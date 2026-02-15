@@ -1,0 +1,122 @@
+name: 🛠️ Debug Slack Notification
+on:
+  workflow_dispatch:
+    inputs:
+      simulate_analysis_failure:
+        description: "Simuler échec Analyse ?"
+        type: boolean
+        default: true
+      simulate_test_failure:
+        description: "Simuler échec Tests ?"
+        type: boolean
+        default: false
+
+jobs:
+  static-analysis:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo "Simulation de l'analyse..."
+          if [ "${{ inputs.simulate_analysis_failure }}" == "true" ]; then
+            echo "❌ Simulation d'erreur !"
+            exit 1
+          else
+            echo "✅ Tout va bien."
+            exit 0
+          fi
+
+  scratch-org-test:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo "Simulation des tests..."
+          if [ "${{ inputs.simulate_test_failure }}" == "true" ]; then
+            exit 1
+          else
+            exit 0
+          fi
+
+  validate-production:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Simulation validation prod (toujours OK pour ce test)"
+
+  slack-notify-ci:
+    name: 🔔 Slack — CI Failure
+    needs: [static-analysis, scratch-org-test, validate-production]
+    if: |
+      always() && (
+        needs.static-analysis.result == 'failure' ||
+        needs.scratch-org-test.result == 'failure' ||
+        needs.validate-production.result == 'failure'
+      )
+    runs-on: ubuntu-latest
+    steps:
+      - name: Resolve Slack mention
+        id: author
+        run: |
+          MAP='${{ secrets.SLACK_GITHUB_USERS_MAP }}'
+          AUTHOR="${{ github.actor }}" 
+          echo "Test avec l'utilisateur: $AUTHOR"
+
+          SLACK_ID=""
+          if [ -n "$MAP" ]; then
+            SLACK_ID=$(echo "$MAP" | jq -r --arg user "$AUTHOR" '.[$user] // empty' 2>/dev/null || true)
+          fi
+
+          if [ -n "$SLACK_ID" ]; then
+            echo "✅ ID trouvé: $SLACK_ID"
+            echo "mention=<@$SLACK_ID>" >> $GITHUB_OUTPUT
+          else
+            echo "❌ ID non trouvé dans le JSON"
+            echo "mention=\`$AUTHOR\`" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Build failure details
+        id: details
+        run: |
+          ANALYSIS="${{ needs.static-analysis.result }}"
+          SCRATCH="${{ needs.scratch-org-test.result }}"
+          FAILURES=""
+
+          if [ "$ANALYSIS" = "failure" ]; then
+            FAILURES="${FAILURES}• 🔍 Static Analysis (Simulation)\n"
+          fi
+          if [ "$SCRATCH" = "failure" ]; then
+            FAILURES="${FAILURES}• 🧪 Scratch Org Tests (Simulation)\n"
+          fi
+
+          echo "failures=$FAILURES" >> $GITHUB_OUTPUT
+
+      - name: Send Slack notification
+        uses: slackapi/slack-github-action@v1.27.0
+        with:
+          channel-id: ${{ secrets.SLACK_CHANNEL_CI }}
+          payload: |
+            {
+              "text": "🛠️ TEST DEBUG — Échec simulé pour ${{ github.actor }}",
+              "attachments": [
+                {
+                  "color": "#dc3545",
+                  "blocks": [
+                    {
+                      "type": "header",
+                      "text": { "type": "plain_text", "text": "🛠️ TEST: CI Failure", "emoji": true }
+                    },
+                    {
+                      "type": "section",
+                      "fields": [
+                        { "type": "mrkdwn", "text": "*Auteur:*\n${{ steps.author.outputs.mention }}" },
+                        { "type": "mrkdwn", "text": "*Status:*\nCeci est un test sans Salesforce." }
+                      ]
+                    },
+                    {
+                      "type": "section",
+                      "text": { "type": "mrkdwn", "text": "*Erreurs simulées:*\n${{ steps.details.outputs.failures }}" }
+                    }
+                  ]
+                }
+              ]
+            }
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
