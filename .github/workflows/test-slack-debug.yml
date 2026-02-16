@@ -1,13 +1,13 @@
-name: 🛠️ Debug Slack Notification
+name: Debug Slack Notification
 on:
   workflow_dispatch:
     inputs:
       simulate_analysis_failure:
-        description: 'Simuler échec Analyse ?'
+        description: "Simuler échec Analyse ?"
         type: boolean
         default: true
       simulate_test_failure:
-        description: 'Simuler échec Tests ?'
+        description: "Simuler échec Tests ?"
         type: boolean
         default: false
 
@@ -18,10 +18,10 @@ jobs:
       - run: |
           echo "Simulation de l'analyse..."
           if [ "${{ inputs.simulate_analysis_failure }}" == "true" ]; then
-            echo "❌ Simulation d'erreur !"
+            echo "Simulation d'erreur !"
             exit 1
           else
-            echo "✅ Tout va bien."
+            echo "Tout va bien."
             exit 0
           fi
 
@@ -42,7 +42,7 @@ jobs:
       - run: echo "Simulation validation prod (toujours OK pour ce test)"
 
   slack-notify-ci:
-    name: 🔔 Slack — CI Failure
+    name: Slack — CI Failure
     needs: [static-analysis, scratch-org-test, validate-production]
     if: |
       always() && (
@@ -58,17 +58,17 @@ jobs:
           MAP='${{ secrets.SLACK_GITHUB_USERS_MAP }}'
           AUTHOR="${{ github.actor }}" 
           echo "Test avec l'utilisateur: $AUTHOR"
-          
+
           SLACK_ID=""
           if [ -n "$MAP" ]; then
             SLACK_ID=$(echo "$MAP" | jq -r --arg user "$AUTHOR" '.[$user] // empty' 2>/dev/null || true)
           fi
-          
+
           if [ -n "$SLACK_ID" ]; then
-            echo "✅ ID trouvé: $SLACK_ID"
+            echo "ID trouvé: $SLACK_ID"
             echo "mention=<@$SLACK_ID>" >> $GITHUB_OUTPUT
           else
-            echo "❌ ID non trouvé dans le JSON"
+            echo "ID non trouvé dans le JSON"
             echo "mention=\`$AUTHOR\`" >> $GITHUB_OUTPUT
           fi
 
@@ -80,10 +80,10 @@ jobs:
           FAILURES=""
 
           if [ "$ANALYSIS" = "failure" ]; then
-            FAILURES="${FAILURES}• 🔍 Static Analysis (Simulation)\n"
+            FAILURES="${FAILURES}• Static Analysis (Simulation)\n"
           fi
           if [ "$SCRATCH" = "failure" ]; then
-            FAILURES="${FAILURES}• 🧪 Scratch Org Tests (Simulation)\n"
+            FAILURES="${FAILURES}• Scratch Org Tests (Simulation)\n"
           fi
 
           echo "failures=$FAILURES" >> $GITHUB_OUTPUT
@@ -94,14 +94,14 @@ jobs:
           channel-id: ${{ secrets.SLACK_CHANNEL_CI }}
           payload: |
             {
-              "text": "🛠️ TEST DEBUG — Échec simulé pour ${{ github.actor }}",
+              "text": "TEST DEBUG — Échec simulé pour ${{ github.actor }}",
               "attachments": [
                 {
                   "color": "#dc3545",
                   "blocks": [
                     {
                       "type": "header",
-                      "text": { "type": "plain_text", "text": "🛠️ TEST: CI Failure", "emoji": true }
+                      "text": { "type": "plain_text", "text": "TEST: CI Failure", "emoji": true }
                     },
                     {
                       "type": "section",
