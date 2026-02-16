@@ -80,7 +80,7 @@ jobs:
           echo "Check the logs above for details."
           echo "============================================"
 
-      # ── 🔔  Slack — UAT Success → @qa-team ──
+      # ── 🔔 Slack — UAT Success → @qa-team ──
       - name: 🔔 Slack — UAT Deployed Successfully
         if: success()
         uses: slackapi/slack-github-action@v1.27.0
@@ -118,7 +118,7 @@ jobs:
                         },
                         {
                           "type": "mrkdwn",
-                          "text": "*Date:*\n<!date^${{ github.event.head_commit.timestamp }}^{date_short} {time}|now>"
+                          "text": "*Message:*\n${{ github.event.head_commit.message }}"
                         }
                       ]
                     },
@@ -126,7 +126,7 @@ jobs:
                       "type": "section",
                       "text": {
                         "type": "mrkdwn",
-                        "text": "<!subteam^${{ secrets.SLACK_QA_TEAM_GROUP_ID }}> 🧪 L'environnement UAT est prêt pour les tests.\n\n*Message:* ${{ github.event.head_commit.message }}"
+                        "text": "<!subteam^${{ secrets.SLACK_QA_TEAM_GROUP_ID }}> 🧪 L'environnement UAT est prêt pour les tests."
                       }
                     },
                     {
