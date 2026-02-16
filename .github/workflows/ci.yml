@@ -108,10 +108,10 @@ jobs:
         run: sf org delete scratch --target-org scratch-ci --no-prompt
 
   # ================================================================
-  # JOB 3: Production Validation (PRs → main only)
+  # JOB 3: Production Validation (validate → génère Job ID)
   # ================================================================
   validate-production:
-    name: 🏭 Validate Against Production (Check-Only)
+    name: 🏭 Validate Against Production
     needs: static-analysis
     if: github.base_ref == 'main'
     runs-on: ubuntu-latest
@@ -150,18 +150,194 @@ jobs:
             --set-default
           rm -f auth.url
 
-      - name: Validate Deployment (Check-Only)
+      - name: Validate Deployment (Generates Job ID)
+        id: validate
         run: |
-          echo "🏭 Running check-only deployment against Production..."
-          sf project deploy start \
+          echo "🏭 Running FULL validation against Production..."
+          RESULT=$(sf project deploy validate \
             --source-dir force-app \
             --target-org ProductionOrg \
             --test-level RunLocalTests \
-            --dry-run \
-            --wait 30
+            --wait 30 \
+            --json)
+
+          echo "$RESULT"
+
+          JOB_ID=$(echo "$RESULT" | jq -r '.result.id')
+          echo "job_id=$JOB_ID" >> $GITHUB_OUTPUT
+          echo "✅ Validation OK — Job ID: $JOB_ID"
+
+      - name: Post Job ID to PR
+        if: success()
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: deploy-job-id
+          message: |
+            ## 🏭 Production Validation Successful
+
+            | Info | Value |
+            |------|-------|
+            | **Job ID** | `${{ steps.validate.outputs.job_id }}` |
+            | **Status** | ✅ Validated — Ready for Quick Deploy |
+
+            ### 📋 Deux options pour déployer :
+            
+            **Option A — Salesforce Setup :**
+            1. Setup → Environments → Deploy → Deployment Status
+            2. Cliquer **Quick Deploy**
+            
+            **Option B — GitHub Actions :**
+            1. Onglet Actions → **CD - Deploy to Production**
+            2. Cliquer **Run workflow**
+            3. Coller le Job ID : `${{ steps.validate.outputs.job_id }}`
+
+            > ⚠️ Le Job ID expire après **10 jours**.
+
+      # ── 🔔 Slack — Validation Prod OK ──
+      - name: 🔔 Slack — Production Validated
+        if: success()
+        uses: slackapi/slack-github-action@v1.27.0
+        with:
+          channel-id: ${{ secrets.SLACK_CHANNEL_DEPLOYMENTS }}
+          payload: |
+            {
+              "text": "✅ Validation Production réussie — PR #${{ github.event.pull_request.number }}",
+              "attachments": [
+                {
+                  "color": "#28a745",
+                  "blocks": [
+                    {
+                      "type": "header",
+                      "text": {
+                        "type": "plain_text",
+                        "text": "✅ Validation Production réussie",
+                        "emoji": true
+                      }
+                    },
+                    {
+                      "type": "section",
+                      "fields": [
+                        {
+                          "type": "mrkdwn",
+                          "text": "*Job ID:*\n`${{ steps.validate.outputs.job_id }}`"
+                        },
+                        {
+                          "type": "mrkdwn",
+                          "text": "*PR:*\n<${{ github.event.pull_request.html_url }}|#${{ github.event.pull_request.number }} — ${{ github.event.pull_request.title }}>"
+                        },
+                        {
+                          "type": "mrkdwn",
+                          "text": "*Auteur:*\n`${{ github.actor }}`"
+                        },
+                        {
+                          "type": "mrkdwn",
+                          "text": "*Branche:*\n`${{ github.head_ref }}` → `main`"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "section",
+                      "text": {
+                        "type": "mrkdwn",
+                        "text": "📋 *Prêt pour Quick Deploy* → Salesforce Setup ou GitHub Actions\n\n⚠️ Le Job ID expire après *10 jours*."
+                      }
+                    },
+                    {
+                      "type": "actions",
+                      "elements": [
+                        {
+                          "type": "button",
+                          "text": {
+                            "type": "plain_text",
+                            "text": "🔀 Voir le PR"
+                          },
+                          "url": "${{ github.event.pull_request.html_url }}"
+                        },
+                        {
+                          "type": "button",
+                          "text": {
+                            "type": "plain_text",
+                            "text": "📋 Voir le run"
+                          },
+                          "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+
+      # ── 🔔 Slack — Validation Prod FAILED ──
+      - name: 🔔 Slack — Production Validation Failed
+        if: failure()
+        uses: slackapi/slack-github-action@v1.27.0
+        with:
+          channel-id: ${{ secrets.SLACK_CHANNEL_DEPLOYMENTS }}
+          payload: |
+            {
+              "text": "🚨 Validation Production ÉCHOUÉE — PR #${{ github.event.pull_request.number }}",
+              "attachments": [
+                {
+                  "color": "#dc3545",
+                  "blocks": [
+                    {
+                      "type": "header",
+                      "text": {
+                        "type": "plain_text",
+                        "text": "🚨 Validation Production ÉCHOUÉE",
+                        "emoji": true
+                      }
+                    },
+                    {
+                      "type": "section",
+                      "fields": [
+                        {
+                          "type": "mrkdwn",
+                          "text": "*PR:*\n<${{ github.event.pull_request.html_url }}|#${{ github.event.pull_request.number }} — ${{ github.event.pull_request.title }}>"
+                        },
+                        {
+                          "type": "mrkdwn",
+                          "text": "*Auteur:*\n`${{ github.actor }}`"
+                        },
+                        {
+                          "type": "mrkdwn",
+                          "text": "*Branche:*\n`${{ github.head_ref }}` → `main`"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "section",
+                      "text": {
+                        "type": "mrkdwn",
+                        "text": "🔴 Le code ne passe pas la validation production. Intervention requise !"
+                      }
+                    },
+                    {
+                      "type": "actions",
+                      "elements": [
+                        {
+                          "type": "button",
+                          "text": {
+                            "type": "plain_text",
+                            "text": "🔴 VOIR LES LOGS"
+                          },
+                          "style": "danger",
+                          "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
 
   # ================================================================
-  # JOB 4: PR Comment with CI Results
+  # JOB 4: PR Comment
   # ================================================================
   pr-comment:
     name: 💬 PR Results Comment
@@ -194,7 +370,7 @@ jobs:
             echo "target_env=UAT" >> $GITHUB_OUTPUT
           else
             VALIDATION="${{ needs.validate-production.result }}"
-            echo "validation_label=🏭 **Production Validation (Check-Only)**" >> $GITHUB_OUTPUT
+            echo "validation_label=🏭 **Production Validation**" >> $GITHUB_OUTPUT
             echo "target_env=Production" >> $GITHUB_OUTPUT
           fi
 
@@ -234,7 +410,7 @@ jobs:
             <sub>🤖 Automated by CI Pipeline — <a href="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}">View full run</a></sub>
 
   # ================================================================
-  # Slack Notification — CI Failure → @author
+  # 🔔 Slack — CI Failure → @auteur
   # ================================================================
   slack-notify-ci:
     name: 🔔 Slack — CI Failure
