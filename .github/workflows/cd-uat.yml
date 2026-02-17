@@ -80,6 +80,14 @@ jobs:
           echo "Check the logs above for details."
           echo "============================================"
 
+      # ── Préparer le message commit pour JSON ──
+      - name: Sanitize commit message
+        if: always()
+        id: commit
+        run: |
+          MSG=$(echo "${{ github.event.head_commit.message }}" | head -1 | tr -d '"' | tr -d '\\')
+          echo "message=$MSG" >> $GITHUB_OUTPUT
+
       # ── 🔔 Slack — UAT Success → @qa-team ──
       - name: 🔔 Slack — UAT Deployed Successfully
         if: success()
@@ -118,7 +126,7 @@ jobs:
                         },
                         {
                           "type": "mrkdwn",
-                          "text": "*Message:*\n${{ github.event.head_commit.message }}"
+                          "text": "*Message:*\n${{ steps.commit.outputs.message }}"
                         }
                       ]
                     },
@@ -149,9 +157,7 @@ jobs:
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
 
-      # ────────────────────────────────────────────────────
-      # Email QA team — UAT prêt pour les tests
-      # ────────────────────────────────────────────────────
+      # ── 📧 Email — UAT prêt pour les tests ──
       - name: 📧 Email — UAT prêt pour les tests
         if: success()
         uses: dawidd6/action-send-mail@v3
@@ -182,7 +188,7 @@ jobs:
                   </tr>
                   <tr style="background:#f8f9fa">
                     <td style="padding:10px;font-weight:bold;border:1px solid #dee2e6">Description</td>
-                    <td style="padding:10px;border:1px solid #dee2e6">${{ github.event.head_commit.message }}</td>
+                    <td style="padding:10px;border:1px solid #dee2e6">${{ steps.commit.outputs.message }}</td>
                   </tr>
                 </table>
                 <p>
