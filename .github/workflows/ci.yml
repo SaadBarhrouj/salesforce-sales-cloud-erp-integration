@@ -115,6 +115,8 @@ jobs:
     needs: static-analysis
     if: github.base_ref == 'main'
     runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
