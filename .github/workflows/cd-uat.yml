@@ -149,6 +149,51 @@ jobs:
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
 
+      # ────────────────────────────────────────────────────
+      # Email QA team — UAT prêt pour les tests
+      # ────────────────────────────────────────────────────
+      - name: 📧 Email — UAT prêt pour les tests
+        if: success()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: ${{ secrets.SMTP_SERVER }}
+          server_port: ${{ secrets.SMTP_PORT }}
+          username: ${{ secrets.SMTP_USERNAME }}
+          password: ${{ secrets.SMTP_PASSWORD }}
+          from: ${{ secrets.EMAIL_FROM }}
+          to: ${{ secrets.EMAIL_TO_QA }}
+          subject: "🧪 UAT mis à jour — Prêt pour les tests"
+          html_body: |
+            <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">
+              <div style="background:#17a2b8;color:#fff;padding:20px;border-radius:8px 8px 0 0">
+                <h2 style="margin:0">🧪 Environnement UAT mis à jour</h2>
+              </div>
+              <div style="border:1px solid #e0e0e0;border-top:none;padding:20px;border-radius:0 0 8px 8px">
+                <p style="font-size:16px">Bonjour l'équipe QA,</p>
+                <p>Une nouvelle version a été déployée sur l'environnement <strong>UAT</strong>. Vous pouvez commencer vos tests.</p>
+                <table style="width:100%;border-collapse:collapse;margin:15px 0">
+                  <tr style="background:#f8f9fa">
+                    <td style="padding:10px;font-weight:bold;border:1px solid #dee2e6">Déployé par</td>
+                    <td style="padding:10px;border:1px solid #dee2e6">${{ github.actor }}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding:10px;font-weight:bold;border:1px solid #dee2e6">Commit</td>
+                    <td style="padding:10px;border:1px solid #dee2e6"><code>${{ github.sha }}</code></td>
+                  </tr>
+                  <tr style="background:#f8f9fa">
+                    <td style="padding:10px;font-weight:bold;border:1px solid #dee2e6">Description</td>
+                    <td style="padding:10px;border:1px solid #dee2e6">${{ github.event.head_commit.message }}</td>
+                  </tr>
+                </table>
+                <p>
+                  <a href="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+                     style="background:#17a2b8;color:#fff;padding:10px 20px;text-decoration:none;border-radius:4px;display:inline-block">
+                    📋 Voir le déploiement
+                  </a>
+                </p>
+              </div>
+            </div>
+
       # ── 🔔 Slack — UAT Failure → @tech-lead ──
       - name: 🔔 Slack — UAT Deployment Failed
         if: failure()
