@@ -154,15 +154,51 @@ jobs:
         id: validate
         run: |
           echo "🏭 Running FULL validation against Production..."
+          
+          set +e
           RESULT=$(sf project deploy validate \
             --source-dir force-app \
             --target-org ProductionOrg \
             --test-level RunLocalTests \
             --wait 30 \
-            --json)
-
+            --json 2>&1)
+          EXIT_CODE=$?
+          set -e
+          
           echo "$RESULT"
-
+          
+          if [ $EXIT_CODE -ne 0 ]; then
+            echo ""
+            echo "============================================"
+            echo "❌ VALIDATION FAILED"
+            echo "============================================"
+            
+            ERROR_MSG=$(echo "$RESULT" | jq -r '.message // .result.errorMessage // "Unknown error"' 2>/dev/null || echo "Could not parse error")
+            echo "Error: $ERROR_MSG"
+            
+            FAILED_TESTS=$(echo "$RESULT" | jq -r '.result.details.runTestResult.failures[]?.name // empty' 2>/dev/null || true)
+            if [ -n "$FAILED_TESTS" ]; then
+              echo ""
+              echo "Failed tests:"
+              echo "$FAILED_TESTS"
+            fi
+            
+            DEPLOY_ERRORS=$(echo "$RESULT" | jq -r '.result.details.componentFailures[]?.problem // empty' 2>/dev/null || true)
+            if [ -n "$DEPLOY_ERRORS" ]; then
+              echo ""
+              echo "Component errors:"
+              echo "$DEPLOY_ERRORS"
+            fi
+            
+            JOB_ID=$(echo "$RESULT" | jq -r '.result.id // empty' 2>/dev/null || true)
+            if [ -n "$JOB_ID" ]; then
+              echo "job_id=$JOB_ID" >> $GITHUB_OUTPUT
+            fi
+            
+            echo "============================================"
+            exit 1
+          fi
+          
           JOB_ID=$(echo "$RESULT" | jq -r '.result.id')
           echo "job_id=$JOB_ID" >> $GITHUB_OUTPUT
           echo "✅ Validation OK — Job ID: $JOB_ID"
