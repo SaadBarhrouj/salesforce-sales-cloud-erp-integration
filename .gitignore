@@ -46,3 +46,8 @@ $RECYCLE.BIN/
 **/__pycache__/
 **/.venv/
 **/venv/
+
+# GitHub & VSCode configuration files
+.github/skills/
+.github/copilot-instructions.md
+.vscode/
