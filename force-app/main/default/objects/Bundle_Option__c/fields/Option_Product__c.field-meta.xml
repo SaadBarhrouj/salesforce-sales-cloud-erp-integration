@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Option_Product__c</fullName>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <inlineHelpText>The option (child) product.</inlineHelpText>
+    <label>Option Product</label>
+    <referenceTo>Product2</referenceTo>
+    <relationshipLabel>Bundle Memberships</relationshipLabel>
+    <relationshipName>Bundle_Memberships</relationshipName>
+    <required>false</required>
+    <trackTrending>false</trackTrending>
+    <type>Lookup</type>
+</CustomField>
