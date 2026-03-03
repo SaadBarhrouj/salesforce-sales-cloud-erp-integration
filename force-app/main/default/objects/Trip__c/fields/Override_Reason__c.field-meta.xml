@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Override_Reason__c</fullName>
+    <description>Mandatory justification when the final price is overridden from the system-calculated price. Provides an audit trail for pricing decisions.</description>
+    <externalId>false</externalId>
+    <inlineHelpText>Required when the final price differs from the system price. Explain why the price was adjusted (e.g., &quot;Customer negotiation&quot;, &quot;Manager approval #12345&quot;).</inlineHelpText>
+    <label>Override Reason</label>
+    <length>255</length>
+    <required>false</required>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Text</type>
+    <unique>false</unique>
+</CustomField>

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Truck_Type__c</fullName>
+    <description>Truck type code determined by matching the total weight against configured weight thresholds for the applicable country. The smallest truck capable of carrying the load is selected. Stored for audit.</description>
+    <externalId>false</externalId>
+    <inlineHelpText>The truck type assigned to this trip based on total weight (e.g., VL, PL12, PL35). Automatically determined by the calculation engine.</inlineHelpText>
+    <label>Truck Type</label>
+    <length>10</length>
+    <required>false</required>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Text</type>
+    <unique>false</unique>
+</CustomField>

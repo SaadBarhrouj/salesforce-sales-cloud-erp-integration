@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Country_Code__c</fullName>
+    <description>Select the ISO 3166-1 alpha-2 country code where this location is physically situated. This value is used for geographic filtering, business rule evaluation, regulatory compliance, and reporting across the organization.</description>
+    <inlineHelpText>Select the 2-letter ISO country code for this location (e.g., FR for France, DE for Germany, UK for United Kingdom). This field drives all country-specific rules, pricing, and configurations.</inlineHelpText>
+    <label>Country Code</label>
+    <required>true</required>
+    <trackHistory>false</trackHistory>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetName>Country_Codes</valueSetName>
+    </valueSet>
+</CustomField>

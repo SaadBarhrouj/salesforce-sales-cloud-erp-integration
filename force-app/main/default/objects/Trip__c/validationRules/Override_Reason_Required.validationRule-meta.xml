@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Override_Reason_Required</fullName>
+    <active>true</active>
+    <description>Requires a justification when the final price is manually changed from the system-calculated price</description>
+    <errorConditionFormula>AND(
+    Final_Price__c &lt;&gt; System_Price__c,
+    NOT(ISBLANK(System_Price__c)),
+    ISBLANK(Override_Reason__c)
+)</errorConditionFormula>
+    <errorDisplayField>Override_Reason__c</errorDisplayField>
+    <errorMessage>An override reason is required when the final price 
+differs from the system-calculated price.</errorMessage>
+</ValidationRule>
