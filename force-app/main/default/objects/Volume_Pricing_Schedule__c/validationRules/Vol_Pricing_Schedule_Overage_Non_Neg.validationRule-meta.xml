@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Vol_Pricing_Schedule_Overage_Non_Neg</fullName>
+    <active>true</active>
+    <description>Prevents negative overage rates.</description>
+    <errorConditionFormula>AND(
+  NOT(ISBLANK(Overage_Rate__c)),
+  Overage_Rate__c &lt; 0
+)</errorConditionFormula>
+    <errorDisplayField>Overage_Rate__c</errorDisplayField>
+    <errorMessage>Overage Rate must be zero or a positive value. Negative pricing is not permitted.</errorMessage>
+</ValidationRule>

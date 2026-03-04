@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Volume_Pricing_Tier_Sort_Order_Positive</fullName>
+    <active>true</active>
+    <description>Prevents zero or negative sort order values.</description>
+    <errorConditionFormula>Sort_Order__c &lt;= 0</errorConditionFormula>
+    <errorDisplayField>Sort_Order__c</errorDisplayField>
+    <errorMessage>Sort Order must be a positive number. Use increments of 10 (10, 20, 30...).</errorMessage>
+</ValidationRule>
