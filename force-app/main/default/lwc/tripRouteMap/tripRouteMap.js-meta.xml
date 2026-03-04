@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<LightningComponentBundle xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>62.0</apiVersion>
+    <isExposed>true</isExposed>
+    <masterLabel>Trip Route Map</masterLabel>
+    <description>
+        Interactive route map for Trip records showing departure,
+        destination and distance with directional indicators.
+    </description>
+
+    <targets>
+        <target>lightning__RecordPage</target>
+    </targets>
+
+    <targetConfigs>
+        <targetConfig targets="lightning__RecordPage">
+            <objects>
+                <object>Trip__c</object>
+            </objects>
+
+            <property name="mapHeight"
+                      type="Integer"
+                      default="380"
+                      label="Map height (px)"
+                      description="Map container height in pixels"
+                      min="200" max="800" />
+
+            <property name="hideRoutePanel"
+                      type="Boolean"
+                      default="false"
+                      label="Hide route summary"
+                      description="Hides the directional route panel below the map" />
+
+            <property name="hideDirectionsLink"
+                      type="Boolean"
+                      default="false"
+                      label="Hide Google Maps link"
+                      description="Hides the driving directions link" />
+        </targetConfig>
+    </targetConfigs>
+</LightningComponentBundle>

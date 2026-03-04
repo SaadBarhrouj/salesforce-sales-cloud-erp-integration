@@ -1,0 +1,132 @@
+<template>
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- LOADING                                    -->
+    <!-- ═══════════════════════════════════════════ -->
+    <template lwc:if={isLoading}>
+        <lightning-card title="Trip Route" icon-name="utility:routing">
+            <div class="state-container">
+                <lightning-spinner
+                    alternative-text="Loading route…"
+                    size="medium">
+                </lightning-spinner>
+            </div>
+        </lightning-card>
+    </template>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- ERROR                                      -->
+    <!-- ═══════════════════════════════════════════ -->
+    <template lwc:elseif={hasError}>
+        <lightning-card title="Trip Route" icon-name="utility:routing">
+            <div class="state-container">
+                <lightning-icon
+                    icon-name="utility:error"
+                    size="large"
+                    variant="error">
+                </lightning-icon>
+                <p class="state-heading slds-text-color_error">
+                    Loading Error
+                </p>
+                <p class="state-subtext">
+                    Unable to retrieve trip route data.
+                </p>
+            </div>
+        </lightning-card>
+    </template>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- INCOMPLETE COORDINATES                     -->
+    <!-- ═══════════════════════════════════════════ -->
+    <template lwc:elseif={isIncomplete}>
+        <lightning-card title="Trip Route" icon-name="utility:routing">
+            <div class="state-container">
+                <div class="empty-icon-ring">
+                    <lightning-icon
+                        icon-name="utility:routing"
+                        size="large">
+                    </lightning-icon>
+                </div>
+                <p class="state-heading">Route Not Available</p>
+                <p class="state-subtext">
+                    Both locations must have GPS coordinates
+                    to display the route map.
+                </p>
+            </div>
+        </lightning-card>
+    </template>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- MAP + ROUTE                                -->
+    <!-- ═══════════════════════════════════════════ -->
+    <template lwc:else>
+        <lightning-card title="Trip Route" icon-name="utility:routing">
+
+            <!-- Interactive Map — auto-fit, no zoom-level -->
+            <div class="map-frame" >
+                <lightning-map
+                    map-markers={mapMarkers}
+                    list-view="hidden">
+                </lightning-map>
+            </div>
+
+            <!-- Route Summary Panel -->
+            <template lwc:if={showRoutePanel}>
+                <div class="route-panel">
+
+                    <!-- Directional visual: ●───►● -->
+                    <div class="route-visual">
+                        <div class="dot dot--departure"></div>
+                        <div class="line-track">
+                            <div class="line"></div>
+                        </div>
+                        <div class="dot dot--destination"></div>
+                    </div>
+
+                    <!-- Labels row -->
+                    <div class="route-labels">
+                        <span class="route-name route-name--left"
+                              title={departureName}>
+                            {departureName}
+                        </span>
+
+                        <div class="route-center">
+                            <span class="route-distance">
+                                <template lwc:if={isEstimated}>
+                                    <abbr class="estimated"
+                                          title="Estimated (Haversine × 1.3)">≈</abbr>
+                                </template>
+                                {formattedDistance}
+                            </span>
+                            <template lwc:if={direction}>
+                                <span class="route-direction">{direction}</span>
+                            </template>
+                        </div>
+
+                        <span class="route-name route-name--right"
+                              title={destinationName}>
+                            {destinationName}
+                        </span>
+                    </div>
+                </div>
+            </template>
+
+            <!-- Google Maps Directions Link -->
+            <template lwc:if={showDirectionsLink}>
+                <div class="footer">
+                    <a href={googleMapsDirectionsUrl}
+                       target="_blank"
+                       rel="noopener noreferrer"
+                       class="footer-link">
+                        <lightning-icon
+                            icon-name="utility:new_window"
+                            size="xx-small"
+                            class="slds-m-right_xx-small">
+                        </lightning-icon>
+                        View Route in Google Maps
+                    </a>
+                </div>
+            </template>
+
+        </lightning-card>
+    </template>
+</template>
