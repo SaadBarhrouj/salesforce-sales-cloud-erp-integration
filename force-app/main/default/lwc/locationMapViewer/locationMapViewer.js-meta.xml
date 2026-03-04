@@ -26,7 +26,7 @@
 
             <property name="mapHeight"
                       type="Integer"
-                      default="420"
+                      default="400"
                       label="Map height (px)"
                       description="Map container height in pixels"
                       min="200" max="800" />
