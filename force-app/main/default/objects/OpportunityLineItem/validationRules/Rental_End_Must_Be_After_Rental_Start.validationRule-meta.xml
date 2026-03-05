@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Rental_End_Must_Be_After_Rental_Start</fullName>
+    <active>true</active>
+    <description>Enforces chronological integrity between Rental_Start_Date__c and Rental_End_Date__c, ensuring the rental period end date is never set before its start date when both dates are provided.</description>
+    <errorConditionFormula>AND(NOT(ISBLANK(Rental_Start_Date__c)), NOT(ISBLANK(Rental_End_Date__c)), Rental_End_Date__c &lt; Rental_Start_Date__c)</errorConditionFormula>
+    <errorDisplayField>Rental_End_Date__c</errorDisplayField>
+    <errorMessage>Rental End Date must be on or after Rental Start Date.</errorMessage>
+</ValidationRule>

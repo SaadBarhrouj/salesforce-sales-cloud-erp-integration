@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Default_Agency_Required_When_Transport</fullName>
+    <active>true</active>
+    <description>Enforces that Default_Agency__c is populated when Is_Transport_Required__c is enabled, ensuring no transport can be initiated without a defined departure agency.</description>
+    <errorConditionFormula>AND(Is_Transport_Required__c, ISBLANK(Default_Agency__c))</errorConditionFormula>
+    <errorDisplayField>Default_Agency__c</errorDisplayField>
+    <errorMessage>Default Agency is required when transport is required. Please select a default agency or uncheck &quot;Is Transport Required&quot;.</errorMessage>
+</ValidationRule>

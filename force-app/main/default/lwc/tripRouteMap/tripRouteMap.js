@@ -1,9 +1,3 @@
-/**
- * Interactive route map for Trip__c records.
- * Displays departure + destination markers with directional
- * route panel and distance from Trip__c.Distance_Km__c.
- * 100% LDS with spanning fields — zero Apex.
- */
 import { LightningElement, api, wire } from 'lwc';
 import { getRecord, getFieldValue }    from 'lightning/uiRecordApi';
 

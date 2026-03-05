@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Trip_Pickup__c</fullName>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <description>Reference to the Pickup Trip this line item has been assigned to by the trip engine. Populated automatically — never set manually. Allows traceability from a line item back to its return trip and cost breakdown.</description>
+    <inlineHelpText>Automatically populated by the system. Shows the pickup trip this line item belongs to. Read-only — do not edit manually.</inlineHelpText>
+    <label>Trip Pickup</label>
+    <referenceTo>Trip__c</referenceTo>
+    <relationshipLabel>Line Items (Pickup)</relationshipLabel>
+    <relationshipName>OLIs_On_Pickup_Trip</relationshipName>
+    <required>false</required>
+    <type>Lookup</type>
+</CustomField>

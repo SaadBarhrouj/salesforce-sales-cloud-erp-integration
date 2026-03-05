@@ -1,7 +1,5 @@
 <template>
-    <!-- ═══════════════════════════════════════════ -->
     <!-- LOADING                                    -->
-    <!-- ═══════════════════════════════════════════ -->
     <template lwc:if={isLoading}>
         <lightning-card title="Trip Route" icon-name="utility:routing">
             <div class="state-container">
@@ -13,9 +11,7 @@
         </lightning-card>
     </template>
 
-    <!-- ═══════════════════════════════════════════ -->
     <!-- ERROR                                      -->
-    <!-- ═══════════════════════════════════════════ -->
     <template lwc:elseif={hasError}>
         <lightning-card title="Trip Route" icon-name="utility:routing">
             <div class="state-container">
@@ -34,9 +30,7 @@
         </lightning-card>
     </template>
 
-    <!-- ═══════════════════════════════════════════ -->
     <!-- INCOMPLETE COORDINATES                     -->
-    <!-- ═══════════════════════════════════════════ -->
     <template lwc:elseif={isIncomplete}>
         <lightning-card title="Trip Route" icon-name="utility:routing">
             <div class="state-container">
@@ -55,9 +49,7 @@
         </lightning-card>
     </template>
 
-    <!-- ═══════════════════════════════════════════ -->
     <!-- MAP + ROUTE                                -->
-    <!-- ═══════════════════════════════════════════ -->
     <template lwc:else>
         <lightning-card title="Trip Route" icon-name="utility:routing">
 

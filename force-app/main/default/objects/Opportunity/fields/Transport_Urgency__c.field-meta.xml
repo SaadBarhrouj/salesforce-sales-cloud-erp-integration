@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Transport_Urgency__c</fullName>
+    <description>Urgency level of the transport for this opportunity. Evaluated by the supplement engine against conditional surcharge rules — Express or Urgent values may trigger additional surcharges as defined in the active Supplement configuration records.</description>
+    <inlineHelpText>Select the transport urgency level for this opportunity. &quot;Express&quot; or &quot;Urgent&quot; may automatically trigger additional surcharges. Defaults to &quot;Standard&quot; if no urgency applies.</inlineHelpText>
+    <label>Transport Urgency</label>
+    <required>false</required>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackTrending>false</trackTrending>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>true</sorted>
+            <value>
+                <fullName>Express</fullName>
+                <default>false</default>
+                <label>Express</label>
+            </value>
+            <value>
+                <fullName>Standard</fullName>
+                <default>false</default>
+                <label>Standard</label>
+            </value>
+            <value>
+                <fullName>Urgent</fullName>
+                <default>false</default>
+                <label>Urgent</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

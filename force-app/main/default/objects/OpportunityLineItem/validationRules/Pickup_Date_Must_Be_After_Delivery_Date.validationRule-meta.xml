@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Pickup_Date_Must_Be_After_Delivery_Date</fullName>
+    <active>true</active>
+    <description>Enforces chronological integrity between Delivery_Date__c and Pickup_Date__c, ensuring equipment pickup is strictly scheduled after delivery when both dates are provided.</description>
+    <errorConditionFormula>AND(NOT(ISBLANK(Delivery_Date__c)), NOT(ISBLANK(Pickup_Date__c)), Pickup_Date__c &lt;= Delivery_Date__c)</errorConditionFormula>
+    <errorDisplayField>Pickup_Date__c</errorDisplayField>
+    <errorMessage>Pickup Date must be strictly after Delivery Date. Please correct the dates.</errorMessage>
+</ValidationRule>
