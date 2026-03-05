@@ -13,7 +13,7 @@ concurrency:
 
 jobs:
   deploy-to-uat:
-    name: 🚀 Deploy to UAT Org
+    name: Deploy to UAT Org
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -27,6 +27,7 @@ jobs:
             ~/.local/share/sf
             ~/.cache/sf
             /usr/local/lib/node_modules/@salesforce
+            /usr/local/bin/sf
           key: sf-cli-${{ runner.os }}-v2
           restore-keys: |
             sf-cli-${{ runner.os }}-
@@ -52,18 +53,25 @@ jobs:
 
       - name: Deploy to UAT Org
         run: |
-          echo "🚀 Deploying to UAT Org..."
+          echo "Deploying to UAT Org..."
+          
+          # Use RunLocalTests only if Apex test classes are present
+          TEST_LEVEL="NoTestRun"
+          if [ -n "$(grep -rl "@isTest" force-app --include="*.cls")" ]; then
+            TEST_LEVEL="RunLocalTests"
+          fi
+
           sf project deploy start \
             --source-dir force-app \
             --target-org UATOrg \
-            --test-level RunLocalTests \
+            --test-level $TEST_LEVEL \
             --wait 30
 
       - name: Deployment Summary
         if: success()
         run: |
           echo "============================================"
-          echo "✅ DEPLOYMENT TO UAT SUCCESSFUL"
+          echo "DEPLOYMENT TO UAT SUCCESSFUL"
           echo "============================================"
           echo "Branch:      uat"
           echo "Commit:      ${{ github.sha }}"
@@ -75,12 +83,12 @@ jobs:
         if: failure()
         run: |
           echo "============================================"
-          echo "❌ DEPLOYMENT TO UAT FAILED"
+          echo "DEPLOYMENT TO UAT FAILED"
           echo "============================================"
           echo "Check the logs above for details."
           echo "============================================"
 
-      # ── Préparer le message commit pour JSON ──
+      # ── Prepare commit message for JSON ──
       - name: Sanitize commit message
         if: always()
         id: commit
@@ -88,15 +96,15 @@ jobs:
           MSG=$(echo "${{ github.event.head_commit.message }}" | head -1 | tr -d '"' | tr -d '\\')
           echo "message=$MSG" >> $GITHUB_OUTPUT
 
-      # ── 🔔 Slack — UAT Success → @qa-team ──
-      - name: 🔔 Slack — UAT Deployed Successfully
+      # ── Slack — UAT Success ──
+      - name: Slack — UAT Deployed Successfully
         if: success()
         uses: slackapi/slack-github-action@v1.27.0
         with:
           channel-id: ${{ secrets.SLACK_CHANNEL_DEPLOYMENTS }}
           payload: |
             {
-              "text": "✅ UAT déployé avec succès",
+              "text": "UAT deployment successful",
               "attachments": [
                 {
                   "color": "#28a745",
@@ -105,8 +113,8 @@ jobs:
                       "type": "header",
                       "text": {
                         "type": "plain_text",
-                        "text": "✅ Déploiement UAT réussi",
-                        "emoji": true
+                        "text": "UAT Deployment Successful",
+                        "emoji": false
                       }
                     },
                     {
@@ -114,11 +122,11 @@ jobs:
                       "fields": [
                         {
                           "type": "mrkdwn",
-                          "text": "*Environnement:*\nUAT"
+                          "text": "*Environment:*\nUAT"
                         },
                         {
                           "type": "mrkdwn",
-                          "text": "*Auteur:*\n`${{ github.actor }}`"
+                          "text": "*Author:*\n`${{ github.actor }}`"
                         },
                         {
                           "type": "mrkdwn",
@@ -134,7 +142,7 @@ jobs:
                       "type": "section",
                       "text": {
                         "type": "mrkdwn",
-                        "text": "<!subteam^${{ secrets.SLACK_QA_TEAM_GROUP_ID }}> 🧪 L'environnement UAT est prêt pour les tests."
+                        "text": "The UAT environment has been updated and is ready for testing."
                       }
                     },
                     {
@@ -144,7 +152,7 @@ jobs:
                           "type": "button",
                           "text": {
                             "type": "plain_text",
-                            "text": "📋 Voir le run"
+                            "text": "View Deployment"
                           },
                           "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
                         }
@@ -157,8 +165,8 @@ jobs:
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
 
-      # ── 📧 Email — UAT prêt pour les tests ──
-      - name: 📧 Email — UAT prêt pour les tests
+      # ── Email — UAT ready for testing ──
+      - name: Email — UAT Ready for Testing
         if: success()
         uses: dawidd6/action-send-mail@v3
         with:
@@ -168,18 +176,18 @@ jobs:
           password: ${{ secrets.SMTP_PASSWORD }}
           from: ${{ secrets.EMAIL_FROM }}
           to: ${{ secrets.EMAIL_TO_QA }}
-          subject: "🧪 UAT mis à jour — Prêt pour les tests"
+          subject: "UAT Updated - Ready for Testing"
           html_body: |
             <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">
               <div style="background:#17a2b8;color:#fff;padding:20px;border-radius:8px 8px 0 0">
-                <h2 style="margin:0">🧪 Environnement UAT mis à jour</h2>
+                <h2 style="margin:0">UAT Environment Updated</h2>
               </div>
               <div style="border:1px solid #e0e0e0;border-top:none;padding:20px;border-radius:0 0 8px 8px">
-                <p style="font-size:16px">Bonjour l'équipe QA,</p>
-                <p>Une nouvelle version a été déployée sur l'environnement <strong>UAT</strong>. Vous pouvez commencer vos tests.</p>
+                <p style="font-size:16px">Hello QA Team,</p>
+                <p>A new version has been deployed to the <strong>UAT</strong> environment. It is now ready for testing.</p>
                 <table style="width:100%;border-collapse:collapse;margin:15px 0">
                   <tr style="background:#f8f9fa">
-                    <td style="padding:10px;font-weight:bold;border:1px solid #dee2e6">Déployé par</td>
+                    <td style="padding:10px;font-weight:bold;border:1px solid #dee2e6">Deployed By</td>
                     <td style="padding:10px;border:1px solid #dee2e6">${{ github.actor }}</td>
                   </tr>
                   <tr>
@@ -194,21 +202,21 @@ jobs:
                 <p>
                   <a href="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
                      style="background:#17a2b8;color:#fff;padding:10px 20px;text-decoration:none;border-radius:4px;display:inline-block">
-                    📋 Voir le déploiement
+                    View Deployment Details
                   </a>
                 </p>
               </div>
             </div>
 
-      # ── 🔔 Slack — UAT Failure → @tech-lead ──
-      - name: 🔔 Slack — UAT Deployment Failed
+      # ── Slack — UAT Failure ──
+      - name: Slack — UAT Deployment Failed
         if: failure()
         uses: slackapi/slack-github-action@v1.27.0
         with:
           channel-id: ${{ secrets.SLACK_CHANNEL_DEPLOYMENTS }}
           payload: |
             {
-              "text": "❌ Échec du déploiement UAT",
+              "text": "UAT deployment failed",
               "attachments": [
                 {
                   "color": "#dc3545",
@@ -217,8 +225,8 @@ jobs:
                       "type": "header",
                       "text": {
                         "type": "plain_text",
-                        "text": "❌ Déploiement UAT échoué",
-                        "emoji": true
+                        "text": "UAT Deployment Failed",
+                        "emoji": false
                       }
                     },
                     {
@@ -226,11 +234,11 @@ jobs:
                       "fields": [
                         {
                           "type": "mrkdwn",
-                          "text": "*Environnement:*\nUAT"
+                          "text": "*Environment:*\nUAT"
                         },
                         {
                           "type": "mrkdwn",
-                          "text": "*Auteur:*\n`${{ github.actor }}`"
+                          "text": "*Author:*\n`${{ github.actor }}`"
                         },
                         {
                           "type": "mrkdwn",
@@ -238,7 +246,7 @@ jobs:
                         },
                         {
                           "type": "mrkdwn",
-                          "text": "*Branche:*\n`uat`"
+                          "text": "*Branch:*\n`uat`"
                         }
                       ]
                     },
@@ -246,7 +254,7 @@ jobs:
                       "type": "section",
                       "text": {
                         "type": "mrkdwn",
-                        "text": "<!subteam^${{ secrets.SLACK_TECH_LEAD_GROUP_ID }}> ⚠️ Le déploiement UAT a échoué. Intervention requise."
+                        "text": "The deployment to the UAT environment has failed and requires attention."
                       }
                     },
                     {
@@ -256,7 +264,7 @@ jobs:
                           "type": "button",
                           "text": {
                             "type": "plain_text",
-                            "text": "🔴 Voir les logs"
+                            "text": "View Logs"
                           },
                           "style": "danger",
                           "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
