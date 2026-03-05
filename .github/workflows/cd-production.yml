@@ -70,10 +70,17 @@ jobs:
         if: ${{ inputs.skip_quick_deploy }}
         run: |
           echo "Running full deployment (quick deploy skipped)..."
+          
+          # Use RunLocalTests only if Apex test classes are present
+          TEST_LEVEL="NoTestRun"
+          if [ -n "$(grep -rl "@isTest" force-app --include="*.cls")" ]; then
+            TEST_LEVEL="RunLocalTests"
+          fi
+
           sf project deploy start \
             --source-dir force-app \
             --target-org ProductionOrg \
-            --test-level RunLocalTests \
+            --test-level $TEST_LEVEL \
             --wait 30
 
       - name: Deployment Summary
