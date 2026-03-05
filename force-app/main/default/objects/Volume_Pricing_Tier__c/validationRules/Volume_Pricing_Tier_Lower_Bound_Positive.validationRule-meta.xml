@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
-    <fullName>Volume_Pricing_Tier_Lower_Bound_Positive</fullName>
-    <active>true</active>
-    <description>Prevents zero or negative lower bounds.</description>
-    <errorConditionFormula>Lower_Bound__c &lt;= 0</errorConditionFormula>
-    <errorDisplayField>Lower_Bound__c</errorDisplayField>
-    <errorMessage>Lower Bound must be greater than zero. Tiers must start at a positive quantity.</errorMessage>
-</ValidationRule>
