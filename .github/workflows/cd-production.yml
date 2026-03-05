@@ -33,7 +33,6 @@ jobs:
             ~/.local/share/sf
             ~/.cache/sf
             /usr/local/lib/node_modules/@salesforce
-            /usr/local/bin/sf
           key: sf-cli-${{ runner.os }}-v2
           restore-keys: |
             sf-cli-${{ runner.os }}-
@@ -70,17 +69,10 @@ jobs:
         if: ${{ inputs.skip_quick_deploy }}
         run: |
           echo "Running full deployment (quick deploy skipped)..."
-          
-          # Use RunLocalTests only if Apex test classes are present
-          TEST_LEVEL="NoTestRun"
-          if [ -n "$(grep -rl "@isTest" force-app --include="*.cls")" ]; then
-            TEST_LEVEL="RunLocalTests"
-          fi
-
           sf project deploy start \
             --source-dir force-app \
             --target-org ProductionOrg \
-            --test-level $TEST_LEVEL \
+            --test-level RunLocalTests \
             --wait 30
 
       - name: Deployment Summary

@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
-    <fullName>Vol_Pricing_Sched_Product_Required</fullName>
-    <active>true</active>
-    <description>Enforces Product as required because Product2 lookup cannot be required with restricted delete behavior.</description>
-    <errorConditionFormula>ISBLANK(Product__c)</errorConditionFormula>
-    <errorDisplayField>Product__c</errorDisplayField>
-    <errorMessage>Every Volume Pricing Schedule must be associated with a Product.</errorMessage>
-</ValidationRule>
