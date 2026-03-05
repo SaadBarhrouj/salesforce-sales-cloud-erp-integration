@@ -49,5 +49,6 @@ $RECYCLE.BIN/
 
 # GitHub & VSCode configuration files
 .github/skills/
+.github/agents/
 .github/copilot-instructions.md
 .vscode/

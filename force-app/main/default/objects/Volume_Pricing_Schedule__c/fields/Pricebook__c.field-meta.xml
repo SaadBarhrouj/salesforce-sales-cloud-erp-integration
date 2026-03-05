@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Pricebook__c</fullName>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <inlineHelpText>If blank, this schedule applies globally to the product across all pricebooks. If set, it applies only when the product is sold from this specific pricebook.</inlineHelpText>
+    <label>Pricebook</label>
+    <referenceTo>Pricebook2</referenceTo>
+    <relationshipLabel>Volume Pricing Schedules</relationshipLabel>
+    <relationshipName>Volume_Pricing_Schedules</relationshipName>
+    <required>false</required>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Lookup</type>
+</CustomField>
