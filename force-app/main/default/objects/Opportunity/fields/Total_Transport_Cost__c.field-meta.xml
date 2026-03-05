@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Total_Transport_Cost__c</fullName>
+    <description>Aggregated cost of all non-cancelled trips associated with this opportunity. Automatically calculated via roll-up summary from the Trip master-detail relationship.</description>
+    <inlineHelpText>Total cost of all active trips for this opportunity. Cancelled trips are excluded. This value updates automatically.</inlineHelpText>
+    <label>Total Transport Cost</label>
+    <summarizedField>Trip__c.Final_Price__c</summarizedField>
+    <summaryFilterItems>
+        <field>Trip__c.Status__c</field>
+        <operation>notEqual</operation>
+        <value>Cancelled</value>
+    </summaryFilterItems>
+    <summaryForeignKey>Trip__c.Opportunity__c</summaryForeignKey>
+    <summaryOperation>sum</summaryOperation>
+    <trackTrending>false</trackTrending>
+    <type>Summary</type>
+</CustomField>

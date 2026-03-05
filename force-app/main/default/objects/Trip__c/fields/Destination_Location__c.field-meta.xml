@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Destination_Location__c</fullName>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <description>Target location for this trip. For delivery trips, this is the client site. For pickup trips, this is the warehouse or agency. Site access conditions at the client site may trigger additional surcharges regardless of direction.</description>
+    <inlineHelpText>The end point of this trip. Delivery = arrives at client site. Pickup = returns to warehouse.</inlineHelpText>
+    <label>Destination Location</label>
+    <referenceTo>Location</referenceTo>
+    <relationshipLabel>Trips Destination</relationshipLabel>
+    <relationshipName>Trips_Destination</relationshipName>
+    <required>false</required>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Lookup</type>
+</CustomField>

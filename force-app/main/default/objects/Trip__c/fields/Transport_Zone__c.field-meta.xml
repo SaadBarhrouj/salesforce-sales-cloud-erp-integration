@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Transport_Zone__c</fullName>
+    <description>Zone code determined by matching the trip distance against configured distance ranges for the applicable country. Stored for audit and traceability purposes.</description>
+    <externalId>false</externalId>
+    <inlineHelpText>The pricing zone assigned to this trip based on its distance (e.g., A, B, C). Automatically determined by the calculation engine.</inlineHelpText>
+    <label>Transport Zone</label>
+    <length>5</length>
+    <required>false</required>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Text</type>
+    <unique>false</unique>
+</CustomField>

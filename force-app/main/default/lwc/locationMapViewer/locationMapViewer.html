@@ -1,0 +1,111 @@
+<template>
+    <!-- STATE 1 : LOADING  -->
+     
+    <template lwc:if={isLoading}>
+        <lightning-card title="Map" icon-name="utility:location">
+            <div class="state-container">
+                <lightning-spinner
+                    alternative-text="Loading map…"
+                    size="medium">
+                </lightning-spinner>
+            </div>
+        </lightning-card>
+    </template>
+
+    <!-- STATE 2 : ERROR     -->
+
+    <template lwc:elseif={hasError}>
+        <lightning-card title="Map" icon-name="utility:location">
+            <div class="state-container">
+                <lightning-icon
+                    icon-name="utility:error"
+                    size="large"
+                    variant="error">
+                </lightning-icon>
+                <p class="state-heading slds-text-color_error">
+                    Loading Error
+                </p>
+                <p class="state-subtext">
+                    Unable to retrieve location data.
+                </p>
+            </div>
+        </lightning-card>
+    </template>
+
+    <!-- STATE 3 : NO COORDINATES     -->
+    <template lwc:elseif={showEmptyState}>
+        <lightning-card title="Map" icon-name="utility:location">
+            <div class="state-container">
+                <div class="empty-icon-ring">
+                    <lightning-icon
+                        icon-name="utility:location"
+                        size="large">
+                    </lightning-icon>
+                </div>
+                <p class="state-heading">Coordinates Not Available</p>
+                <p class="state-subtext">
+                    Enter Latitude and Longitude to display the interactive map.
+                </p>
+            </div>
+        </lightning-card>
+    </template>
+
+    <!-- STATE 4 : MAP     -->
+
+    <template lwc:else>
+        <lightning-card title="Map" icon-name={headerIcon}>
+
+            <!-- ── Copy Button ────────────────────────────── -->
+            <lightning-button-icon
+                slot="actions"
+                icon-name="utility:copy_to_clipboard"
+                alternative-text="Copy GPS coordinates"
+                title="Copy GPS coordinates"
+                onclick={handleCopyCoordinates}>
+            </lightning-button-icon>
+
+            <!-- ── Interactive Map ────────────────────────── -->
+            <div class="map-frame">
+                <lightning-map
+                    map-markers={mapMarkers}
+                    zoom-level={computedZoomLevel}
+                    list-view="hidden">
+                </lightning-map>
+            </div>
+
+            <!-- ── Coordinates Panel ──────────────────────── -->
+            <template lwc:if={showCoordinates}>
+                <div class="coord-panel">
+                    <div class="coord-grid">
+                        <div class="kpi">
+                            <span class="kpi-label">Latitude</span>
+                            <span class="kpi-value">{formattedLatitude}</span>
+                        </div>
+                        <div class="kpi">
+                            <span class="kpi-label">Longitude</span>
+                            <span class="kpi-value">{formattedLongitude}</span>
+                        </div>
+                    </div>
+                </div>
+            </template>
+
+            <!-- ── Google Maps Link ───────────────────────── -->
+            <template lwc:if={showGoogleMapsLink}>
+                <div class="footer">
+                    <a href={googleMapsUrl}
+                       target="_blank"
+                       rel="noopener noreferrer"
+                       class="footer-link">
+                        <lightning-icon
+                            icon-name="utility:new_window"
+                            size="xx-small"
+                            class="slds-m-right_xx-small">
+                        </lightning-icon>
+                        View in Google Maps
+                    </a>
+                </div>
+            </template>
+
+        </lightning-card>
+    </template>
+</template>

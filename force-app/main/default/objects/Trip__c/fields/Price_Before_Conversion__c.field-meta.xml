@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Price_Before_Conversion__c</fullName>
+    <description>Final calculated price in the original rate currency before currency conversion. Stored for audit purposes when a currency conversion was applied in the final calculation step.</description>
+    <inlineHelpText>The calculated price in the original rate currency, before any currency conversion. Useful for auditing multi-currency calculations.</inlineHelpText>
+    <label>Price Before Conversion</label>
+    <precision>18</precision>
+    <required>false</required>
+    <scale>2</scale>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Currency</type>
+</CustomField>

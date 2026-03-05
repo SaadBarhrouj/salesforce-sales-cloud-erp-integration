@@ -1,0 +1,856 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<GlobalValueSet xmlns="http://soap.sforce.com/2006/04/metadata">
+    <customValue>
+        <fullName>AFN</fullName>
+        <default>false</default>
+        <label>AFN - Afghani</label>
+    </customValue>
+    <customValue>
+        <fullName>EUR</fullName>
+        <default>false</default>
+        <label>EUR - Euro</label>
+    </customValue>
+    <customValue>
+        <fullName>ALL</fullName>
+        <default>false</default>
+        <label>ALL - Lek</label>
+    </customValue>
+    <customValue>
+        <fullName>DZD</fullName>
+        <default>false</default>
+        <label>DZD - Algerian Dinar</label>
+    </customValue>
+    <customValue>
+        <fullName>USD</fullName>
+        <default>false</default>
+        <label>USD - US Dollar</label>
+    </customValue>
+    <customValue>
+        <fullName>AOA</fullName>
+        <default>false</default>
+        <label>AOA - Kwanza</label>
+    </customValue>
+    <customValue>
+        <fullName>XCD</fullName>
+        <default>false</default>
+        <label>XCD - East Caribbean Dollar</label>
+    </customValue>
+    <customValue>
+        <fullName>ARS</fullName>
+        <default>false</default>
+        <label>ARS - Argentine Peso</label>
+    </customValue>
+    <customValue>
+        <fullName>AMD</fullName>
+        <default>false</default>
+        <label>AMD - Armenian Dram</label>
+    </customValue>
+    <customValue>
+        <fullName>AWG</fullName>
+        <default>false</default>
+        <label>AWG - Aruban Florin</label>
+    </customValue>
+    <customValue>
+        <fullName>AUD</fullName>
+        <default>false</default>
+        <label>AUD - Australian Dollar</label>
+    </customValue>
+    <customValue>
+        <fullName>AZN</fullName>
+        <default>false</default>
+        <label>AZN - Azerbaijan Manat</label>
+    </customValue>
+    <customValue>
+        <fullName>BSD</fullName>
+        <default>false</default>
+        <label>BSD - Bahamian Dollar</label>
+    </customValue>
+    <customValue>
+        <fullName>BHD</fullName>
+        <default>false</default>
+        <label>BHD - Bahraini Dinar</label>
+    </customValue>
+    <customValue>
+        <fullName>BDT</fullName>
+        <default>false</default>
+        <label>BDT - Taka</label>
+    </customValue>
+    <customValue>
+        <fullName>BBD</fullName>
+        <default>false</default>
+        <label>BBD - Barbados Dollar</label>
+    </customValue>
+    <customValue>
+        <fullName>BYN</fullName>
+        <default>false</default>
+        <label>BYN - Belarusian Ruble</label>
+    </customValue>
+    <customValue>
+        <fullName>BZD</fullName>
+        <default>false</default>
+        <label>BZD - Belize Dollar</label>
+    </customValue>
+    <customValue>
+        <fullName>XOF</fullName>
+        <default>false</default>
+        <label>XOF - CFA Franc BCEAO</label>
+    </customValue>
+    <customValue>
+        <fullName>BMD</fullName>
+        <default>false</default>
+        <label>BMD - Bermudian Dollar</label>
+    </customValue>
+    <customValue>
+        <fullName>INR</fullName>
+        <default>false</default>
+        <label>INR - Indian Rupee</label>
+    </customValue>
+    <customValue>
+        <fullName>BTN</fullName>
+        <default>false</default>
+        <label>BTN - Ngultrum</label>
+    </customValue>
+    <customValue>
+        <fullName>BOB</fullName>
+        <default>false</default>
+        <label>BOB - Boliviano</label>
+    </customValue>
+    <customValue>
+        <fullName>BOV</fullName>
+        <default>false</default>
+        <label>BOV - Mvdol</label>
+    </customValue>
+    <customValue>
+        <fullName>BAM</fullName>
+        <default>false</default>
+        <label>BAM - Convertible Mark</label>
+    </customValue>
+    <customValue>
+        <fullName>BWP</fullName>
+        <default>false</default>
+        <label>BWP - Pula</label>
+    </customValue>
+    <customValue>
+        <fullName>NOK</fullName>
+        <default>false</default>
+        <label>NOK - Norwegian Krone</label>
+    </customValue>
+    <customValue>
+        <fullName>BRL</fullName>
+        <default>false</default>
+        <label>BRL - Brazilian Real</label>
+    </customValue>
+    <customValue>
+        <fullName>BND</fullName>
+        <default>false</default>
+        <label>BND - Brunei Dollar</label>
+    </customValue>
+    <customValue>
+        <fullName>XAF</fullName>
+        <default>false</default>
+        <label>XAF - CFA Franc BEAC</label>
+    </customValue>
+    <customValue>
+        <fullName>BIF</fullName>
+        <default>false</default>
+        <label>BIF - Burundi Franc</label>
+    </customValue>
+    <customValue>
+        <fullName>CVE</fullName>
+        <default>false</default>
+        <label>CVE - Cabo Verde Escudo</label>
+    </customValue>
+    <customValue>
+        <fullName>KHR</fullName>
+        <default>false</default>
+        <label>KHR - Riel</label>
+    </customValue>
+    <customValue>
+        <fullName>CAD</fullName>
+        <default>false</default>
+        <label>CAD - Canadian Dollar</label>
+    </customValue>
+    <customValue>
+        <fullName>KYD</fullName>
+        <default>false</default>
+        <label>KYD - Cayman Islands Dollar</label>
+    </customValue>
+    <customValue>
+        <fullName>CLP</fullName>
+        <default>false</default>
+        <label>CLP - Chilean Peso</label>
+    </customValue>
+    <customValue>
+        <fullName>CLF</fullName>
+        <default>false</default>
+        <label>CLF - Unidad de Fomento</label>
+    </customValue>
+    <customValue>
+        <fullName>CNY</fullName>
+        <default>false</default>
+        <label>CNY - Yuan Renminbi</label>
+    </customValue>
+    <customValue>
+        <fullName>COP</fullName>
+        <default>false</default>
+        <label>COP - Colombian Peso</label>
+    </customValue>
+    <customValue>
+        <fullName>COU</fullName>
+        <default>false</default>
+        <label>COU - Unidad de Valor Real</label>
+    </customValue>
+    <customValue>
+        <fullName>KMF</fullName>
+        <default>false</default>
+        <label>KMF - Comorian Franc</label>
+    </customValue>
+    <customValue>
+        <fullName>CDF</fullName>
+        <default>false</default>
+        <label>CDF - Congolese Franc</label>
+    </customValue>
+    <customValue>
+        <fullName>NZD</fullName>
+        <default>false</default>
+        <label>NZD - New Zealand Dollar</label>
+    </customValue>
+    <customValue>
+        <fullName>CRC</fullName>
+        <default>false</default>
+        <label>CRC - Costa Rican Colon</label>
+    </customValue>
+    <customValue>
+        <fullName>CUP</fullName>
+        <default>false</default>
+        <label>CUP - Cuban Peso</label>
+    </customValue>
+    <customValue>
+        <fullName>XCG</fullName>
+        <default>false</default>
+        <label>XCG - Caribbean Guilder</label>
+    </customValue>
+    <customValue>
+        <fullName>CZK</fullName>
+        <default>false</default>
+        <label>CZK - Czech Koruna</label>
+    </customValue>
+    <customValue>
+        <fullName>DKK</fullName>
+        <default>false</default>
+        <label>DKK - Danish Krone</label>
+    </customValue>
+    <customValue>
+        <fullName>DJF</fullName>
+        <default>false</default>
+        <label>DJF - Djibouti Franc</label>
+    </customValue>
+    <customValue>
+        <fullName>DOP</fullName>
+        <default>false</default>
+        <label>DOP - Dominican Peso</label>
+    </customValue>
+    <customValue>
+        <fullName>EGP</fullName>
+        <default>false</default>
+        <label>EGP - Egyptian Pound</label>
+    </customValue>
+    <customValue>
+        <fullName>SVC</fullName>
+        <default>false</default>
+        <label>SVC - El Salvador Colon</label>
+    </customValue>
+    <customValue>
+        <fullName>ERN</fullName>
+        <default>false</default>
+        <label>ERN - Nakfa</label>
+    </customValue>
+    <customValue>
+        <fullName>ETB</fullName>
+        <default>false</default>
+        <label>ETB - Ethiopian Birr</label>
+    </customValue>
+    <customValue>
+        <fullName>GBP</fullName>
+        <default>false</default>
+        <label>GBP - British Pound Sterling</label>
+    </customValue>
+    <customValue>
+        <fullName>FKP</fullName>
+        <default>false</default>
+        <label>FKP - Falkland Islands Pound</label>
+    </customValue>
+    <customValue>
+        <fullName>FJD</fullName>
+        <default>false</default>
+        <label>FJD - Fiji Dollar</label>
+    </customValue>
+    <customValue>
+        <fullName>XPF</fullName>
+        <default>false</default>
+        <label>XPF - CFP Franc</label>
+    </customValue>
+    <customValue>
+        <fullName>GMD</fullName>
+        <default>false</default>
+        <label>GMD - Dalasi</label>
+    </customValue>
+    <customValue>
+        <fullName>GEL</fullName>
+        <default>false</default>
+        <label>GEL - Lari</label>
+    </customValue>
+    <customValue>
+        <fullName>GHS</fullName>
+        <default>false</default>
+        <label>GHS - Ghana Cedi</label>
+    </customValue>
+    <customValue>
+        <fullName>GIP</fullName>
+        <default>false</default>
+        <label>GIP - Gibraltar Pound</label>
+    </customValue>
+    <customValue>
+        <fullName>GTQ</fullName>
+        <default>false</default>
+        <label>GTQ - Quetzal</label>
+    </customValue>
+    <customValue>
+        <fullName>GNF</fullName>
+        <default>false</default>
+        <label>GNF - Guinean Franc</label>
+    </customValue>
+    <customValue>
+        <fullName>GYD</fullName>
+        <default>false</default>
+        <label>GYD - Guyana Dollar</label>
+    </customValue>
+    <customValue>
+        <fullName>HTG</fullName>
+        <default>false</default>
+        <label>HTG - Gourde</label>
+    </customValue>
+    <customValue>
+        <fullName>HKD</fullName>
+        <default>false</default>
+        <label>HKD - Hong Kong Dollar</label>
+    </customValue>
+    <customValue>
+        <fullName>HUF</fullName>
+        <default>false</default>
+        <label>HUF - Forint</label>
+    </customValue>
+    <customValue>
+        <fullName>ISK</fullName>
+        <default>false</default>
+        <label>ISK - Iceland Krona</label>
+    </customValue>
+    <customValue>
+        <fullName>IDR</fullName>
+        <default>false</default>
+        <label>IDR - Rupiah</label>
+    </customValue>
+    <customValue>
+        <fullName>XDR</fullName>
+        <default>false</default>
+        <label>XDR - SDR (Special Drawing Right)</label>
+    </customValue>
+    <customValue>
+        <fullName>IRR</fullName>
+        <default>false</default>
+        <label>IRR - Iranian Rial</label>
+    </customValue>
+    <customValue>
+        <fullName>IQD</fullName>
+        <default>false</default>
+        <label>IQD - Iraqi Dinar</label>
+    </customValue>
+    <customValue>
+        <fullName>ILS</fullName>
+        <default>false</default>
+        <label>ILS - New Israeli Sheqel</label>
+    </customValue>
+    <customValue>
+        <fullName>JMD</fullName>
+        <default>false</default>
+        <label>JMD - Jamaican Dollar</label>
+    </customValue>
+    <customValue>
+        <fullName>JPY</fullName>
+        <default>false</default>
+        <label>JPY - Yen</label>
+    </customValue>
+    <customValue>
+        <fullName>JOD</fullName>
+        <default>false</default>
+        <label>JOD - Jordanian Dinar</label>
+    </customValue>
+    <customValue>
+        <fullName>KZT</fullName>
+        <default>false</default>
+        <label>KZT - Tenge</label>
+    </customValue>
+    <customValue>
+        <fullName>KES</fullName>
+        <default>false</default>
+        <label>KES - Kenyan Shilling</label>
+    </customValue>
+    <customValue>
+        <fullName>KPW</fullName>
+        <default>false</default>
+        <label>KPW - North Korean Won</label>
+    </customValue>
+    <customValue>
+        <fullName>KRW</fullName>
+        <default>false</default>
+        <label>KRW - Won</label>
+    </customValue>
+    <customValue>
+        <fullName>KWD</fullName>
+        <default>false</default>
+        <label>KWD - Kuwaiti Dinar</label>
+    </customValue>
+    <customValue>
+        <fullName>KGS</fullName>
+        <default>false</default>
+        <label>KGS - Som</label>
+    </customValue>
+    <customValue>
+        <fullName>LAK</fullName>
+        <default>false</default>
+        <label>LAK - Lao Kip</label>
+    </customValue>
+    <customValue>
+        <fullName>LBP</fullName>
+        <default>false</default>
+        <label>LBP - Lebanese Pound</label>
+    </customValue>
+    <customValue>
+        <fullName>LSL</fullName>
+        <default>false</default>
+        <label>LSL - Loti</label>
+    </customValue>
+    <customValue>
+        <fullName>ZAR</fullName>
+        <default>false</default>
+        <label>ZAR - Rand</label>
+    </customValue>
+    <customValue>
+        <fullName>LRD</fullName>
+        <default>false</default>
+        <label>LRD - Liberian Dollar</label>
+    </customValue>
+    <customValue>
+        <fullName>LYD</fullName>
+        <default>false</default>
+        <label>LYD - Libyan Dinar</label>
+    </customValue>
+    <customValue>
+        <fullName>MOP</fullName>
+        <default>false</default>
+        <label>MOP - Pataca</label>
+    </customValue>
+    <customValue>
+        <fullName>MKD</fullName>
+        <default>false</default>
+        <label>MKD - Denar</label>
+    </customValue>
+    <customValue>
+        <fullName>MGA</fullName>
+        <default>false</default>
+        <label>MGA - Malagasy Ariary</label>
+    </customValue>
+    <customValue>
+        <fullName>MWK</fullName>
+        <default>false</default>
+        <label>MWK - Malawi Kwacha</label>
+    </customValue>
+    <customValue>
+        <fullName>MYR</fullName>
+        <default>false</default>
+        <label>MYR - Malaysian Ringgit</label>
+    </customValue>
+    <customValue>
+        <fullName>MVR</fullName>
+        <default>false</default>
+        <label>MVR - Rufiyaa</label>
+    </customValue>
+    <customValue>
+        <fullName>MXN</fullName>
+        <default>false</default>
+        <label>MXN - Mexican Peso</label>
+    </customValue>
+    <customValue>
+        <fullName>MXV</fullName>
+        <default>false</default>
+        <label>MXV - Mexican Unidad de Inversion (UDI)</label>
+    </customValue>
+    <customValue>
+        <fullName>MDL</fullName>
+        <default>false</default>
+        <label>MDL - Moldovan Leu</label>
+    </customValue>
+    <customValue>
+        <fullName>MNT</fullName>
+        <default>false</default>
+        <label>MNT - Tugrik</label>
+    </customValue>
+    <customValue>
+        <fullName>MUR</fullName>
+        <default>false</default>
+        <label>MUR - Mauritius Rupee</label>
+    </customValue>
+    <customValue>
+        <fullName>MAD</fullName>
+        <default>false</default>
+        <label>MAD - Moroccan Dirham</label>
+    </customValue>
+    <customValue>
+        <fullName>MZN</fullName>
+        <default>false</default>
+        <label>MZN - Mozambique Metical</label>
+    </customValue>
+    <customValue>
+        <fullName>MMK</fullName>
+        <default>false</default>
+        <label>MMK - Kyat</label>
+    </customValue>
+    <customValue>
+        <fullName>NAD</fullName>
+        <default>false</default>
+        <label>NAD - Namibia Dollar</label>
+    </customValue>
+    <customValue>
+        <fullName>NPR</fullName>
+        <default>false</default>
+        <label>NPR - Nepalese Rupee</label>
+    </customValue>
+    <customValue>
+        <fullName>ANG</fullName>
+        <default>false</default>
+        <label>ANG - Caribbean Guilder</label>
+    </customValue>
+    <customValue>
+        <fullName>NGN</fullName>
+        <default>false</default>
+        <label>NGN - Naira</label>
+    </customValue>
+    <customValue>
+        <fullName>OMR</fullName>
+        <default>false</default>
+        <label>OMR - Rial Omani</label>
+    </customValue>
+    <customValue>
+        <fullName>PKR</fullName>
+        <default>false</default>
+        <label>PKR - Pakistan Rupee</label>
+    </customValue>
+    <customValue>
+        <fullName>PAB</fullName>
+        <default>false</default>
+        <label>PAB - Balboa</label>
+    </customValue>
+    <customValue>
+        <fullName>PGK</fullName>
+        <default>false</default>
+        <label>PGK - Kina</label>
+    </customValue>
+    <customValue>
+        <fullName>PYG</fullName>
+        <default>false</default>
+        <label>PYG - Guarani</label>
+    </customValue>
+    <customValue>
+        <fullName>PEN</fullName>
+        <default>false</default>
+        <label>PEN - Sol</label>
+    </customValue>
+    <customValue>
+        <fullName>PHP</fullName>
+        <default>false</default>
+        <label>PHP - Philippine Peso</label>
+    </customValue>
+    <customValue>
+        <fullName>PLN</fullName>
+        <default>false</default>
+        <label>PLN - Zloty</label>
+    </customValue>
+    <customValue>
+        <fullName>QAR</fullName>
+        <default>false</default>
+        <label>QAR - Qatari Rial</label>
+    </customValue>
+    <customValue>
+        <fullName>RON</fullName>
+        <default>false</default>
+        <label>RON - Romanian Leu</label>
+    </customValue>
+    <customValue>
+        <fullName>RUB</fullName>
+        <default>false</default>
+        <label>RUB - Russian Ruble</label>
+    </customValue>
+    <customValue>
+        <fullName>RWF</fullName>
+        <default>false</default>
+        <label>RWF - Rwanda Franc</label>
+    </customValue>
+    <customValue>
+        <fullName>SHP</fullName>
+        <default>false</default>
+        <label>SHP - Saint Helena Pound</label>
+    </customValue>
+    <customValue>
+        <fullName>STN</fullName>
+        <default>false</default>
+        <label>STN - Dobra</label>
+    </customValue>
+    <customValue>
+        <fullName>SAR</fullName>
+        <default>false</default>
+        <label>SAR - Saudi Riyal</label>
+    </customValue>
+    <customValue>
+        <fullName>RSD</fullName>
+        <default>false</default>
+        <label>RSD - Serbian Dinar</label>
+    </customValue>
+    <customValue>
+        <fullName>SCR</fullName>
+        <default>false</default>
+        <label>SCR - Seychelles Rupee</label>
+    </customValue>
+    <customValue>
+        <fullName>SLE</fullName>
+        <default>false</default>
+        <label>SLE - Leone</label>
+    </customValue>
+    <customValue>
+        <fullName>SGD</fullName>
+        <default>false</default>
+        <label>SGD - Singapore Dollar</label>
+    </customValue>
+    <customValue>
+        <fullName>SBD</fullName>
+        <default>false</default>
+        <label>SBD - Solomon Islands Dollar</label>
+    </customValue>
+    <customValue>
+        <fullName>SOS</fullName>
+        <default>false</default>
+        <label>SOS - Somali Shilling</label>
+    </customValue>
+    <customValue>
+        <fullName>SSP</fullName>
+        <default>false</default>
+        <label>SSP - South Sudanese Pound</label>
+    </customValue>
+    <customValue>
+        <fullName>LKR</fullName>
+        <default>false</default>
+        <label>LKR - Sri Lanka Rupee</label>
+    </customValue>
+    <customValue>
+        <fullName>SDG</fullName>
+        <default>false</default>
+        <label>SDG - Sudanese Pound</label>
+    </customValue>
+    <customValue>
+        <fullName>SRD</fullName>
+        <default>false</default>
+        <label>SRD - Surinam Dollar</label>
+    </customValue>
+    <customValue>
+        <fullName>SEK</fullName>
+        <default>false</default>
+        <label>SEK - Swedish Krona</label>
+    </customValue>
+    <customValue>
+        <fullName>CHF</fullName>
+        <default>false</default>
+        <label>CHF - Swiss Franc</label>
+    </customValue>
+    <customValue>
+        <fullName>CHE</fullName>
+        <default>false</default>
+        <label>CHE - WIR Euro</label>
+    </customValue>
+    <customValue>
+        <fullName>CHW</fullName>
+        <default>false</default>
+        <label>CHW - WIR Franc</label>
+    </customValue>
+    <customValue>
+        <fullName>SYP</fullName>
+        <default>false</default>
+        <label>SYP - Syrian Pound</label>
+    </customValue>
+    <customValue>
+        <fullName>TWD</fullName>
+        <default>false</default>
+        <label>TWD - New Taiwan Dollar</label>
+    </customValue>
+    <customValue>
+        <fullName>TJS</fullName>
+        <default>false</default>
+        <label>TJS - Somoni</label>
+    </customValue>
+    <customValue>
+        <fullName>TZS</fullName>
+        <default>false</default>
+        <label>TZS - Tanzanian Shilling</label>
+    </customValue>
+    <customValue>
+        <fullName>THB</fullName>
+        <default>false</default>
+        <label>THB - Baht</label>
+    </customValue>
+    <customValue>
+        <fullName>TMT</fullName>
+        <default>false</default>
+        <label>TMT - Turkmenistan New Manat</label>
+    </customValue>
+    <customValue>
+        <fullName>TND</fullName>
+        <default>false</default>
+        <label>TND - Tunisian Dinar</label>
+    </customValue>
+    <customValue>
+        <fullName>TRY</fullName>
+        <default>false</default>
+        <label>TRY - Turkish Lira</label>
+    </customValue>
+    <customValue>
+        <fullName>UGX</fullName>
+        <default>false</default>
+        <label>UGX - Uganda Shilling</label>
+    </customValue>
+    <customValue>
+        <fullName>UAH</fullName>
+        <default>false</default>
+        <label>UAH - Hryvnia</label>
+    </customValue>
+    <customValue>
+        <fullName>AED</fullName>
+        <default>false</default>
+        <label>AED - UAE Dirham</label>
+    </customValue>
+    <customValue>
+        <fullName>UYU</fullName>
+        <default>false</default>
+        <label>UYU - Peso Uruguayo</label>
+    </customValue>
+    <customValue>
+        <fullName>UYI</fullName>
+        <default>false</default>
+        <label>UYI - Uruguay Peso en Unidades Indexadas (UI)</label>
+    </customValue>
+    <customValue>
+        <fullName>UYW</fullName>
+        <default>false</default>
+        <label>UYW - Unidad Previsional</label>
+    </customValue>
+    <customValue>
+        <fullName>UZS</fullName>
+        <default>false</default>
+        <label>UZS - Uzbekistan Sum</label>
+    </customValue>
+    <customValue>
+        <fullName>VUV</fullName>
+        <default>false</default>
+        <label>VUV - Vatu</label>
+    </customValue>
+    <customValue>
+        <fullName>VES</fullName>
+        <default>false</default>
+        <label>VES - Bolívar Soberano</label>
+    </customValue>
+    <customValue>
+        <fullName>VED</fullName>
+        <default>false</default>
+        <label>VED - Bolívar Soberano Digital</label>
+    </customValue>
+    <customValue>
+        <fullName>VND</fullName>
+        <default>false</default>
+        <label>VND - Dong</label>
+    </customValue>
+    <customValue>
+        <fullName>YER</fullName>
+        <default>false</default>
+        <label>YER - Yemeni Rial</label>
+    </customValue>
+    <customValue>
+        <fullName>ZMW</fullName>
+        <default>false</default>
+        <label>ZMW - Zambian Kwacha</label>
+    </customValue>
+    <customValue>
+        <fullName>ZWG</fullName>
+        <default>false</default>
+        <label>ZWG - Zimbabwe Gold</label>
+    </customValue>
+    <customValue>
+        <fullName>XUA</fullName>
+        <default>false</default>
+        <label>XUA - ADB Unit of Account</label>
+    </customValue>
+    <customValue>
+        <fullName>XBA</fullName>
+        <default>false</default>
+        <label>XBA - Bond Markets Unit European Composite Unit (EURCO)</label>
+    </customValue>
+    <customValue>
+        <fullName>XBB</fullName>
+        <default>false</default>
+        <label>XBB - Bond Markets Unit European Monetary Unit (E.M.U.-6)</label>
+    </customValue>
+    <customValue>
+        <fullName>XBC</fullName>
+        <default>false</default>
+        <label>XBC - Bond Markets Unit European Unit of Account 9 (E.U.A.-9)</label>
+    </customValue>
+    <customValue>
+        <fullName>XBD</fullName>
+        <default>false</default>
+        <label>XBD - Bond Markets Unit European Unit of Account 17 (E.U.A.-17)</label>
+    </customValue>
+    <customValue>
+        <fullName>XTS</fullName>
+        <default>false</default>
+        <label>XTS - Codes specifically reserved for testing purposes</label>
+    </customValue>
+    <customValue>
+        <fullName>XXX</fullName>
+        <default>false</default>
+        <label>XXX - The codes assigned for transactions where no currency is involved</label>
+    </customValue>
+    <customValue>
+        <fullName>XAU</fullName>
+        <default>false</default>
+        <label>XAU - Gold</label>
+    </customValue>
+    <customValue>
+        <fullName>XPD</fullName>
+        <default>false</default>
+        <label>XPD - Palladium</label>
+    </customValue>
+    <customValue>
+        <fullName>XPT</fullName>
+        <default>false</default>
+        <label>XPT - Platinum</label>
+    </customValue>
+    <customValue>
+        <fullName>XAG</fullName>
+        <default>false</default>
+        <label>XAG - Silver</label>
+    </customValue>
+    <customValue>
+        <fullName>XSU</fullName>
+        <default>false</default>
+        <label>XSU - Sucre</label>
+    </customValue>
+    <description>ISO 4217 alphabetic currency codes. Applied on all objects and metadata types requiring currency referencing and multi-currency support. Must match the currency codes activated in Salesforce Multi-Currency setup.</description>
+    <masterLabel>Currency Codes</masterLabel>
+    <sorted>true</sorted>
+</GlobalValueSet>

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Delivery_Site_Required_When_Transport</fullName>
+    <active>true</active>
+    <description>Enforces that Delivery_Site__c is populated when Is_Transport_Required__c is enabled, ensuring no transport can be initiated without a defined destination site.</description>
+    <errorConditionFormula>AND(Is_Transport_Required__c, ISBLANK(Delivery_Site__c))</errorConditionFormula>
+    <errorDisplayField>Delivery_Site__c</errorDisplayField>
+    <errorMessage>Delivery Site is required when transport is required. Please select a delivery site or uncheck &quot;Is Transport Required&quot;.</errorMessage>
+</ValidationRule>

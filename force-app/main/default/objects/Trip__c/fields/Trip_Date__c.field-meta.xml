@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Trip_Date__c</fullName>
+    <description>Scheduled date for this trip. Used to filter configuration rules by their effective date ranges. Also serves as one of the three grouping criteria (location + direction + date).</description>
+    <inlineHelpText>The date this trip is scheduled. This date determines which pricing rules and surcharges apply based on their validity periods.</inlineHelpText>
+    <label>Trip Date</label>
+    <required>true</required>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Date</type>
+</CustomField>
