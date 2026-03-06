@@ -73,11 +73,6 @@
     </fieldPermissions>
     <fieldPermissions>
         <editable>false</editable>
-        <field>Bundle_Option__c.Sort_Order__c</field>
-        <readable>false</readable>
-    </fieldPermissions>
-    <fieldPermissions>
-        <editable>false</editable>
         <field>Product_Rule__c.Advanced_Condition__c</field>
         <readable>false</readable>
     </fieldPermissions>
@@ -123,11 +118,6 @@
     </fieldPermissions>
     <fieldPermissions>
         <editable>false</editable>
-        <field>Rule_Action__c.Product_Rule__c</field>
-        <readable>false</readable>
-    </fieldPermissions>
-    <fieldPermissions>
-        <editable>false</editable>
         <field>Rule_Action__c.Sort_Order__c</field>
         <readable>false</readable>
     </fieldPermissions>
@@ -138,27 +128,7 @@
     </fieldPermissions>
     <fieldPermissions>
         <editable>false</editable>
-        <field>Rule_Condition__c.Product_Rule__c</field>
-        <readable>false</readable>
-    </fieldPermissions>
-    <fieldPermissions>
-        <editable>false</editable>
-        <field>Rule_Condition__c.Filter_Value__c</field>
-        <readable>false</readable>
-    </fieldPermissions>
-    <fieldPermissions>
-        <editable>false</editable>
         <field>Rule_Condition__c.Index__c</field>
-        <readable>false</readable>
-    </fieldPermissions>
-    <fieldPermissions>
-        <editable>false</editable>
-        <field>Rule_Condition__c.Operator__c</field>
-        <readable>false</readable>
-    </fieldPermissions>
-    <fieldPermissions>
-        <editable>false</editable>
-        <field>Rule_Condition__c.Product_Rule__c</field>
         <readable>false</readable>
     </fieldPermissions>
     <fieldPermissions>
@@ -193,11 +163,6 @@
     </fieldPermissions>
     <fieldPermissions>
         <editable>false</editable>        <field>Volume_Pricing_Tier__c.Upper_Bound__c</field>
-        <readable>false</readable>
-    </fieldPermissions>
-    <fieldPermissions>
-        <editable>false</editable>
-        <field>Volume_Pricing_Tier__c.Volume_Pricing_Schedule__c</field>
         <readable>false</readable>
     </fieldPermissions>
     <layoutAssignments>
