@@ -104,6 +104,12 @@
     </relatedLists>
     <relatedLists>
         <fields>NAME</fields>
+        <fields>Product_Rule__c</fields>
+        <fields>Is_Active__c</fields>
+        <relatedList>Bundle_Rule_Assignment__c.Bundle_Product__c</relatedList>
+    </relatedLists>
+    <relatedLists>
+        <fields>NAME</fields>
         <fields>Bundle_Product__c</fields>
         <fields>Is_Selected__c</fields>
         <fields>Option_Type__c</fields>
@@ -115,7 +121,7 @@
     <showRunAssignmentRulesCheckbox>false</showRunAssignmentRulesCheckbox>
     <showSubmitAndAttachButton>false</showSubmitAndAttachButton>
     <summaryLayout>
-        <masterLabel>00h9I000002n4MN</masterLabel>
+        <masterLabel>00hC1000001xugo</masterLabel>
         <sizeX>4</sizeX>
         <sizeY>0</sizeY>
         <summaryLayoutStyle>Default</summaryLayoutStyle>
