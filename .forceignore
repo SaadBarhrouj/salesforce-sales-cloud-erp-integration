@@ -10,3 +10,12 @@ package.xml
 
 # LWC Jest
 **/__tests__/**
+
+# Commerce objects not available in Developer scratch orgs
+**/objects/ProductCatalog/**
+**/objects/ProductCategory/**
+**/objects/ProductCategoryProduct/**
+**/layouts/ProductCatalog-*
+**/layouts/ProductCategory-*
+**/flexipages/Catalog_Record_Page.flexipage-meta.xml
+**/flexipages/Category_Record_Page.flexipage-meta.xml

@@ -147,7 +147,7 @@
         <type>Default</type>
     </actionOverrides>
     <allowInChatterGroups>true</allowInChatterGroups>
-    <compactLayoutAssignment>SYSTEM</compactLayoutAssignment>
+    <compactLayoutAssignment>Trip_Compact_Layout</compactLayoutAssignment>
     <deploymentStatus>Deployed</deploymentStatus>
     <description>Represents a single physical trip between two locations. Groups related line items sharing the same departure, direction, and date. Carries the complete pricing calculation.</description>
     <enableActivities>true</enableActivities>
@@ -162,9 +162,10 @@
     <externalSharingModel>ControlledByParent</externalSharingModel>
     <label>Trip</label>
     <nameField>
-        <label>Trip Key</label>
+        <displayFormat>TRIP-{00000}</displayFormat>
+        <label>Trip Number</label>
         <trackHistory>false</trackHistory>
-        <type>Text</type>
+        <type>AutoNumber</type>
     </nameField>
     <pluralLabel>Trips</pluralLabel>
     <searchLayouts></searchLayouts>

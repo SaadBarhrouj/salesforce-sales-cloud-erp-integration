@@ -128,22 +128,11 @@
     </actionOverrides>
     <actionOverrides>
         <actionName>View</actionName>
-<<<<<<< HEAD
         <type>Default</type>
     </actionOverrides>
     <actionOverrides>
         <actionName>View</actionName>
         <formFactor>Large</formFactor>
-=======
-        <comment>Action override created by Lightning App Builder during activation.</comment>
-        <content>Product_Record_Page</content>
-        <formFactor>Large</formFactor>
-        <skipRecordTypeSelect>false</skipRecordTypeSelect>
-        <type>Flexipage</type>
-    </actionOverrides>
-    <actionOverrides>
-        <actionName>View</actionName>
->>>>>>> 7903069da86ab14c24d89c36a615b158b5ed24e9
         <type>Default</type>
     </actionOverrides>
     <actionOverrides>
@@ -159,26 +148,14 @@
         <customTabListAdditionalFields>PRODUCT2.CUSTOMER_PRODUCT_ID</customTabListAdditionalFields>
         <customTabListAdditionalFields>PRODUCT2.DESCRIPTION</customTabListAdditionalFields>
         <lookupDialogsAdditionalFields>PRODUCT2.NAME</lookupDialogsAdditionalFields>
-<<<<<<< HEAD
-        <lookupDialogsAdditionalFields>PRODUCT2.PRODUCT_CLASS</lookupDialogsAdditionalFields>
-=======
->>>>>>> 7903069da86ab14c24d89c36a615b158b5ed24e9
         <lookupDialogsAdditionalFields>PRODUCT2.CUSTOMER_PRODUCT_ID</lookupDialogsAdditionalFields>
         <lookupDialogsAdditionalFields>PRODUCT2.DESCRIPTION</lookupDialogsAdditionalFields>
         <lookupDialogsAdditionalFields>PRODUCT2.FAMILY</lookupDialogsAdditionalFields>
         <lookupPhoneDialogsAdditionalFields>PRODUCT2.NAME</lookupPhoneDialogsAdditionalFields>
-<<<<<<< HEAD
-        <lookupPhoneDialogsAdditionalFields>PRODUCT2.PRODUCT_CLASS</lookupPhoneDialogsAdditionalFields>
-=======
->>>>>>> 7903069da86ab14c24d89c36a615b158b5ed24e9
         <lookupPhoneDialogsAdditionalFields>PRODUCT2.CUSTOMER_PRODUCT_ID</lookupPhoneDialogsAdditionalFields>
         <lookupPhoneDialogsAdditionalFields>PRODUCT2.DESCRIPTION</lookupPhoneDialogsAdditionalFields>
         <lookupPhoneDialogsAdditionalFields>PRODUCT2.FAMILY</lookupPhoneDialogsAdditionalFields>
         <searchResultsAdditionalFields>PRODUCT2.NAME</searchResultsAdditionalFields>
-<<<<<<< HEAD
-        <searchResultsAdditionalFields>PRODUCT2.PRODUCT_CLASS</searchResultsAdditionalFields>
-=======
->>>>>>> 7903069da86ab14c24d89c36a615b158b5ed24e9
         <searchResultsAdditionalFields>PRODUCT2.CUSTOMER_PRODUCT_ID</searchResultsAdditionalFields>
         <searchResultsAdditionalFields>PRODUCT2.DESCRIPTION</searchResultsAdditionalFields>
         <searchResultsAdditionalFields>PRODUCT2.FAMILY</searchResultsAdditionalFields>
