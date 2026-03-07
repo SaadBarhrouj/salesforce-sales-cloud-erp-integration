@@ -22,3 +22,10 @@ package.xml
 
 # Custom Metadata Type objects (definitions)
 **/objects/*__mdt/
+
+# Location custom fields - unresolvable references for UAT deployment
+**/objects/Location/fields/EarliestPickupTimeOffset.field-meta.xml
+**/objects/Location/fields/IsEligibleForPickup.field-meta.xml
+**/objects/Location/fields/LatestPickupTimeOffset.field-meta.xml
+**/objects/Location/fields/PickupProcessingTime.field-meta.xml
+**/objects/Location/fields/PickupProcessingTimeUnit.field-meta.xml
