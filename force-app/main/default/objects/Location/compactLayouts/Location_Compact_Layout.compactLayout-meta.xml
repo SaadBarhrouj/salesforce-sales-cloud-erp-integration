@@ -4,7 +4,6 @@
     <fields>Name</fields>
     <fields>LocationType</fields>
     <fields>Country_Code__c</fields>
-    <fields>AccountId</fields>
     <fields>Phone</fields>
     <label>Location Compact Layout</label>
 </CompactLayout>

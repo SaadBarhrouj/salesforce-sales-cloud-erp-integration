@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Zone_Code__c</fullName>
+    <description>Zone code that must match a Transport_Zone__mdt.Zone_Code__c value. Establishes the link between the distance-based zone and its pricing.</description>
+    <externalId>false</externalId>
+    <fieldManageability>DeveloperControlled</fieldManageability>
+    <inlineHelpText>Zone code (e.g., A, B, C). Must correspond to a Transport Zone record.</inlineHelpText>
+    <label>Zone Code</label>
+    <length>5</length>
+    <required>true</required>
+    <type>Text</type>
+    <unique>false</unique>
+</CustomField>

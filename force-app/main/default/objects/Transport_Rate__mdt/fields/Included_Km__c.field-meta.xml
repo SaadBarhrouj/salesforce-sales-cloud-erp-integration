@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Included_Km__c</fullName>
+    <description>Number of kilometers included in the base price. Beyond this threshold, each additional kilometer is charged at Price_Per_Extra_Km__c. The engine calculates: extra_km = max(0, distance - Included_Km__c).</description>
+    <externalId>false</externalId>
+    <fieldManageability>DeveloperControlled</fieldManageability>
+    <inlineHelpText>Number of km included in the base price. Additional km beyond this are charged per km.</inlineHelpText>
+    <label>Included Km</label>
+    <precision>4</precision>
+    <required>true</required>
+    <scale>0</scale>
+    <type>Number</type>
+    <unique>false</unique>
+</CustomField>
