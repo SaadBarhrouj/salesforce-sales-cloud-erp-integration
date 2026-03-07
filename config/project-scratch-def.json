@@ -6,9 +6,6 @@
     "lightningExperienceSettings": {
       "enableS1DesktopEnabled": true
     },
-    "commerceSettings": {
-        "isCommerceEnabled": true
-    },
     "mobileSettings": {
       "enableS1EncryptedStoragePref2": false
     }
