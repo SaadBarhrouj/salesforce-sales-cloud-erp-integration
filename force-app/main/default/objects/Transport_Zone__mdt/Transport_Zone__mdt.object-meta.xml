@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
-    <description>Defines tariff zones based on route distance and country. Each record represents a distance range (min ≤ distance &lt; max) mapped to a zone code. Used by the calculation engine to determine which pricing zone applies to a Trip.</description>
-    <label>Transport Zone</label>
-    <pluralLabel>Transport Zones</pluralLabel>
-    <visibility>Public</visibility>
-</CustomObject>

@@ -19,3 +19,6 @@ package.xml
 **/layouts/ProductCategory-*
 **/flexipages/Catalog_Record_Page.flexipage-meta.xml
 **/flexipages/Category_Record_Page.flexipage-meta.xml
+
+# Custom Metadata Type objects (definitions)
+**/objects/*__mdt/

@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
-    <description>Defines base transport pricing for each combination of Zone + Truck + Country + Effective Period. Contains base price, included kilometers, extra-km pricing, minimum price floor, and return discount percentage. Used by the engine at Steps 5–7. Supports currency specification and temporal versioning via effective dates.</description>
-    <label>Transport Rate</label>
-    <pluralLabel>Transport Rates</pluralLabel>
-    <visibility>Public</visibility>
-</CustomObject>

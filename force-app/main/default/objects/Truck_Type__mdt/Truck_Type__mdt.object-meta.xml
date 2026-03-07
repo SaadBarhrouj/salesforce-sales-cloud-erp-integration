@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
-    <description>Defines available truck categories per country, each with a maximum weight capacity. Used by the calculation engine to determine the smallest truck capable of carrying the total weight of a Trip. Records should be ordered by ascending weight capacity per country.</description>
-    <label>Truck Type</label>
-    <pluralLabel>Truck Types</pluralLabel>
-    <visibility>Public</visibility>
-</CustomObject>
