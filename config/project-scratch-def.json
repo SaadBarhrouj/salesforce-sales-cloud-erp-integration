@@ -1,10 +1,13 @@
 {
   "orgName": "kihlyouns company",
-  "edition": "Developer",
+  "edition": "developer",
   "features": ["EnableSetPasswordInApi", "Communities", "B2BCommerce"],
   "settings": {
     "lightningExperienceSettings": {
       "enableS1DesktopEnabled": true
+    },
+    "commerceSettings": {
+        "isCommerceEnabled": true
     },
     "mobileSettings": {
       "enableS1EncryptedStoragePref2": false
