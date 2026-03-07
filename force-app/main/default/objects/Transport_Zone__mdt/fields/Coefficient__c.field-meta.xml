@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Coefficient__c</fullName>
+    <defaultValue>1</defaultValue>
+    <description>Zone multiplier coefficient. Reserved for future use (e.g., congestion adjustment, seasonal factor). Default value is 1.00, meaning no adjustment. When implemented, the base price will be multiplied by this coefficient.</description>
+    <externalId>false</externalId>
+    <fieldManageability>DeveloperControlled</fieldManageability>
+    <inlineHelpText>Zone multiplier (default 1.00). Reserved for future use. Leave at 1.00 unless instructed otherwise.</inlineHelpText>
+    <label>Coefficient</label>
+    <precision>5</precision>
+    <required>false</required>
+    <scale>2</scale>
+    <type>Number</type>
+    <unique>false</unique>
+</CustomField>
