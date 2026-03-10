@@ -7,7 +7,14 @@
                     <name>actionNames</name>
                     <valueList>
                         <valueListItems>
-                            <value>Location.Create_Site</value>
+                            <value>Location.Associate_Account</value>
+                            <visibilityRule>
+                                <criteria>
+                                    <leftValue>{!Record.RecordType.DeveloperName}</leftValue>
+                                    <operator>CONTAINS</operator>
+                                    <rightValue>Site</rightValue>
+                                </criteria>
+                            </visibilityRule>
                         </valueListItems>
                         <valueListItems>
                             <value>Edit</value>
