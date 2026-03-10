@@ -34,3 +34,9 @@ force-app/main/default/objects/Location/fields/IsEligibleForPickup.field-meta.xm
 force-app/main/default/objects/Location/fields/LatestPickupTimeOffset.field-meta.xml
 force-app/main/default/objects/Location/fields/PickupProcessingTime.field-meta.xml
 force-app/main/default/objects/Location/fields/PickupProcessingTimeUnit.field-meta.xml
+
+# Ignore standard Account fields requiring specific features 
+force-app/main/default/objects/Account/fields/ChannelProgramLevelName.field-meta.xml
+force-app/main/default/objects/Account/fields/ChannelProgramName.field-meta.xml
+force-app/main/default/objects/Account/fields/IsCustomerPortal.field-meta.xml
+force-app/main/default/objects/Account/fields/IsPartner.field-meta.xml
