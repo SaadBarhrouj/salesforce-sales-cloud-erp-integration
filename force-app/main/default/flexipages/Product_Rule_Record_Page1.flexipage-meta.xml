@@ -33,6 +33,9 @@
                             <value>Clone</value>
                         </valueListItems>
                         <valueListItems>
+                            <value>Product_Rule__c.Clone_With_Related_Records</value>
+                        </valueListItems>
+                        <valueListItems>
                             <value>Delete</value>
                         </valueListItems>
                     </valueList>

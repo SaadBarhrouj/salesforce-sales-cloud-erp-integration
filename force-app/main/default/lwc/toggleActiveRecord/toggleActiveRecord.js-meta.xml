@@ -4,8 +4,13 @@
     <isExposed>true</isExposed>
     <targets>
         <target>lightning__RecordAction</target>
+        <target>lightning__RecordPage</target>
     </targets>
     <targetConfigs>
+        <targetConfig targets="lightning__RecordPage">
+            <property name="fieldName" type="String" label="Field API Name" default="Is_Active__c" description="The API name of the boolean field to toggle." />
+            <property name="successMessage" type="String" label="Success Message" default="Record status updated successfully." />
+        </targetConfig>
         <targetConfig targets="lightning__RecordAction">
             <actionType>Action</actionType>
         </targetConfig>
