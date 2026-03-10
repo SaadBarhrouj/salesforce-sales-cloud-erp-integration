@@ -283,7 +283,6 @@ export default class CreateSiteAssociation extends LightningElement {
         this.activeDateTo = null;
         this.activeTo = null;
 
-        // Keep the page record, clear the other field
         this.showNewLocationForm = false;
         this.showNewAccountForm = false;
         if (this.isOnAccountPage) {
