@@ -1,0 +1,182 @@
+<template>
+    <!-- Card container -->
+    <lightning-card title={cardTitle} icon-name="standard:location">
+            <div class="slds-p-around_medium">
+
+                <!-- Account field -->
+                <div class="slds-m-bottom_medium">
+                    <template if:true={isOnAccountPage}>
+                        <!-- On Account page: show read-only pill -->
+                        <label class="slds-form-element__label">
+                            <abbr class="slds-required" title="required">*</abbr>
+                            Account
+                        </label>
+                        <div class="slds-pill slds-m-top_xx-small slds-p-around_xx-small" style="padding-right: 0.5rem;">
+                            <lightning-icon icon-name="standard:account" 
+                                           size="x-small"
+                                           class="slds-m-right_x-small">
+                            </lightning-icon>
+                            <span>{accountName}</span>
+                        </div>
+                    </template>
+                    <template if:false={isOnAccountPage}>
+                        <!-- On Location page: show Account lookup or inline creation form -->
+                        <template if:false={showNewAccountForm}>
+                            <lightning-record-picker
+                                label="Account"
+                                placeholder="Search Accounts..."
+                                object-api-name="Account"
+                                key={accountPickerKey}
+                                value={accountId}
+                                onchange={handleAccountChange}
+                                required>
+                            </lightning-record-picker>
+                            <lightning-button
+                                label="New Account"
+                                variant="base"
+                                icon-name="utility:add"
+                                onclick={handleNewAccount}
+                                class="slds-m-top_xx-small">
+                            </lightning-button>
+                        </template>
+                        <template if:true={showNewAccountForm}>
+                            <div class="slds-box slds-m-top_x-small slds-theme_shade" style="border-radius:6px">
+                                <p class="slds-text-heading_small slds-m-bottom_small">New Account</p>
+                                <lightning-record-edit-form
+                                    object-api-name="Account"
+                                    onsuccess={handleAccountCreated}>
+                                    <lightning-messages></lightning-messages>
+                                    <lightning-input-field field-name="Name" required></lightning-input-field>
+                                    <div class="slds-m-top_small slds-text-align_right">
+                                        <lightning-button
+                                            label="Cancel"
+                                            onclick={handleCancelNewAccount}
+                                            class="slds-m-right_x-small">
+                                        </lightning-button>
+                                        <lightning-button
+                                            type="submit"
+                                            label="Create Account"
+                                            variant="brand">
+                                        </lightning-button>
+                                    </div>
+                                </lightning-record-edit-form>
+                            </div>
+                        </template>
+                    </template>
+                </div>
+
+                <!-- Location field -->
+                <div class="slds-m-bottom_medium">
+                    <template if:true={isOnLocationPage}>
+                        <!-- On Location page: show read-only pill -->
+                        <label class="slds-form-element__label">
+                            <abbr class="slds-required" title="required">*</abbr>
+                            Location
+                        </label>
+                        <div class="slds-pill slds-m-top_xx-small slds-p-around_xx-small" style="padding-right: 0.5rem;">
+                            <lightning-icon icon-name="standard:location" 
+                                           size="x-small"
+                                           class="slds-m-right_x-small">
+                            </lightning-icon>
+                            <span>{locationName}</span>
+                        </div>
+                    </template>
+                    <template if:false={isOnLocationPage}>
+                        <!-- On Account page: show Location lookup or inline creation form -->
+                        <template if:false={showNewLocationForm}>
+                            <lightning-record-picker
+                                label="Location"
+                                placeholder="Search Sites..."
+                                object-api-name="Location"
+                                key={locationPickerKey}
+                                value={locationId}
+                                onchange={handleLocationChange}
+                                filter={locationFilter}
+                                required>
+                            </lightning-record-picker>
+                            <lightning-button
+                                label="New Location"
+                                variant="base"
+                                icon-name="utility:add"
+                                onclick={handleNewLocation}
+                                class="slds-m-top_xx-small">
+                            </lightning-button>
+                        </template>
+                        <template if:true={showNewLocationForm}>
+                            <div class="slds-box slds-m-top_x-small slds-theme_shade" style="border-radius:6px">
+                                <p class="slds-text-heading_small slds-m-bottom_small">New Location</p>
+                                <lightning-record-edit-form
+                                    data-id="locationForm"
+                                    object-api-name="Location"
+                                    record-type-id={locationSiteRecordTypeId}
+                                    onsubmit={handleLocationSubmit}
+                                    onsuccess={handleLocationCreated}>
+                                    <lightning-messages></lightning-messages>
+                                    <lightning-input-field field-name="Name" required></lightning-input-field>
+                                    <lightning-input-field field-name="Country_Code__c" required></lightning-input-field>
+                                    <div class="slds-m-top_small slds-text-align_right">
+                                        <lightning-button
+                                            label="Cancel"
+                                            onclick={handleCancelNewLocation}
+                                            class="slds-m-right_x-small">
+                                        </lightning-button>
+                                        <lightning-button
+                                            type="submit"
+                                            label="Create Location"
+                                            variant="brand">
+                                        </lightning-button>
+                                    </div>
+                                </lightning-record-edit-form>
+                            </div>
+                        </template>
+                    </template>
+                </div>
+
+                <!-- Type (readonly) -->
+                <div class="slds-m-bottom_medium">
+                    <label class="slds-form-element__label">Type</label>
+                    <div class="slds-pill slds-m-top_xx-small slds-p-around_xx-small" style="padding-right: 0.5rem;">
+                        <lightning-icon icon-name="utility:truck" size="x-small" class="slds-m-right_x-small"></lightning-icon>
+                        <span>Ship To — Delivery site</span>
+                    </div>
+                </div>
+
+                <!-- Active From -->
+                <div class="slds-m-bottom_medium">
+                    <lightning-input
+                        type="date"
+                        label="Active From"
+                        value={activeDateFrom}
+                        onchange={handleActiveFromChange}>
+                    </lightning-input>
+                </div>
+
+                <!-- Active To -->
+                <div class="slds-m-bottom_medium">
+                    <lightning-input
+                        type="date"
+                        label="Active To"
+                        value={activeDateTo}
+                        onchange={handleActiveToChange}>
+                    </lightning-input>
+                </div>
+
+                <!-- Buttons -->
+                <div class="slds-text-align_right">
+                    <lightning-button
+                        label="Cancel"
+                        onclick={handleCancel}
+                        class="slds-m-right_x-small">
+                    </lightning-button>
+                    <lightning-button
+                        label="Save"
+                        variant="brand"
+                        onclick={handleSave}
+                        disabled={isSaveDisabled}>
+                    </lightning-button>
+                </div>
+
+            </div>
+
+    </lightning-card>
+</template>
