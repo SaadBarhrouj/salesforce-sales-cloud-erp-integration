@@ -86,22 +86,34 @@ export default class TripRouteMap extends LightningElement {
 
     get mapContainerStyle() { return `height:${this.mapHeight}px`; }
 
-    // Two markers — standard red pins
+    // Footer dot + line classes — swap based on direction so warehouse=blue/client=orange everywhere
+    get departureDotClass()   { return this.direction === 'Delivery' ? 'dot dot--warehouse' : 'dot dot--client';    }
+    get destinationDotClass() { return this.direction === 'Delivery' ? 'dot dot--client'    : 'dot dot--warehouse'; }
+    get lineClass()           { return this.direction === 'Delivery' ? 'line'               : 'line line--pickup';   }
+
     get mapMarkers() {
         if (!this._hasAllCoords) return [];
+
+        const isDelivery = this.direction === 'Delivery';
+
+        const warehouseIcon = { url: 'https://maps.google.com/mapfiles/ms/icons/blue-dot.png'   };
+        const customerIcon  = { url: 'https://maps.google.com/mapfiles/ms/icons/orange-dot.png' };
+
+        const departureIcon   = isDelivery ? warehouseIcon : customerIcon;
+        const destinationIcon = isDelivery ? customerIcon  : warehouseIcon;
 
         return [
             {
                 location    : { Latitude: this.departureLat, Longitude: this.departureLng },
                 title       : this.departureName,
-                description : 'Departure',
-                icon        : 'standard:location'
+                description : isDelivery ? 'Our warehouse (departure)' : 'Client site (departure)',
+                mapIcon     : departureIcon
             },
             {
                 location    : { Latitude: this.destinationLat, Longitude: this.destinationLng },
                 title       : this.destinationName,
-                description : 'Destination',
-                icon        : 'standard:location'
+                description : isDelivery ? 'Client site (destination)' : 'Our warehouse (destination)',
+                mapIcon     : destinationIcon
             }
         ];
     }
