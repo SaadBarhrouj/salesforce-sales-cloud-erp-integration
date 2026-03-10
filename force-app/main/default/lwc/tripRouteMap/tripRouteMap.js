@@ -1,15 +1,15 @@
 import { LightningElement, api, wire } from 'lwc';
 import { getRecord, getFieldValue }    from 'lightning/uiRecordApi';
+import TRIP_DISTANCE_KM  from '@salesforce/schema/Trip__c.Distance_Km__c';
+import TRIP_DIRECTION    from '@salesforce/schema/Trip__c.Direction__c';
 
 // Trip own fields
 const TRIP_FIELDS = [
-    'Trip__c.Distance_Km__c',
-    'Trip__c.Direction__c'
+    TRIP_DISTANCE_KM,
+    TRIP_DIRECTION
 ];
 
-// Trip optional + Location spanning fields
 const OPTIONAL_FIELDS = [
-    'Trip__c.Is_Distance_Estimated__c',
     'Trip__c.Departure_Location__r.Name',
     'Trip__c.Departure_Location__r.Latitude',
     'Trip__c.Departure_Location__r.Longitude',
@@ -43,10 +43,9 @@ export default class TripRouteMap extends LightningElement {
     get hasError()     { return !!this.record?.error;                       }
     get isIncomplete() { return !!this.record?.data && !this._hasAllCoords; }
 
-    // Trip field accessors
-    get distance()    { return this._val('Trip__c.Distance_Km__c');            }
-    get direction()   { return this._val('Trip__c.Direction__c');              }
-    get isEstimated() { return this._val('Trip__c.Is_Distance_Estimated__c'); }
+    // Trip field accessors 
+    get distance()    { return getFieldValue(this.record?.data, TRIP_DISTANCE_KM);  }
+    get direction()   { return getFieldValue(this.record?.data, TRIP_DIRECTION);    }
 
     // Departure Location accessors
     get departureName() {
@@ -86,22 +85,33 @@ export default class TripRouteMap extends LightningElement {
 
     get mapContainerStyle() { return `height:${this.mapHeight}px`; }
 
-    // Two markers — standard red pins
+    get departureDotClass()   { return this.direction === 'Delivery' ? 'dot dot--warehouse' : 'dot dot--client';    }
+    get destinationDotClass() { return this.direction === 'Delivery' ? 'dot dot--client'    : 'dot dot--warehouse'; }
+    get lineClass()           { return this.direction === 'Delivery' ? 'line'               : 'line line--pickup';   }
+
     get mapMarkers() {
         if (!this._hasAllCoords) return [];
+
+        const isDelivery = this.direction === 'Delivery';
+
+        const warehouseIcon = { url: 'https://maps.google.com/mapfiles/ms/icons/blue-dot.png'   };
+        const customerIcon  = { url: 'https://maps.google.com/mapfiles/ms/icons/orange-dot.png' };
+
+        const departureIcon   = isDelivery ? warehouseIcon : customerIcon;
+        const destinationIcon = isDelivery ? customerIcon  : warehouseIcon;
 
         return [
             {
                 location    : { Latitude: this.departureLat, Longitude: this.departureLng },
                 title       : this.departureName,
-                description : 'Departure',
-                icon        : 'standard:location'
+                description : isDelivery ? 'Our warehouse (departure)' : 'Client site (departure)',
+                mapIcon     : departureIcon
             },
             {
                 location    : { Latitude: this.destinationLat, Longitude: this.destinationLng },
                 title       : this.destinationName,
-                description : 'Destination',
-                icon        : 'standard:location'
+                description : isDelivery ? 'Client site (destination)' : 'Our warehouse (destination)',
+                mapIcon     : destinationIcon
             }
         ];
     }
