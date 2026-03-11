@@ -1,0 +1,58 @@
+<template>
+    <lightning-quick-action-panel header="Clone with Related Records">
+        <div class="slds-var-m-around_medium slds-is-relative" style="min-height: 100px;">
+            <template if:true={isLoading}>
+                <lightning-spinner alternative-text="Loading" size="medium" variant="brand"></lightning-spinner>
+            </template>
+
+            <template if:false={isLoading}>
+                <!-- Introduction / Help Text -->
+                <p class="slds-var-m-bottom_small">Select related records to include in the clone of the parent record.</p>
+
+                <!-- Dynamic Accordion for related lists -->
+                <template if:true={hasChildren}>
+                    <lightning-accordion allow-multiple-sections-open>
+                        <template for:each={childRelationships} for:item="rel">
+                            <lightning-accordion-section 
+                                key={rel.relationshipName} 
+                                name={rel.relationshipName} 
+                                label={rel.headerLabel}>
+                                
+                                <div class="slds-scrollable_x">
+                                    <lightning-datatable
+                                        key-field="Id"
+                                        data={rel.records}
+                                        columns={rel.columns}
+                                        onrowselection={handleRowSelection}
+                                        data-rel={rel.relationshipName}>
+                                    </lightning-datatable>
+                                </div>
+                            </lightning-accordion-section>
+                        </template>
+                    </lightning-accordion>
+                </template>
+
+                <template if:false={hasChildren}>
+                    <p class="slds-text-color_weak slds-text-align_center slds-var-m-top_large">
+                        No related child records found to clone.
+                    </p>
+                </template>
+            </template>
+        </div>
+
+        <div slot="footer">
+            <lightning-button 
+                variant="neutral" 
+                label="Cancel" 
+                onclick={closeAction}
+                class="slds-var-m-right_x-small">
+            </lightning-button>
+            <lightning-button 
+                variant="brand" 
+                label="Clone" 
+                onclick={handleClone}
+                disabled={isLoading}>
+            </lightning-button>
+        </div>
+    </lightning-quick-action-panel>
+</template>
