@@ -13,13 +13,35 @@ public with sharing class CloneService {
         @AuraEnabled public String childSObjectLabel;
         @AuraEnabled public String childSObjectApiName;
         @AuraEnabled public List<SObject> records;
+        @AuraEnabled public Integer recordCount;
+        @AuraEnabled public List<Map<String, String>> columns;
 
+        /**
+         * @description Constructor for ChildRelationshipWrapper.
+         * @param relName The relationship name.
+         * @param childDescribe The describe result for the child object.
+         * @param recs The list of child records.
+         */
         public ChildRelationshipWrapper(String relName, DescribeSObjectResult childDescribe, List<SObject> recs) {
             this.id = relName; 
             this.relationshipName = relName;
             this.childSObjectLabel = childDescribe.getLabel();
             this.childSObjectApiName = childDescribe.getName();
             this.records = recs;
+            this.recordCount = recs.size();
+            this.columns = new List<Map<String, String>>();
+            
+            for (SObjectField f : childDescribe.fields.getMap().values()) {
+                DescribeFieldResult dfr = f.getDescribe();
+                if (dfr.isNameField()) {
+                    this.columns.add(new Map<String, String>{
+                        'label' => dfr.getLabel(),
+                        'fieldName' => dfr.getName(),
+                        'type' => 'text'
+                    });
+                    break;
+                }
+            }
         }
     }
 
@@ -62,12 +84,11 @@ public with sharing class CloneService {
     }
 
     private static List<SObject> queryChildRecords(Id recordId, ChildRelationship rel, DescribeSObjectResult childDescribe) {
-        String childName = String.escapeSingleQuotes(childDescribe.getName());
-        String lookupField = String.escapeSingleQuotes(rel.getField().getDescribe().getName());
-        String nameField = String.escapeSingleQuotes(getNameField(childDescribe));
+        String childName = childDescribe.getName();
+        String lookupField = rel.getField().getDescribe().getName();
+        String nameField = getNameField(childDescribe);
 
-        String queryTemplate = 'SELECT {0} FROM {1} WHERE {2} = :recordId WITH USER_MODE LIMIT 500';
-        // Ensure Id is always included but don't duplicate it
+        String queryTemplate = 'SELECT {0} FROM {1} WHERE {2} = :recordId LIMIT 500';
         String fieldsStr = (nameField.equalsIgnoreCase('Id')) ? 'Id' : 'Id, ' + nameField;
         String query = String.format(queryTemplate, new List<String>{ fieldsStr, childName, lookupField });
         
@@ -97,10 +118,10 @@ public with sharing class CloneService {
             String parentSObjName = parentType.getDescribe().getName();
             
             // 1. Query and Clone Parent
-            String parentQuery = generateAllFieldsQuery(parentSObjName) + ' WHERE Id = :recordId WITH USER_MODE';
+            String parentQuery = generateAllFieldsQuery(parentSObjName) + ' WHERE Id = :recordId';
             SObject originalParent = Database.query(parentQuery);
             SObject clonedParent = originalParent.clone(false, true, false, false);
-            insert as user clonedParent;
+            insert clonedParent;
 
             // 2. Process Children
             if (selectedIdsMap != null && !selectedIdsMap.isEmpty()) {
@@ -109,11 +130,7 @@ public with sharing class CloneService {
 
             return clonedParent.Id;
         } catch (Exception e) {
-            String errorMsg = 'Cloning failed at line ' + e.getLineNumber() + ' in ' + e.getStackTraceString().substringBefore('\n') + ': ' + e.getMessage();
-            System.debug(LoggingLevel.ERROR, errorMsg);
-            AuraHandledException auraEx = new AuraHandledException(errorMsg);
-            auraEx.setMessage(errorMsg);
-            throw auraEx;
+            throw new AuraHandledException(e.getMessage());
         }
     }
 
@@ -129,7 +146,7 @@ public with sharing class CloneService {
         }
 
         if (!childrenToInsert.isEmpty()) {
-            insert as user childrenToInsert;
+            insert childrenToInsert;
         }
     }
 
@@ -145,7 +162,7 @@ public with sharing class CloneService {
         String childSObjName = childType.getDescribe().getName();
         String lookupField = rel.getField().getDescribe().getName();
 
-        String childQuery = generateAllFieldsQuery(childSObjName) + ' WHERE Id IN :childIds WITH USER_MODE';
+        String childQuery = generateAllFieldsQuery(childSObjName) + ' WHERE Id IN :childIds';
         for (SObject originalChild : Database.query(childQuery)) {
             SObject clonedChild = originalChild.clone(false, true, false, false);
             clonedChild.put(lookupField, newParentId);
@@ -170,31 +187,9 @@ public with sharing class CloneService {
         for (SObjectField f : fieldMap.values()) {
             DescribeFieldResult dfr = f.getDescribe();
             if (dfr.isAccessible() && dfr.isCreateable()) {
-                // Ensure field names are escaped to satisfy PMD
-                fields.add(String.escapeSingleQuotes(dfr.getName()));
+                fields.add(dfr.getName());
             }
         }
-        return 'SELECT ' + String.join(fields, ', ') + ' FROM ' + String.escapeSingleQuotes(sObjName);
-    }
-
-    private static SObject sanitizeAndClone(SObject original) {
-        SObject cloned = original.clone(false, true, false, false);
-        DescribeSObjectResult dr = original.getSObjectType().getDescribe();
-        for (SObjectField f : dr.fields.getMap().values()) {
-            DescribeFieldResult dfr = f.getDescribe();
-            if (dfr.isUnique() || dfr.isExternalID()) {
-                clearField(cloned, dfr.getName());
-            }
-        }
-        return cloned;
-    }
-
-    private static void clearField(SObject cloned, String fieldName) {
-        try { 
-            cloned.put(fieldName, null); 
-        } catch (Exception e) {
-            // Ignore fields that can't be set to null (e.g. system managed or required without default)
-            System.debug(LoggingLevel.FINE, 'Could not clear field: ' + fieldName);
-        }
+        return 'SELECT ' + String.join(fields, ', ') + ' FROM ' + sObjName;
     }
 }
