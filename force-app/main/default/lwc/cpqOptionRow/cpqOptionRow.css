@@ -1,0 +1,24 @@
+.option-row {
+    transition: background-color 0.15s ease;
+}
+
+.option-row:hover {
+    background-color: var(--slds-g-color-neutral-base-95, #f3f3f3);
+}
+
+.row-selected {
+    background-color: var(--slds-g-color-brand-base-95, #f0f8ff);
+}
+
+.row-required {
+    border-left: 3px solid var(--slds-g-color-error-base-40, #ea001e);
+}
+
+.detail-row .detail-content {
+    background-color: var(--slds-g-color-neutral-base-95, #f3f3f3);
+    border-radius: var(--slds-g-radius-border-2, 0.25rem);
+}
+
+.qty-input {
+    max-width: 80px;
+}

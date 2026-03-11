@@ -1,0 +1,17 @@
+.product-card {
+    cursor: pointer;
+    margin-bottom: var(--slds-g-spacing-2, 0.5rem);
+    transition: box-shadow 0.2s ease, border-color 0.2s ease;
+    border: var(--slds-g-sizing-border-1, 1px) solid var(--slds-g-color-border-base-1, #e5e5e5);
+    border-radius: var(--slds-g-radius-border-2, 0.25rem);
+    background-color: var(--slds-g-color-neutral-base-100, #ffffff);
+}
+
+.product-card:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.card-selected {
+    border-color: var(--slds-g-color-brand-base-50, #0176d3);
+    background-color: var(--slds-g-color-brand-base-95, #f0f8ff);
+}

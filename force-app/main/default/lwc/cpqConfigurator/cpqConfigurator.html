@@ -1,0 +1,138 @@
+<template>
+    <!-- Sticky Header -->
+    <c-cpq-sticky-header
+        title={headerTitle}
+        subtitle={headerSubtitle}
+        icon-name={headerIcon}
+        actions={headerActions}
+        onheaderaction={handleHeaderAction}
+    ></c-cpq-sticky-header>
+
+    <!-- Progress Bar -->
+    <c-cpq-progress-bar
+        current-step={currentStep}
+        steps={stepList}
+        onstepnavigate={handleStepNavigate}
+    ></c-cpq-progress-bar>
+
+    <!-- Step Content -->
+    <div class="step-container slds-p-around_medium">
+
+        <!-- Step 1: Init -->
+        <template lwc:if={isStepInit}>
+            <c-cpq-step-init
+                quote-state={quoteState}
+                onstatechange={handleQuoteStateChange}
+                oninitcomplete={handleInitComplete}
+            ></c-cpq-step-init>
+        </template>
+
+        <!-- Step 2: Product Selection -->
+        <template lwc:if={isStepSelection}>
+            <c-cpq-step-selection
+                catalog-id={quoteState.catalogId}
+                cart-items={cartItems}
+                onproductadd={handleProductAdd}
+                onproductremove={handleProductRemove}
+                onnavigate={handleNavigate}
+            ></c-cpq-step-selection>
+        </template>
+
+        <!-- Step 3: Bundle Configurator -->
+        <template lwc:if={isStepConfigure}>
+            <c-cpq-step-bundle-config
+                cart-items={cartItems}
+                onconfigupdate={handleConfigUpdate}
+                onnavigate={handleNavigate}
+            ></c-cpq-step-bundle-config>
+        </template>
+
+        <!-- Step 4: Line Editor -->
+        <template lwc:if={isStepLineEditor}>
+            <c-cpq-step-line-editor
+                cart-items={numberedCartItems}
+                quote-state={quoteState}
+                onlineupdate={handleLineUpdate}
+                onlineremove={handleLineRemove}
+                onglobaldiscount={handleGlobalDiscount}
+                onnavigate={handleNavigate}
+            ></c-cpq-step-line-editor>
+        </template>
+
+        <!-- Step 5: Logistics -->
+        <template lwc:if={isStepLogistics}>
+            <c-cpq-step-logistics
+                cart-items={cartItems}
+                quote-state={quoteState}
+                logistics-state={logisticsState}
+                onlogisticschange={handleLogisticsChange}
+                onnavigate={handleNavigate}
+            ></c-cpq-step-logistics>
+        </template>
+
+        <!-- Step 6: Review & Save -->
+        <template lwc:if={isStepReview}>
+            <c-cpq-step-review
+                cart-items={cartItems}
+                quote-state={quoteState}
+                logistics-state={logisticsState}
+                onsavequote={handleSaveQuote}
+                onnavigate={handleNavigate}
+            ></c-cpq-step-review>
+        </template>
+    </div>
+
+    <!-- Floating Mini-Cart (Little Extra) -->
+    <div class={miniCartClass} lwc:if={showMiniCart}>
+        <div class="mini-cart-header slds-grid slds-grid_align-spread slds-p-around_x-small">
+            <span class="slds-text-title_caps">Live Summary</span>
+            <lightning-button-icon
+                icon-name="utility:close"
+                variant="bare"
+                size="small"
+                alternative-text="Close summary"
+                onclick={toggleMiniCart}
+            ></lightning-button-icon>
+        </div>
+        <div class="mini-cart-body slds-p-around_small">
+            <template for:each={cartItems} for:item="item">
+                <div key={item._key} class="slds-grid slds-grid_align-spread slds-m-bottom_xx-small">
+                    <span class="slds-truncate slds-text-body_small" style="max-width:170px;" title={item.productName}>{item.productName}</span>
+                    <span class="slds-text-body_small">{item._formattedTotal}</span>
+                </div>
+            </template>
+            <div class="slds-border_top slds-p-top_x-small slds-m-top_x-small slds-grid slds-grid_align-spread">
+                <span class="slds-text-title_caps">Subtotal</span>
+                <span class="slds-text-heading_small">{formattedSubtotal}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mini-cart toggle fab -->
+    <div class="mini-cart-fab" lwc:if={isCartVisible}>
+        <lightning-button-icon
+            icon-name="utility:cart"
+            variant="brand"
+            size="large"
+            alternative-text="Toggle cart summary"
+            onclick={toggleMiniCart}
+        ></lightning-button-icon>
+        <span class="cart-badge" lwc:if={cartCount}>{cartCount}</span>
+    </div>
+
+    <!-- Toast simulation -->
+    <template lwc:if={toastMessage}>
+        <div class={toastClass} role="status">
+            <lightning-icon icon-name={toastIcon} size="small" class="slds-m-right_small"></lightning-icon>
+            <span>{toastMessage}</span>
+            <lightning-button-icon
+                icon-name="utility:close"
+                variant="bare-inverse"
+                size="small"
+                alternative-text="Close"
+                class="slds-m-left_small"
+                onclick={closeToast}
+            ></lightning-button-icon>
+        </div>
+    </template>
+</template>

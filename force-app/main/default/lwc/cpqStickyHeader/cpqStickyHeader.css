@@ -1,0 +1,13 @@
+:host {
+    display: block;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.cpq-header {
+    background-color: var(--slds-g-color-neutral-base-95, #f3f3f3);
+    border-bottom: var(--slds-g-sizing-border-1, 1px) solid var(--slds-g-color-border-base-1, #e5e5e5);
+    padding-inline: var(--slds-g-spacing-4, 1rem);
+    padding-block: var(--slds-g-spacing-3, 0.75rem);
+}

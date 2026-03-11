@@ -1,0 +1,34 @@
+<template>
+    <div class="slds-progress slds-progress_shade">
+        <ol class="slds-progress__list">
+            <template for:each={computedSteps} for:item="step">
+                <li
+                    key={step.key}
+                    class={step.itemClass}
+                    data-step={step.number}
+                    onclick={handleStepClick}
+                    role="button"
+                    tabindex="0"
+                    onkeydown={handleStepKeydown}
+                >
+                    <button class={step.buttonClass} title={step.label}>
+                        <lightning-icon
+                            lwc:if={step.isComplete}
+                            icon-name="utility:check"
+                            size="x-small"
+                            alternative-text="Complete"
+                            class="slds-progress__marker_icon"
+                        ></lightning-icon>
+                        <span lwc:if={step.isCurrent} class="slds-assistive-text">Current Step:</span>
+                        <span class="step-label">{step.label}</span>
+                    </button>
+                </li>
+            </template>
+        </ol>
+        <div class="slds-progress-bar slds-progress-bar_x-small" aria-valuemin="0" aria-valuemax="100" aria-valuenow={progressValue} role="progressbar">
+            <span class="slds-progress-bar__value" style={progressStyle}>
+                <span class="slds-assistive-text">Progress: {progressValue}%</span>
+            </span>
+        </div>
+    </div>
+</template>

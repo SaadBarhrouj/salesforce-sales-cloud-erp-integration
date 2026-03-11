@@ -1,0 +1,42 @@
+/* cpqStepReview – Review & Summary step */
+
+:host {
+    display: block;
+}
+
+.review-container {
+    max-width: 960px;
+    margin-inline: auto;
+}
+
+/* ── Option sub-rows ── */
+.option-sub-row {
+    background-color: var(--slds-g-color-neutral-base-95, #f3f3f3);
+}
+
+/* ── Bundle summary cards ── */
+.bundle-summary {
+    background-color: var(--slds-g-color-neutral-base-100, #fff);
+}
+
+.badge-success {
+    --slds-c-badge-color-background: var(--slds-g-color-success-base-40, #2e844a);
+    --slds-c-badge-text-color: #fff;
+}
+
+.badge-warning {
+    --slds-c-badge-color-background: var(--slds-g-color-warning-base-50, #dd7a01);
+    --slds-c-badge-text-color: #fff;
+}
+
+/* ── Grand Total card ── */
+.total-card {
+    background: linear-gradient(135deg, var(--slds-g-color-brand-base-95, #f0f8ff) 0%, var(--slds-g-color-neutral-base-100, #fff) 100%);
+    border: 2px solid var(--slds-g-color-brand-base-50, #0176d3);
+    border-radius: var(--slds-g-radius-border-2, 0.5rem);
+}
+
+.grand-total {
+    color: var(--slds-g-color-brand-base-50, #0176d3);
+    font-weight: var(--slds-g-font-weight-7, 700);
+}
