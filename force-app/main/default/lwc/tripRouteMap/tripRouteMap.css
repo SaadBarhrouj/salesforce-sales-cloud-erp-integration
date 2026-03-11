@@ -1,6 +1,7 @@
 /**
  * tripRouteMap styles
- * Colors: Blue #0176D3 (Departure) / Orange #E87722 (Destination)
+ * Colors: Blue #0176D3 (Warehouse/our company) / Orange #E87722 (Client)
+ * Both map icons and footer dots swap with Direction__c (Delivery vs Pickup).
  */
 
 :host {
@@ -37,12 +38,12 @@
     flex-shrink: 0;
 }
 
-.dot--departure {
+.dot--warehouse {
     background: #0176D3;
     box-shadow: 0 0 0 3px rgba(1, 118, 211, 0.2);
 }
 
-.dot--destination {
+.dot--client {
     background: #E87722;
     box-shadow: 0 0 0 3px rgba(232, 119, 34, 0.2);
 }
@@ -58,7 +59,7 @@
     position: relative;
 }
 
-/* Arrow pointing toward destination */
+/* Arrow pointing toward destination (Delivery: blue→orange, Pickup: orange→blue) */
 .line::after {
     content: '';
     position: absolute;
@@ -67,6 +68,14 @@
     border-top: 5px solid transparent;
     border-bottom: 5px solid transparent;
     border-left: 8px solid #E87722;
+}
+
+.line--pickup {
+    background: linear-gradient(to right, #E87722, #0176D3);
+}
+
+.line--pickup::after {
+    border-left-color: #0176D3;
 }
 
 /* Labels */

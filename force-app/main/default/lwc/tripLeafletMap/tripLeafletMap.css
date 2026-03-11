@@ -1,0 +1,175 @@
+/* ── Map wrapper ── */
+.map-wrapper {
+    padding: 0;
+    margin: 0;
+}
+
+.map-container {
+    position: relative;
+    border: 1px solid #d8dde6;
+    border-radius: 4px;
+    overflow: hidden;
+    background: #f4f6f9;
+}
+
+.leaflet-map {
+    width: 100%;
+    height: 100%;
+    min-height: 300px;
+    z-index: 0;
+}
+
+/* ── State containers ── */
+.state-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1rem;
+    min-height: 180px;
+}
+
+.state-heading {
+    margin-top: 0.75rem;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.state-subtext {
+    margin-top: 0.25rem;
+    font-size: 0.8125rem;
+    color: #706e6b;
+}
+
+.empty-icon-ring {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: #f3f3f3;
+}
+
+/* ── Route panel ── */
+.route-panel {
+    padding: 0.75rem 1rem;
+    border-top: 1px solid #e5e5e5;
+}
+
+.route-visual {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.dot--departure {
+    background: #1589ee;
+}
+
+.dot--destination {
+    background: #e74c3c;
+}
+
+.line-track {
+    flex: 1;
+    height: 3px;
+    position: relative;
+}
+
+.line {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 100%;
+    background: repeating-linear-gradient(
+        90deg, #1976D2 0px, #1976D2 6px, transparent 6px, transparent 10px
+    );
+}
+
+.route-labels {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.route-name {
+    font-size: 0.8125rem;
+    font-weight: 500;
+    max-width: 35%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.route-name--left {
+    text-align: left;
+}
+
+.route-name--right {
+    text-align: right;
+}
+
+.route-center {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.route-distance {
+    font-size: 0.9375rem;
+    font-weight: 700;
+    color: #032d60;
+}
+
+.route-duration {
+    font-size: 0.75rem;
+    color: #1976D2;
+    font-weight: 600;
+}
+
+.route-direction {
+    font-size: 0.75rem;
+    color: #706e6b;
+    text-transform: capitalize;
+}
+
+/* ── Legend ── */
+.legend-panel {
+    display: flex;
+    gap: 1rem;
+    padding: 0.5rem 1rem;
+    border-top: 1px solid #e5e5e5;
+    font-size: 0.75rem;
+    color: #706e6b;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    border: 1px solid #fff;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.15);
+}
+
+.legend-dot--warehouse {
+    background: #1589ee;
+}
+
+.legend-dot--site {
+    background: #e74c3c;
+}
