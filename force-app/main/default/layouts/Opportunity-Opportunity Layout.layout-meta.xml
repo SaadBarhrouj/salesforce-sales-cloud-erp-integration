@@ -29,6 +29,10 @@
             </layoutItems>
             <layoutItems>
                 <behavior>Edit</behavior>
+                <field>Offer_Type__c</field>
+            </layoutItems>
+            <layoutItems>
+                <behavior>Edit</behavior>
                 <field>LeadSource</field>
             </layoutItems>
         </layoutColumns>
@@ -184,7 +188,8 @@
         <fields>Product2</fields>
         <fields>Quantity</fields>
         <fields>UnitPrice</fields>
-        <fields>ServiceDate</fields>
+        <fields>Is_Bundle_Product__c</fields>
+        <fields>Bundle_Group__c</fields>
         <fields>Description</fields>
         <relatedList>RelatedLineItemList</relatedList>
     </relatedLists>
