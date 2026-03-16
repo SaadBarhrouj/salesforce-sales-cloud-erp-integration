@@ -1,13 +1,23 @@
 :host {
     display: block;
-    position: sticky;
-    top: 0;
-    z-index: 100;
+    width: 100%;
+    padding: 0;
+    margin: 0;
 }
 
-.cpq-header {
-    background-color: var(--slds-g-color-neutral-base-95, #f3f3f3);
-    border-bottom: var(--slds-g-sizing-border-1, 1px) solid var(--slds-g-color-border-base-1, #e5e5e5);
-    padding-inline: var(--slds-g-spacing-4, 1rem);
-    padding-block: var(--slds-g-spacing-3, 0.75rem);
+/* Container must take 100% width with no extra spacing */
+.slds-tabs_card {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    background-color: #fff;
+}
+
+/* Page header flush with edges */
+.slds-page-header {
+    width: 100%;
+    margin: 0;
+    padding: 1rem;
+    background-color: #fff;
+    border-bottom: 1px solid #dddbda;
 }

@@ -1,85 +1,96 @@
 <template>
-    <!-- Sticky Header -->
-    <c-cpq-sticky-header
-        title={headerTitle}
-        subtitle={headerSubtitle}
-        icon-name={headerIcon}
-        actions={headerActions}
-        onheaderaction={handleHeaderAction}
-    ></c-cpq-sticky-header>
+    <div class="cpq-app-wrapper">
+        <!-- Page Header -->
+        <c-cpq-sticky-header
+            top-label={headerTopLabel}
+            title={headerTitle}
+            subtitle={headerSubtitle}
+            icon-name={headerIcon}
+            step-actions={headerStepActions}
+            global-actions={headerGlobalActions}
+            metadata-items={headerMetadata}
+            show-search={headerShowSearch}
+            search-placeholder={headerSearchPlaceholder}
+            onheaderaction={handleHeaderAction}
+        ></c-cpq-sticky-header>
 
-    <!-- Progress Bar -->
-    <c-cpq-progress-bar
-        current-step={currentStep}
-        steps={stepList}
-        onstepnavigate={handleStepNavigate}
-    ></c-cpq-progress-bar>
+        <!-- BODY: Two-column layout (Sidebar | Lever | Main) -->
+        <div class="cpq-app-body">
+            <!-- LEFT COLUMN: Sidebar (dynamic content area) -->
+            <aside class={sidebarClass}>
+                <div class="cpq-sidebar-inner">
+                    <div class="sidebar-section-label">{sidebarTitle}</div>
+                    <!-- Sidebar content injected here -->
+                </div>
+            </aside>
 
-    <!-- Step Content -->
-    <div class="step-container slds-p-around_medium">
+            <!-- MIDDLE: Vertical Toggle Lever (24px wide) -->
+            <button class="cpq-sidebar-lever" onclick={toggleSidebar} title="Toggle sidebar">
+                <span class="lever-icon">
+                    <lightning-icon icon-name={sidebarToggleIcon} size="x-small"></lightning-icon>
+                </span>
+                <span class="lever-text">{sidebarLeverLabel}</span>
+            </button>
 
-        <!-- Step 1: Init -->
-        <template lwc:if={isStepInit}>
-            <c-cpq-step-init
-                quote-state={quoteState}
-                onstatechange={handleQuoteStateChange}
-                oninitcomplete={handleInitComplete}
-            ></c-cpq-step-init>
-        </template>
+            <!-- RIGHT COLUMN: Main content (grows to fill) -->
+            <main class="cpq-app-main">
 
-        <!-- Step 2: Product Selection -->
-        <template lwc:if={isStepSelection}>
-            <c-cpq-step-selection
-                catalog-id={quoteState.catalogId}
-                cart-items={cartItems}
-                onproductadd={handleProductAdd}
-                onproductremove={handleProductRemove}
-                onnavigate={handleNavigate}
-            ></c-cpq-step-selection>
-        </template>
 
-        <!-- Step 3: Bundle Configurator -->
-        <template lwc:if={isStepConfigure}>
-            <c-cpq-step-bundle-config
-                cart-items={cartItems}
-                onconfigupdate={handleConfigUpdate}
-                onnavigate={handleNavigate}
-            ></c-cpq-step-bundle-config>
-        </template>
+                    <!-- Step 1: Product Selection (Main View) -->
+                    <template lwc:if={isStepSelection}>
+                        <c-cpq-step-selection
+                            catalog-id={quoteState.catalogId}
+                            cart-items={cartItems}
+                            onproductadd={handleProductAdd}
+                            onproductremove={handleProductRemove}
+                            onnavigate={handleNavigate}
+                        ></c-cpq-step-selection>
+                    </template>
 
-        <!-- Step 4: Line Editor -->
-        <template lwc:if={isStepLineEditor}>
-            <c-cpq-step-line-editor
-                cart-items={numberedCartItems}
-                quote-state={quoteState}
-                onlineupdate={handleLineUpdate}
-                onlineremove={handleLineRemove}
-                onglobaldiscount={handleGlobalDiscount}
-                onnavigate={handleNavigate}
-            ></c-cpq-step-line-editor>
-        </template>
+                    <!-- Step 2: Bundle Configurator -->
+                    <template lwc:if={isStepConfigure}>
+                        <c-cpq-step-bundle-config
+                            cart-items={cartItems}
+                            onconfigupdate={handleConfigUpdate}
+                            onnavigate={handleNavigate}
+                        ></c-cpq-step-bundle-config>
+                    </template>
 
-        <!-- Step 5: Logistics -->
-        <template lwc:if={isStepLogistics}>
-            <c-cpq-step-logistics
-                cart-items={cartItems}
-                quote-state={quoteState}
-                logistics-state={logisticsState}
-                onlogisticschange={handleLogisticsChange}
-                onnavigate={handleNavigate}
-            ></c-cpq-step-logistics>
-        </template>
+                    <!-- Step 3: Line Editor -->
+                    <template lwc:if={isStepLineEditor}>
+                        <c-cpq-step-line-editor
+                            cart-items={numberedCartItems}
+                            quote-state={quoteState}
+                            onlineupdate={handleLineUpdate}
+                            onlineremove={handleLineRemove}
+                            onglobaldiscount={handleGlobalDiscount}
+                            onnavigate={handleNavigate}
+                        ></c-cpq-step-line-editor>
+                    </template>
 
-        <!-- Step 6: Review & Save -->
-        <template lwc:if={isStepReview}>
-            <c-cpq-step-review
-                cart-items={cartItems}
-                quote-state={quoteState}
-                logistics-state={logisticsState}
-                onsavequote={handleSaveQuote}
-                onnavigate={handleNavigate}
-            ></c-cpq-step-review>
-        </template>
+                    <!-- Step 4: Logistics -->
+                    <template lwc:if={isStepLogistics}>
+                        <c-cpq-step-logistics
+                            cart-items={cartItems}
+                            quote-state={quoteState}
+                            logistics-state={logisticsState}
+                            onlogisticschange={handleLogisticsChange}
+                            onnavigate={handleNavigate}
+                        ></c-cpq-step-logistics>
+                    </template>
+
+                    <!-- Step 5: Review & Save -->
+                    <template lwc:if={isStepReview}>
+                        <c-cpq-step-review
+                            cart-items={cartItems}
+                            quote-state={quoteState}
+                            logistics-state={logisticsState}
+                            onsavequote={handleSaveQuote}
+                            onnavigate={handleNavigate}
+                        ></c-cpq-step-review>
+                    </template>
+            </main>
+        </div>
     </div>
 
     <!-- Floating Mini-Cart (Little Extra) -->

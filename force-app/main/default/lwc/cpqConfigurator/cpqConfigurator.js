@@ -1,26 +1,28 @@
-import { LightningElement, api, track } from 'lwc';
-import { STEPS, EVENTS, MESSAGES } from 'c/cpqConstants';
+import { LightningElement, api, track, wire } from 'lwc';
+import { getRecord, getFieldValue } from 'lightning/uiRecordApi';
+import OPP_NAME from '@salesforce/schema/Opportunity.Name';
+import OPP_ACCOUNT_ID from '@salesforce/schema/Opportunity.AccountId';
+import OPP_ACCOUNT_NAME from '@salesforce/schema/Opportunity.Account.Name';
+import { STEPS, MESSAGES, STEP_META, STEP_LIST } from 'c/cpqConstants';
 import { deepClone, calculateCartSubtotal, calculateCartItemTotal, formatCurrency } from 'c/cpqUtils';
 
-const STEP_META = [
-    { value: STEPS.INIT, label: 'Quote Setup', icon: 'standard:quote', subtitle: 'Configure quote parameters' },
-    { value: STEPS.SELECTION, label: 'Product Selection', icon: 'standard:product', subtitle: 'Choose products for your quote' },
-    { value: STEPS.CONFIGURE, label: 'Bundle Configuration', icon: 'standard:bundle_policy', subtitle: 'Configure bundles & options' },
-    { value: STEPS.LINE_EDITOR, label: 'Line Editor', icon: 'standard:order_item', subtitle: 'Review & adjust line items' },
-    { value: STEPS.LOGISTICS, label: 'Logistics', icon: 'standard:shipment', subtitle: 'Delivery options' },
-    { value: STEPS.REVIEW, label: 'Review & Save', icon: 'standard:task', subtitle: 'Verify everything before saving' }
-];
+const OPP_FIELDS = [OPP_NAME, OPP_ACCOUNT_ID, OPP_ACCOUNT_NAME];
 
 const TOAST_DURATION = 4000;
 
 export default class CpqConfigurator extends LightningElement {
     @api recordId;
     @api objectApiName;
+    @api opportunityNumber;
+
+    /* ── wire data ────────────────────────────────── */
+    @wire(getRecord, { recordId: '$recordId', fields: OPP_FIELDS })
+    opportunityRecord;
 
     /* ── wizard state ─────────────────────────────── */
-    currentStep = STEPS.INIT;
-    initCompleted = false;
+    currentStep = STEPS.SELECTION;
     miniCartOpen = false;
+    @track isSidebarOpen = true;
 
     /* ── domain state ─────────────────────────────── */
     @track quoteState = {
@@ -53,55 +55,135 @@ export default class CpqConfigurator extends LightningElement {
        ═══════════════════════════════════════════════ */
 
     /* -- step booleans -- */
-    get isStepInit() { return this.currentStep === STEPS.INIT; }
-    get isStepSelection() { return this.currentStep === STEPS.SELECTION; }
-    get isStepConfigure() { return this.currentStep === STEPS.CONFIGURE; }
-    get isStepLineEditor() { return this.currentStep === STEPS.LINE_EDITOR; }
-    get isStepLogistics() { return this.currentStep === STEPS.LOGISTICS; }
-    get isStepReview() { return this.currentStep === STEPS.REVIEW; }
+    get isStepSelection() { return this.currentStep.key === STEPS.SELECTION.key; }
+    get isStepConfigure() { return this.currentStep.key === STEPS.CONFIGURE.key; }
+    get isStepLineEditor() { return this.currentStep.key === STEPS.LINE_EDITOR.key; }
+    get isStepLogistics() { return this.currentStep.key === STEPS.LOGISTICS.key; }
+    get isStepReview() { return this.currentStep.key === STEPS.REVIEW.key; }
 
     /* -- header -- */
-    get headerTitle() { return this._stepMeta.label; }
-    get headerSubtitle() { return this._stepMeta.subtitle; }
-    get headerIcon() { return this._stepMeta.icon; }
-
-    get _stepMeta() {
-        return STEP_META.find(s => s.value === this.currentStep) || STEP_META[0];
+    get headerTopLabel() {
+        if (this.opportunityRecord?.data) {
+            const name = getFieldValue(this.opportunityRecord.data, OPP_NAME);
+            if (name) return name;
+        }
+        return this.recordId || 'OPP-000000';
     }
 
-    get headerActions() {
-        const actions = [];
-        if (this.currentStep !== STEPS.INIT) {
-            actions.push({ label: 'Back', value: 'back', variant: 'neutral', iconName: 'utility:back' });
+    get headerTitle() { return this._stepMeta.label; }
+    get headerSubtitle() { return ''; }
+    get headerIcon() { return 'standard:product'; }
+
+    get headerMetadata() {
+        const metadata = [];
+        
+        // Account - as LINK
+        if (this.opportunityRecord?.data) {
+            const accountName = getFieldValue(this.opportunityRecord.data, OPP_ACCOUNT_NAME);
+            if (accountName) {
+                metadata.push({
+                    id: 'account',
+                    label: accountName,
+                    value: '#', // Link placeholder
+                    iconName: 'standard:account',
+                    isLink: true,
+                    isBold: false
+                });
+            }
         }
-        if (this.currentStep !== STEPS.REVIEW) {
-            actions.push({ label: 'Next', value: 'next', variant: 'brand', iconName: 'utility:forward', disabled: !this._canAdvance });
-        }
-        if (this.currentStep === STEPS.REVIEW) {
-            actions.push({ label: 'Confirm & Save', value: 'save', variant: 'brand', iconName: 'utility:save' });
-        }
-        return actions;
+        
+        // Pricebook - as LINK
+        metadata.push({
+            id: 'pricebook',
+            label: 'Standard Pricebook',
+            value: '#', // Link placeholder
+            iconName: 'standard:pricebook',
+            isLink: true,
+            isBold: false
+        });
+        
+        // Offer Type: Sale (Static - NOT a link)
+        metadata.push({
+            id: 'offerType',
+            label: 'Offer Type:',
+            value: 'Sale',
+            iconName: 'standard:category',
+            isLink: false,
+            isBold: true
+        });
+        
+        return metadata;
+    }
+
+    get headerShowSearch() {
+        return this.currentStep.key === STEPS.SELECTION.key;
+    }
+
+    get headerSearchPlaceholder() {
+        // Dynamic placeholder based on step
+        if (this.currentStep.key === STEPS.SELECTION.key) return 'Search products...';
+        return 'Search...';
+    }
+
+    get _stepMeta() {
+        return STEP_META[this.currentStep.key] || STEP_META[STEPS.SELECTION.key];
+    }
+
+    get headerStepActions() {
+        return [
+            { name: 'addProducts', label: 'Add Product', variant: 'neutral' },
+            { name: 'save', label: 'Save', variant: 'neutral' }
+        ];
+    }
+
+    get headerGlobalActions() {
+        return [
+            { name: 'settings', label: 'List View Controls', variant: 'border-filled', iconName: 'utility:settings', isMenu: true },
+            { name: 'table', label: 'Change view', variant: 'border-filled', iconName: 'utility:table', isMenu: true },
+            { name: 'edit', label: 'Edit List', variant: 'border-filled', iconName: 'utility:edit' },
+            { name: 'refresh', label: 'Refresh List', variant: 'border-filled', iconName: 'utility:refresh' },
+            // Grouped actions: Chart + Filter
+            {
+                name: 'analyticsGroup',
+                isGroup: true,
+                items: [
+                    { name: 'charts', label: 'Charts', variant: 'border-filled', iconName: 'utility:chart' },
+                    { name: 'filterList', label: 'Filters', variant: 'border-filled', iconName: 'utility:filterList' }
+                ]
+            }
+        ];
     }
 
     get _canAdvance() {
-        if (this.currentStep === STEPS.INIT) return this.initCompleted;
-        if (this.currentStep === STEPS.SELECTION) return this.cartItems.length > 0;
+        if (this.currentStep.key === STEPS.SELECTION.key) return this.cartItems.length > 0;
         return true;
     }
 
-    /* -- progress bar -- */
-    get stepList() {
-        return STEP_META.map(s => ({
-            value: s.value,
-            label: s.label
-        }));
+    /* -- sidebar -- */
+    get sidebarClass() {
+        return this.isSidebarOpen ? 'cpq-sidebar is-open' : 'cpq-sidebar is-closed';
+    }
+
+    get sidebarTitle() {
+        if (this.currentStep.key === STEPS.SELECTION.key) return 'Categories';
+        if (this.currentStep.key === STEPS.CONFIGURE.key) return 'Bundles';
+        if (this.currentStep.key === STEPS.LINE_EDITOR.key) return 'Lines';
+        return 'Details';
+    }
+
+    get sidebarToggleIcon() {
+        return this.isSidebarOpen ? 'utility:chevronleft' : 'utility:chevronright';
+    }
+
+    get sidebarLeverLabel() {
+        return (this._stepMeta.label || '').toUpperCase();
     }
 
     /* -- cart helpers -- */
     get cartCount() { return this.cartItems.length; }
 
     get isCartVisible() {
-        return this.currentStep !== STEPS.INIT && this.currentStep !== STEPS.LOGISTICS && this.currentStep !== STEPS.REVIEW;
+        return this.currentStep.key !== STEPS.LOGISTICS.key && this.currentStep.key !== STEPS.REVIEW.key;
     }
 
     get showMiniCart() {
@@ -136,42 +218,22 @@ export default class CpqConfigurator extends LightningElement {
         return this.toastVariant === 'error' ? 'utility:error' : 'utility:success';
     }
 
-    /* ═══════════════════════════════════════════════
-       EVENT HANDLERS
-       ═══════════════════════════════════════════════ */
-
     /* -- header actions -- */
     handleHeaderAction(event) {
-        const action = event.detail.value;
+        const action = event.detail.action;
         if (action === 'back') this._goBack();
         else if (action === 'next') this._goNext();
         else if (action === 'save') this._triggerSave();
+        else if (action === 'cancel') this._showToast('Configuration cancelled', 'error');
+        else this._showToast(`Action: ${action}`, 'success');
     }
 
-    /* -- progress bar click -- */
-    handleStepNavigate(event) {
-        const targetStep = event.detail.value;
-        const targetIdx = STEP_META.findIndex(s => s.value === targetStep);
-        const currentIdx = STEP_META.findIndex(s => s.value === this.currentStep);
-        if (targetIdx <= currentIdx) {
-            if (targetStep === STEPS.INIT || this.initCompleted) {
-                this.currentStep = targetStep;
-            }
-        }
+    toggleSidebar() {
+        this.isSidebarOpen = !this.isSidebarOpen;
     }
+
 
     /* -- Step 1 events -- */
-    handleQuoteStateChange(event) {
-        this.quoteState = deepClone(event.detail.quoteState);
-    }
-
-    handleInitComplete(event) {
-        this.quoteState = deepClone(event.detail.quoteState);
-        this.initCompleted = true;
-        this._goNext();
-    }
-
-    /* -- Step 2 events -- */
     handleProductAdd(event) {
         const product = deepClone(event.detail.cartItem);
         const discount = this.quoteState.additionalDiscountPercent || 0;
@@ -268,16 +330,16 @@ export default class CpqConfigurator extends LightningElement {
        ═══════════════════════════════════════════════ */
 
     _goNext() {
-        const idx = STEP_META.findIndex(s => s.value === this.currentStep);
-        if (idx < STEP_META.length - 1 && this._canAdvance) {
-            this.currentStep = STEP_META[idx + 1].value;
+        const idx = STEP_LIST.findIndex(s => s.key === this.currentStep.key);
+        if (idx < STEP_LIST.length - 1 && this._canAdvance) {
+            this.currentStep = STEP_LIST[idx + 1];
         }
     }
 
     _goBack() {
-        const idx = STEP_META.findIndex(s => s.value === this.currentStep);
+        const idx = STEP_LIST.findIndex(s => s.key === this.currentStep.key);
         if (idx > 0) {
-            this.currentStep = STEP_META[idx - 1].value;
+            this.currentStep = STEP_LIST[idx - 1];
         }
     }
 
