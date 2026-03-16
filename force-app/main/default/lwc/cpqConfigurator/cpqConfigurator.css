@@ -1,6 +1,6 @@
 /* ═══════════════════════════════════════════════════
    CPQ Edit Lines – Full-Bleed Native Interface
-   CRITICAL: All border-radius forced to 0 for flat design
+   NOTE: Reset styles handled by OpportunityLineConfiguratorLauncher
    ═══════════════════════════════════════════════════ */
 
 :host {
@@ -8,23 +8,6 @@
     flex-direction: column !important;
     height: 100vh !important;
     width: 100% !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    /* Force SLDS/Lightning default spacing to zero */
-    --slds-c-card-spacing-block-start: 0 !important;
-    --slds-c-card-spacing-block-end: 0 !important;
-    --slds-c-card-spacing-inline-start: 0 !important;
-    --slds-c-card-spacing-inline-end: 0 !important;
-    --slds-c-button-radius-border: 0px !important;
-    --slds-g-radius-border-1: 0px !important;
-    --slds-g-radius-border-2: 0px !important;
-    background-color: #ffffff !important;
-    box-shadow: none !important;
-    border-radius: 0 !important;
-}
-
-:host * {
-    border-radius: 0 !important;
 }
 
 /* ═══════════════════════════════════════════════════
@@ -36,11 +19,6 @@
     flex-direction: column !important;
     height: 100vh !important;
     width: 100% !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    background-color: #ffffff !important;
-    box-shadow: none !important;
-    border-radius: 0 !important;
 }
 
 /* ═══════════════════════════════════════════════════
@@ -52,9 +30,6 @@
     flex: 1 1 auto !important;
     min-height: 0 !important;
     width: 100% !important;
-    background-color: #ffffff !important;
-    box-shadow: none !important;
-    border-radius: 0 !important;
 }
 
 /* ═══════════════════════════════════════════════════
@@ -66,14 +41,9 @@
     width: 260px !important;
     min-width: 260px !important;
     max-width: 260px !important;
-    background-color: #ffffff !important;
     border-right: 1px solid #dddbda !important;
     overflow: hidden !important;
     transition: flex 0.3s ease-in-out, width 0.3s ease-in-out, min-width 0.3s ease-in-out, max-width 0.3s ease-in-out !important;
-    box-shadow: none !important;
-    border-radius: 0 !important;
-    margin: 0 !important;
-    padding: 0 !important;
 }
 
 .cpq-sidebar.is-closed {
@@ -170,12 +140,7 @@
     min-width: 0 !important;
     width: 100% !important;
     height: 100% !important;
-    background-color: #ffffff !important;
     overflow: hidden !important;
-    box-shadow: none !important;
-    border-radius: 0 !important;
-    margin: 0 !important;
-    padding: 0 !important;
     display: flex !important;
     flex-direction: column !important;
 }
@@ -183,10 +148,6 @@
 /* ═══════════════════════════════════════════════════
    CONTENT & COMPONENTS
    ═══════════════════════════════════════════════════ */
-
-.cpq-app-main * {
-    border-radius: 0 !important;
-}
 
 /* Mini-Cart (Floating Side Panel) */
 .mini-cart {

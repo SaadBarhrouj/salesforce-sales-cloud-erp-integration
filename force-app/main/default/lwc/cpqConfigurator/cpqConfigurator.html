@@ -1,7 +1,6 @@
 <template>
-    <!-- GLOBAL WRAPPER: 100vh full height, 100% width flex column -->
     <div class="cpq-app-wrapper">
-        <!-- HEADER: Full-width action bar -->
+        <!-- Page Header -->
         <c-cpq-sticky-header
             top-label={headerTopLabel}
             title={headerTitle}
@@ -9,6 +8,9 @@
             icon-name={headerIcon}
             step-actions={headerStepActions}
             global-actions={headerGlobalActions}
+            metadata-items={headerMetadata}
+            show-search={headerShowSearch}
+            search-placeholder={headerSearchPlaceholder}
             onheaderaction={handleHeaderAction}
         ></c-cpq-sticky-header>
 

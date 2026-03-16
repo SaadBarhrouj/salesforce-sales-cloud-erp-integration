@@ -5,17 +5,25 @@
 
 /* ─── Wizard Steps ─── */
 export const STEPS = Object.freeze({
-    INIT:        { number: 1, key: 'init',       label: 'Quote Setup',       icon: 'standard:contract' },
-    SELECTION:   { number: 2, key: 'selection',   label: 'Product Selection', icon: 'standard:product' },
-    CONFIGURE:   { number: 3, key: 'configure',   label: 'Configure Products',icon: 'standard:settings' },
-    LINE_EDITOR: { number: 4, key: 'lineEditor',  label: 'Edit Quote Lines',  icon: 'standard:quote_line_item' },
-    LOGISTICS:   { number: 5, key: 'logistics',   label: 'Logistics',         icon: 'standard:shipment' },
-    REVIEW:      { number: 6, key: 'review',     label: 'Review & Save',     icon: 'standard:task' }
+    SELECTION:   { number: 1, key: 'selection',   label: 'Product Selection', icon: 'standard:product' },
+    CONFIGURE:   { number: 2, key: 'configure',   label: 'Configure Products',icon: 'standard:settings' },
+    LINE_EDITOR: { number: 3, key: 'lineEditor',  label: 'Edit Quote Lines',  icon: 'standard:quote_line_item' },
+    LOGISTICS:   { number: 4, key: 'logistics',   label: 'Logistics',         icon: 'standard:shipment' },
+    REVIEW:      { number: 5, key: 'review',     label: 'Review & Save',     icon: 'standard:task' }
 });
 
 export const STEP_LIST = Object.freeze(
     Object.values(STEPS).sort((a, b) => a.number - b.number)
 );
+
+/* ─── Step Metadata (Header & UI Labels) ─── */
+export const STEP_META = Object.freeze({
+    [STEPS.SELECTION.key]: { label: 'Product Selection', icon: 'standard:product', subtitle: 'Select and configure products' },
+    [STEPS.CONFIGURE.key]: { label: 'Bundle Configuration', icon: 'standard:bundle_policy', subtitle: 'Configure bundles and options' },
+    [STEPS.LINE_EDITOR.key]: { label: 'Line Editor', icon: 'standard:order_item', subtitle: 'Review and adjust line items' },
+    [STEPS.LOGISTICS.key]: { label: 'Logistics', icon: 'standard:shipment', subtitle: 'Delivery options' },
+    [STEPS.REVIEW.key]: { label: 'Review & Save', icon: 'standard:task', subtitle: 'Verify everything before saving' }
+});
 
 /* ─── Option Types (Bundle_Option__c.Option_Type__c) ─── */
 export const OPTION_TYPES = Object.freeze({

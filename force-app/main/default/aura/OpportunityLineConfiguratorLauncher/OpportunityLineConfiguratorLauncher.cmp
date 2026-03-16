@@ -6,6 +6,8 @@
 
     <aura:handler name="change" value="{!v.pageReference}" action="{!c.onPageReferenceChange}" />
 
-    <c:cpqConfigurator recordId="{!v.recordId}" />
+    <div class="full-bleed-container">
+        <c:cpqConfigurator recordId="{!v.recordId}" />
+    </div>
 
 </aura:component>
