@@ -19,24 +19,7 @@
         <!-- Right panel: Products grid + search -->
         <div class="slds-col slds-size_9-of-12">
             <div class="slds-card slds-card_boundary">
-                <!-- Search bar -->
-                <div class="slds-card__header">
-                    <lightning-layout vertical-align="center">
-                        <lightning-layout-item flexibility="grow">
-                            <lightning-input
-                                type="search"
-                                label="Search products"
-                                variant="label-hidden"
-                                placeholder="Search by name, code, or family..."
-                                value={searchTerm}
-                                onchange={handleSearchInput}
-                            ></lightning-input>
-                        </lightning-layout-item>
-                        <lightning-layout-item class="slds-p-left_small">
-                            <span class="slds-badge slds-badge_inverse">{cartCountLabel}</span>
-                        </lightning-layout-item>
-                    </lightning-layout>
-                </div>
+                
 
                 <!-- Products list -->
                 <div class="slds-card__body slds-card__body_inner">
