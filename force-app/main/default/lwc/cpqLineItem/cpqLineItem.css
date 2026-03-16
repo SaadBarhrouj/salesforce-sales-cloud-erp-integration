@@ -1,0 +1,15 @@
+.product-row {
+    background-color: var(--slds-g-color-neutral-base-100, #ffffff);
+}
+
+.option-child-row {
+    background-color: var(--slds-g-color-neutral-base-95, #f3f3f3);
+}
+
+.qty-field {
+    max-width: 80px;
+}
+
+.disc-field {
+    max-width: 80px;
+}

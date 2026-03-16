@@ -1,0 +1,97 @@
+/* ═══════════════════════════════════════════════════
+   cpqConfigurator – Parent Orchestrator
+   SLDS 2.0 Cosmos – styling-hooks only
+   ═══════════════════════════════════════════════════ */
+
+:host {
+    display: block;
+    position: relative;
+    min-height: 100vh;
+    background: var(--slds-g-color-neutral-base-95, #f3f3f3);
+}
+
+/* ── Step Container ───────────────────────────── */
+.step-container {
+    max-width: 1280px;
+    margin-inline: auto;
+    animation: fadeSlide 0.25s ease-out;
+}
+
+@keyframes fadeSlide {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Mini-Cart (Floating Side Panel) ──────────── */
+.mini-cart {
+    position: fixed;
+    right: var(--slds-g-spacing-4, 1rem);
+    bottom: 5.5rem;
+    width: 280px;
+    max-height: 380px;
+    border-radius: var(--slds-g-radius-border-2, 0.5rem);
+    box-shadow: var(--slds-g-shadow-2, 0 2px 8px rgba(0,0,0,0.16));
+    z-index: 8000;
+    overflow: hidden;
+}
+
+.mini-cart-header {
+    background: var(--slds-g-color-brand-base-50, #0176d3);
+    color: var(--slds-g-color-on-brand, #fff);
+}
+
+.mini-cart-header lightning-button-icon {
+    --slds-c-button-icon-color-foreground: var(--slds-g-color-on-brand, #fff);
+}
+
+.mini-cart-body {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+/* ── Cart FAB ─────────────────────────────────── */
+.mini-cart-fab {
+    position: fixed;
+    right: var(--slds-g-spacing-4, 1rem);
+    bottom: var(--slds-g-spacing-4, 1rem);
+    z-index: 8001;
+}
+
+.mini-cart-fab lightning-button-icon {
+    --slds-c-button-icon-sizing-border-radius: 50%;
+}
+
+.cart-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    min-width: 20px;
+    height: 20px;
+    line-height: 20px;
+    text-align: center;
+    font-size: var(--slds-g-font-scale-neg-2, 0.6875rem);
+    font-weight: var(--slds-g-font-weight-7, 700);
+    color: var(--slds-g-color-on-error, #fff);
+    background: var(--slds-g-color-error-base-40, #ea001e);
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+/* ── Toast Bar ────────────────────────────────── */
+.toast-bar {
+    position: fixed;
+    bottom: var(--slds-g-spacing-4, 1rem);
+    left: 50%;
+    transform: translateX(-50%);
+    min-width: 320px;
+    max-width: 560px;
+    padding: var(--slds-g-spacing-3, 0.75rem) var(--slds-g-spacing-4, 1rem);
+    border-radius: var(--slds-g-radius-border-2, 0.5rem);
+    z-index: 9100;
+    animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+    from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+    to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}

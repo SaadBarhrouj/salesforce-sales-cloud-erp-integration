@@ -1,0 +1,91 @@
+<template>
+    <!-- Main row -->
+    <tr class={rowClass}>
+        <td class="slds-cell-wrap" data-label="Select">
+            <lightning-input
+                lwc:if={isMultiSelect}
+                type="checkbox"
+                checked={option.isSelected}
+                disabled={option.Is_Required__c}
+                label="Select"
+                variant="label-hidden"
+                onchange={handleSelectionChange}
+            ></lightning-input>
+            <lightning-input
+                lwc:if={isSingleSelect}
+                type="radio"
+                name={radioGroupName}
+                checked={option.isSelected}
+                label="Select"
+                variant="label-hidden"
+                onchange={handleSelectionChange}
+            ></lightning-input>
+        </td>
+        <td data-label="Quantity">
+            <lightning-input
+                lwc:if={isQuantityEditable}
+                type="number"
+                value={option.quantity}
+                min={option.Min_Quantity__c}
+                max={option.Max_Quantity__c}
+                step="1"
+                label="Qty"
+                variant="label-hidden"
+                class="qty-input"
+                onchange={handleQuantityChange}
+            ></lightning-input>
+            <span lwc:else>{formattedQuantity}</span>
+        </td>
+        <td data-label="Product Code">
+            <span class="slds-text-body_small">{option.productCode}</span>
+        </td>
+        <td data-label="Product Name">{option.productName}</td>
+        <td data-label="Description">
+            <span class="slds-truncate slds-text-body_small" title={option.productDescription}>{option.productDescription}</span>
+        </td>
+        <td data-label="Unit Price" class="slds-text-align_right">{formattedPrice}</td>
+        <td class="slds-text-align_center">
+            <lightning-button-icon
+                icon-name={expandIcon}
+                variant="bare"
+                size="small"
+                alternative-text="Toggle details"
+                onclick={handleExpandToggle}
+            ></lightning-button-icon>
+        </td>
+    </tr>
+
+    <!-- Expandable detail row -->
+    <tr lwc:if={isExpanded} class="detail-row">
+        <td colspan="7">
+            <div class="slds-p-around_small slds-box slds-box_x-small detail-content">
+                <lightning-layout multiple-rows>
+                    <lightning-layout-item size="4" padding="horizontal-small">
+                        <dl class="slds-dl_horizontal">
+                            <dt class="slds-dl_horizontal__label">Type:</dt>
+                            <dd class="slds-dl_horizontal__detail">{option.Option_Type__c}</dd>
+                            <dt class="slds-dl_horizontal__label">Family:</dt>
+                            <dd class="slds-dl_horizontal__detail">{option.family}</dd>
+                        </dl>
+                    </lightning-layout-item>
+                    <lightning-layout-item size="4" padding="horizontal-small">
+                        <dl class="slds-dl_horizontal">
+                            <dt class="slds-dl_horizontal__label">Min Qty:</dt>
+                            <dd class="slds-dl_horizontal__detail">{option.Min_Quantity__c}</dd>
+                            <dt class="slds-dl_horizontal__label">Max Qty:</dt>
+                            <dd class="slds-dl_horizontal__detail">{option.Max_Quantity__c}</dd>
+                        </dl>
+                    </lightning-layout-item>
+                    <lightning-layout-item size="4" padding="horizontal-small">
+                        <dl class="slds-dl_horizontal">
+                            <dt class="slds-dl_horizontal__label">Weight:</dt>
+                            <dd class="slds-dl_horizontal__detail">{formattedWeight} kg</dd>
+                            <dt class="slds-dl_horizontal__label">Required:</dt>
+                            <dd class="slds-dl_horizontal__detail">{requiredLabel}</dd>
+                        </dl>
+                    </lightning-layout-item>
+                </lightning-layout>
+            </div>
+        </td>
+    </tr>
+</template>

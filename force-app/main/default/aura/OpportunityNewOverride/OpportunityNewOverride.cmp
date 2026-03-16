@@ -1,0 +1,3 @@
+<aura:component implements="lightning:actionOverride,flexipage:availableForAllPageTypes" access="global">
+    <c:cpqConfigurator />
+</aura:component>

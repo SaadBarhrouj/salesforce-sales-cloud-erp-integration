@@ -1,0 +1,120 @@
+<template>
+    <div class="slds-card slds-p-around_medium">
+        <h2 class="slds-text-heading_medium slds-m-bottom_medium">Quote Information</h2>
+
+        <lightning-layout multiple-rows>
+            <!-- Account -->
+            <lightning-layout-item size="12" medium-device-size="6" padding="around-small">
+                <lightning-combobox
+                    label="Account"
+                    value={selectedAccountId}
+                    options={accountOptions}
+                    placeholder="Select an Account"
+                    required
+                    onchange={handleAccountChange}
+                ></lightning-combobox>
+            </lightning-layout-item>
+
+            <!-- Contact -->
+            <lightning-layout-item size="12" medium-device-size="6" padding="around-small">
+                <lightning-combobox
+                    label="Contact"
+                    value={selectedContactId}
+                    options={contactOptions}
+                    placeholder="Select a Contact"
+                    required
+                    disabled={isContactDisabled}
+                    onchange={handleContactChange}
+                ></lightning-combobox>
+            </lightning-layout-item>
+
+            <!-- Catalog -->
+            <lightning-layout-item size="12" medium-device-size="6" padding="around-small">
+                <lightning-combobox
+                    label="Catalog"
+                    value={selectedCatalogId}
+                    options={catalogOptions}
+                    placeholder="Select a Catalog"
+                    required
+                    onchange={handleCatalogChange}
+                ></lightning-combobox>
+            </lightning-layout-item>
+
+            <!-- Start Date -->
+            <lightning-layout-item size="12" medium-device-size="6" padding="around-small">
+                <lightning-input
+                    type="date"
+                    label="Start Date"
+                    value={startDate}
+                    required
+                    onchange={handleDateChange}
+                ></lightning-input>
+            </lightning-layout-item>
+
+            <!-- Subscription Term -->
+            <lightning-layout-item size="12" medium-device-size="6" padding="around-small">
+                <lightning-input
+                    type="number"
+                    label="Subscription Term (months)"
+                    value={subscriptionTerm}
+                    min="1"
+                    max="120"
+                    field-level-help="Duration in months for subscription products."
+                    onchange={handleTermChange}
+                ></lightning-input>
+            </lightning-layout-item>
+
+            <!-- Additional Discount -->
+            <lightning-layout-item size="12" medium-device-size="6" padding="around-small">
+                <lightning-input
+                    type="number"
+                    label="Additional Discount (%)"
+                    value={additionalDiscountPercent}
+                    min="0"
+                    max="100"
+                    step="0.5"
+                    field-level-help="Global additional discount applied to all line items."
+                    onchange={handleGlobalDiscountChange}
+                ></lightning-input>
+            </lightning-layout-item>
+        </lightning-layout>
+
+        <!-- Account Details Preview -->
+        <div lwc:if={hasAccountDetails} class="slds-m-top_medium slds-box slds-box_x-small slds-theme_shade">
+            <h3 class="slds-text-title_caps slds-m-bottom_x-small">Account Details</h3>
+            <lightning-layout>
+                <lightning-layout-item size="4">
+                    <dl class="slds-dl_horizontal slds-dl_horizontal_small">
+                        <dt class="slds-dl_horizontal__label">Industry:</dt>
+                        <dd class="slds-dl_horizontal__detail">{accountDetails.Industry}</dd>
+                    </dl>
+                </lightning-layout-item>
+                <lightning-layout-item size="4">
+                    <dl class="slds-dl_horizontal slds-dl_horizontal_small">
+                        <dt class="slds-dl_horizontal__label">Priority:</dt>
+                        <dd class="slds-dl_horizontal__detail">{accountDetails.CustomerPriority__c}</dd>
+                    </dl>
+                </lightning-layout-item>
+                <lightning-layout-item size="4">
+                    <dl class="slds-dl_horizontal slds-dl_horizontal_small">
+                        <dt class="slds-dl_horizontal__label">Locations:</dt>
+                        <dd class="slds-dl_horizontal__detail">{accountDetails.NumberofLocations__c}</dd>
+                    </dl>
+                </lightning-layout-item>
+            </lightning-layout>
+        </div>
+
+        <!-- Navigation -->
+        <div class="slds-m-top_large slds-clearfix">
+            <lightning-button
+                label="Next: Select Products"
+                variant="brand"
+                icon-name="utility:forward"
+                icon-position="right"
+                class="slds-float_right"
+                disabled={isNextDisabled}
+                onclick={handleNext}
+            ></lightning-button>
+        </div>
+    </div>
+</template>

@@ -1,0 +1,83 @@
+<template>
+    <!-- Parent product row -->
+    <tr class="slds-hint-parent product-row">
+        <td data-label="#">{lineNumber}</td>
+        <td data-label="Product Code">
+            <span class="slds-text-body_regular slds-text-title_bold">{item.productCode}</span>
+        </td>
+        <td data-label="Product Name">
+            <span class="slds-text-body_regular">{item.productName}</span>
+            <lightning-icon lwc:if={item.isBundle} icon-name="utility:package" size="xx-small" class="slds-m-left_xx-small" alternative-text="Bundle"></lightning-icon>
+        </td>
+        <td data-label="Quantity">
+            <lightning-input
+                type="number"
+                value={item.quantity}
+                min="1"
+                step="1"
+                label="Qty"
+                variant="label-hidden"
+                class="qty-field"
+                onchange={handleQuantityChange}
+            ></lightning-input>
+        </td>
+        <td data-label="List Unit Price" class="slds-text-align_right">{formattedListPrice}</td>
+        <td data-label="Additional Disc.">
+            <lightning-input
+                type="number"
+                value={item.additionalDiscount}
+                min="0"
+                max="100"
+                step="0.5"
+                label="Discount"
+                variant="label-hidden"
+                formatter="percent-fixed"
+                class="disc-field"
+                onchange={handleDiscountChange}
+            ></lightning-input>
+        </td>
+        <td data-label="Net Unit Price" class="slds-text-align_right">{formattedNetPrice}</td>
+        <td data-label="Net Total" class="slds-text-align_right slds-text-title_bold">{formattedNetTotal}</td>
+        <td class="slds-text-align_center">
+            <lightning-button-icon
+                icon-name="utility:delete"
+                variant="bare"
+                size="small"
+                alternative-text="Remove product"
+                onclick={handleRemove}
+            ></lightning-button-icon>
+        </td>
+    </tr>
+
+    <!-- Option child rows -->
+    <template for:each={selectedOptions} for:item="opt">
+        <tr key={opt.Id} class="slds-hint-parent option-child-row">
+            <td></td>
+            <td data-label="Product Code" class="slds-text-color_weak">
+                <span class="slds-p-left_medium">{opt.productCode}</span>
+            </td>
+            <td data-label="Product Name" class="slds-text-color_weak">{opt.productName}</td>
+            <td data-label="Quantity">
+                <lightning-input
+                    lwc:if={opt.Quantity_Editable__c}
+                    type="number"
+                    value={opt.quantity}
+                    min={opt.Min_Quantity__c}
+                    max={opt.Max_Quantity__c}
+                    step="1"
+                    label="Qty"
+                    variant="label-hidden"
+                    class="qty-field"
+                    data-option-id={opt.Id}
+                    onchange={handleOptionQuantityChange}
+                ></lightning-input>
+                <span lwc:else>{opt.quantity}</span>
+            </td>
+            <td data-label="List Unit Price" class="slds-text-align_right slds-text-color_weak">{opt.formattedListPrice}</td>
+            <td data-label="Disc."></td>
+            <td data-label="Net Unit Price" class="slds-text-align_right slds-text-color_weak">{opt.formattedNetPrice}</td>
+            <td data-label="Net Total" class="slds-text-align_right slds-text-color_weak">{opt.formattedNetTotal}</td>
+            <td></td>
+        </tr>
+    </template>
+</template>
