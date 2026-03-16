@@ -1,13 +1,86 @@
 :host {
-    display: block;
-    position: sticky;
-    top: 0;
-    z-index: 100;
+    display: block !important;
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 200 !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    --slds-c-button-radius-border: 0px !important;
+    --slds-c-button-neutral-color-background: #ffffff !important;
+    --slds-c-button-neutral-color-border: #c9c9c9 !important;
+    --slds-c-button-text-color: #0176d3 !important;
+}
+
+:host * {
+    border-radius: 0 !important;
+    box-shadow: none !important;
 }
 
 .cpq-header {
-    background-color: var(--slds-g-color-neutral-base-95, #f3f3f3);
-    border-bottom: var(--slds-g-sizing-border-1, 1px) solid var(--slds-g-color-border-base-1, #e5e5e5);
-    padding-inline: var(--slds-g-spacing-4, 1rem);
-    padding-block: var(--slds-g-spacing-3, 0.75rem);
+    background-color: #ffffff !important;
+    border-bottom: 1px solid #dddbda !important;
+    padding: 1rem !important;
+    border-radius: 0 !important;
+    width: 100% !important;
+    box-shadow: none !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+}
+
+.cpq-header__row {
+    display: flex !important;
+    align-items: center !important;
+    gap: 1rem !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.cpq-header__left {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 1rem !important;
+}
+
+.cpq-header__topline {
+    font-size: 0.75rem !important;
+    color: #666666 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.06em !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    font-weight: 600 !important;
+}
+
+.cpq-header__right {
+    flex: 0 0 auto !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.cpq-header .slds-button-group-list {
+    margin: 0 !important;
+    padding: 0 !important;
+    display: flex !important;
+    gap: 0.5rem !important;
+}
+
+.cpq-header .slds-button-group-list li {
+    margin: 0 !important;
+    padding: 0 !important;
+    list-style: none !important;
+}
+
+.cpq-header lightning-button {
+    border-radius: 0 !important;
+}
+
+.cpq-header .slds-page-header {
+    border-radius: 0 !important;
 }

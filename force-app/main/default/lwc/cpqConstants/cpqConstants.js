@@ -101,3 +101,43 @@ export const EVENTS = Object.freeze({
     CATEGORY_SELECT:   'categoryselect',
     SEARCH:            'search'
 });
+
+/* ─── Empty State Illustrations ─── */
+export const ILLUSTRATIONS = Object.freeze({
+    // Access Related
+    ACCESS_DELETED:       { name: 'access:deleted',         label: 'Deleted Access',        description: 'A cocoon or chrysalis' },
+    ACCESS_LIMIT:         { name: 'access:limit',           label: 'Access Limit',          description: 'An extinguished candle' },
+    ACCESS_REQUEST:       { name: 'access:request',         label: 'Access Request',        description: 'A locked padlock' },
+
+    // Cart Related
+    CART_NO_ITEMS:        { name: 'cart:noitems',           label: 'No Items in Cart',      description: 'An empty shopping bag' },
+
+    // Error Related
+    ERROR_APP_CONNECTION: { name: 'error:appconnection',    label: 'App Connection Error',  description: 'A stylized balloon' },
+    ERROR_CONNECTION_ISSUE: { name: 'error:connectionissue', label: 'Connection Issue',     description: 'An unplugged electrical plug' },
+    ERROR_RECOVERABLE:    { name: 'error:recoverable',      label: 'Recoverable Error',     description: 'A wilting plant' },
+    ERROR_UNRECOVERABLE:  { name: 'error:unrecoverable',    label: 'Unrecoverable Error',   description: 'A rain cloud' },
+
+    // Maintenance Related
+    MAINTENANCE_PLANNED:  { name: 'maintenance:planned',    label: 'Planned Maintenance',   description: 'A healthy plant' },
+    MAINTENANCE_UNPLANNED: { name: 'maintenance:unplanned', label: 'Unplanned Maintenance', description: 'A boomerang' },
+
+    // No Results Related
+    NORESULTS_FILTER:     { name: 'noresults:filter',       label: 'No Results - Filter',   description: 'Three plants, the tallest bending to the sun' },
+    NORESULTS_SEARCH:     { name: 'noresults:search',       label: 'No Results - Search',   description: 'A telescope pointing away from the sky' },
+    NORESULTS_UNKNOWN:    { name: 'noresults:unknown',      label: 'No Results - Unknown',  description: 'Mountains and clouds' },
+
+    // Success Related
+    SUCCESS_ASSIGNED:     { name: 'success:assigned',       label: 'Successfully Assigned', description: 'Umbrella planted on a beach' },
+    SUCCESS_NEW:          { name: 'success:new',            label: 'Success - New',         description: 'A zen sand garden' },
+    SUCCESS_SELF_ASSIGNED: { name: 'success:selfassigned',  label: 'Self Assigned',         description: 'A flag planted on a hill' }
+});
+
+/**
+ * Get illustration by key
+ * @param {string} key - Illustration key (e.g., 'CART_NO_ITEMS')
+ * @returns {Object} Illustration object with name, label, and description
+ */
+export const getIllustration = (key) => {
+    return ILLUSTRATIONS[key] || ILLUSTRATIONS.NORESULTS_UNKNOWN;
+};

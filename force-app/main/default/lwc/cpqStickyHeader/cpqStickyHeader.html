@@ -1,12 +1,13 @@
 <template>
     <header class="cpq-header slds-page-header slds-page-header_joined">
-        <div class="slds-page-header__row">
-            <div class="slds-page-header__col-title">
+        <div class="cpq-header__row">
+            <div class="cpq-header__left">
                 <div class="slds-media">
                     <div class="slds-media__figure" lwc:if={iconName}>
                         <lightning-icon icon-name={iconName} size="medium"></lightning-icon>
                     </div>
                     <div class="slds-media__body">
+                        <p class="cpq-header__topline slds-truncate" lwc:if={topLabel}>{topLabel}</p>
                         <div class="slds-page-header__name">
                             <div class="slds-page-header__name-title">
                                 <h1>
@@ -18,25 +19,34 @@
                     </div>
                 </div>
             </div>
-            <div class="slds-page-header__col-actions">
-                <div class="slds-page-header__controls">
-                    <div class="slds-page-header__control">
-                        <ul class="slds-button-group-list">
-                            <template for:each={actions} for:item="action">
-                                <li key={action.name}>
-                                    <lightning-button
-                                        label={action.label}
-                                        variant={action.variant}
-                                        icon-name={action.iconName}
-                                        disabled={action.disabled}
-                                        data-action={action.name}
-                                        onclick={handleAction}
-                                    ></lightning-button>
-                                </li>
-                            </template>
-                        </ul>
-                    </div>
-                </div>
+
+            <div class="cpq-header__right">
+                <ul class="slds-button-group-list">
+                    <template for:each={stepActions} for:item="action">
+                        <li key={action.name}>
+                            <lightning-button
+                                label={action.label}
+                                variant={action.variant}
+                                icon-name={action.iconName}
+                                disabled={action.disabled}
+                                data-action={action.name}
+                                onclick={handleAction}
+                            ></lightning-button>
+                        </li>
+                    </template>
+                    <template for:each={globalActions} for:item="action">
+                        <li key={action.name}>
+                            <lightning-button
+                                label={action.label}
+                                variant={action.variant}
+                                icon-name={action.iconName}
+                                disabled={action.disabled}
+                                data-action={action.name}
+                                onclick={handleAction}
+                            ></lightning-button>
+                        </li>
+                    </template>
+                </ul>
             </div>
         </div>
     </header>

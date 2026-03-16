@@ -1,0 +1,195 @@
+<template>
+  <!-- Main Card Container -->
+  <div class="slds-tabs_card">
+
+    <!-- Page Header -->
+    <div class="slds-page-header">
+
+      <!-- ========== ROW 1: TITLE & PRIMARY ACTIONS ========== -->
+      <div class="slds-page-header__row">
+
+        <!-- LEFT: TITLE SECTION -->
+        <div class="slds-page-header__col-title">
+          <div class="slds-media">
+
+            <!-- Icon -->
+            <div class="slds-media__figure">
+              <lightning-icon
+                icon-name="standard:product"
+                size="medium"
+                alternative-text="Product Selection">
+              </lightning-icon>
+            </div>
+
+            <!-- Title Content -->
+            <div class="slds-media__body">
+              <div class="slds-page-header__name">
+                <div class="slds-page-header__name-title">
+                  <h1>
+                    <span>Opp-00000008</span>
+                    <span class="slds-page-header__title slds-truncate" title="Product Selection">
+                      Product Selection
+                    </span>
+                  </h1>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- RIGHT: PRIMARY ACTIONS -->
+        <div class="slds-page-header__col-actions">
+          <div class="slds-page-header__controls">
+            <div class="slds-page-header__control">
+              <lightning-button-group>
+                <lightning-button label="Add Product" variant="neutral"></lightning-button>
+                <lightning-button label="Save" variant="neutral"></lightning-button>
+                <lightning-button-icon
+                  icon-name="utility:down"
+                  title="More Actions"
+                  alternative-text="More Actions"
+                  variant="border-filled">
+                </lightning-button-icon>
+              </lightning-button-group>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ========== ROW 2: METADATA, SEARCH & CONTROLS ========== -->
+      <div class="slds-page-header__row">
+
+        <!-- LEFT: METADATA -->
+        <div class="slds-page-header__col-meta">
+          <ul class="slds-list_horizontal slds-has-dividers_right slds-grid_vertical-align-center">
+            <!-- Account -->
+            <li class="slds-item">
+              <lightning-icon
+                icon-name="standard:account"
+                size="xx-small"
+                alternative-text="Account"
+                class="slds-m-right_x-small">
+              </lightning-icon>
+              <a href="#">Express Logistics and Transport</a>
+            </li>
+            <!-- Pricebook -->
+            <li class="slds-item">
+              <lightning-icon
+                icon-name="standard:pricebook"
+                size="xx-small"
+                alternative-text="Pricebook"
+                class="slds-m-right_x-small">
+              </lightning-icon>
+              <a href="#">Standard Pricebook</a>
+            </li>
+            <!-- Offer Type -->
+            <li class="slds-item">
+              <lightning-icon
+                icon-name="standard:category"
+                size="xx-small"
+                alternative-text="Opportunity"
+                class="slds-m-right_xx-small">
+              </lightning-icon>
+              <strong>Offer Type:</strong>
+              <span class="slds-m-left_x-small">Sale</span>
+            </li>
+          </ul>
+        </div>
+
+        <!-- RIGHT: SEARCH & CONTROL BUTTONS (Grouped to the right) -->
+        <div class="slds-grid slds-grid_align-end slds-nowrap">
+
+          <!-- SEARCH -->
+          <div class="slds-m-right_x-small">
+            <lightning-input
+              type="search"
+              placeholder="Search..."
+              variant="label-hidden">
+            </lightning-input>
+          </div>
+
+          <!-- CONTROL BUTTONS -->
+          <div>
+            <div class="slds-page-header__controls">
+
+              <!-- View & List Controls - Settings Menu -->
+              <div class="slds-page-header__control">
+                <lightning-button-menu
+                  icon-name="utility:settings"
+                  title="List View Controls"
+                  alternative-text="List View Controls"
+                  variant="border-filled">
+                </lightning-button-menu>
+              </div>
+              <!-- Table View Menu -->
+              <div class="slds-page-header__control">
+                <lightning-button-menu
+                  icon-name="utility:table"
+                  title="Change view"
+                  alternative-text="Change view"
+                  variant="border-filled">
+                </lightning-button-menu>
+              </div>
+              <div class="slds-page-header__control">
+                <lightning-button-icon
+                  icon-name="utility:edit"
+                  title="Edit List"
+                  alternative-text="Edit List"
+                  variant="border-filled">
+                </lightning-button-icon>
+              </div>
+
+              <!-- Refresh -->
+              <div class="slds-page-header__control">
+                <lightning-button-icon
+                  icon-name="utility:refresh"
+                  title="Refresh List"
+                  alternative-text="Refresh List"
+                  variant="border-filled">
+                </lightning-button-icon>
+              </div>
+
+              <!-- Chart & Filter Group -->
+              <div class="slds-page-header__control">
+                <lightning-button-group>
+                  <lightning-button-icon
+                    icon-name="utility:chart"
+                    title="Charts"
+                    alternative-text="Charts"
+                    variant="border-filled">
+                  </lightning-button-icon>
+                  <lightning-button-icon
+                    icon-name="utility:filterList"
+                    title="Filters"
+                    alternative-text="Filters"
+                    variant="border-filled">
+                  </lightning-button-icon>
+                </lightning-button-group>
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- ========== EMPTY STATE COMPONENT ========== -->
+  <c-empty-state
+    illustration-name="noresults:search"
+    title="No Opportunities Found"
+    description="Try adjusting your search criteria or create a new opportunity."
+    size="small"
+    show-cta-button="true"
+    cta-label="Create New"
+    cta-variant="brand"
+    onctabuttonclick={handleEmptyStateAction}>
+  </c-empty-state>
+
+</template>

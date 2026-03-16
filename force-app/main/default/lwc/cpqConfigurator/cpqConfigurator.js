@@ -1,12 +1,11 @@
 import { LightningElement, api, track } from 'lwc';
-import { STEPS, EVENTS, MESSAGES } from 'c/cpqConstants';
+import { STEPS, MESSAGES } from 'c/cpqConstants';
 import { deepClone, calculateCartSubtotal, calculateCartItemTotal, formatCurrency } from 'c/cpqUtils';
 
 const STEP_META = [
-    { value: STEPS.INIT, label: 'Quote Setup', icon: 'standard:quote', subtitle: 'Configure quote parameters' },
-    { value: STEPS.SELECTION, label: 'Product Selection', icon: 'standard:product', subtitle: 'Choose products for your quote' },
-    { value: STEPS.CONFIGURE, label: 'Bundle Configuration', icon: 'standard:bundle_policy', subtitle: 'Configure bundles & options' },
-    { value: STEPS.LINE_EDITOR, label: 'Line Editor', icon: 'standard:order_item', subtitle: 'Review & adjust line items' },
+    { value: STEPS.SELECTION, label: 'Configure Products', icon: 'standard:product', subtitle: 'Select and configure products' },
+    { value: STEPS.CONFIGURE, label: 'Bundle Configuration', icon: 'standard:bundle_policy', subtitle: 'Configure bundles and options' },
+    { value: STEPS.LINE_EDITOR, label: 'Line Editor', icon: 'standard:order_item', subtitle: 'Review and adjust line items' },
     { value: STEPS.LOGISTICS, label: 'Logistics', icon: 'standard:shipment', subtitle: 'Delivery options' },
     { value: STEPS.REVIEW, label: 'Review & Save', icon: 'standard:task', subtitle: 'Verify everything before saving' }
 ];
@@ -16,11 +15,12 @@ const TOAST_DURATION = 4000;
 export default class CpqConfigurator extends LightningElement {
     @api recordId;
     @api objectApiName;
+    @api opportunityNumber;
 
     /* ── wizard state ─────────────────────────────── */
-    currentStep = STEPS.INIT;
-    initCompleted = false;
+    currentStep = STEPS.SELECTION;
     miniCartOpen = false;
+    @track isSidebarOpen = true;
 
     /* ── domain state ─────────────────────────────── */
     @track quoteState = {
@@ -53,7 +53,6 @@ export default class CpqConfigurator extends LightningElement {
        ═══════════════════════════════════════════════ */
 
     /* -- step booleans -- */
-    get isStepInit() { return this.currentStep === STEPS.INIT; }
     get isStepSelection() { return this.currentStep === STEPS.SELECTION; }
     get isStepConfigure() { return this.currentStep === STEPS.CONFIGURE; }
     get isStepLineEditor() { return this.currentStep === STEPS.LINE_EDITOR; }
@@ -61,47 +60,60 @@ export default class CpqConfigurator extends LightningElement {
     get isStepReview() { return this.currentStep === STEPS.REVIEW; }
 
     /* -- header -- */
+    get headerTopLabel() { return this.opportunityNumber || this.recordId || 'OPP-000000'; }
     get headerTitle() { return this._stepMeta.label; }
-    get headerSubtitle() { return this._stepMeta.subtitle; }
-    get headerIcon() { return this._stepMeta.icon; }
+    get headerSubtitle() { return ''; }
+    get headerIcon() { return 'standard:opportunity'; }
 
     get _stepMeta() {
         return STEP_META.find(s => s.value === this.currentStep) || STEP_META[0];
     }
 
-    get headerActions() {
-        const actions = [];
-        if (this.currentStep !== STEPS.INIT) {
-            actions.push({ label: 'Back', value: 'back', variant: 'neutral', iconName: 'utility:back' });
-        }
-        if (this.currentStep !== STEPS.REVIEW) {
-            actions.push({ label: 'Next', value: 'next', variant: 'brand', iconName: 'utility:forward', disabled: !this._canAdvance });
-        }
-        if (this.currentStep === STEPS.REVIEW) {
-            actions.push({ label: 'Confirm & Save', value: 'save', variant: 'brand', iconName: 'utility:save' });
-        }
-        return actions;
+    get headerStepActions() {
+        return [
+            { name: 'filter', label: 'Filter', variant: 'neutral', iconName: 'utility:filterList' },
+            { name: 'addProducts', label: 'Add Products', variant: 'neutral', iconName: 'utility:add' },
+            { name: 'calculate', label: 'Calculate', variant: 'neutral', iconName: 'utility:moneybag' }
+        ];
+    }
+
+    get headerGlobalActions() {
+        return [
+            { name: 'cancel', label: 'Cancel', variant: 'neutral', iconName: 'utility:close' },
+            { name: 'save', label: 'Save', variant: 'neutral', iconName: 'utility:save', disabled: this.currentStep !== STEPS.REVIEW }
+        ];
     }
 
     get _canAdvance() {
-        if (this.currentStep === STEPS.INIT) return this.initCompleted;
         if (this.currentStep === STEPS.SELECTION) return this.cartItems.length > 0;
         return true;
     }
 
-    /* -- progress bar -- */
-    get stepList() {
-        return STEP_META.map(s => ({
-            value: s.value,
-            label: s.label
-        }));
+    /* -- sidebar -- */
+    get sidebarClass() {
+        return this.isSidebarOpen ? 'cpq-sidebar is-open' : 'cpq-sidebar is-closed';
+    }
+
+    get sidebarTitle() {
+        if (this.currentStep === STEPS.SELECTION) return 'Categories';
+        if (this.currentStep === STEPS.CONFIGURE) return 'Bundles';
+        if (this.currentStep === STEPS.LINE_EDITOR) return 'Lines';
+        return 'Details';
+    }
+
+    get sidebarToggleIcon() {
+        return this.isSidebarOpen ? 'utility:chevronleft' : 'utility:chevronright';
+    }
+
+    get sidebarLeverLabel() {
+        return (this._stepMeta.label || '').toUpperCase();
     }
 
     /* -- cart helpers -- */
     get cartCount() { return this.cartItems.length; }
 
     get isCartVisible() {
-        return this.currentStep !== STEPS.INIT && this.currentStep !== STEPS.LOGISTICS && this.currentStep !== STEPS.REVIEW;
+        return this.currentStep !== STEPS.LOGISTICS && this.currentStep !== STEPS.REVIEW;
     }
 
     get showMiniCart() {
@@ -136,42 +148,22 @@ export default class CpqConfigurator extends LightningElement {
         return this.toastVariant === 'error' ? 'utility:error' : 'utility:success';
     }
 
-    /* ═══════════════════════════════════════════════
-       EVENT HANDLERS
-       ═══════════════════════════════════════════════ */
-
     /* -- header actions -- */
     handleHeaderAction(event) {
-        const action = event.detail.value;
+        const action = event.detail.action;
         if (action === 'back') this._goBack();
         else if (action === 'next') this._goNext();
         else if (action === 'save') this._triggerSave();
+        else if (action === 'cancel') this._showToast('Configuration cancelled', 'error');
+        else this._showToast(`Action: ${action}`, 'success');
     }
 
-    /* -- progress bar click -- */
-    handleStepNavigate(event) {
-        const targetStep = event.detail.value;
-        const targetIdx = STEP_META.findIndex(s => s.value === targetStep);
-        const currentIdx = STEP_META.findIndex(s => s.value === this.currentStep);
-        if (targetIdx <= currentIdx) {
-            if (targetStep === STEPS.INIT || this.initCompleted) {
-                this.currentStep = targetStep;
-            }
-        }
+    toggleSidebar() {
+        this.isSidebarOpen = !this.isSidebarOpen;
     }
+
 
     /* -- Step 1 events -- */
-    handleQuoteStateChange(event) {
-        this.quoteState = deepClone(event.detail.quoteState);
-    }
-
-    handleInitComplete(event) {
-        this.quoteState = deepClone(event.detail.quoteState);
-        this.initCompleted = true;
-        this._goNext();
-    }
-
-    /* -- Step 2 events -- */
     handleProductAdd(event) {
         const product = deepClone(event.detail.cartItem);
         const discount = this.quoteState.additionalDiscountPercent || 0;

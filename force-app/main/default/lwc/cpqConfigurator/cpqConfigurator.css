@@ -1,94 +1,255 @@
 /* ═══════════════════════════════════════════════════
-   cpqConfigurator – Parent Orchestrator
-   SLDS 2.0 Cosmos – styling-hooks only
+   CPQ Edit Lines – Full-Bleed Native Interface
+   CRITICAL: All border-radius forced to 0 for flat design
    ═══════════════════════════════════════════════════ */
 
 :host {
-    display: block;
-    position: relative;
-    min-height: 100vh;
-    background: var(--slds-g-color-neutral-base-95, #f3f3f3);
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100vh !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    /* Force SLDS/Lightning default spacing to zero */
+    --slds-c-card-spacing-block-start: 0 !important;
+    --slds-c-card-spacing-block-end: 0 !important;
+    --slds-c-card-spacing-inline-start: 0 !important;
+    --slds-c-card-spacing-inline-end: 0 !important;
+    --slds-c-button-radius-border: 0px !important;
+    --slds-g-radius-border-1: 0px !important;
+    --slds-g-radius-border-2: 0px !important;
+    background-color: #ffffff !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
 }
 
-/* ── Step Container ───────────────────────────── */
-.step-container {
-    max-width: 1280px;
-    margin-inline: auto;
-    animation: fadeSlide 0.25s ease-out;
+:host * {
+    border-radius: 0 !important;
 }
 
-@keyframes fadeSlide {
-    from { opacity: 0; transform: translateY(8px); }
-    to   { opacity: 1; transform: translateY(0); }
+/* ═══════════════════════════════════════════════════
+   WRAPPER: Main flex container
+   ═══════════════════════════════════════════════════ */
+
+.cpq-app-wrapper {
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100vh !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background-color: #ffffff !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
 }
 
-/* ── Mini-Cart (Floating Side Panel) ──────────── */
+/* ═══════════════════════════════════════════════════
+   BODY: Two-column (Sidebar | Lever | Main)
+   ═══════════════════════════════════════════════════ */
+
+.cpq-app-body {
+    display: flex !important;
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    width: 100% !important;
+    background-color: #ffffff !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+}
+
+/* ═══════════════════════════════════════════════════
+   SIDEBAR: Left column (260px, switches to 0)
+   ═══════════════════════════════════════════════════ */
+
+.cpq-sidebar {
+    flex: 0 0 260px !important;
+    width: 260px !important;
+    min-width: 260px !important;
+    max-width: 260px !important;
+    background-color: #ffffff !important;
+    border-right: 1px solid #dddbda !important;
+    overflow: hidden !important;
+    transition: flex 0.3s ease-in-out, width 0.3s ease-in-out, min-width 0.3s ease-in-out, max-width 0.3s ease-in-out !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.cpq-sidebar.is-closed {
+    flex: 0 0 0 !important;
+    width: 0 !important;
+    min-width: 0 !important;
+    max-width: 0 !important;
+}
+
+.cpq-sidebar-inner {
+    height: 100% !important;
+    overflow-y: auto !important;
+    padding: 1rem !important;
+    box-sizing: border-box !important;
+}
+
+.sidebar-section-label {
+    font-size: 0.75rem !important;
+    font-weight: 700 !important;
+    color: #333333 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.1em !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* ═══════════════════════════════════════════════════
+   LEVER: 24px vertical toggle bar
+   ═══════════════════════════════════════════════════ */
+
+.cpq-sidebar-lever {
+    flex: 0 0 24px !important;
+    width: 24px !important;
+    min-width: 24px !important;
+    max-width: 24px !important;
+    height: 100% !important;
+    background-color: #54698d !important;
+    color: #ffffff !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    cursor: pointer !important;
+    gap: 0.25rem !important;
+    box-shadow: none !important;
+}
+
+.cpq-sidebar-lever:hover {
+    background-color: #465570 !important;
+}
+
+.cpq-sidebar-lever:active {
+    background-color: #3d4a5e !important;
+}
+
+.lever-icon {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex: 0 0 auto !important;
+}
+
+.lever-icon lightning-icon {
+    color: #ffffff !important;
+}
+
+.lever-text {
+    writing-mode: vertical-rl !important;
+    transform: rotate(180deg) !important;
+    text-transform: uppercase !important;
+    font-size: 0.6rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.1em !important;
+    line-height: 1 !important;
+    flex: 1 1 auto !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    color: #ffffff !important;
+    margin: 0 !important;
+    padding: 0.25rem 0 !important;
+}
+
+/* ═══════════════════════════════════════════════════
+   MAIN: Right column (flex-grow)
+   ═══════════════════════════════════════════════════ */
+
+.cpq-app-main {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    background-color: #ffffff !important;
+    overflow: hidden !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+/* ═══════════════════════════════════════════════════
+   CONTENT & COMPONENTS
+   ═══════════════════════════════════════════════════ */
+
+.cpq-app-main * {
+    border-radius: 0 !important;
+}
+
+/* Mini-Cart (Floating Side Panel) */
 .mini-cart {
-    position: fixed;
-    right: var(--slds-g-spacing-4, 1rem);
-    bottom: 5.5rem;
-    width: 280px;
-    max-height: 380px;
-    border-radius: var(--slds-g-radius-border-2, 0.5rem);
-    box-shadow: var(--slds-g-shadow-2, 0 2px 8px rgba(0,0,0,0.16));
-    z-index: 8000;
-    overflow: hidden;
+    position: fixed !important;
+    right: 1rem !important;
+    bottom: 5.5rem !important;
+    width: 280px !important;
+    max-height: 380px !important;
+    border-radius: 0 !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
+    z-index: 8000 !important;
+    overflow: hidden !important;
+    background: #ffffff !important;
 }
 
 .mini-cart-header {
-    background: var(--slds-g-color-brand-base-50, #0176d3);
-    color: var(--slds-g-color-on-brand, #fff);
-}
-
-.mini-cart-header lightning-button-icon {
-    --slds-c-button-icon-color-foreground: var(--slds-g-color-on-brand, #fff);
+    background: #0176d3 !important;
+    color: #ffffff !important;
+    border-radius: 0 !important;
 }
 
 .mini-cart-body {
-    max-height: 300px;
-    overflow-y: auto;
+    max-height: 300px !important;
+    overflow-y: auto !important;
 }
 
-/* ── Cart FAB ─────────────────────────────────── */
+/* Cart FAB */
 .mini-cart-fab {
-    position: fixed;
-    right: var(--slds-g-spacing-4, 1rem);
-    bottom: var(--slds-g-spacing-4, 1rem);
-    z-index: 8001;
-}
-
-.mini-cart-fab lightning-button-icon {
-    --slds-c-button-icon-sizing-border-radius: 50%;
+    position: fixed !important;
+    right: 1rem !important;
+    bottom: 1rem !important;
+    z-index: 8001 !important;
 }
 
 .cart-badge {
-    position: absolute;
-    top: -4px;
-    right: -4px;
-    min-width: 20px;
-    height: 20px;
-    line-height: 20px;
-    text-align: center;
-    font-size: var(--slds-g-font-scale-neg-2, 0.6875rem);
-    font-weight: var(--slds-g-font-weight-7, 700);
-    color: var(--slds-g-color-on-error, #fff);
-    background: var(--slds-g-color-error-base-40, #ea001e);
-    border-radius: 50%;
-    pointer-events: none;
+    position: absolute !important;
+    top: -4px !important;
+    right: -4px !important;
+    min-width: 20px !important;
+    height: 20px !important;
+    line-height: 20px !important;
+    text-align: center !important;
+    font-size: 0.6875rem !important;
+    font-weight: 700 !important;
+    color: #ffffff !important;
+    background: #ea001e !important;
+    border-radius: 50% !important;
+    pointer-events: none !important;
 }
 
-/* ── Toast Bar ────────────────────────────────── */
+/* Toast Bar */
 .toast-bar {
-    position: fixed;
-    bottom: var(--slds-g-spacing-4, 1rem);
-    left: 50%;
-    transform: translateX(-50%);
-    min-width: 320px;
-    max-width: 560px;
-    padding: var(--slds-g-spacing-3, 0.75rem) var(--slds-g-spacing-4, 1rem);
-    border-radius: var(--slds-g-radius-border-2, 0.5rem);
-    z-index: 9100;
-    animation: slideUp 0.3s ease-out;
+    position: fixed !important;
+    bottom: 1rem !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    min-width: 320px !important;
+    max-width: 560px !important;
+    padding: 0.75rem 1rem !important;
+    border-radius: 0 !important;
+    z-index: 9100 !important;
+    animation: slideUp 0.3s ease-out !important;
+    background: #ffffff !important;
 }
 
 @keyframes slideUp {
