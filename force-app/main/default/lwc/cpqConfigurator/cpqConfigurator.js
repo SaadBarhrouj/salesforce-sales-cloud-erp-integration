@@ -142,7 +142,6 @@ export default class CpqConfigurator extends LightningElement {
             { name: 'table', label: 'Change view', variant: 'border-filled', iconName: 'utility:table', isMenu: true },
             { name: 'edit', label: 'Edit List', variant: 'border-filled', iconName: 'utility:edit' },
             { name: 'refresh', label: 'Refresh List', variant: 'border-filled', iconName: 'utility:refresh' },
-            // Grouped actions: Chart + Filter
             {
                 name: 'analyticsGroup',
                 isGroup: true,
