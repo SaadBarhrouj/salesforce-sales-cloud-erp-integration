@@ -3,12 +3,12 @@ import { getRecord, getFieldValue } from 'lightning/uiRecordApi';
 import OPP_NAME from '@salesforce/schema/Opportunity.Name';
 import OPP_ACCOUNT_ID from '@salesforce/schema/Opportunity.AccountId';
 import OPP_ACCOUNT_NAME from '@salesforce/schema/Opportunity.Account.Name';
-import { STEPS, MESSAGES, STEP_META, STEP_LIST } from 'c/cpqConstants';
-import { deepClone, calculateCartSubtotal, calculateCartItemTotal, formatCurrency } from 'c/cpqUtils';
+import OPP_PRICEBOOK_ID from '@salesforce/schema/Opportunity.Pricebook2Id';
+import OPP_PRICEBOOK_NAME from '@salesforce/schema/Opportunity.Pricebook2.Name';
+import { STEPS, MESSAGES, STEP_META, STEP_LIST, TOAST_DURATION } from 'c/cpqConstants';
+import { deepClone, calculateCartSubtotal, calculateCartItemTotal, formatCurrency, showToast } from 'c/cpqUtils';
 
-const OPP_FIELDS = [OPP_NAME, OPP_ACCOUNT_ID, OPP_ACCOUNT_NAME];
-
-const TOAST_DURATION = 4000;
+const OPP_FIELDS = [OPP_NAME, OPP_ACCOUNT_ID, OPP_ACCOUNT_NAME, OPP_PRICEBOOK_ID, OPP_PRICEBOOK_NAME];
 
 export default class CpqConfigurator extends LightningElement {
     @api recordId;
@@ -19,10 +19,21 @@ export default class CpqConfigurator extends LightningElement {
     @wire(getRecord, { recordId: '$recordId', fields: OPP_FIELDS })
     opportunityRecord;
 
+    /* ── lifecycle ────────────────────────────────── */
+    connectedCallback() {
+        // Initialize sidebar data when component mounts
+        this.initSidebarData(this.currentStep.key);
+    }
+
     /* ── wizard state ─────────────────────────────── */
     currentStep = STEPS.SELECTION;
     miniCartOpen = false;
-    @track isSidebarOpen = true;
+
+    /* ── sidebar state ────────────────────────────── */
+    @track sidebarTitle = 'Categories';
+    @track sidebarIcon = 'standard:category';
+    @track sidebarSortLabel = 'Name';
+    @track sidebarItems = [];
 
     /* ── domain state ─────────────────────────────── */
     @track quoteState = {
@@ -44,11 +55,6 @@ export default class CpqConfigurator extends LightningElement {
         transportUrgency: '',
         notes: ''
     };
-
-    /* ── toast state ──────────────────────────────── */
-    toastMessage = '';
-    toastVariant = 'success';
-    _toastTimer;
 
     /* ═══════════════════════════════════════════════
        GETTERS
@@ -80,27 +86,45 @@ export default class CpqConfigurator extends LightningElement {
         // Account - as LINK
         if (this.opportunityRecord?.data) {
             const accountName = getFieldValue(this.opportunityRecord.data, OPP_ACCOUNT_NAME);
+            const accountId = getFieldValue(this.opportunityRecord.data, OPP_ACCOUNT_ID);
             if (accountName) {
                 metadata.push({
                     id: 'account',
                     label: accountName,
-                    value: '#', // Link placeholder
+                    value: accountId, // Link value (recordId)
                     iconName: 'standard:account',
                     isLink: true,
-                    isBold: false
+                    isBold: false,
+                    objectApiName: 'Account'
                 });
             }
         }
         
         // Pricebook - as LINK
-        metadata.push({
-            id: 'pricebook',
-            label: 'Standard Pricebook',
-            value: '#', // Link placeholder
-            iconName: 'standard:pricebook',
-            isLink: true,
-            isBold: false
-        });
+        if (this.opportunityRecord?.data) {
+            const pbName = getFieldValue(this.opportunityRecord.data, OPP_PRICEBOOK_NAME);
+            const pbId = getFieldValue(this.opportunityRecord.data, OPP_PRICEBOOK_ID);
+            
+            metadata.push({
+                id: 'pricebook',
+                label: pbName || 'Standard Pricebook',
+                value: pbId || '#', 
+                iconName: 'standard:pricebook',
+                isLink: true,
+                isBold: false,
+                objectApiName: 'Pricebook2'
+            });
+        } else {
+            metadata.push({
+                id: 'pricebook',
+                label: 'Standard Pricebook',
+                value: '#', 
+                iconName: 'standard:pricebook',
+                isLink: true,
+                isBold: false,
+                objectApiName: 'Pricebook2'
+            });
+        }
         
         // Offer Type: Sale (Static - NOT a link)
         metadata.push({
@@ -120,7 +144,6 @@ export default class CpqConfigurator extends LightningElement {
     }
 
     get headerSearchPlaceholder() {
-        // Dynamic placeholder based on step
         if (this.currentStep.key === STEPS.SELECTION.key) return 'Search products...';
         return 'Search...';
     }
@@ -175,47 +198,6 @@ export default class CpqConfigurator extends LightningElement {
         return true;
     }
 
-    /* -- sidebar -- */
-    get sidebarClass() {
-        return this.isSidebarOpen ? 'cpq-sidebar is-open' : 'cpq-sidebar is-closed';
-    }
-
-    get sidebarTitle() {
-        if (this.currentStep.key === STEPS.SELECTION.key) return 'Categories';
-        if (this.currentStep.key === STEPS.CONFIGURE.key) return 'Bundles';
-        if (this.currentStep.key === STEPS.LINE_EDITOR.key) return 'Lines';
-        return 'Details';
-    }
-
-    get sidebarToggleIcon() {
-        return this.isSidebarOpen ? 'utility:chevronleft' : 'utility:chevronright';
-    }
-
-    get sidebarLeverLabel() {
-        return (this._stepMeta.label || '').toUpperCase();
-    }
-
-    /* -- cart helpers -- */
-    get cartCount() { return this.cartItems.length; }
-
-    get isCartVisible() {
-        return this.currentStep.key !== STEPS.LOGISTICS.key && this.currentStep.key !== STEPS.REVIEW.key;
-    }
-
-    get showMiniCart() {
-        return this.isCartVisible && this.miniCartOpen && this.cartItems.length > 0;
-    }
-
-    get miniCartClass() {
-        return 'mini-cart slds-box slds-theme_default';
-    }
-
-    get numberedCartItems() {
-        return this.cartItems.map((item, idx) => ({
-            ...item,
-            _lineNumber: idx + 1
-        }));
-    }
 
     get formattedSubtotal() {
         const discount = this.quoteState.additionalDiscountPercent || 0;
@@ -223,16 +205,6 @@ export default class CpqConfigurator extends LightningElement {
         return formatCurrency(subtotal);
     }
 
-    /* -- toast -- */
-    get toastClass() {
-        const base = 'toast-bar slds-notify slds-notify_toast slds-grid slds-grid_vertical-align-center';
-        return this.toastVariant === 'error'
-            ? `${base} slds-theme_error`
-            : `${base} slds-theme_success`;
-    }
-    get toastIcon() {
-        return this.toastVariant === 'error' ? 'utility:error' : 'utility:success';
-    }
 
     /* -- header actions -- */
     handleHeaderAction(event) {
@@ -263,12 +235,124 @@ export default class CpqConfigurator extends LightningElement {
         this.cartItems = [];
     }
 
-    toggleSidebar() {
-        this.isSidebarOpen = !this.isSidebarOpen;
+    /* ── Sidebar Data Management ──────────────────── */
+    
+    initSidebarData(stepKey) {
+        if (stepKey === STEPS.SELECTION.key) {
+            this._loadCategoriesSidebar();
+        } else if (stepKey === STEPS.CONFIGURE.key) {
+            this._loadBundlesSidebar();
+        } else if (stepKey === STEPS.LINE_EDITOR.key) {
+            this._loadLinesSidebar();
+        } else {
+            this._loadDetailsSidebar();
+        }
     }
 
+    _loadCategoriesSidebar() {
+        this.sidebarTitle = 'Categories';
+        this.sidebarIcon = 'standard:product';
+        this.sidebarSortLabel = 'Name';
+        this.sidebarItems = [
+            { 
+                id: 'cat-001', 
+                label: 'Electronics', 
+                value: '12', 
+                children: [
+                    { id: 'cat-001-1', label: 'Computers', value: '5' },
+                    { id: 'cat-001-2', label: 'Peripherals', value: '7' }
+                ]
+            },
+            { 
+                id: 'cat-002', 
+                label: 'Furniture', 
+                value: '8', 
+                children: [
+                    { id: 'cat-002-1', label: 'Desks', value: '3' },
+                    { id: 'cat-002-2', label: 'Chairs', value: '5' }
+                ]
+            },
+            { 
+                id: 'cat-003', 
+                label: 'Software Licenses', 
+                value: '5'
+            },
+            { 
+                id: 'cat-004', 
+                label: 'Services', 
+                value: '3'
+            }
+        ];
+    }
 
-    /* -- Step 1 events -- */
+    _loadBundlesSidebar() {
+        this.sidebarTitle = 'Bundles';
+        this.sidebarIcon = 'standard:bundle';
+        this.sidebarSortLabel = 'Price';
+        this.sidebarItems = [
+            { 
+                id: 'bun-001', 
+                label: 'Starter Pack', 
+                value: '2', 
+                children: [
+                    { id: 'bun-001-1', label: 'Option 1', value: '$99' }
+                ]
+            },
+            { 
+                id: 'bun-002', 
+                label: 'Professional', 
+                value: '4', 
+                children: [
+                    { id: 'bun-002-1', label: 'Option 1', value: '$199' },
+                    { id: 'bun-002-2', label: 'Option 2', value: '$149' }
+                ]
+            },
+            { 
+                id: 'bun-003', 
+                label: 'Enterprise', 
+                value: '6'
+            },
+            { 
+                id: 'bun-004', 
+                label: 'Custom Bundle', 
+                value: '8'
+            }
+        ];
+    }
+
+    _loadLinesSidebar() {
+        this.sidebarTitle = 'Lines';
+        this.sidebarIcon = 'standard:list_item';
+        this.sidebarSortLabel = 'Added Date';
+        this.sidebarItems = (this.cartItems || []).map((item, idx) => ({
+            id: item._key,
+            label: item.productName,
+            value: item.quantity.toString()
+        }));
+    }
+
+    _loadDetailsSidebar() {
+        this.sidebarTitle = 'Details';
+        this.sidebarIcon = 'standard:info';
+        this.sidebarSortLabel = 'Field';
+        this.sidebarItems = [
+            { id: 'det-001', label: 'Account', value: this.quoteState.accountName },
+            { id: 'det-002', label: 'Start Date', value: this.quoteState.startDate },
+            { id: 'det-003', label: 'Term', value: `${this.quoteState.subscriptionTerm}m` }
+        ];
+    }
+
+    handleSidebarItemSelect(event) {
+        const { selectedItemId } = event.detail;
+        this._showToast('Selection', `Selected item: ${selectedItemId}`, 'success');
+    }
+
+    handleSidebarRefresh(event) {
+        this._showToast('Refresh', 'Sidebar data refreshed', 'success');
+        this.initSidebarData(this.currentStep.key);
+    }
+
+    /* ── Step 1 events ── */
     handleProductAdd(event) {
         const cartItem = deepClone(event.detail.cartItem);
         const discount = this.quoteState.additionalDiscountPercent || 0;
@@ -283,7 +367,7 @@ export default class CpqConfigurator extends LightningElement {
         const { productId } = event.detail;
         const items = deepClone(this.cartItems).filter(i => i.productId !== productId);
         this.cartItems = items;
-        this._showToast('Product removed', 'success');
+        this._showToast('Success', 'Product removed', 'success');
     }
 
     /* -- Step 3 events -- */
@@ -322,7 +406,7 @@ export default class CpqConfigurator extends LightningElement {
         const { itemKey } = event.detail;
         const items = deepClone(this.cartItems).filter(i => i._key !== itemKey);
         this.cartItems = items;
-        this._showToast('Line item removed', 'success');
+        this._showToast('Removed', 'Line item removed', 'success');
     }
 
     handleGlobalDiscount(event) {
@@ -349,34 +433,6 @@ export default class CpqConfigurator extends LightningElement {
         else if (direction === 'back') this._goBack();
     }
 
-    /* -- mini-cart -- */
-    toggleMiniCart() {
-        this.miniCartOpen = !this.miniCartOpen;
-    }
-
-    /* -- toast -- */
-    closeToast() {
-        this.toastMessage = '';
-        clearTimeout(this._toastTimer);
-    }
-
-    /* ═══════════════════════════════════════════════
-       NAVIGATION
-       ═══════════════════════════════════════════════ */
-
-    _goNext() {
-        const idx = STEP_LIST.findIndex(s => s.key === this.currentStep.key);
-        if (idx < STEP_LIST.length - 1 && this._canAdvance) {
-            this.currentStep = STEP_LIST[idx + 1];
-        }
-    }
-
-    _goBack() {
-        const idx = STEP_LIST.findIndex(s => s.key === this.currentStep.key);
-        if (idx > 0) {
-            this.currentStep = STEP_LIST[idx - 1];
-        }
-    }
 
     /* ═══════════════════════════════════════════════
        HELPERS
@@ -392,15 +448,10 @@ export default class CpqConfigurator extends LightningElement {
     }
 
     _triggerSave() {
-        this._showToast(MESSAGES.SAVE_SUCCESS, 'success');
+        this._showToast('Success', MESSAGES.SAVE_SUCCESS, 'success');
     }
 
-    _showToast(message, variant = 'success') {
-        clearTimeout(this._toastTimer);
-        this.toastMessage = message;
-        this.toastVariant = variant;
-        this._toastTimer = setTimeout(() => {
-            this.toastMessage = '';
-        }, TOAST_DURATION);
+    _showToast(title, message, variant = 'success') {
+        showToast(this, title, message, variant);
     }
 }

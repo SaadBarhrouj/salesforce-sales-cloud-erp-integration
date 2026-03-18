@@ -1,6 +1,8 @@
 import { LightningElement, api } from 'lwc';
+import { NavigationMixin } from 'lightning/navigation';
+import { dispatchCustomEvent } from 'c/cpqUtils';
 
-export default class CpqStickyHeader extends LightningElement {
+export default class CpqStickyHeader extends NavigationMixin(LightningElement) {
     @api topLabel = '';
     @api title = '';
     @api subtitle = '';
@@ -41,13 +43,34 @@ export default class CpqStickyHeader extends LightningElement {
         return (this.metadataItems && this.metadataItems.length > 0) || this.showSearch || (this._globalActions && this._globalActions.length > 0);
     }
 
+    /**
+     * Handle navigation to a record page
+     */
+        handleLinkClick(event) {
+            event.preventDefault();
+            const recordId = event.currentTarget.dataset.recordId;
+            const objectApiName = event.currentTarget.dataset.objectApiName;
+
+            if (recordId && objectApiName) {
+                this[NavigationMixin.GenerateUrl]({
+                    type: 'standard__recordPage',
+                    attributes: {
+                        recordId: recordId,
+                        objectApiName: objectApiName,
+                        actionName: 'view'
+                    }
+                }).then(url => {
+                    window.open(url, '_blank');
+                });
+            }
+        }
+
+    /**
+     * Handle action button clicks from header
+     */
     handleAction(event) {
         const actionName = event.currentTarget.dataset.action;
-        this.dispatchEvent(new CustomEvent('headeraction', {
-            detail: { action: actionName },
-            bubbles: true,
-            composed: true
-        }));
+        dispatchCustomEvent(this, 'headeraction', { action: actionName });
     }
 
     handleMenuSelect(event) {
@@ -60,11 +83,7 @@ export default class CpqStickyHeader extends LightningElement {
     }
 
     handleSearch(event) {
-        this.dispatchEvent(new CustomEvent('headersearch', {
-            detail: { searchValue: event.detail.value },
-            bubbles: true,
-            composed: true
-        }));
+        dispatchCustomEvent(this, 'headersearch', { searchValue: event.detail.value });
     }
 
     normalizeAction(action) {
