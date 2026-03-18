@@ -5,14 +5,6 @@
     margin: 0;
 }
 
-/* Container must take 100% width with no extra spacing */
-.slds-tabs_card {
-    width: 100%;
-    margin: 0;
-    padding: 0;
-    background-color: #fff;
-}
-
 /* Page header flush with edges */
 .slds-page-header {
     width: 100%;

@@ -1,37 +1,133 @@
-.cpq-sidebar {
-    background-color: var(--slds-g-color-neutral-base-95, #f3f3f3);
-    border-right: var(--slds-g-sizing-border-1, 1px) solid var(--slds-g-color-border-base-1, #e5e5e5);
+:host {
+    --slds-c-split-view-sizing-width: 400px;
     height: 100%;
-    overflow-y: auto;
-    transition: width 0.3s ease;
+    display: flex;
+    flex-direction: column;
 }
 
-.cpq-sidebar_expanded {
-    width: 260px;
-    min-width: 260px;
+/* ═══════════════════════════════════════════════
+   CONTAINER
+   ═══════════════════════════════════════════════ */
+.slds-split-view_container {
+    height: 100%;
+    flex: 1 1 auto;
+    position: relative;
+    background-color: white;
+    border-right: 1px solid var(--slds-g-color-border-base-1, #dddbda);
 }
 
-.cpq-sidebar_collapsed {
-    width: 48px;
-    min-width: 48px;
+.slds-split-view {
+    height: 100%;
+    width: 100% !important;
+    background-color: white;
 }
 
-.sidebar-header {
-    border-bottom: var(--slds-g-sizing-border-1, 1px) solid var(--slds-g-color-border-base-1, #e5e5e5);
-    background-color: var(--slds-g-color-neutral-base-100, #ffffff);
+.slds-split-view_container.slds-is-open {
+    width: 320px;
+    min-width: 320px;
 }
 
-li[role="option"] {
+.slds-split-view_container.slds-is-closed {
+    width: 0;
+    min-width: 0;
+    border-right: none;
+}
+
+/* ═══════════════════════════════════════════════
+   TOGGLE BUTTON
+   ═══════════════════════════════════════════════ */
+.slds-split-view__toggle-button {
+    position: absolute !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    right: -14px !important;
+    width: 14px !important;
+    padding: 0 !important;
+    background-color: white !important;
+    border: 1px solid var(--slds-g-color-border-base-1, #dddbda) !important;
+    border-radius: 0 4px 4px 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    z-index: 10 !important;
     cursor: pointer;
-    border-bottom: var(--slds-g-sizing-border-1, 1px) solid var(--slds-g-color-border-base-1, #e5e5e5);
+    overflow: hidden !important;
+}
+
+.slds-split-view__toggle-button lightning-icon {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    transform: scale(0.65);
+}
+
+/* ═══════════════════════════════════════════════
+   SELECTION STATE
+   ═══════════════════════════════════════════════ */
+.slds-split-view__list-item-action {
+    display: flex;
+    align-items: center;
+    background-color: white;
+    position: relative;
+    padding: 0.5rem 1rem;
+    text-decoration: none;
+    color: var(--slds-g-color-neutral-base-20, #080707);
+    border: none;
+}
+
+.slds-split-view__list-item-action[aria-current="page"] {
+    background-color: var(--slds-g-color-neutral-base-95, #f3f3f3);
+}
+
+.slds-split-view__list-item-action[aria-current="page"]::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 3px;
+    background-color: var(--slds-g-color-brand-base-50, #0176d3);
+}
+
+/* ═══════════════════════════════════════════════
+   CHEVRON — inside the link
+   ═══════════════════════════════════════════════ */
+.cpq-chevron {
+    flex-shrink: 0;
+    width: 1.25rem;
+    height: 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 0.25rem;
+    color: var(--slds-g-color-neutral-base-50, #747474);
+    cursor: pointer;
+    border-radius: 0.25rem;
     transition: background-color 0.15s ease;
 }
 
-li[role="option"]:hover {
-    background-color: var(--slds-g-color-neutral-base-90, #f0f0f0);
+.cpq-chevron:hover {
+    background-color: var(--slds-g-color-neutral-base-90, #fafaf9);
 }
 
-li[aria-selected="true"] {
-    background-color: var(--slds-g-color-brand-base-95, #f0f8ff);
-    border-left: 3px solid var(--slds-g-color-brand-base-50, #0176d3);
+.cpq-chevron lightning-icon {
+    transform: rotate(0deg);
+    transition: transform 0.2s ease;
+}
+
+.cpq-chevron-rotated lightning-icon {
+    transform: rotate(90deg);
+}
+
+.cpq-chevron-placeholder {
+    flex-shrink: 0;
+    width: 1.25rem;
+    margin-right: 0.25rem;
+}
+
+/* ═══════════════════════════════════════════════
+   CHILDREN  —  indented sibling items
+   ═══════════════════════════════════════════════ */
+.cpq-child-item .slds-split-view__list-item-action {
+    padding-left: 3.5rem;
 }

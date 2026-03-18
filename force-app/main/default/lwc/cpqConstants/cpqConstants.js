@@ -50,6 +50,8 @@ export const RULE_EVAL_EVENTS = Object.freeze({
     ALWAYS: 'Always'
 });
 
+export const TOAST_DURATION = 4000;
+
 export const RULE_ACTION_TYPES = Object.freeze({
     ADD:    'Add',
     REMOVE: 'Remove',

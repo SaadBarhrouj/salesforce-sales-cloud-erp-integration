@@ -84,7 +84,11 @@
                   class="slds-m-right_x-small">
                 </lightning-icon>
                 <template lwc:if={item.isLink}>
-                  <a href={item.value}>{item.label}</a>
+                  <a href="#" 
+                     data-record-id={item.value}
+                     data-object-api-name={item.objectApiName}
+                     onclick={handleLinkClick}
+                     class="slds-text-link">{item.label}</a>
                 </template>
                 <template lwc:else>
                   <strong lwc:if={item.isBold}>{item.label}</strong>

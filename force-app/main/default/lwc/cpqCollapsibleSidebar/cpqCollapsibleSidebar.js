@@ -1,46 +1,115 @@
-import { LightningElement, api } from 'lwc';
+import { LightningElement, api, track } from 'lwc';
+import { dispatchCustomEvent } from 'c/cpqUtils';
 
 export default class CpqCollapsibleSidebar extends LightningElement {
-    @api title = 'Bundles';
-    @api items = []; // [{ id, label, subtitle, badge, isActive, badgeVariant }]
-    @api activeItemId = null;
 
-    _collapsed = false;
+    /* ── Public API ─────────────────────────────── */
+    @api title     = 'Categories';
+    @api iconName  = 'standard:category';
+    @api sortLabel = 'Name';
+    @api items     = [];
 
-    get isExpanded() {
-        return !this._collapsed;
+    /* ── Private State ──────────────────────────── */
+    @track selectedItemId = null;
+    @track isExpanded      = true;
+    @track _expandedMap    = {};
+
+    /* ═══════════════════════════════════════════════
+       GETTERS — Panel
+       ═══════════════════════════════════════════════ */
+
+    get isCollapsed() {
+        return !this.isExpanded;
+    }
+
+    get containerClass() {
+        return 'slds-split-view_container '
+             + (this.isExpanded ? 'slds-is-open' : 'slds-is-closed');
     }
 
     get toggleIcon() {
-        return this._collapsed ? 'utility:right' : 'utility:left';
+        return this.isExpanded ? 'utility:left' : 'utility:right';
     }
 
-    get toggleLabel() {
-        return this._collapsed ? 'Expand sidebar' : 'Collapse sidebar';
+    get toggleTitle() {
+        return this.isExpanded ? 'Close Split View' : 'Open Split View';
     }
 
-    get sidebarClass() {
-        return [
-            'cpq-sidebar',
-            this._collapsed ? 'cpq-sidebar_collapsed' : 'cpq-sidebar_expanded'
-        ].join(' ');
+    get toggleAriaExpanded() {
+        return this.isExpanded ? 'true' : 'false';
+    }
+
+    get buttonClass() {
+        const base = 'slds-button slds-button_icon slds-split-view__toggle-button';
+        return this.isExpanded ? base + ' slds-is-open' : base;
+    }
+
+    /* ═══════════════════════════════════════════════
+       GETTERS — List
+       ═══════════════════════════════════════════════ */
+
+    get itemCount() {
+        return this.items.length;
     }
 
     get computedItems() {
-        return this.items;
+        return this.items.map(item => {
+            const hasChildren    = !!(item.children && item.children.length);
+            const isItemExpanded = !!this._expandedMap[item.id];
+
+            return {
+                ...item,
+                ariaCurrent:  item.id === this.selectedItemId ? 'page' : null,
+                tabIndex:     item.id === this.selectedItemId ? '0'    : '-1',
+                hasChildren,
+                noChildren: !hasChildren,
+                isItemExpanded,
+                chevronClass: 'cpq-chevron'
+                            + (isItemExpanded ? ' cpq-chevron-rotated' : ''),
+                computedChildren: hasChildren
+                    ? item.children.map(child => ({
+                          ...child,
+                          ariaCurrent: child.id === this.selectedItemId ? 'page' : null,
+                          tabIndex:    child.id === this.selectedItemId ? '0'    : '-1'
+                      }))
+                    : []
+            };
+        });
     }
 
+    /* ═══════════════════════════════════════════════
+       HANDLERS
+       ═══════════════════════════════════════════════ */
+
     handleToggle() {
-        this._collapsed = !this._collapsed;
-        this.dispatchEvent(new CustomEvent('sidebartoggle', {
-            detail: { collapsed: this._collapsed }
-        }));
+        this.isExpanded = !this.isExpanded;
     }
 
     handleItemClick(event) {
-        const itemId = event.currentTarget.dataset.id;
-        this.dispatchEvent(new CustomEvent('itemselect', {
-            detail: { itemId }
-        }));
+        event.preventDefault();
+        const itemId = event.currentTarget.dataset.itemId;
+        this.selectedItemId = itemId;
+
+        dispatchCustomEvent(this, 'itemselect', { selectedItemId: itemId });
+    }
+
+    handleChevronClick(event) {
+        event.preventDefault();
+        event.stopPropagation();
+
+        const itemId = event.currentTarget.dataset.itemId;
+        const updated = { ...this._expandedMap };
+
+        if (updated[itemId]) {
+            delete updated[itemId];
+        } else {
+            updated[itemId] = true;
+        }
+
+        this._expandedMap = updated;
+    }
+
+    handleRefresh() {
+        dispatchCustomEvent(this, 'refresh', { title: this.title });
     }
 }

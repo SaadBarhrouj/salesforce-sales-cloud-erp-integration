@@ -1,14 +1,16 @@
 import { LightningElement, api } from 'lwc';
+import { NavigationMixin } from 'lightning/navigation';
+import { dispatchCustomEvent } from 'c/cpqUtils';
 
-export default class CpqStickyHeader extends LightningElement {
+export default class CpqStickyHeader extends NavigationMixin(LightningElement) {
     @api topLabel = '';
     @api title = '';
     @api subtitle = '';
     @api iconName = '';
-    @api stepActions = []; // [{ name, label, variant, disabled }] - renders as buttons in button-group
-    @api globalActions = []; // [{ name, label, variant, iconName, isMenu, isGroup, items }]
-    @api metadataItems = []; // [{ id, label, value, iconName, isLink, isBold }]
-    @api showSearch = false; // Boolean: show/hide search based on step
+    @api stepActions = []; 
+    @api globalActions = []; 
+    @api metadataItems = [];
+    @api showSearch = false;
     @api searchPlaceholder = 'Search...';
 
     /**
@@ -19,25 +21,39 @@ export default class CpqStickyHeader extends LightningElement {
     }
 
     /**
+     * Handle navigation to a record page
+     */
+        handleLinkClick(event) {
+            event.preventDefault();
+            const recordId = event.currentTarget.dataset.recordId;
+            const objectApiName = event.currentTarget.dataset.objectApiName;
+
+            if (recordId && objectApiName) {
+                this[NavigationMixin.GenerateUrl]({
+                    type: 'standard__recordPage',
+                    attributes: {
+                        recordId: recordId,
+                        objectApiName: objectApiName,
+                        actionName: 'view'
+                    }
+                }).then(url => {
+                    window.open(url, '_blank');
+                });
+            }
+        }
+
+    /**
      * Handle action button clicks from header
      */
     handleAction(event) {
         const actionName = event.currentTarget.dataset.action;
-        this.dispatchEvent(new CustomEvent('headeraction', {
-            detail: { action: actionName },
-            bubbles: true,
-            composed: true
-        }));
+        dispatchCustomEvent(this, 'headeraction', { action: actionName });
     }
 
     /**
      * Handle search input change
      */
     handleSearch(event) {
-        this.dispatchEvent(new CustomEvent('headersearch', {
-            detail: { searchValue: event.detail.value },
-            bubbles: true,
-            composed: true
-        }));
+        dispatchCustomEvent(this, 'headersearch', { searchValue: event.detail.value });
     }
 }

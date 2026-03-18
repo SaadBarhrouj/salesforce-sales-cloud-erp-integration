@@ -97,6 +97,34 @@ export function calculateCartSubtotal(cartItems) {
     );
 }
 
+/* ─── Custom Event Dispatcher ─── */
+
+export function dispatchCustomEvent(
+    element,
+    eventName,
+    detail = {},
+    options = {}) {
+    if (!element) {
+        throw new Error('dispatchCustomEvent: element is required');
+    }
+
+    const {
+        bubbles = true,
+        composed = true,
+        cancelable = false
+    } = options;
+
+    const event = new CustomEvent(eventName, {
+        detail,
+        bubbles,
+        composed,
+        cancelable
+    });
+
+    element.dispatchEvent(event);
+    return event;
+}
+
 /* ─── Category Tree Builder (flat → hierarchical) ─── */
 export function buildCategoryTree(categories, catalogId) {
     const filtered = categories.filter(c => c.CatalogId === catalogId);
@@ -187,4 +215,17 @@ export function debounce(fn, delay = 300) {
         clearTimeout(timeoutId);
         timeoutId = setTimeout(() => fn.apply(this, args), delay);
     };
+}
+
+/* ─── Standard Toast Event ─── */
+import { ShowToastEvent } from 'lightning/platformShowToastEvent';
+
+export function showToast(component, title, message, variant = 'success') {
+    if(!component) return;
+    const toastEvent = new ShowToastEvent({
+        title,
+        message,
+        variant,
+    });
+    component.dispatchEvent(toastEvent);
 }
