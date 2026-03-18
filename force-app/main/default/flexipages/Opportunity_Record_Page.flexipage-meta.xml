@@ -10,13 +10,13 @@
                             <value>Edit</value>
                         </valueListItems>
                         <valueListItems>
+                            <value>CustomButton.Opportunity.Edit_Lines</value>
+                        </valueListItems>
+                        <valueListItems>
                             <value>Clone</value>
                         </valueListItems>
                         <valueListItems>
                             <value>Delete</value>
-                        </valueListItems>
-                        <valueListItems>
-                            <value>Global.NewNote</value>
                         </valueListItems>
                         <valueListItems>
                             <value>AutoQuoteFlowLauncher</value>
