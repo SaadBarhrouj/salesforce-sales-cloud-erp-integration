@@ -1,71 +1,109 @@
 <template>
-    <div class="slds-grid slds-gutters step-selection">
-        <!-- Left panel: Category tree -->
-        <div class="slds-col slds-size_3-of-12 category-panel">
-            <div class="slds-card slds-card_boundary">
-                <div class="slds-card__header slds-grid">
-                    <h2 class="slds-card__header-title slds-text-heading_small">Categories</h2>
+    <div class="step-selection slds-p-around_none slds-grid slds-is-relative slds-scrollable_none">
+
+            <!-- ══════ MAIN CONTENT AREA ══════ -->
+            <div class="step-selection-content slds-col slds-no-space slds-scrollable_y">
+
+                <div lwc:if={isLoading} class="slds-is-relative slds-var-p-around_xx-large">
+                    <lightning-spinner alternative-text="Loading products" size="medium"></lightning-spinner>
                 </div>
-                <div class="slds-card__body">
-                    <lightning-tree
-                        items={categoryTree}
-                        header=""
-                        onselect={handleCategorySelect}
-                    ></lightning-tree>
+
+                <div lwc:if={hasNoProducts}>
+                    <c-empty-state
+                        illustration-name={emptyStateIllustration}
+                        title="No Products Available"
+                        description="Please adjust your search or filter criteria."
+                        size="large">
+                    </c-empty-state>
                 </div>
-            </div>
-        </div>
 
-        <!-- Right panel: Products grid + search -->
-        <div class="slds-col slds-size_9-of-12">
-            <div class="slds-card slds-card_boundary">
-                
+                <template lwc:if={hasProducts}>
+                    <!-- TABLE VIEW -->
+                    <template lwc:if={isTableView}>
+                        <lightning-datatable
+                            key-field="Id"
+                            data={filteredProducts}
+                            columns={columns}
+                            selected-rows={selectedProductIds}
+                            onrowselection={handleRowSelection}>
+                        </lightning-datatable>
+                    </template>
 
-                <!-- Products list -->
-                <div class="slds-card__body slds-card__body_inner">
-                    <div lwc:if={isLoading} class="slds-align_absolute-center slds-p-around_large">
-                        <lightning-spinner alternative-text="Loading products" size="medium"></lightning-spinner>
-                    </div>
-
-                    <div lwc:if={hasNoProducts} class="slds-align_absolute-center slds-p-around_large">
-                        <div class="slds-illustration slds-illustration_small">
-                            <p class="slds-text-body_regular slds-text-color_weak">
-                                Select a category to browse products, or use the search bar.
-                            </p>
+                    <!-- CARD VIEW -->
+                    <template lwc:if={isCardView}>
+                        <div class="card-view-grid slds-p-around_small">
+                            <template for:each={cardProducts} for:item="product">
+                                <c-cpq-product-card
+                                    key={product.Id}
+                                    product={product}
+                                    is-in-cart={product._isInCart}
+                                    onproducttoggle={handleProductToggle}>
+                                </c-cpq-product-card>
+                            </template>
                         </div>
-                    </div>
+                    </template>
+                </template>
+            </div>
 
-                    <template lwc:if={hasProducts}>
-                        <template for:each={displayProducts} for:item="product">
-                            <c-cpq-product-card
-                                key={product.Id}
-                                product={product}
-                                is-in-cart={product._inCart}
-                                onproducttoggle={handleProductToggle}
-                            ></c-cpq-product-card>
-                        </template>
+            <!-- ══════ FILTER PANEL (SLDS Docked Right Drawer) ══════ -->
+            <section class={filterPanelClass} aria-hidden={filterPanelHidden}>
+                <div class="filter-panel__header slds-grid slds-grid_align-spread slds-media_center slds-p-around_medium slds-m-around_none">
+                    <div>
+                        <h2 class="slds-text-heading_small slds-truncate slds-m-around_none" title="Filters">Filters</h2>
+                        <p class="slds-m-top_xxx-small slds-text-body_small slds-color__text_gray-9 slds-m-around_none">Code and type</p>
+                    </div>
+                    <lightning-button-icon
+                        icon-name="utility:close"
+                        variant="border-filled"
+                        alternative-text="Close filters"
+                        title="Close filters"
+                        onclick={closeFilterPanel}>
+                    </lightning-button-icon>
+                </div>
+
+                <div class="filter-panel__summary slds-grid slds-wrap" lwc:if={hasActiveFilters}>
+                    <template for:each={activeFilters} for:item="filter">
+                        <lightning-pill
+                            key={filter.id}
+                            label={filter.label}
+                            name={filter.field}
+                            onremove={handleRemoveFilter}>
+                        </lightning-pill>
                     </template>
                 </div>
-            </div>
 
-            <!-- Navigation -->
-            <div class="slds-m-top_medium slds-clearfix">
-                <lightning-button
-                    label="Back"
-                    icon-name="utility:back"
-                    class="slds-float_left"
-                    onclick={handleBack}
-                ></lightning-button>
-                <lightning-button
-                    label="Next: Configure"
-                    variant="brand"
-                    icon-name="utility:forward"
-                    icon-position="right"
-                    class="slds-float_right"
-                    disabled={isNextDisabled}
-                    onclick={handleNext}
-                ></lightning-button>
-            </div>
+                <div class="filter-panel__body slds-p-around_medium slds-p-top_none">
+                    <lightning-input
+                        label="Product Code"
+                        value={pendingFilterProductCode}
+                        onchange={handleProductCodeChange}>
+                    </lightning-input>
+
+                    <div class="slds-m-top_small">
+                        <lightning-combobox
+                            name="bundleTypeFilter"
+                            label="Product Type"
+                            options={bundleTypeOptions}
+                            value={pendingFilterBundleType}
+                            onchange={handleBundleTypeChange}>
+                        </lightning-combobox>
+                    </div>
+                </div>
+
+                <div class="filter-panel__footer slds-grid slds-grid_align-end slds-gutters_x-small">
+                    <lightning-button
+                        label="Reset"
+                        variant="neutral"
+                        onclick={handleRemoveAllFilters}>
+                    </lightning-button>
+                    <lightning-button
+                        class="slds-m-left_small"
+                        label="Apply"
+                        variant="brand"
+                        onclick={applyFilters}>
+                    </lightning-button>
+                </div>
+            </section>
+
         </div>
-    </div>
 </template>
