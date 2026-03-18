@@ -153,26 +153,43 @@ export default class CpqConfigurator extends LightningElement {
     }
 
     get headerStepActions() {
+        if (this.isStepSelection) {
+            return [
+                { name: 'cancel', label: 'Cancel', variant: 'neutral' },
+                { name: 'select', label: 'Select', variant: 'brand', disabled: this.cartItems.length === 0 }
+            ];
+        }
         return [
-            { name: 'addProducts', label: 'Add Product', variant: 'neutral' },
-            { name: 'save', label: 'Save', variant: 'neutral' }
+            { name: 'back', label: 'Back', variant: 'neutral' },
+            { name: 'save', label: 'Save', variant: 'neutral' },
+            { name: 'next', label: 'Next', variant: 'brand' }
         ];
     }
 
     get headerGlobalActions() {
+        if (this.isStepSelection) {
+            const selectionStep = this._getSelectionStep();
+            const filtersOpen = selectionStep?.filterPanelOpen;
+            return [
+                { name: 'refresh', label: 'Refresh Catalog', iconName: 'utility:refresh' },
+                {
+                    name: 'changeView', label: 'Change View', iconName: 'utility:table', isMenu: true, variant: 'border-filled',
+                    menuItems: [
+                        { name: 'viewTable', label: 'Table View', iconName: 'utility:table' },
+                        { name: 'viewCards', label: 'Card View', iconName: 'utility:rows' }
+                    ]
+                },
+                {
+                    name: 'selectionGroup', isGroup: true, items: [
+                        { name: 'clearSelection', label: 'Clear Selection', iconName: 'utility:clear', variant: 'border-filled' },
+                        { name: 'toggleFilters', label: 'Filters', iconName: 'utility:filterList', variant: filtersOpen ? 'brand' : 'border-filled' }
+                    ]
+                }
+            ];
+        }
         return [
             { name: 'settings', label: 'List View Controls', variant: 'border-filled', iconName: 'utility:settings', isMenu: true },
-            { name: 'table', label: 'Change view', variant: 'border-filled', iconName: 'utility:table', isMenu: true },
-            { name: 'edit', label: 'Edit List', variant: 'border-filled', iconName: 'utility:edit' },
-            { name: 'refresh', label: 'Refresh List', variant: 'border-filled', iconName: 'utility:refresh' },
-            {
-                name: 'analyticsGroup',
-                isGroup: true,
-                items: [
-                    { name: 'charts', label: 'Charts', variant: 'border-filled', iconName: 'utility:chart' },
-                    { name: 'filterList', label: 'Filters', variant: 'border-filled', iconName: 'utility:filterList' }
-                ]
-            }
+            { name: 'refresh', label: 'Refresh List', variant: 'border-filled', iconName: 'utility:refresh' }
         ];
     }
 
@@ -194,9 +211,28 @@ export default class CpqConfigurator extends LightningElement {
         const action = event.detail.action;
         if (action === 'back') this._goBack();
         else if (action === 'next') this._goNext();
+        else if (action === 'select') this._goNext();
         else if (action === 'save') this._triggerSave();
-        else if (action === 'cancel') this._showToast('Cancelled', 'Configuration cancelled', 'error');
-        else this._showToast('Action selected', `Action: ${action}`, 'success');
+        else if (action === 'cancel') this._showToast('Configuration cancelled', 'error');
+        else if (action === 'refresh') this._getSelectionStep()?.refreshProducts();
+        else if (action === 'clearSelection') this._handleClearSelection();
+        else if (action === 'toggleFilters') this._getSelectionStep()?.toggleFilterPanel();
+        else if (action === 'viewTable') this._getSelectionStep()?.setViewMode('table');
+        else if (action === 'viewCards') this._getSelectionStep()?.setViewMode('cards');
+    }
+
+    handleHeaderSearch(event) {
+        const searchValue = event.detail.searchValue;
+        const step = this._getSelectionStep();
+        if (step) step.handleSearchInput(searchValue);
+    }
+
+    _getSelectionStep() {
+        return this.template.querySelector('c-cpq-step-selection');
+    }
+
+    _handleClearSelection() {
+        this.cartItems = [];
     }
 
     /* ── Sidebar Data Management ──────────────────── */
@@ -318,13 +354,13 @@ export default class CpqConfigurator extends LightningElement {
 
     /* ── Step 1 events ── */
     handleProductAdd(event) {
-        const product = deepClone(event.detail.cartItem);
+        const cartItem = deepClone(event.detail.cartItem);
         const discount = this.quoteState.additionalDiscountPercent || 0;
-        product._formattedTotal = formatCurrency(calculateCartItemTotal(product, discount));
+        cartItem._formattedTotal = formatCurrency(calculateCartItemTotal(cartItem, discount));
         const items = deepClone(this.cartItems);
-        items.push(product);
+        items.push(cartItem);
         this.cartItems = items;
-        this._showToast('Success', `${product.productName} added to cart`, 'success');
+        this._showToast(`${cartItem.productName} added to cart`, 'success');
     }
 
     handleProductRemove(event) {
