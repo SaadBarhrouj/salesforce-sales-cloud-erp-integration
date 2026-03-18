@@ -63,6 +63,12 @@ export function getProductsByCategory(categoryId) {
     return simulateAsync(products);
 }
 
+/** Fetch all active products. */
+export function getAllProducts() {
+    const products = PRODUCTS.filter(p => p.IsActive);
+    return simulateAsync(products);
+}
+
 /** Search products by name or code (debounced on caller side). */
 export function searchProducts(term, catalogId) {
     if (!term || term.length < 2) return simulateAsync([]);

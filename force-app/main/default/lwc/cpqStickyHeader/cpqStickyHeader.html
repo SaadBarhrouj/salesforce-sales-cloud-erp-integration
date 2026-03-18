@@ -43,25 +43,37 @@
         <div class="slds-page-header__col-actions">
           <div class="slds-page-header__controls">
             <div class="slds-page-header__control">
-              <lightning-button-group lwc:if={stepActions}>
-                <template for:each={stepActions} for:item="action">
-                  <lightning-button
-                    key={action.name}
-                    label={action.label}
-                    variant={action.variant}
-                    disabled={action.disabled}
-                    data-action={action.name}
-                    onclick={handleAction}>
-                  </lightning-button>
-                </template>
-                <!-- Dropdown for more actions -->
-                <lightning-button-icon
-                  icon-name="utility:down"
-                  title="More Actions"
-                  alternative-text="More Actions"
-                  variant="border-filled">
-                </lightning-button-icon>
-              </lightning-button-group>
+              <template lwc:if={hasStepActions}>
+                <lightning-button-group>
+                  <template for:each={stepActions} for:item="action">
+                    <lightning-button
+                      key={action.name}
+                      label={action.label}
+                      variant={action.variant}
+                      disabled={action.disabled}
+                      data-action={action.name}
+                      onclick={handleAction}>
+                    </lightning-button>
+                  </template>
+                  <!-- Dropdown for overflow actions if more than 3 -->
+                  <template lwc:if={hasOverflowActions}>
+                    <lightning-button-menu
+                      alternative-text="More actions"
+                      title="More actions"
+                      variant="neutral"
+                      menu-alignment="right"
+                      onselect={handleMenuSelect}>
+                      <template for:each={stepActionsOverflow} for:item="action">
+                        <lightning-menu-item
+                          key={action.name}
+                          value={action.name}
+                          label={action.label}>
+                        </lightning-menu-item>
+                      </template>
+                    </lightning-button-menu>
+                  </template>
+                </lightning-button-group>
+              </template>
             </div>
           </div>
         </div>
@@ -91,8 +103,12 @@
                      class="slds-text-link">{item.label}</a>
                 </template>
                 <template lwc:else>
-                  <strong lwc:if={item.isBold}>{item.label}</strong>
-                  <template lwc:if="{!item.isBold}">{item.label}</template>
+                  <template lwc:if={item.isBold}>
+                    <strong>{item.label}</strong>
+                  </template>
+                  <template lwc:else>
+                    {item.label}
+                  </template>
                   <span class="slds-m-left_x-small" lwc:if={item.value}>{item.value}</span>
                 </template>
               </li>
@@ -140,7 +156,18 @@
                       icon-name={action.iconName}
                       title={action.label}
                       alternative-text={action.label}
-                      variant={action.variant}>
+                      variant={action.variant}
+                      onselect={handleMenuSelect}>
+                      <template lwc:if={action.menuItems}>
+                        <template for:each={action.menuItems} for:item="menuItem">
+                          <lightning-menu-item
+                            key={menuItem.name}
+                            value={menuItem.name}
+                            label={menuItem.label}
+                            icon-name={menuItem.iconName}>
+                          </lightning-menu-item>
+                        </template>
+                      </template>
                     </lightning-button-menu>
                   </template>
                   <template lwc:else>
