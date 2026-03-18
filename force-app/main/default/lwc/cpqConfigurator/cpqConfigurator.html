@@ -14,28 +14,20 @@
             onheaderaction={handleHeaderAction}
         ></c-cpq-sticky-header>
 
-        <!-- BODY: Two-column layout (Sidebar | Lever | Main) -->
+        <!-- BODY: Two-column layout -->
         <div class="cpq-app-body">
-            <!-- LEFT COLUMN: Sidebar (dynamic content area) -->
-            <aside class={sidebarClass}>
-                <div class="cpq-sidebar-inner">
-                    <div class="sidebar-section-label">{sidebarTitle}</div>
-                    <!-- Sidebar content injected here -->
-                </div>
-            </aside>
+            <!-- LEFT COLUMN: Split View Sidebar -->
+            <c-cpq-collapsible-sidebar
+                title={sidebarTitle}
+                icon-name={sidebarIcon}
+                sort-label={sidebarSortLabel}
+                items={sidebarItems}
+                onitemselect={handleSidebarItemSelect}
+                onrefresh={handleSidebarRefresh}
+            ></c-cpq-collapsible-sidebar>
 
-            <!-- MIDDLE: Vertical Toggle Lever (24px wide) -->
-            <button class="cpq-sidebar-lever" onclick={toggleSidebar} title="Toggle sidebar">
-                <span class="lever-icon">
-                    <lightning-icon icon-name={sidebarToggleIcon} size="x-small"></lightning-icon>
-                </span>
-                <span class="lever-text">{sidebarLeverLabel}</span>
-            </button>
-
-            <!-- RIGHT COLUMN: Main content (grows to fill) -->
+            <!-- RIGHT COLUMN: Main content  -->
             <main class="cpq-app-main">
-
-
                     <!-- Step 1: Product Selection (Main View) -->
                     <template lwc:if={isStepSelection}>
                         <c-cpq-step-selection
@@ -92,58 +84,4 @@
             </main>
         </div>
     </div>
-
-    <!-- Floating Mini-Cart (Little Extra) -->
-    <div class={miniCartClass} lwc:if={showMiniCart}>
-        <div class="mini-cart-header slds-grid slds-grid_align-spread slds-p-around_x-small">
-            <span class="slds-text-title_caps">Live Summary</span>
-            <lightning-button-icon
-                icon-name="utility:close"
-                variant="bare"
-                size="small"
-                alternative-text="Close summary"
-                onclick={toggleMiniCart}
-            ></lightning-button-icon>
-        </div>
-        <div class="mini-cart-body slds-p-around_small">
-            <template for:each={cartItems} for:item="item">
-                <div key={item._key} class="slds-grid slds-grid_align-spread slds-m-bottom_xx-small">
-                    <span class="slds-truncate slds-text-body_small" style="max-width:170px;" title={item.productName}>{item.productName}</span>
-                    <span class="slds-text-body_small">{item._formattedTotal}</span>
-                </div>
-            </template>
-            <div class="slds-border_top slds-p-top_x-small slds-m-top_x-small slds-grid slds-grid_align-spread">
-                <span class="slds-text-title_caps">Subtotal</span>
-                <span class="slds-text-heading_small">{formattedSubtotal}</span>
-            </div>
-        </div>
-    </div>
-
-    <!-- Mini-cart toggle fab -->
-    <div class="mini-cart-fab" lwc:if={isCartVisible}>
-        <lightning-button-icon
-            icon-name="utility:cart"
-            variant="brand"
-            size="large"
-            alternative-text="Toggle cart summary"
-            onclick={toggleMiniCart}
-        ></lightning-button-icon>
-        <span class="cart-badge" lwc:if={cartCount}>{cartCount}</span>
-    </div>
-
-    <!-- Toast simulation -->
-    <template lwc:if={toastMessage}>
-        <div class={toastClass} role="status">
-            <lightning-icon icon-name={toastIcon} size="small" class="slds-m-right_small"></lightning-icon>
-            <span>{toastMessage}</span>
-            <lightning-button-icon
-                icon-name="utility:close"
-                variant="bare-inverse"
-                size="small"
-                alternative-text="Close"
-                class="slds-m-left_small"
-                onclick={closeToast}
-            ></lightning-button-icon>
-        </div>
-    </template>
 </template>

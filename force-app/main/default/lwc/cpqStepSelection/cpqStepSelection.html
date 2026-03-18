@@ -1,71 +1,13 @@
 <template>
-    <div class="slds-grid slds-gutters step-selection">
-        <!-- Left panel: Category tree -->
-        <div class="slds-col slds-size_3-of-12 category-panel">
-            <div class="slds-card slds-card_boundary">
-                <div class="slds-card__header slds-grid">
-                    <h2 class="slds-card__header-title slds-text-heading_small">Categories</h2>
-                </div>
-                <div class="slds-card__body">
-                    <lightning-tree
-                        items={categoryTree}
-                        header=""
-                        onselect={handleCategorySelect}
-                    ></lightning-tree>
-                </div>
-            </div>
-        </div>
-
-        <!-- Right panel: Products grid + search -->
-        <div class="slds-col slds-size_9-of-12">
-            <div class="slds-card slds-card_boundary">
-                
-
-                <!-- Products list -->
-                <div class="slds-card__body slds-card__body_inner">
-                    <div lwc:if={isLoading} class="slds-align_absolute-center slds-p-around_large">
-                        <lightning-spinner alternative-text="Loading products" size="medium"></lightning-spinner>
-                    </div>
-
-                    <div lwc:if={hasNoProducts} class="slds-align_absolute-center slds-p-around_large">
-                        <div class="slds-illustration slds-illustration_small">
-                            <p class="slds-text-body_regular slds-text-color_weak">
-                                Select a category to browse products, or use the search bar.
-                            </p>
-                        </div>
-                    </div>
-
-                    <template lwc:if={hasProducts}>
-                        <template for:each={displayProducts} for:item="product">
-                            <c-cpq-product-card
-                                key={product.Id}
-                                product={product}
-                                is-in-cart={product._inCart}
-                                onproducttoggle={handleProductToggle}
-                            ></c-cpq-product-card>
-                        </template>
-                    </template>
-                </div>
-            </div>
-
-            <!-- Navigation -->
-            <div class="slds-m-top_medium slds-clearfix">
-                <lightning-button
-                    label="Back"
-                    icon-name="utility:back"
-                    class="slds-float_left"
-                    onclick={handleBack}
-                ></lightning-button>
-                <lightning-button
-                    label="Next: Configure"
-                    variant="brand"
-                    icon-name="utility:forward"
-                    icon-position="right"
-                    class="slds-float_right"
-                    disabled={isNextDisabled}
-                    onclick={handleNext}
-                ></lightning-button>
-            </div>
-        </div>
-    </div>
+  <!-- ========== EMPTY STATE COMPONENT ========== -->
+  <c-empty-state
+    illustration-name="noresults:search"
+    title="No Opportunities Found"
+    description="Try adjusting your search criteria or create a new opportunity."
+    size="small"
+    show-cta-button="true"
+    cta-label="Create New"
+    cta-variant="brand"
+    onctabuttonclick={handleEmptyStateAction}>
+  </c-empty-state>
 </template>
