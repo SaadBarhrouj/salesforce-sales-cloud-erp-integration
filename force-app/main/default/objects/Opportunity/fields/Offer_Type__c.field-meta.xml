@@ -15,11 +15,6 @@
                 <label>Sale</label>
             </value>
             <value>
-                <fullName>Rental</fullName>
-                <default>false</default>
-                <label>Rental</label>
-            </value>
-            <value>
                 <fullName>Rental_and_Services</fullName>
                 <default>false</default>
                 <label>Rental and Services</label>
