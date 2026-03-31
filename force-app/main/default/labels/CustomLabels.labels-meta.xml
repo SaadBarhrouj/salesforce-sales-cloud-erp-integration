@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomLabels xmlns="http://soap.sforce.com/2006/04/metadata">
+    <labels>
+        <fullName>Generic_Service_Records_Required</fullName>
+        <categories>Generated_Architecture</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Generic_Service_Records_Required</shortDescription>
+        <value>At least one {0} record is required.</value>
+    </labels>
+    <labels>
+        <fullName>Generic_Service_Record_Id_Required</fullName>
+        <categories>Generated_Architecture</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Generic_Service_Record_Id_Required</shortDescription>
+        <value>An existing {0} record Id is required for this operation.</value>
+    </labels>
+    <labels>
+        <fullName>Generic_Service_Record_Not_Found</fullName>
+        <categories>Generated_Architecture</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Generic_Service_Record_Not_Found</shortDescription>
+        <value>The requested {0} record could not be found.</value>
+    </labels>
+    <labels>
+        <fullName>Generic_Service_Field_Required</fullName>
+        <categories>Generated_Architecture</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Generic_Service_Field_Required</shortDescription>
+        <value>{0} is required for {1}.</value>
+    </labels>
+    <labels>
+        <fullName>Generic_Controller_Request_Failed</fullName>
+        <categories>Generated_Architecture</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Generic_Controller_Request_Failed</shortDescription>
+        <value>We could not complete the {0} request. Please contact your administrator.</value>
+    </labels>
+</CustomLabels>
