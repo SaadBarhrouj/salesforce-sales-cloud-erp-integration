@@ -151,9 +151,6 @@ private class Product2ServiceTest {
 
     @IsTest
     static void testGetByCategoryIdValidCategoryIdReturnsProducts() {
-        // Arrange
-        Product2 recordItem = TestDataFactory.createProduct2(true);
-
         // Act
         Test.startTest();
         List<Product2> result = Product2Service.getByCategoryId(null);
