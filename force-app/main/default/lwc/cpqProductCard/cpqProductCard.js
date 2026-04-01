@@ -1,13 +1,8 @@
 import { LightningElement, api } from 'lwc';
-import { formatCurrency } from 'c/cpqUtils';
 
 export default class CpqProductCard extends LightningElement {
     @api product = {};
     @api isInCart = false;
-
-    get formattedPrice() {
-        return formatCurrency(this.product.UnitPrice);
-    }
 
     get cardClass() {
         return [

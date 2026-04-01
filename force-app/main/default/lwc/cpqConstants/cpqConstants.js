@@ -152,6 +152,7 @@ export const EVENTS = Object.freeze({
     CATEGORY_SELECT:   'categoryselect',
     ITEM_SELECT:       'itemselect',
     ITEM_DESELECT:     'itemdeselect',
+    CATEGORY_CLEAR:    'categoryclear',
     SEARCH:            'search'
 });
 

@@ -1,8 +1,10 @@
 /**
  * CPQ Configurator – Data Service Module
- * Promise-based data access layer returning mock data.
- * Phase 2: Replace each function body with wire() or imperative @AuraEnabled Apex calls.
+ * Promise-based data access layer for the CPQ configurator.
+ * Phase 1: Replace the selection screen product source with Product2 records.
  */
+import getProduct2Records from '@salesforce/apex/Product2Controller.getAll';
+import getProduct2RecordsByCategory from '@salesforce/apex/Product2Controller.getAllByCategory';
 import {
     ACCOUNTS, CONTACTS, CATALOGS, CATEGORIES, PRODUCTS,
     PRODUCT_CATEGORY_PRODUCTS, BUNDLE_FEATURES, BUNDLE_OPTIONS,
@@ -13,6 +15,20 @@ import {
 import { deepClone, getCategoryIdsWithDescendants } from 'c/cpqUtils';
 
 const SIMULATED_DELAY = 150; // ms – simulates network latency
+
+function mapProduct2Records(records) {
+    return (records || [])
+        .filter(product => product.IsActive)
+        .map(product => ({
+            Id: product.Id,
+            Name: product.Name,
+            ProductCode: product.ProductCode,
+            Description: product.Description,
+            IsActive: product.IsActive,
+            Unit_Weight_Kg__c: product.Unit_Weight_Kg__c,
+            isBundle: !!(product.Options__r && product.Options__r.length > 0)
+        }));
+}
 
 function simulateAsync(data) {
     return new Promise((resolve) => {
@@ -53,20 +69,18 @@ export function getCategoriesByCatalog(catalogId) {
 }
 
 /** Fetch products for a category (including sub-categories). */
-export function getProductsByCategory(categoryId) {
-    const categoryIds = getCategoryIdsWithDescendants(categoryId, CATEGORIES);
-    const productIds = PRODUCT_CATEGORY_PRODUCTS
-        .filter(pcp => categoryIds.includes(pcp.ProductCategoryId))
-        .map(pcp => pcp.ProductId);
-    const unique = [...new Set(productIds)];
-    const products = PRODUCTS.filter(p => unique.includes(p.Id) && p.IsActive);
-    return simulateAsync(products);
+export async function getProductsByCategory(categoryId) {
+    if (!categoryId) {
+        return getAllProducts();
+    }
+    const products = await getProduct2RecordsByCategory({ categoryId });
+    return deepClone(mapProduct2Records(products));
 }
 
 /** Fetch all active products. */
-export function getAllProducts() {
-    const products = PRODUCTS.filter(p => p.IsActive);
-    return simulateAsync(products);
+export async function getAllProducts() {
+    const products = await getProduct2Records();
+    return deepClone(mapProduct2Records(products));
 }
 
 /** Search products by name or code (debounced on caller side). */

@@ -1,15 +1,13 @@
 import { LightningElement, api, track } from 'lwc';
-import { getAllProducts, searchProducts, getProductsByCategory } from 'c/cpqDataService';
+import { getAllProducts, getProductsByCategory } from 'c/cpqDataService';
 import { EVENTS, getIllustration } from 'c/cpqConstants';
-import { debounce, generateId } from 'c/cpqUtils';
+import { generateId } from 'c/cpqUtils';
 
 const COLUMNS = [
-    { label: 'Code', fieldName: 'ProductCode', type: 'text', sortable: true },
+    { label: 'Product Code', fieldName: 'ProductCode', type: 'text', sortable: true },
     { label: 'Product Name', fieldName: 'Name', type: 'text', sortable: true, wrapText: true },
     { label: 'Description', fieldName: 'Description', type: 'text', wrapText: true },
-    { label: 'Category', fieldName: 'Family', type: 'text', sortable: true },
-    { label: 'Unit Price', fieldName: 'UnitPrice', type: 'currency', typeAttributes: { currencyCode: 'USD', minimumFractionDigits: 2 }, sortable: true, cellAttributes: { alignment: 'right' } },
-    { label: 'Bundle', fieldName: 'IsBundle', type: 'boolean', sortable: true }
+    { label: 'isBundle', fieldName: 'isBundle', type: 'boolean', sortable: true }
 ];
 
 const BUNDLE_TYPE_OPTIONS = [
@@ -19,13 +17,11 @@ const BUNDLE_TYPE_OPTIONS = [
 ];
 
 export default class CpqStepSelection extends LightningElement {
-    @api catalogId = '';
-    @api cartItems = [];
+    @api selectedProducts = [];
     columns = COLUMNS;
     products = [];
     searchTerm = '';
     isLoading = false;
-    _debouncedSearch;
 
     /* ── View Mode ────────────────────────── */
     @track viewMode = 'table';
@@ -43,8 +39,33 @@ export default class CpqStepSelection extends LightningElement {
     emptyStateIllustration = getIllustration('NORESULTS_SEARCH').name;
 
     async connectedCallback() {
-        this._debouncedSearch = debounce((term) => this.performSearch(term), 350);
-        await this.loadAllProducts();
+        await this.loadAllProducts(this.categoryId);
+    }
+
+    /* ── Reactive Category Change ─────────────── */
+    _categoryId = '';
+    _categoryLabel = '';
+
+    @api
+    get categoryId() {
+        return this._categoryId;
+    }
+
+    set categoryId(value) {
+        const oldValue = this._categoryId;
+        this._categoryId = value || '';
+        if (oldValue !== this._categoryId) {
+            this.loadAllProducts(this._categoryId);
+        }
+    }
+
+    @api
+    get categoryLabel() {
+        return this._categoryLabel;
+    }
+
+    set categoryLabel(value) {
+        this._categoryLabel = value || '';
     }
 
     /* ═══════════════════════════════════════
@@ -52,21 +73,31 @@ export default class CpqStepSelection extends LightningElement {
        ═══════════════════════════════════════ */
 
     get selectedProductIds() {
-        return (this.cartItems || []).map(item => item.productId);
+        return (this.selectedProducts || []).map(item => item.productId);
     }
 
     get filteredProducts() {
         let result = [...this.products];
+
+        if (this.searchTerm) {
+            const term = this.searchTerm.trim().toLowerCase();
+            if (term) {
+                result = result.filter(product => (
+                    (product.Name || '').toLowerCase().includes(term) ||
+                    (product.ProductCode || '').toLowerCase().includes(term) ||
+                    (product.Description || '').toLowerCase().includes(term)
+                ));
+            }
+        }
 
         if (this.filterProductCode) {
             const term = this.filterProductCode.toLowerCase();
             result = result.filter(product => (product.ProductCode || '').toLowerCase().includes(term));
         }
 
-        if (this.filterBundleType === 'bundle') {
-            result = result.filter(p => p.IsBundle);
-        } else if (this.filterBundleType === 'standalone') {
-            result = result.filter(p => !p.IsBundle);
+        if (this.filterBundleType !== 'all') {
+            const isBundle = this.filterBundleType === 'bundle';
+            result = result.filter(product => product.isBundle === isBundle);
         }
 
         return result;
@@ -102,11 +133,15 @@ export default class CpqStepSelection extends LightningElement {
 
     get activeFilters() {
         const filters = [];
+        if (this.categoryLabel) {
+            filters.push({ id: 'category', label: 'Category: ' + this.categoryLabel, value: this.categoryId, field: 'category' });
+        }
         if (this.filterProductCode) {
             filters.push({ id: 'productCode', label: 'Product Code', value: this.filterProductCode, field: 'productCode' });
         }
         if (this.filterBundleType !== 'all') {
-            filters.push({ id: 'bundleType', label: 'Product Type', value: this.filterBundleType === 'bundle' ? 'Bundles Only' : 'Standalone Only', field: 'bundleType' });
+            const label = this.filterBundleType === 'bundle' ? 'Bundles' : 'Standalone';
+            filters.push({ id: 'bundleType', label: 'Type: ' + label, value: this.filterBundleType, field: 'bundleType' });
         }
         return filters;
     }
@@ -117,17 +152,16 @@ export default class CpqStepSelection extends LightningElement {
        DATA LOADING
        ═══════════════════════════════════════ */
 
-    async loadAllProducts() {
+    async loadAllProducts(categoryId) {
         this.isLoading = true;
-        try { this.products = await getAllProducts(); }
+        try {
+            if (categoryId) {
+                this.products = await getProductsByCategory(categoryId);
+            } else {
+                this.products = await getAllProducts();
+            }
+        }
         catch (e) { console.error('Error loading products:', e); }
-        finally { this.isLoading = false; }
-    }
-
-    async performSearch(term) {
-        this.isLoading = true;
-        try { this.products = await searchProducts(term, this.catalogId); }
-        catch (e) { console.error('Error searching products:', e); }
         finally { this.isLoading = false; }
     }
 
@@ -138,11 +172,6 @@ export default class CpqStepSelection extends LightningElement {
     @api
     handleSearchInput(searchValue) {
         this.searchTerm = searchValue || '';
-        if (this.searchTerm && this.searchTerm.length >= 2) {
-            this._debouncedSearch(this.searchTerm);
-        } else if (!this.searchTerm) {
-            this.loadAllProducts();
-        }
     }
 
     @api
@@ -163,7 +192,7 @@ export default class CpqStepSelection extends LightningElement {
 
     @api
     clearSelections() {
-        (this.cartItems || []).forEach(item => {
+        (this.selectedProducts || []).forEach(item => {
             this.dispatchEvent(new CustomEvent(EVENTS.PRODUCT_REMOVE, {
                 detail: { productId: item.productId }
             }));
@@ -184,7 +213,8 @@ export default class CpqStepSelection extends LightningElement {
     handleRowSelection(event) {
         const selectedRows = event.detail.selectedRows || [];
         const currentSelectedIds = new Set(selectedRows.map(row => row.Id));
-        const cartIds = new Set((this.cartItems || []).map(item => item.productId));
+        const visibleProductIds = new Set(this.filteredProducts.map(product => product.Id));
+        const cartIds = new Set((this.selectedProducts || []).map(item => item.productId));
 
         selectedRows.forEach(row => {
             if (!cartIds.has(row.Id)) {
@@ -192,8 +222,8 @@ export default class CpqStepSelection extends LightningElement {
             }
         });
 
-        (this.cartItems || []).forEach(item => {
-            if (!currentSelectedIds.has(item.productId)) {
+        (this.selectedProducts || []).forEach(item => {
+            if (visibleProductIds.has(item.productId) && !currentSelectedIds.has(item.productId)) {
                 this.dispatchEvent(new CustomEvent(EVENTS.PRODUCT_REMOVE, {
                     detail: { productId: item.productId }
                 }));
@@ -217,13 +247,13 @@ export default class CpqStepSelection extends LightningElement {
             productId: product.Id,
             productCode: product.ProductCode,
             productName: product.Name,
-            isBundle: product.IsBundle,
+            isBundle: !!product.isBundle,
             quantity: 1,
-            listUnitPrice: product.UnitPrice,
+            listUnitPrice: 0,
             additionalDiscount: 0,
-            netUnitPrice: product.UnitPrice,
-            netTotal: product.UnitPrice,
-            configured: !product.IsBundle,
+            netUnitPrice: 0,
+            netTotal: 0,
+            configured: true,
             options: [],
             weight: product.Unit_Weight_Kg__c || 0
         };
@@ -244,8 +274,16 @@ export default class CpqStepSelection extends LightningElement {
 
     handleRemoveFilter(event) {
         const field = event.detail?.name || event.target?.name || event.currentTarget?.dataset?.field;
-        if (field === 'productCode') this.filterProductCode = '';
-        else if (field === 'bundleType') this.filterBundleType = 'all';
+        if (field === 'category') {
+            this._categoryId = '';
+            this._categoryLabel = '';
+            this.dispatchEvent(new CustomEvent(EVENTS.CATEGORY_CLEAR));
+            this.loadAllProducts();
+        } else if (field === 'productCode') {
+            this.filterProductCode = '';
+        } else if (field === 'bundleType') {
+            this.filterBundleType = 'all';
+        }
     }
 
     applyFilters() {

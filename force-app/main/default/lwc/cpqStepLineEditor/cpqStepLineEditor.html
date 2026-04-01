@@ -55,7 +55,7 @@
                 </tr>
             </thead>
             <tbody>
-                <template for:each={cartItems} for:item="item" for:index="idx">
+                <template for:each={selectedProducts} for:item="item" for:index="idx">
                     <c-cpq-line-item
                         key={item._key}
                         item={item}

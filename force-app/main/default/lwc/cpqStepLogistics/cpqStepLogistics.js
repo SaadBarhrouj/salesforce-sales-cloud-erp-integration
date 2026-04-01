@@ -1,10 +1,10 @@
 import { LightningElement, api } from 'lwc';
 import { getLocations } from 'c/cpqDataService';
-import { formatCurrency, formatNumber, calculateCartSubtotal, deepClone } from 'c/cpqUtils';
+import { formatCurrency, formatNumber, calculateSelectedProductsSubtotal, deepClone } from 'c/cpqUtils';
 import { URGENCY_OPTIONS } from 'c/cpqConstants';
 
 export default class CpqStepLogistics extends LightningElement {
-    @api cartItems = [];
+    @api selectedProducts = [];
     @api quoteState = {};
     @api logisticsState = {};
 
@@ -53,16 +53,16 @@ export default class CpqStepLogistics extends LightningElement {
     }
 
     get formattedSubtotal() {
-        return formatCurrency(calculateCartSubtotal(this.cartItems || []));
+        return formatCurrency(calculateSelectedProductsSubtotal(this.selectedProducts || []));
     }
 
     get itemCount() {
-        return (this.cartItems || []).length;
+        return (this.selectedProducts || []).length;
     }
 
     get totalWeight() {
         let weight = 0;
-        (this.cartItems || []).forEach(item => {
+        (this.selectedProducts || []).forEach(item => {
             weight += (item.weight || 0) * item.quantity;
             if (item.options) {
                 item.options.filter(o => o.isSelected).forEach(o => {

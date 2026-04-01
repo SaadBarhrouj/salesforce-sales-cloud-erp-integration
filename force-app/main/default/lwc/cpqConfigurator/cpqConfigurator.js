@@ -8,7 +8,7 @@ import OPP_PRICEBOOK_NAME from '@salesforce/schema/Opportunity.Pricebook2.Name';
 import OPP_OFFER_TYPE from '@salesforce/schema/Opportunity.Offer_Type__c';
 import getSidebarCategoriesByOfferType from '@salesforce/apex/ProductCategoryController.getSidebarCategoriesByOfferType';
 import { STEPS, MESSAGES, STEP_LIST, TOAST_DURATION } from 'c/cpqConstants';
-import { deepClone, calculateCartSubtotal, calculateCartItemTotal, formatCurrency, showToast } from 'c/cpqUtils';
+import { deepClone, calculateSelectedProductsSubtotal, calculateSelectedProductTotal, formatCurrency, showToast } from 'c/cpqUtils';
 
 const OPP_FIELDS = [OPP_NAME, OPP_ACCOUNT_ID, OPP_ACCOUNT_NAME, OPP_PRICEBOOK_ID, OPP_PRICEBOOK_NAME ,OPP_OFFER_TYPE];
 
@@ -36,6 +36,8 @@ export default class CpqConfigurator extends LightningElement {
     @track sidebarSortLabel = 'Name';
     @track sidebarIsLoading = false;
     @track sidebarItems = [];
+    @track selectedCategoryId = '';
+    @track selectedCategoryLabel = '';
 
     /* ── domain state ─────────────────────────────── */
     @track quoteState = {
@@ -49,7 +51,7 @@ export default class CpqConfigurator extends LightningElement {
         subscriptionTerm: 12,
         additionalDiscountPercent: 0
     };
-    @track cartItems = [];
+    @track selectedProducts = [];
     @track logisticsState = {
         isTransportRequired: false,
         deliverySite: '',
@@ -205,7 +207,7 @@ export default class CpqConfigurator extends LightningElement {
     }
 
     _handleClearSelection() {
-        this.cartItems = [];
+        this.selectedProducts = [];
     }
 
     /* ── Sidebar Data Management ──────────────────── */
@@ -290,7 +292,7 @@ export default class CpqConfigurator extends LightningElement {
         this.sidebarTitle = 'Lines';
         this.sidebarIcon = 'standard:list_item';
         this.sidebarSortLabel = 'Added Date';
-        this.sidebarItems = (this.cartItems || []).map((item, idx) => ({
+        this.sidebarItems = (this.selectedProducts || []).map((item, idx) => ({
             id: item._key,
             label: item.productName,
             value: item.quantity.toString()
@@ -307,15 +309,40 @@ export default class CpqConfigurator extends LightningElement {
             { id: 'det-003', label: 'Term', value: `${this.quoteState.subscriptionTerm}m` }
         ];
     }
-
-    handleSidebarItemSelect(event) {
-        const { selectedItemId } = event.detail;
-        this._showToast('Selection', `Selected category: ${selectedItemId}`, 'success');
-    }
-
+    
     handleSidebarItemDeselect(event) {
         const { itemId } = event.detail;
         this._showToast('Deselection', `Deselected category: ${itemId}`, 'info');
+
+    }
+
+    handleSidebarItemSelect(event) {
+        const { selectedItemId } = event.detail;
+        const selectedItem = this._findSidebarItemById(selectedItemId);
+        this.selectedCategoryId = selectedItem ? selectedItem.value : '';
+        this.selectedCategoryLabel = selectedItem ? selectedItem.label : '';
+    }
+
+
+    handleCategoryClear() {
+        this.selectedCategoryId = '';
+        this.selectedCategoryLabel = '';
+    }
+
+    _findSidebarItemById(itemId) {
+        for (const item of this.sidebarItems) {
+            if (item.id === itemId) {
+                return item;
+            }
+            if (item.children) {
+                for (const child of item.children) {
+                    if (child.id === itemId) {
+                        return child;
+                    }
+                }
+            }
+        }
+        return null;
     }
 
     handleSidebarRefresh(event) {
@@ -327,38 +354,38 @@ export default class CpqConfigurator extends LightningElement {
     handleProductAdd(event) {
         const cartItem = deepClone(event.detail.cartItem);
         const discount = this.quoteState.additionalDiscountPercent || 0;
-        cartItem._formattedTotal = formatCurrency(calculateCartItemTotal(cartItem, discount));
-        const items = deepClone(this.cartItems);
+        cartItem._formattedTotal = formatCurrency(calculateSelectedProductTotal(cartItem, discount));
+        const items = deepClone(this.selectedProducts);
         items.push(cartItem);
-        this.cartItems = items;
+        this.selectedProducts = items;
         this._showToast(`${cartItem.productName} added to cart`, 'success');
     }
 
     handleProductRemove(event) {
         const { productId } = event.detail;
-        const items = deepClone(this.cartItems).filter(i => i.productId !== productId);
-        this.cartItems = items;
+        const items = deepClone(this.selectedProducts).filter(i => i.productId !== productId);
+        this.selectedProducts = items;
         this._showToast('Success', 'Product removed', 'success');
     }
 
     /* -- Step 3 events -- */
     handleConfigUpdate(event) {
         const { itemKey, options, configured } = event.detail;
-        const items = deepClone(this.cartItems);
+        const items = deepClone(this.selectedProducts);
         const discount = this.quoteState.additionalDiscountPercent || 0;
         const idx = items.findIndex(i => i._key === itemKey);
         if (idx !== -1) {
             items[idx].options = deepClone(options);
             items[idx].configured = configured;
-            items[idx]._formattedTotal = formatCurrency(calculateCartItemTotal(items[idx], discount));
+            items[idx]._formattedTotal = formatCurrency(calculateSelectedProductTotal(items[idx], discount));
         }
-        this.cartItems = items;
+        this.selectedProducts = items;
     }
 
     /* -- Step 4 events -- */
     handleLineUpdate(event) {
         const { itemKey, field, value, optionId } = event.detail;
-        const items = deepClone(this.cartItems);
+        const items = deepClone(this.selectedProducts);
         const discount = this.quoteState.additionalDiscountPercent || 0;
         const idx = items.findIndex(i => i._key === itemKey);
         if (idx !== -1) {
@@ -368,15 +395,15 @@ export default class CpqConfigurator extends LightningElement {
                 const opt = (items[idx].options || []).find(o => o.Id === optionId);
                 if (opt) opt.quantity = value;
             }
-            items[idx]._formattedTotal = formatCurrency(calculateCartItemTotal(items[idx], discount));
+            items[idx]._formattedTotal = formatCurrency(calculateSelectedProductTotal(items[idx], discount));
         }
-        this.cartItems = items;
+        this.selectedProducts = items;
     }
 
     handleLineRemove(event) {
         const { itemKey } = event.detail;
-        const items = deepClone(this.cartItems).filter(i => i._key !== itemKey);
-        this.cartItems = items;
+        const items = deepClone(this.selectedProducts).filter(i => i._key !== itemKey);
+        this.selectedProducts = items;
         this._showToast('Removed', 'Line item removed', 'success');
     }
 
@@ -411,11 +438,11 @@ export default class CpqConfigurator extends LightningElement {
 
     _recalcAllTotals() {
         const discount = this.quoteState.additionalDiscountPercent || 0;
-        const items = deepClone(this.cartItems);
+        const items = deepClone(this.selectedProducts);
         items.forEach(item => {
-            item._formattedTotal = formatCurrency(calculateCartItemTotal(item, discount));
+            item._formattedTotal = formatCurrency(calculateSelectedProductTotal(item, discount));
         });
-        this.cartItems = items;
+        this.selectedProducts = items;
     }
 
     _triggerSave() {
