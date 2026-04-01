@@ -1,4 +1,13 @@
+/**
+ * @description Trigger handler for Product2 records.
+ * Delegates trigger events to Product2Service for business logic execution.
+ */
 public class Product2TriggerHandler {
+    /**
+     * @description Routes trigger events to the appropriate handler method.
+     * @param newList The list of new Product2 records (null for delete operations).
+     * @param oldMap Map of old Product2 records by ID (null for insert operations).
+     */
     public static void handle(List<SObject> newList, Map<Id, SObject> oldMap) {
         if (Trigger.isBefore) {
             if (Trigger.isInsert) {
