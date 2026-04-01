@@ -49,7 +49,7 @@ private class Product2ServiceTest {
         try {
             Product2Service.saveRecords(emptyRecords, new Map<Id, Product2>());
             System.assertEquals('Expected exception', 'No exception', 'The service should throw when an empty list is provided.');
-        } catch (Product2Service.ServiceException ex) {
+        } catch (Product2Exception ex) {
             actualMessage = ex.getMessage();
         }
         Test.stopTest();
@@ -70,7 +70,7 @@ private class Product2ServiceTest {
         try {
             Product2Service.saveRecords(new List<Product2>{ recordItem }, new Map<Id, Product2>());
             System.assertEquals('Expected exception', 'No exception', 'The service should throw when required data is missing.');
-        } catch (Product2Service.ServiceException ex) {
+        } catch (Product2Exception ex) {
             actualMessage = ex.getMessage();
         }
         Test.stopTest();
@@ -188,7 +188,7 @@ private class Product2ServiceTest {
         Test.startTest();
         try {
             Product2Service.saveRecords(new List<Product2>{ recordItem }, new Map<Id, Product2>());
-        } catch (Product2Service.ServiceException ex) {
+        } catch (Product2Exception ex) {
             actualMessage = ex.getMessage();
         }
         Test.stopTest();
@@ -207,7 +207,7 @@ private class Product2ServiceTest {
         Test.startTest();
         try {
             Product2Service.deleteRecords(emptyRecords);
-        } catch (Product2Service.ServiceException ex) {
+        } catch (Product2Exception ex) {
             actualMessage = ex.getMessage();
         }
         Test.stopTest();
@@ -225,7 +225,7 @@ private class Product2ServiceTest {
         Test.startTest();
         try {
             Product2Service.deleteRecords(null);
-        } catch (Product2Service.ServiceException ex) {
+        } catch (Product2Exception ex) {
             actualMessage = ex.getMessage();
         }
         Test.stopTest();
@@ -244,7 +244,7 @@ private class Product2ServiceTest {
         Test.startTest();
         try {
             Product2Service.deleteRecords(new List<Product2>{ recordItem });
-        } catch (Product2Service.ServiceException ex) {
+        } catch (Product2Exception ex) {
             actualMessage = ex.getMessage();
         }
         Test.stopTest();
@@ -291,7 +291,7 @@ private class Product2ServiceTest {
         Test.startTest();
         try {
             Product2Service.beforeInsert(new List<Product2>{ recordItem });
-        } catch (Product2Service.ServiceException ex) {
+        } catch (Product2Exception ex) {
             actualMessage = ex.getMessage();
         }
         Test.stopTest();
@@ -326,7 +326,7 @@ private class Product2ServiceTest {
         Test.startTest();
         try {
             Product2Service.beforeUpdate(new List<Product2>{ recordItem }, new Map<Id, Product2>(), new Map<Id, Product2>());
-        } catch (Product2Service.ServiceException ex) {
+        } catch (Product2Exception ex) {
             actualMessage = ex.getMessage();
         }
         Test.stopTest();
@@ -346,7 +346,7 @@ private class Product2ServiceTest {
         Test.startTest();
         try {
             Product2Service.beforeUpdate(new List<Product2>{ recordItem }, new Map<Id, Product2>(), new Map<Id, Product2>());
-        } catch (Product2Service.ServiceException ex) {
+        } catch (Product2Exception ex) {
             actualMessage = ex.getMessage();
         }
         Test.stopTest();
@@ -365,7 +365,7 @@ private class Product2ServiceTest {
         Test.startTest();
         try {
             Product2Service.beforeUpdate(new List<Product2>{ recordItem }, new Map<Id, Product2>(), null);
-        } catch (Product2Service.ServiceException ex) {
+        } catch (Product2Exception ex) {
             actualMessage = ex.getMessage();
         }
         Test.stopTest();
@@ -469,7 +469,7 @@ private class Product2ServiceTest {
         Test.startTest();
         try {
             Product2Service.saveRecords(new List<Product2>{ recordItem }, new Map<Id, Product2>());
-        } catch (Product2Service.ServiceException ex) {
+        } catch (Product2Exception ex) {
             actualMessage = ex.getMessage();
         }
         Test.stopTest();
