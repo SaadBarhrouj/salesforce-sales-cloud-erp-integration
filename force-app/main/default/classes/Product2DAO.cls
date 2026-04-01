@@ -17,17 +17,10 @@ public inherited sharing class Product2DAO {
             SELECT
                 Id,
                 Description,
-                DisplayUrl,
-                ExternalDataSourceId,
-                ExternalId,
                 Family,
                 IsActive,
                 Name,
                 ProductCode,
-                QuantityUnitOfMeasure,
-                SellerId,
-                SourceProductId,
-                StockKeepingUnit,
                 Unit_Weight_Kg__c
             FROM Product2
             WHERE Id = :recordId
@@ -51,17 +44,10 @@ public inherited sharing class Product2DAO {
             SELECT
                 Id,
                 Description,
-                DisplayUrl,
-                ExternalDataSourceId,
-                ExternalId,
                 Family,
                 IsActive,
                 Name,
                 ProductCode,
-                QuantityUnitOfMeasure,
-                SellerId,
-                SourceProductId,
-                StockKeepingUnit,
                 Unit_Weight_Kg__c
             FROM Product2
             WHERE Id IN :recordIds
@@ -83,17 +69,10 @@ public inherited sharing class Product2DAO {
             SELECT
                 Id,
                 Description,
-                DisplayUrl,
-                ExternalDataSourceId,
-                ExternalId,
                 Family,
                 IsActive,
                 Name,
                 ProductCode,
-                QuantityUnitOfMeasure,
-                SellerId,
-                SourceProductId,
-                StockKeepingUnit,
                 Unit_Weight_Kg__c
             FROM Product2
             WHERE Name = :recordName
@@ -109,17 +88,10 @@ public inherited sharing class Product2DAO {
             SELECT
                 Id,
                 Description,
-                DisplayUrl,
-                ExternalDataSourceId,
-                ExternalId,
                 Family,
                 IsActive,
                 Name,
                 ProductCode,
-                QuantityUnitOfMeasure,
-                SellerId,
-                SourceProductId,
-                StockKeepingUnit,
                 Unit_Weight_Kg__c,
                 (SELECT Id FROM Options__r)
             FROM Product2
@@ -154,17 +126,10 @@ public inherited sharing class Product2DAO {
             SELECT
                 Id,
                 Description,
-                DisplayUrl,
-                ExternalDataSourceId,
-                ExternalId,
                 Family,
                 IsActive,
                 Name,
                 ProductCode,
-                QuantityUnitOfMeasure,
-                SellerId,
-                SourceProductId,
-                StockKeepingUnit,
                 Unit_Weight_Kg__c,
                 (SELECT Id FROM Options__r)
             FROM Product2

@@ -7,17 +7,10 @@ public inherited sharing class Product2Service {
     private static final List<String> TRACKED_FIELDS = new List<String>{
         'Id',
         'Description',
-        'DisplayUrl',
-        'ExternalDataSourceId',
-        'ExternalId',
         'Family',
         'IsActive',
         'Name',
         'ProductCode',
-        'QuantityUnitOfMeasure',
-        'SellerId',
-        'SourceProductId',
-        'StockKeepingUnit',
         'Unit_Weight_Kg__c'
     };
     private static final List<String> REQUIRED_FIELDS = new List<String>{
