@@ -9,7 +9,7 @@ private class Product2ControllerTest {
     }
 
     @IsTest
-    static void test_getAll_existingData_returnsRecords() {
+    static void testGetAllExistingDataReturnsRecords() {
         // Arrange
         User testUser = [SELECT Id FROM User WHERE Alias = 'tuser' LIMIT 1];
         List<Product2> loadedRecords = new List<Product2>();
@@ -26,7 +26,7 @@ private class Product2ControllerTest {
     }
 
     @IsTest
-    static void test_saveRecords_insert_validRecord_returnsSavedRecord() {
+    static void testSaveRecordsInsertValidRecordReturnsSavedRecord() {
         // Arrange
         User testUser = [SELECT Id FROM User WHERE Alias = 'tuser' LIMIT 1];
         Product2 recordItem = TestDataFactory.createProduct2(false);
@@ -44,7 +44,7 @@ private class Product2ControllerTest {
     }
 
     @IsTest
-    static void test_saveRecords_update_changedRecord_returnsUpdatedRecord() {
+    static void testSaveRecordsUpdateChangedRecordReturnsUpdatedRecord() {
         // Arrange
         User testUser = [SELECT Id FROM User WHERE Alias = 'tuser' LIMIT 1];
         Product2 recordItem = [SELECT Id FROM Product2 LIMIT 1];
@@ -64,7 +64,7 @@ private class Product2ControllerTest {
     }
 
     @IsTest
-    static void test_saveRecords_emptyList_throwsAuraHandledException() {
+    static void testSaveRecordsEmptyListThrowsAuraHandledException() {
         // Arrange
         User testUser = [SELECT Id FROM User WHERE Alias = 'tuser' LIMIT 1];
         String actualMessage = '';
@@ -88,7 +88,7 @@ private class Product2ControllerTest {
     }
 
     @IsTest
-    static void test_deleteRecords_existingRecord_returnsTrue() {
+    static void testDeleteRecordsExistingRecordReturnsTrue() {
         // Arrange
         User testUser = [SELECT Id FROM User WHERE Alias = 'tuser' LIMIT 1];
         Product2 recordItem;
