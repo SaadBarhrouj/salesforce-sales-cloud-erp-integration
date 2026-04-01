@@ -29,6 +29,10 @@ public inherited sharing class Product2Service {
         return loadedRecords == null ? new List<Product2>() : loadedRecords;
     }
 
+    public static List<Product2> getByCategoryId(Id categoryId) {
+        return getLoadedRecords(Product2DAO.getByCategoryId(categoryId));
+    }
+
     public static List<Product2> saveRecords(List<Product2> records, Map<Id, Product2> persistedRecordsById) {
         validateCollection(records);
 

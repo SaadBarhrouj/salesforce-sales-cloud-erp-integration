@@ -18,20 +18,7 @@
                 <p class="slds-text-heading_small slds-truncate" title={product.Name}>{product.Name}</p>
                 <p class="slds-text-body_small slds-text-color_weak slds-truncate" lwc:if={product.Description}>{product.Description}</p>
             </div>
-            <div class="slds-col slds-size_2-of-12 slds-text-align_center">
-                <span class="slds-badge" lwc:if={product.Family}>{product.Family}</span>
-            </div>
-            <div class="slds-col slds-size_2-of-12 slds-text-align_right">
-                <span class="slds-text-heading_small">{formattedPrice}</span>
-            </div>
-            <div class="slds-col slds-size_1-of-12 slds-text-align_right">
-                <lightning-icon
-                    lwc:if={product.IsBundle}
-                    icon-name="utility:package"
-                    size="x-small"
-                    alternative-text="Bundle"
-                    title="Configurable Bundle"
-                ></lightning-icon>
+            <div class="slds-col slds-size_5-of-12 slds-text-align_right">
             </div>
         </div>
     </div>

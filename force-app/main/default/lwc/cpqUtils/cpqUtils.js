@@ -67,19 +67,19 @@ export function round(value, decimals = 2) {
     return Math.round(value * factor) / factor;
 }
 
-/* ─── Cart Item Total (bundle + options) ─── */
-export function calculateCartItemTotal(cartItem) {
+/* ─── Selected Product Total (bundle + options) ─── */
+export function calculateSelectedProductTotal(selectedProduct) {
     let total = calculateLineTotal(
-        cartItem.quantity,
-        cartItem.listUnitPrice,
-        cartItem.additionalDiscount || 0
+        selectedProduct.quantity,
+        selectedProduct.listUnitPrice,
+        selectedProduct.additionalDiscount || 0
     );
 
-    if (cartItem.options) {
-        for (const opt of cartItem.options) {
+    if (selectedProduct.options) {
+        for (const opt of selectedProduct.options) {
             if (opt.isSelected) {
                 total += calculateLineTotal(
-                    opt.quantity * cartItem.quantity,
+                    opt.quantity * selectedProduct.quantity,
                     opt.listUnitPrice,
                     opt.additionalDiscount || 0
                 );
@@ -89,10 +89,10 @@ export function calculateCartItemTotal(cartItem) {
     return round(total, 2);
 }
 
-/* ─── Cart Subtotal ─── */
-export function calculateCartSubtotal(cartItems) {
+/* ─── Selected Products Subtotal ─── */
+export function calculateSelectedProductsSubtotal(selectedProducts) {
     return round(
-        cartItems.reduce((sum, item) => sum + calculateCartItemTotal(item), 0),
+        selectedProducts.reduce((sum, item) => sum + calculateSelectedProductTotal(item), 0),
         2
     );
 }

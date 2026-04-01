@@ -109,6 +109,7 @@ export const EVENTS = Object.freeze({
     SIDEBAR_TOGGLE:    'sidebartoggle',
     BUNDLE_SELECT:     'bundleselect',
     CATEGORY_SELECT:   'categoryselect',
+    CATEGORY_CLEAR:    'categoryclear',
     SEARCH:            'search'
 });
 

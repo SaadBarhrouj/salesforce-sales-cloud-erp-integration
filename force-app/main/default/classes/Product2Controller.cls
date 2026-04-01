@@ -27,6 +27,16 @@ public with sharing class Product2Controller {
         }
     }
 
+    @AuraEnabled(cacheable=true)
+    public static List<Product2> getAllByCategory(String categoryId) {
+        try {
+            Id safeCategoryId = String.isBlank(categoryId) ? null : (Id) categoryId;
+            return Product2Service.getByCategoryId(safeCategoryId);
+        } catch (Exception ex) {
+            throw new AuraHandledException(getControllerErrorMessage());
+        }
+    }
+
     @AuraEnabled
     public static List<Product2> saveRecords(List<Product2> records) {
         try {
