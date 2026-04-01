@@ -23,8 +23,10 @@
                 icon-name={sidebarIcon}
                 sort-label={sidebarSortLabel}
                 items={sidebarItems}
+                is-loading={sidebarIsLoading}
                 onitemselect={handleSidebarItemSelect}
-                onrefresh={handleSidebarRefresh}
+                onitemdeselect={handleSidebarItemDeselect}
+                onsidebarrefresh={handleSidebarRefresh}
             ></c-cpq-collapsible-sidebar>
 
             <!-- RIGHT COLUMN: Main content  -->

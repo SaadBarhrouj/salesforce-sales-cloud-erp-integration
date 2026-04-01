@@ -1,4 +1,10 @@
+/**
+ * Data Access Object for ProductCatalog records.
+ * Provides query methods to retrieve ProductCatalog data from the database.
+ * Uses inherited sharing to respect record-level security.
+ */
 public inherited sharing class ProductCatalogDAO {
+    /*
     public static ProductCatalog getById(Id recordId) {
         if (recordId == null) {
             return null;
@@ -33,8 +39,15 @@ public inherited sharing class ProductCatalogDAO {
             WHERE Id IN :recordIds
         ]);
     }
+    */
 
-
+    /**
+     * Retrieves ProductCatalog records by catalog name.
+     * Returns empty list if the provided name is blank or no records are found.
+     * 
+     * @param recordName The catalog name to search for
+     * @return List of ProductCatalog records matching the name
+     */
     public static List<ProductCatalog> getByName(String recordName) {
         if (String.isBlank(recordName)) {
             return new List<ProductCatalog>();
@@ -51,6 +64,7 @@ public inherited sharing class ProductCatalogDAO {
         ];
     }
 
+    /*
     public static List<ProductCatalog> getAll() {
         return [
             SELECT
@@ -61,4 +75,5 @@ public inherited sharing class ProductCatalogDAO {
             FROM ProductCatalog
         ];
     }
+    */
 }

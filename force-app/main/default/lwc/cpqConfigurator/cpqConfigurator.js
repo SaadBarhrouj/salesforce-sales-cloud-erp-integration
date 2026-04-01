@@ -1,14 +1,16 @@
 import { LightningElement, api, track, wire } from 'lwc';
-import { getRecord, getFieldValue } from 'lightning/uiRecordApi';
+import { getRecord, getFieldValue, getFieldDisplayValue } from 'lightning/uiRecordApi';
 import OPP_NAME from '@salesforce/schema/Opportunity.Name';
 import OPP_ACCOUNT_ID from '@salesforce/schema/Opportunity.AccountId';
 import OPP_ACCOUNT_NAME from '@salesforce/schema/Opportunity.Account.Name';
 import OPP_PRICEBOOK_ID from '@salesforce/schema/Opportunity.Pricebook2Id';
 import OPP_PRICEBOOK_NAME from '@salesforce/schema/Opportunity.Pricebook2.Name';
-import { STEPS, MESSAGES, STEP_META, STEP_LIST, TOAST_DURATION } from 'c/cpqConstants';
+import OPP_OFFER_TYPE from '@salesforce/schema/Opportunity.Offer_Type__c';
+import getSidebarCategoriesByOfferType from '@salesforce/apex/ProductCategoryController.getSidebarCategoriesByOfferType';
+import { STEPS, MESSAGES, STEP_LIST, TOAST_DURATION } from 'c/cpqConstants';
 import { deepClone, calculateCartSubtotal, calculateCartItemTotal, formatCurrency, showToast } from 'c/cpqUtils';
 
-const OPP_FIELDS = [OPP_NAME, OPP_ACCOUNT_ID, OPP_ACCOUNT_NAME, OPP_PRICEBOOK_ID, OPP_PRICEBOOK_NAME];
+const OPP_FIELDS = [OPP_NAME, OPP_ACCOUNT_ID, OPP_ACCOUNT_NAME, OPP_PRICEBOOK_ID, OPP_PRICEBOOK_NAME ,OPP_OFFER_TYPE];
 
 export default class CpqConfigurator extends LightningElement {
     @api recordId;
@@ -27,12 +29,12 @@ export default class CpqConfigurator extends LightningElement {
 
     /* ── wizard state ─────────────────────────────── */
     currentStep = STEPS.SELECTION;
-    miniCartOpen = false;
 
     /* ── sidebar state ────────────────────────────── */
     @track sidebarTitle = 'Categories';
     @track sidebarIcon = 'standard:category';
     @track sidebarSortLabel = 'Name';
+    @track sidebarIsLoading = false;
     @track sidebarItems = [];
 
     /* ── domain state ─────────────────────────────── */
@@ -75,11 +77,9 @@ export default class CpqConfigurator extends LightningElement {
         }
         return this.recordId || 'OPP-000000';
     }
-
-    get headerTitle() { return this._stepMeta.label; }
-    get headerSubtitle() { return ''; }
-    get headerIcon() { return 'standard:product'; }
-
+    get headerTitle() { return this.currentStep.label; }
+    get headerSubtitle() { return this.currentStep.subtitle || ''; }
+    get headerIcon() { return this.currentStep.icon || 'standard:product'; }
     get headerMetadata() {
         const metadata = [];
         
@@ -105,6 +105,7 @@ export default class CpqConfigurator extends LightningElement {
             const pbName = getFieldValue(this.opportunityRecord.data, OPP_PRICEBOOK_NAME);
             const pbId = getFieldValue(this.opportunityRecord.data, OPP_PRICEBOOK_ID);
             
+            
             metadata.push({
                 id: 'pricebook',
                 label: pbName || 'Standard Pricebook',
@@ -126,83 +127,55 @@ export default class CpqConfigurator extends LightningElement {
             });
         }
         
-        // Offer Type: Sale (Static - NOT a link)
-        metadata.push({
-            id: 'offerType',
-            label: 'Offer Type:',
-            value: 'Sale',
-            iconName: 'standard:category',
-            isLink: false,
-            isBold: true
-        });
-        
+        if (this.opportunityRecord?.data) {
+           const offerTypeLabel = getFieldDisplayValue(this.opportunityRecord.data, OPP_OFFER_TYPE);
+           const offerType = offerTypeLabel ? offerTypeLabel : getFieldValue(this.opportunityRecord.data, OPP_OFFER_TYPE);
+            // Offer Type: 
+            metadata.push({
+                id: 'offerType',
+                label: 'Offer Type:',
+                value: offerType || 'Sale',
+                iconName: 'standard:category',
+                isLink: false,
+                isBold: true
+            });
+        }
+
         return metadata;
     }
-
     get headerShowSearch() {
-        return this.currentStep.key === STEPS.SELECTION.key;
+        return this.currentStep.header?.showSearch || false;
     }
 
     get headerSearchPlaceholder() {
-        if (this.currentStep.key === STEPS.SELECTION.key) return 'Search products...';
-        return 'Search...';
-    }
-
-    get _stepMeta() {
-        return STEP_META[this.currentStep.key] || STEP_META[STEPS.SELECTION.key];
+        return this.currentStep.header?.searchPlaceholder || 'Search...';
     }
 
     get headerStepActions() {
-        if (this.isStepSelection) {
-            return [
-                { name: 'cancel', label: 'Cancel', variant: 'neutral' },
-                { name: 'select', label: 'Select', variant: 'brand', disabled: this.cartItems.length === 0 }
-            ];
-        }
-        return [
-            { name: 'back', label: 'Back', variant: 'neutral' },
-            { name: 'save', label: 'Save', variant: 'neutral' },
-            { name: 'next', label: 'Next', variant: 'brand' }
-        ];
+        const actions = deepClone(this.currentStep.header?.stepActions || []);
+        return actions.map(action => {
+            if (action.dynamicProperty === 'disableIfCartEmpty') {
+                action.disabled = this.cartItems.length === 0;
+            }
+            return action;
+        });
     }
 
     get headerGlobalActions() {
-        if (this.isStepSelection) {
-            const selectionStep = this._getSelectionStep();
-            const filtersOpen = selectionStep?.filterPanelOpen;
-            return [
-                { name: 'refresh', label: 'Refresh Catalog', iconName: 'utility:refresh' },
-                {
-                    name: 'changeView', label: 'Change View', iconName: 'utility:table', isMenu: true, variant: 'border-filled',
-                    menuItems: [
-                        { name: 'viewTable', label: 'Table View', iconName: 'utility:table' },
-                        { name: 'viewCards', label: 'Card View', iconName: 'utility:rows' }
-                    ]
-                },
-                {
-                    name: 'selectionGroup', isGroup: true, items: [
-                        { name: 'clearSelection', label: 'Clear Selection', iconName: 'utility:clear', variant: 'border-filled' },
-                        { name: 'toggleFilters', label: 'Filters', iconName: 'utility:filterList', variant: filtersOpen ? 'brand' : 'border-filled' }
-                    ]
-                }
-            ];
-        }
-        return [
-            { name: 'settings', label: 'List View Controls', variant: 'border-filled', iconName: 'utility:settings', isMenu: true },
-            { name: 'refresh', label: 'Refresh List', variant: 'border-filled', iconName: 'utility:refresh' }
-        ];
-    }
+        const actions = deepClone(this.currentStep.header?.globalActions || []);
+        const filtersOpen = this._getSelectionStep()?.filterPanelOpen;
 
-    get _canAdvance() {
-        if (this.currentStep.key === STEPS.SELECTION.key) return this.cartItems.length > 0;
-        return true;
-    }
-
-
-    get formattedSubtotal() {
-        const discount = this.quoteState.additionalDiscountPercent || 0;
-        const subtotal = calculateCartSubtotal(this.cartItems, discount);
-        return formatCurrency(subtotal);
+        return actions.map(action => {
+            if (action.isGroup && action.items) {
+                action.items = action.items.map(item => {
+                    if (item.dynamicProperty === 'highlightIfFiltersOpen') {
+                        item.variant = filtersOpen ? 'brand' : 'border-filled';
+                    }
+                    return item;
+                });
+            }
+            return action;
+        });
     }
 
 
@@ -252,37 +225,30 @@ export default class CpqConfigurator extends LightningElement {
     _loadCategoriesSidebar() {
         this.sidebarTitle = 'Categories';
         this.sidebarIcon = 'standard:product';
-        this.sidebarSortLabel = 'Name';
-        this.sidebarItems = [
-            { 
-                id: 'cat-001', 
-                label: 'Electronics', 
-                value: '12', 
-                children: [
-                    { id: 'cat-001-1', label: 'Computers', value: '5' },
-                    { id: 'cat-001-2', label: 'Peripherals', value: '7' }
-                ]
-            },
-            { 
-                id: 'cat-002', 
-                label: 'Furniture', 
-                value: '8', 
-                children: [
-                    { id: 'cat-002-1', label: 'Desks', value: '3' },
-                    { id: 'cat-002-2', label: 'Chairs', value: '5' }
-                ]
-            },
-            { 
-                id: 'cat-003', 
-                label: 'Software Licenses', 
-                value: '5'
-            },
-            { 
-                id: 'cat-004', 
-                label: 'Services', 
-                value: '3'
-            }
-        ];
+        this.sidebarSortLabel = 'Products';
+        
+        if (!this.recordId) {
+            this.sidebarItems = [];
+            this._showToast('Error', 'Opportunity ID not available', 'error');
+            return;
+        }
+
+        this.sidebarIsLoading = true;
+        getSidebarCategoriesByOfferType({ opportunityId: this.recordId })
+            .then(result => {
+                this.sidebarItems = result || [];
+                if (this.sidebarItems.length === 0) {
+                    this._showToast('Info', 'No categories available for this offer type', 'info');
+                }
+            })
+            .catch(error => {
+                console.error('Error loading sidebar categories:', error);
+                this._showToast('Error', 'Failed to load categories', 'error');
+                this.sidebarItems = [];
+            })
+            .finally(() => {
+                this.sidebarIsLoading = false;
+            });
     }
 
     _loadBundlesSidebar() {
@@ -344,12 +310,17 @@ export default class CpqConfigurator extends LightningElement {
 
     handleSidebarItemSelect(event) {
         const { selectedItemId } = event.detail;
-        this._showToast('Selection', `Selected item: ${selectedItemId}`, 'success');
+        this._showToast('Selection', `Selected category: ${selectedItemId}`, 'success');
+    }
+
+    handleSidebarItemDeselect(event) {
+        const { itemId } = event.detail;
+        this._showToast('Deselection', `Deselected category: ${itemId}`, 'info');
     }
 
     handleSidebarRefresh(event) {
-        this._showToast('Refresh', 'Sidebar data refreshed', 'success');
-        this.initSidebarData(this.currentStep.key);
+       this.initSidebarData(this.currentStep.key);
+       this._showToast('Refresh', 'Sidebar data refreshed', 'success');
     }
 
     /* ── Step 1 events ── */

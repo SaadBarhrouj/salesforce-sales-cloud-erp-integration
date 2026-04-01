@@ -1,5 +1,5 @@
 import { LightningElement, api, track } from 'lwc';
-import { getAllProducts, searchProducts } from 'c/cpqDataService';
+import { getAllProducts, searchProducts, getProductsByCategory } from 'c/cpqDataService';
 import { EVENTS, getIllustration } from 'c/cpqConstants';
 import { debounce, generateId } from 'c/cpqUtils';
 

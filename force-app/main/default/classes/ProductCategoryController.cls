@@ -1,4 +1,10 @@
+/**
+ * LWC Controller for ProductCategory operations.
+ * Provides AuraEnabled endpoints for LWC components to fetch and display product categories
+ * with sidebar hierarchy filtered by opportunity parameters.
+ */
 public with sharing class ProductCategoryController {
+    /*
     @AuraEnabled(cacheable=true)
     public static ProductCategory getById(Id recordId) {
         try {
@@ -66,5 +72,27 @@ public with sharing class ProductCategoryController {
 
     private static String getControllerErrorMessage() {
         return String.format(System.Label.Generic_Controller_Request_Failed, new List<String>{ ProductCategory.SObjectType.getDescribe().getLabel() });
+    }
+    */
+
+
+    /**
+     * Fetches sidebar categories for LWC based on Opportunity's OfferType field.
+     * Returns hierarchical category structure with product counts.
+     * 
+     * @param opportunityId Salesforce Opportunity ID
+     * @return List of Maps representing category hierarchy with id, label, value, and children
+     * @throws AuraHandledException if opportunityId is null or processing fails
+     */
+    @AuraEnabled(cacheable=false)
+    public static List<Map<String, Object>> getSidebarCategoriesByOfferType(Id opportunityId) {
+        try {
+            if (opportunityId == null) {
+                throw new IllegalArgumentException('Forced exception for testing');
+            }
+            return ProductCategoryService.buildSidebarHierarchyByOfferType(opportunityId);
+        } catch (Exception ex) {
+            throw new AuraHandledException(ex.getMessage());
+        }
     }
 }
