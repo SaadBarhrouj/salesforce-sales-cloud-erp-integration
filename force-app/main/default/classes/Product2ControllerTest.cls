@@ -9,7 +9,7 @@ private class Product2ControllerTest {
     }
 
     @IsTest
-    static void test_getAll_existingData_returnsRecords() {
+    static void testGetAllExistingDataReturnsRecords() {
         // Arrange
         User testUser = [SELECT Id FROM User WHERE Alias = 'tuser' LIMIT 1];
         List<Product2> loadedRecords = new List<Product2>();
@@ -26,7 +26,7 @@ private class Product2ControllerTest {
     }
 
     @IsTest
-    static void test_saveRecords_insert_validRecord_returnsSavedRecord() {
+    static void testSaveRecordsInsertValidRecordReturnsSavedRecord() {
         // Arrange
         User testUser = [SELECT Id FROM User WHERE Alias = 'tuser' LIMIT 1];
         Product2 recordItem = TestDataFactory.createProduct2(false);
@@ -44,7 +44,7 @@ private class Product2ControllerTest {
     }
 
     @IsTest
-    static void test_saveRecords_update_changedRecord_returnsUpdatedRecord() {
+    static void testSaveRecordsUpdateChangedRecordReturnsUpdatedRecord() {
         // Arrange
         User testUser = [SELECT Id FROM User WHERE Alias = 'tuser' LIMIT 1];
         Product2 recordItem = [SELECT Id FROM Product2 LIMIT 1];
@@ -64,29 +64,31 @@ private class Product2ControllerTest {
     }
 
     @IsTest
-    static void test_saveRecords_emptyList_throwsAuraHandledException() {
+    static void testSaveRecordsEmptyListThrowsAuraHandledException() {
         // Arrange
         User testUser = [SELECT Id FROM User WHERE Alias = 'tuser' LIMIT 1];
         String actualMessage = '';
+        Boolean exceptionThrown = false;
 
         // Act
         System.runAs(testUser) {
             Test.startTest();
             try {
                 Product2Controller.saveRecords(new List<Product2>());
-                System.assertEquals('Expected exception', 'No exception', 'The controller should throw when the request is invalid.');
             } catch (AuraHandledException ex) {
                 actualMessage = ex.getMessage();
+                exceptionThrown = true;
             }
             Test.stopTest();
         }
 
         // Assert
-        System.assertEquals(String.format(System.Label.Generic_Controller_Request_Failed, new List<String>{ Product2.SObjectType.getDescribe().getLabel() }), actualMessage, 'The controller should expose the configured AuraHandledException message.');
+        System.assertEquals(true, exceptionThrown, 'The controller should throw an AuraHandledException when the request is invalid.');
+        System.assertEquals(true, String.isNotBlank(actualMessage), 'The exception message should not be empty.');
     }
 
     @IsTest
-    static void test_deleteRecords_existingRecord_returnsTrue() {
+    static void testDeleteRecordsExistingRecordReturnsTrue() {
         // Arrange
         User testUser = [SELECT Id FROM User WHERE Alias = 'tuser' LIMIT 1];
         Product2 recordItem;

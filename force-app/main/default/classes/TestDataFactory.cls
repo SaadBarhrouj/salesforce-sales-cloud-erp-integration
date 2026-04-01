@@ -1,7 +1,16 @@
+/**
+ * @description Factory class for creating test data records.
+ * Provides reusable methods to generate standard test records for unit tests.
+ */
 @IsTest
 public class TestDataFactory {
     private static Integer sequence = 0;
 
+    /**
+     * @description Creates a test User record.
+     * @param doInsert Whether to insert the record into the database.
+     * @return The created User record.
+     */
     public static User createUser(Boolean doInsert) {
         String suffix = nextSuffix();
         User recordItem = new User(
@@ -22,6 +31,11 @@ public class TestDataFactory {
     }
 
 
+    /**
+     * @description Creates a test Account record.
+     * @param doInsert Whether to insert the record into the database.
+     * @return The created Account record.
+     */
     public static Account createAccount(Boolean doInsert) {
 
         Account recordItem = new Account(
@@ -35,6 +49,11 @@ public class TestDataFactory {
         return recordItem;
     }
 
+    /**
+     * @description Creates a test Product2 record.
+     * @param doInsert Whether to insert the record into the database.
+     * @return The created Product2 record.
+     */
     public static Product2 createProduct2(Boolean doInsert) {
 
         Product2 recordItem = new Product2(
@@ -49,6 +68,11 @@ public class TestDataFactory {
         return recordItem;
     }
 
+    /**
+     * @description Creates a test Bundle_Feature__c record.
+     * @param doInsert Whether to insert the record into the database.
+     * @return The created Bundle_Feature__c record.
+     */
     public static Bundle_Feature__c createBundleFeature(Boolean doInsert) {
         Product2 product = createProduct2(true);
         Bundle_Feature__c recordItem = new Bundle_Feature__c(
@@ -65,13 +89,18 @@ public class TestDataFactory {
         return recordItem;
     }
 
+    /**
+     * @description Creates a test Bundle_Option__c record.
+     * @param doInsert Whether to insert the record into the database.
+     * @return The created Bundle_Option__c record.
+     */
     public static Bundle_Option__c createBundleOption(Boolean doInsert) {
         Product2 bundleProduct = createProduct2(true);
         Product2 optionProduct = createProduct2(true);
         Bundle_Feature__c feature = createBundleFeature(true);
         
         Bundle_Option__c recordItem = new Bundle_Option__c(
-            Option_Type__c = 'Product',
+            Option_Type__c = 'Component',
             Sort_Order__c = sequence,
             Bundle_Product__c = bundleProduct.Id,
             Option_Product__c = optionProduct.Id,

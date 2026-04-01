@@ -1,4 +1,13 @@
+/**
+ * @description Data access object for Product2 records.
+ * Contains all SOQL queries for Product2 CRUD operations.
+ */
 public inherited sharing class Product2DAO {
+    /**
+     * @description Retrieves a single Product2 record by ID.
+     * @param recordId The ID of the Product2 record to retrieve.
+     * @return The Product2 record, or null if not found.
+     */
     public static Product2 getById(Id recordId) {
         if (recordId == null) {
             return null;
@@ -28,6 +37,11 @@ public inherited sharing class Product2DAO {
         return records.isEmpty() ? null : records[0];
     }
 
+    /**
+     * @description Retrieves multiple Product2 records by their IDs.
+     * @param recordIds The set of Product2 record IDs to retrieve.
+     * @return Map of Product2 IDs to records.
+     */
     public static Map<Id, Product2> getByIds(Set<Id> recordIds) {
         if (recordIds == null || recordIds.isEmpty()) {
             return new Map<Id, Product2>();
@@ -55,6 +69,11 @@ public inherited sharing class Product2DAO {
     }
 
 
+    /**
+     * @description Retrieves Product2 records by name.
+     * @param recordName The name to search for.
+     * @return List of Product2 records matching the name.
+     */
     public static List<Product2> getByName(String recordName) {
         if (String.isBlank(recordName)) {
             return new List<Product2>();
@@ -81,6 +100,10 @@ public inherited sharing class Product2DAO {
         ];
     }
 
+    /**
+     * @description Retrieves all Product2 records.
+     * @return List of all Product2 records.
+     */
     public static List<Product2> getAll() {
         return [
             SELECT
