@@ -71,7 +71,7 @@ public class TestDataFactory {
         Bundle_Feature__c feature = createBundleFeature(true);
         
         Bundle_Option__c recordItem = new Bundle_Option__c(
-            Option_Type__c = 'Product',
+            Option_Type__c = 'Component',
             Sort_Order__c = sequence,
             Bundle_Product__c = bundleProduct.Id,
             Option_Product__c = optionProduct.Id,
