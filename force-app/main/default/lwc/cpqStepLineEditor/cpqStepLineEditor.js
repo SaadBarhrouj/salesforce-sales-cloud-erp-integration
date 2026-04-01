@@ -1,23 +1,23 @@
 import { LightningElement, api } from 'lwc';
-import { calculateCartSubtotal, formatCurrency, deepClone } from 'c/cpqUtils';
+import { calculateSelectedProductsSubtotal, formatCurrency, deepClone } from 'c/cpqUtils';
 
 export default class CpqStepLineEditor extends LightningElement {
-    @api cartItems = [];
+    @api selectedProducts = [];
     @api quoteState = {};
 
     get numberedItems() {
-        return (this.cartItems || []).map((item, idx) => ({
+        return (this.selectedProducts || []).map((item, idx) => ({
             ...item,
             _lineNumber: idx + 1
         }));
     }
 
     get formattedSubtotal() {
-        return formatCurrency(calculateCartSubtotal(this.cartItems || []));
+        return formatCurrency(calculateSelectedProductsSubtotal(this.selectedProducts || []));
     }
 
     get isEmpty() {
-        return !this.cartItems || this.cartItems.length === 0;
+        return !this.selectedProducts || this.selectedProducts.length === 0;
     }
 
     /* ─── Event Handlers ─── */

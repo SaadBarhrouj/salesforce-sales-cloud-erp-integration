@@ -1,8 +1,8 @@
 import { LightningElement, api } from 'lwc';
-import { formatCurrency, formatNumber, calculateCartSubtotal, calculateCartItemTotal } from 'c/cpqUtils';
+import { formatCurrency, formatNumber, calculateSelectedProductsSubtotal, calculateSelectedProductTotal } from 'c/cpqUtils';
 
 export default class CpqStepReview extends LightningElement {
-    @api cartItems = [];
+    @api selectedProducts = [];
     @api quoteState = {};
     @api logisticsState = {};
 
@@ -24,19 +24,19 @@ export default class CpqStepReview extends LightningElement {
     /* ═══ Line Items ═══ */
 
     get itemCount() {
-        return (this.cartItems || []).length;
+        return (this.selectedProducts || []).length;
     }
 
     get numberedItems() {
         const discount = this.quoteState.additionalDiscountPercent || 0;
-        return (this.cartItems || []).map((item, idx) => {
+        return (this.selectedProducts || []).map((item, idx) => {
             const selectedOpts = (item.options || []).filter(o => o.isSelected);
             return {
                 ...item,
                 _lineNumber: idx + 1,
                 _formattedUnitPrice: formatCurrency(item.listUnitPrice || 0),
                 _formattedDiscount: item.additionalDiscount ? `${item.additionalDiscount}%` : '0%',
-                _formattedTotal: formatCurrency(calculateCartItemTotal(item, discount)),
+                _formattedTotal: formatCurrency(calculateSelectedProductTotal(item, discount)),
                 hasOptions: selectedOpts.length > 0,
                 options: selectedOpts.map(o => ({
                     ...o,
@@ -50,17 +50,17 @@ export default class CpqStepReview extends LightningElement {
 
     get formattedSubtotal() {
         const discount = this.quoteState.additionalDiscountPercent || 0;
-        return formatCurrency(calculateCartSubtotal(this.cartItems || [], discount));
+        return formatCurrency(calculateSelectedProductsSubtotal(this.selectedProducts || [], discount));
     }
 
     /* ═══ Bundles ═══ */
 
     get hasBundles() {
-        return (this.cartItems || []).some(i => i.isBundle);
+        return (this.selectedProducts || []).some(i => i.isBundle);
     }
 
     get bundleItems() {
-        return (this.cartItems || [])
+        return (this.selectedProducts || [])
             .filter(i => i.isBundle)
             .map(b => {
                 const selected = (b.options || []).filter(o => o.isSelected);
@@ -104,7 +104,7 @@ export default class CpqStepReview extends LightningElement {
 
     get formattedWeight() {
         let weight = 0;
-        (this.cartItems || []).forEach(item => {
+        (this.selectedProducts || []).forEach(item => {
             weight += (item.weight || 0) * (item.quantity || 1);
             (item.options || []).filter(o => o.isSelected).forEach(o => {
                 weight += (o.Unit_Weight_Kg__c || 0) * (o.quantity || 1);

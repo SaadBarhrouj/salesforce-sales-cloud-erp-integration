@@ -32,18 +32,20 @@
                     <!-- Step 1: Product Selection (Main View) -->
                     <template lwc:if={isStepSelection}>
                         <c-cpq-step-selection
-                            catalog-id={quoteState.catalogId}
-                            cart-items={cartItems}
+                            category-id={selectedCategoryId}
+                            category-label={selectedCategoryLabel}
+                            selected-products={selectedProducts}
                             onproductadd={handleProductAdd}
                             onproductremove={handleProductRemove}
                             onnavigate={handleNavigate}
+                            oncategoryclear={handleCategoryClear}
                         ></c-cpq-step-selection>
                     </template>
 
                     <!-- Step 2: Bundle Configurator -->
                     <template lwc:if={isStepConfigure}>
                         <c-cpq-step-bundle-config
-                            cart-items={cartItems}
+                            selected-products={selectedProducts}
                             onconfigupdate={handleConfigUpdate}
                             onnavigate={handleNavigate}
                         ></c-cpq-step-bundle-config>
@@ -52,7 +54,7 @@
                     <!-- Step 3: Line Editor -->
                     <template lwc:if={isStepLineEditor}>
                         <c-cpq-step-line-editor
-                            cart-items={numberedCartItems}
+                            selected-products={numberedCartItems}
                             quote-state={quoteState}
                             onlineupdate={handleLineUpdate}
                             onlineremove={handleLineRemove}
@@ -64,7 +66,7 @@
                     <!-- Step 4: Logistics -->
                     <template lwc:if={isStepLogistics}>
                         <c-cpq-step-logistics
-                            cart-items={cartItems}
+                            selected-products={selectedProducts}
                             quote-state={quoteState}
                             logistics-state={logisticsState}
                             onlogisticschange={handleLogisticsChange}
@@ -75,7 +77,7 @@
                     <!-- Step 5: Review & Save -->
                     <template lwc:if={isStepReview}>
                         <c-cpq-step-review
-                            cart-items={cartItems}
+                            selected-products={selectedProducts}
                             quote-state={quoteState}
                             logistics-state={logisticsState}
                             onsavequote={handleSaveQuote}

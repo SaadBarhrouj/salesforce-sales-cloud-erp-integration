@@ -4,7 +4,7 @@ import { deepClone, isSingleSelect, getSelectionMode, validateFeatureSelections,
 import { SELECTION_MODES } from 'c/cpqConstants';
 
 export default class CpqStepBundleConfig extends LightningElement {
-    @api cartItems = [];
+    @api selectedProducts = [];
 
     features = [];
     activeBundleKey = null;
@@ -25,7 +25,7 @@ export default class CpqStepBundleConfig extends LightningElement {
     /* ─── Computed ─── */
 
     get bundleItems() {
-        return (this.cartItems || []).filter(i => i.isBundle);
+        return (this.selectedProducts || []).filter(i => i.isBundle);
     }
 
     get hasActiveBundle() {

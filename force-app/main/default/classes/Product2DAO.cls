@@ -97,8 +97,55 @@ public inherited sharing class Product2DAO {
                 SellerId,
                 SourceProductId,
                 StockKeepingUnit,
-                Unit_Weight_Kg__c
+                Unit_Weight_Kg__c,
+                (SELECT Id FROM Options__r)
             FROM Product2
+        ];
+    }
+
+    /**
+     * @description Retrieves Product2 records filtered by category ID via ProductCategoryProduct junction.
+     * @param categoryId The ProductCategory ID to filter by. If null, returns all products.
+     * @return List of Product2 records associated with the category.
+     */
+    public static List<Product2> getByCategoryId(Id categoryId) {
+        if (categoryId == null) {
+            return getAll();
+        }
+
+        if (!Schema.getGlobalDescribe().containsKey('ProductCategoryProduct')) {
+            return getAll();
+        }
+
+        Set<Id> productIds = new Set<Id>();
+        String query = 'SELECT Product2Id FROM ProductCategoryProduct WHERE ProductCategoryId = :categoryId';
+        for (SObject pcp : Database.query(query)) {
+            productIds.add((Id) pcp.get('Product2Id'));
+        }
+
+        if (productIds.isEmpty()) {
+            return new List<Product2>();
+        }
+
+        return [
+            SELECT
+                Id,
+                Description,
+                DisplayUrl,
+                ExternalDataSourceId,
+                ExternalId,
+                Family,
+                IsActive,
+                Name,
+                ProductCode,
+                QuantityUnitOfMeasure,
+                SellerId,
+                SourceProductId,
+                StockKeepingUnit,
+                Unit_Weight_Kg__c,
+                (SELECT Id FROM Options__r)
+            FROM Product2
+            WHERE Id IN :productIds
         ];
     }
 }
