@@ -141,9 +141,9 @@ public inherited sharing class Product2DAO {
         }
 
         Set<Id> productIds = new Set<Id>();
-        String query = 'SELECT Product2Id FROM ProductCategoryProduct WHERE ProductCategoryId = :categoryId';
+        String query = 'SELECT ProductId FROM ProductCategoryProduct WHERE ProductCategoryId = :categoryId';
         for (SObject pcp : Database.query(query)) {
-            productIds.add((Id) pcp.get('Product2Id'));
+            productIds.add((Id) pcp.get('ProductId'));
         }
 
         if (productIds.isEmpty()) {

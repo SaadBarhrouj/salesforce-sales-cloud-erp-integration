@@ -257,30 +257,30 @@ export default class CpqConfigurator extends LightningElement {
         this.sidebarSortLabel = 'Name';
         this.sidebarItems = [
             { 
-                id: 'cat-001', 
+                id: '0Wmxx0000000001CAA', 
                 label: 'Electronics', 
                 value: '12', 
                 children: [
-                    { id: 'cat-001-1', label: 'Computers', value: '5' },
-                    { id: 'cat-001-2', label: 'Peripherals', value: '7' }
+                    { id: '0Wmxx0000000002CAA', label: 'Computers', value: '5' },
+                    { id: '0Wmxx0000000003CAA', label: 'Peripherals', value: '7' }
                 ]
             },
             { 
-                id: 'cat-002', 
+                id: '0Wmxx0000000004CAA', 
                 label: 'Furniture', 
                 value: '8', 
                 children: [
-                    { id: 'cat-002-1', label: 'Desks', value: '3' },
-                    { id: 'cat-002-2', label: 'Chairs', value: '5' }
+                    { id: '0Wmxx0000000005CAA', label: 'Desks', value: '3' },
+                    { id: '0Wmxx0000000006CAA', label: 'Chairs', value: '5' }
                 ]
             },
             { 
-                id: 'cat-003', 
+                id: '0Wmxx0000000007CAA', 
                 label: 'Software Licenses', 
                 value: '5'
             },
             { 
-                id: 'cat-004', 
+                id: '0Wmxx0000000008CAA', 
                 label: 'Services', 
                 value: '3'
             }
@@ -347,7 +347,7 @@ export default class CpqConfigurator extends LightningElement {
     handleSidebarItemSelect(event) {
         const { selectedItemId } = event.detail;
         const selectedItem = this._findSidebarItemById(selectedItemId);
-        this.selectedCategoryId = selectedItem ? selectedItem.value : '';
+        this.selectedCategoryId = selectedItem ? selectedItem.id : '';
         this.selectedCategoryLabel = selectedItem ? selectedItem.label : '';
     }
 
