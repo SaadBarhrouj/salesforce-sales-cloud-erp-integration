@@ -398,4 +398,47 @@ private class Product2ControllerTest {
         // Assert
         System.assertEquals(true, exceptionThrown, 'The controller should throw an exception when deleting a non-existent record.');
     }
+
+    @IsTest
+    static void testSaveRecordsMissingRequiredFieldShowsValidationMessage() {
+        // Arrange
+        User testUser = TestDataFactory.createUser(true);
+        Product2 invalidRecord = new Product2();
+        Boolean exceptionThrown = false;
+        String exceptionMessage = '';
+
+        // Act
+        System.runAs(testUser) {
+            Test.startTest();
+            try {
+                Product2Controller.saveRecords(new List<Product2>{ invalidRecord });
+            } catch (AuraHandledException e) {
+                exceptionThrown = true;
+                exceptionMessage = e.getMessage();
+            }
+            Test.stopTest();
+        }
+
+        // Assert
+        System.assertEquals(true, exceptionThrown, 'Should throw AuraHandledException');
+        System.assertEquals(true, exceptionMessage.contains('required'), 'Should show validation message');
+    }
+
+    @IsTest
+    static void testGetByIdNonExistentRecordReturnsNull() {
+        // Arrange
+        User testUser = TestDataFactory.createUser(true);
+        Id fakeId = Product2.SObjectType.getDescribe().getKeyPrefix() + '000000000000';
+        Product2 result = null;
+
+        // Act
+        System.runAs(testUser) {
+            Test.startTest();
+            result = Product2Controller.getById(fakeId);
+            Test.stopTest();
+        }
+
+        // Assert
+        System.assertEquals(null, result, 'Should return null for non-existent record');
+    }
 }

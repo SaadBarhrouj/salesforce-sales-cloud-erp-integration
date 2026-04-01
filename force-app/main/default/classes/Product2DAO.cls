@@ -9,25 +9,30 @@ public inherited sharing class Product2DAO {
      * @return The Product2 record, or null if not found.
      */
     public static Product2 getById(Id recordId) {
-        if (recordId == null) {
-            return null;
+        try {
+            if (recordId == null) {
+                return null;
+            }
+
+            List<Product2> records = [
+                SELECT
+                    Id,
+                    Description,
+                    Family,
+                    IsActive,
+                    Name,
+                    ProductCode,
+                    Unit_Weight_Kg__c
+                FROM Product2
+                WHERE Id = :recordId
+                LIMIT 1
+            ];
+
+            return records.isEmpty() ? null : records[0];
+        } catch (QueryException e) {
+            System.debug(LoggingLevel.ERROR, 'Product2DAO.getById failed: ' + e.getMessage() + ' | ID: ' + recordId);
+            throw e;
         }
-
-        List<Product2> records = [
-            SELECT
-                Id,
-                Description,
-                Family,
-                IsActive,
-                Name,
-                ProductCode,
-                Unit_Weight_Kg__c
-            FROM Product2
-            WHERE Id = :recordId
-            LIMIT 1
-        ];
-
-        return records.isEmpty() ? null : records[0];
     }
 
     /**
@@ -36,22 +41,27 @@ public inherited sharing class Product2DAO {
      * @return Map of Product2 IDs to records.
      */
     public static Map<Id, Product2> getByIds(Set<Id> recordIds) {
-        if (recordIds == null || recordIds.isEmpty()) {
-            return new Map<Id, Product2>();
-        }
+        try {
+            if (recordIds == null || recordIds.isEmpty()) {
+                return new Map<Id, Product2>();
+            }
 
-        return new Map<Id, Product2>([
-            SELECT
-                Id,
-                Description,
-                Family,
-                IsActive,
-                Name,
-                ProductCode,
-                Unit_Weight_Kg__c
-            FROM Product2
-            WHERE Id IN :recordIds
-        ]);
+            return new Map<Id, Product2>([
+                SELECT
+                    Id,
+                    Description,
+                    Family,
+                    IsActive,
+                    Name,
+                    ProductCode,
+                    Unit_Weight_Kg__c
+                FROM Product2
+                WHERE Id IN :recordIds
+            ]);
+        } catch (QueryException e) {
+            System.debug(LoggingLevel.ERROR, 'Product2DAO.getByIds failed: ' + e.getMessage());
+            throw e;
+        }
     }
 
 
@@ -61,22 +71,27 @@ public inherited sharing class Product2DAO {
      * @return List of Product2 records matching the name.
      */
     public static List<Product2> getByName(String recordName) {
-        if (String.isBlank(recordName)) {
-            return new List<Product2>();
-        }
+        try {
+            if (String.isBlank(recordName)) {
+                return new List<Product2>();
+            }
 
-        return [
-            SELECT
-                Id,
-                Description,
-                Family,
-                IsActive,
-                Name,
-                ProductCode,
-                Unit_Weight_Kg__c
-            FROM Product2
-            WHERE Name = :recordName
-        ];
+            return [
+                SELECT
+                    Id,
+                    Description,
+                    Family,
+                    IsActive,
+                    Name,
+                    ProductCode,
+                    Unit_Weight_Kg__c
+                FROM Product2
+                WHERE Name = :recordName
+            ];
+        } catch (QueryException e) {
+            System.debug(LoggingLevel.ERROR, 'Product2DAO.getByName failed: ' + e.getMessage() + ' | Name: ' + recordName);
+            throw e;
+        }
     }
 
     /**
@@ -84,18 +99,23 @@ public inherited sharing class Product2DAO {
      * @return List of all Product2 records.
      */
     public static List<Product2> getAll() {
-        return [
-            SELECT
-                Id,
-                Description,
-                Family,
-                IsActive,
-                Name,
-                ProductCode,
-                Unit_Weight_Kg__c,
-                (SELECT Id FROM Options__r)
-            FROM Product2
-        ];
+        try {
+            return [
+                SELECT
+                    Id,
+                    Description,
+                    Family,
+                    IsActive,
+                    Name,
+                    ProductCode,
+                    Unit_Weight_Kg__c,
+                    (SELECT Id FROM Options__r)
+                FROM Product2
+            ];
+        } catch (QueryException e) {
+            System.debug(LoggingLevel.ERROR, 'Product2DAO.getAll failed: ' + e.getMessage());
+            throw e;
+        }
     }
 
     /**
@@ -104,36 +124,42 @@ public inherited sharing class Product2DAO {
      * @return List of Product2 records associated with the category.
      */
     public static List<Product2> getByCategoryId(Id categoryId) {
-        if (categoryId == null) {
-            return getAll();
-        }
+        try {
+            if (categoryId == null) {
+                return getAll();
+            }
 
-        if (!Schema.getGlobalDescribe().containsKey('ProductCategoryProduct')) {
-            return getAll();
-        }
+            SObjectType productCategoryType = Schema.getGlobalDescribe().get('ProductCategoryProduct');
+            if (productCategoryType == null) {
+                return getAll();
+            }
 
-        Set<Id> productIds = new Set<Id>();
-        String query = 'SELECT ProductId FROM ProductCategoryProduct WHERE ProductCategoryId = :categoryId';
-        for (SObject pcp : Database.query(query)) {
-            productIds.add((Id) pcp.get('ProductId'));
-        }
+            Set<Id> productIds = new Set<Id>();
+            String query = 'SELECT ProductId FROM ProductCategoryProduct WHERE ProductCategoryId = :categoryId';
+            for (SObject pcp : Database.query(query)) {
+                productIds.add((Id) pcp.get('ProductId'));
+            }
 
-        if (productIds.isEmpty()) {
-            return new List<Product2>();
-        }
+            if (productIds.isEmpty()) {
+                return new List<Product2>();
+            }
 
-        return [
-            SELECT
-                Id,
-                Description,
-                Family,
-                IsActive,
-                Name,
-                ProductCode,
-                Unit_Weight_Kg__c,
-                (SELECT Id FROM Options__r)
-            FROM Product2
-            WHERE Id IN :productIds
-        ];
+            return [
+                SELECT
+                    Id,
+                    Description,
+                    Family,
+                    IsActive,
+                    Name,
+                    ProductCode,
+                    Unit_Weight_Kg__c,
+                    (SELECT Id FROM Options__r)
+                FROM Product2
+                WHERE Id IN :productIds
+            ];
+        } catch (QueryException e) {
+            System.debug(LoggingLevel.ERROR, 'Product2DAO.getByCategoryId failed: ' + e.getMessage() + ' | CategoryId: ' + categoryId);
+            throw e;
+        }
     }
 }

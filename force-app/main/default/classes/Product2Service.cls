@@ -18,11 +18,6 @@ public inherited sharing class Product2Service {
     };
 
     /**
-     * @description Custom exception for Product2 service layer errors.
-     */
-    public class ServiceException extends Exception {}
-
-    /**
      * @description Returns a loaded Product2 record.
      * @param loadedRecord The Product2 record to return.
      * @return The loaded Product2 record.
@@ -72,7 +67,8 @@ public inherited sharing class Product2Service {
             }
 
             if (!safePersistedRecordsById.containsKey(recordItem.Id)) {
-                throw new ServiceException(formatLabel(System.Label.Generic_Service_Record_Not_Found, new List<String>{ getObjectLabel() }));
+                System.debug(LoggingLevel.ERROR, 'Product2Service.saveRecords: Record not found - ' + recordItem.Id);
+                throw new Product2Exception(formatLabel(System.Label.Generic_Service_Record_Not_Found, new List<String>{ getObjectLabel() }));
             }
 
             if (hasChanges(recordItem, safePersistedRecordsById.get(recordItem.Id))) {
@@ -81,10 +77,20 @@ public inherited sharing class Product2Service {
         }
 
         if (!recordsToInsert.isEmpty()) {
-            insert recordsToInsert;
+            try {
+                insert recordsToInsert;
+            } catch (DmlException e) {
+                System.debug(LoggingLevel.ERROR, 'Product2Service.saveRecords insert failed: ' + e.getMessage());
+                throw e;
+            }
         }
         if (!recordsToUpdate.isEmpty()) {
-            update recordsToUpdate;
+            try {
+                update recordsToUpdate;
+            } catch (DmlException e) {
+                System.debug(LoggingLevel.ERROR, 'Product2Service.saveRecords update failed: ' + e.getMessage());
+                throw e;
+            }
         }
 
         return records;
@@ -98,10 +104,16 @@ public inherited sharing class Product2Service {
         validateCollection(records);
         for (Product2 recordItem : records) {
             if (recordItem.Id == null) {
-                throw new ServiceException(formatLabel(System.Label.Generic_Service_Record_Id_Required, new List<String>{ getObjectLabel() }));
+                System.debug(LoggingLevel.ERROR, 'Product2Service.deleteRecords: Record ID is required');
+                throw new Product2Exception(formatLabel(System.Label.Generic_Service_Record_Id_Required, new List<String>{ getObjectLabel() }));
             }
         }
-        delete records;
+        try {
+            delete records;
+        } catch (DmlException e) {
+            System.debug(LoggingLevel.ERROR, 'Product2Service.deleteRecords failed: ' + e.getMessage());
+            throw e;
+        }
     }
 
     /**
@@ -135,10 +147,12 @@ public inherited sharing class Product2Service {
 
         for (Product2 recordItem : newRecords) {
             if (recordItem.Id == null) {
-                throw new ServiceException(formatLabel(System.Label.Generic_Service_Record_Id_Required, new List<String>{ getObjectLabel() }));
+                System.debug(LoggingLevel.ERROR, 'Product2Service.beforeUpdate: Record ID is required');
+                throw new Product2Exception(formatLabel(System.Label.Generic_Service_Record_Id_Required, new List<String>{ getObjectLabel() }));
             }
             if (!safePersistedRecordsById.containsKey(recordItem.Id)) {
-                throw new ServiceException(formatLabel(System.Label.Generic_Service_Record_Not_Found, new List<String>{ getObjectLabel() }));
+                System.debug(LoggingLevel.ERROR, 'Product2Service.beforeUpdate: Record not found - ' + recordItem.Id);
+                throw new Product2Exception(formatLabel(System.Label.Generic_Service_Record_Not_Found, new List<String>{ getObjectLabel() }));
             }
             validateRequiredFields(recordItem);
         }
@@ -156,7 +170,8 @@ public inherited sharing class Product2Service {
 
         for (Product2 recordItem : loadedRecordsById.values()) {
             if (recordItem.Id == null) {
-                throw new ServiceException(formatLabel(System.Label.Generic_Service_Record_Id_Required, new List<String>{ getObjectLabel() }));
+                System.debug(LoggingLevel.ERROR, 'Product2Service.beforeDelete: Record ID is required');
+                throw new Product2Exception(formatLabel(System.Label.Generic_Service_Record_Id_Required, new List<String>{ getObjectLabel() }));
             }
         }
     }
@@ -195,7 +210,8 @@ public inherited sharing class Product2Service {
      */
     private static void validateCollection(List<Product2> records) {
         if (records == null || records.isEmpty()) {
-            throw new ServiceException(formatLabel(System.Label.Generic_Service_Records_Required, new List<String>{ getObjectLabel() }));
+            System.debug(LoggingLevel.ERROR, 'Product2Service.validateCollection: Empty collection provided');
+            throw new Product2Exception(formatLabel(System.Label.Generic_Service_Records_Required, new List<String>{ getObjectLabel() }));
         }
     }
 
@@ -215,7 +231,8 @@ public inherited sharing class Product2Service {
                 String fieldLabel = fieldMap.containsKey(fieldApiName)
                     ? fieldMap.get(fieldApiName).getDescribe().getLabel()
                     : fieldApiName;
-                throw new ServiceException(formatLabel(System.Label.Generic_Service_Field_Required, new List<String>{ fieldLabel, getObjectLabel() }));
+                System.debug(LoggingLevel.ERROR, 'Product2Service.validateRequiredFields: ' + fieldLabel + ' is required');
+                throw new Product2Exception(formatLabel(System.Label.Generic_Service_Field_Required, new List<String>{ fieldLabel, getObjectLabel() }));
             }
         }
     }

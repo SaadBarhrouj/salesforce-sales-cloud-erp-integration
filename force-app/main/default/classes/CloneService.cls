@@ -52,31 +52,42 @@ public with sharing class CloneService {
      */
     @AuraEnabled(cacheable=true)
     public static List<ChildRelationshipWrapper> getRelatedChildRecords(Id recordId) {
-        List<ChildRelationshipWrapper> wrappers = new List<ChildRelationshipWrapper>();
-        if (recordId == null) {
-            return wrappers;
-        }
-
-        SObjectType parentType = recordId.getSObjectType();
-        DescribeSObjectResult parentDescribe = parentType.getDescribe();
-
-        for (ChildRelationship rel : parentDescribe.getChildRelationships()) {
-            String relName = rel.getRelationshipName();
-            if (String.isBlank(relName)) {
-                continue;
+        try {
+            List<ChildRelationshipWrapper> wrappers = new List<ChildRelationshipWrapper>();
+            if (recordId == null) {
+                return wrappers;
             }
 
-            SObjectType childType = rel.getChildSObject();
-            DescribeSObjectResult childDescribe = childType.getDescribe();
-            
-            if (shouldIncludeRelationship(rel, childDescribe)) {
-                List<SObject> records = queryChildRecords(recordId, rel, childDescribe);
-                if (!records.isEmpty()) {
-                    wrappers.add(new ChildRelationshipWrapper(relName, childDescribe, records));
+            SObjectType parentType = recordId.getSObjectType();
+            if (parentType == null) {
+                throw new AuraHandledException('Invalid record ID provided.');
+            }
+
+            DescribeSObjectResult parentDescribe = parentType.getDescribe();
+
+            for (ChildRelationship rel : parentDescribe.getChildRelationships()) {
+                String relName = rel.getRelationshipName();
+                if (String.isBlank(relName)) {
+                    continue;
+                }
+
+                SObjectType childType = rel.getChildSObject();
+                DescribeSObjectResult childDescribe = childType.getDescribe();
+                
+                if (shouldIncludeRelationship(rel, childDescribe)) {
+                    List<SObject> records = queryChildRecords(recordId, rel, childDescribe);
+                    if (!records.isEmpty()) {
+                        wrappers.add(new ChildRelationshipWrapper(relName, childDescribe, records));
+                    }
                 }
             }
+            return wrappers;
+        } catch (AuraHandledException e) {
+            throw e;
+        } catch (Exception e) {
+            System.debug(LoggingLevel.ERROR, 'CloneService.getRelatedChildRecords failed: ' + e.getMessage());
+            throw new AuraHandledException('Failed to load related records. Please try again or contact your administrator.');
         }
-        return wrappers;
     }
 
     private static Boolean shouldIncludeRelationship(ChildRelationship rel, DescribeSObjectResult childDescribe) {
@@ -130,7 +141,8 @@ public with sharing class CloneService {
 
             return clonedParent.Id;
         } catch (Exception e) {
-            throw new AuraHandledException(e.getMessage());
+            System.debug(LoggingLevel.ERROR, 'CloneService.cloneRecordWithChildren failed: ' + e.getMessage());
+            throw new AuraHandledException('Failed to clone record. Please try again or contact your administrator.');
         }
     }
 
@@ -182,7 +194,11 @@ public with sharing class CloneService {
     }
 
     private static String generateAllFieldsQuery(String sObjName) {
-        Map<String, SObjectField> fieldMap = Schema.getGlobalDescribe().get(sObjName).getDescribe().fields.getMap();
+        SObjectType sObjType = Schema.getGlobalDescribe().get(sObjName);
+        if (sObjType == null) {
+            throw new AuraHandledException('Object type not found: ' + sObjName);
+        }
+        Map<String, SObjectField> fieldMap = sObjType.getDescribe().fields.getMap();
         List<String> fields = new List<String>();
         for (SObjectField f : fieldMap.values()) {
             DescribeFieldResult dfr = f.getDescribe();
