@@ -57,7 +57,7 @@
                         variant="border-filled"
                         alternative-text="Close filters"
                         title="Close filters"
-                        onclick={closeFilterPanel}>
+                        onclick={handleCloseFilterPanel}>
                     </lightning-button-icon>
                 </div>
 
@@ -76,7 +76,7 @@
                     <lightning-input
                         label="Product Code"
                         value={pendingFilterProductCode}
-                        onchange={handleProductCodeChange}>
+                        onchange={handleFilterProductCodeChange}>
                     </lightning-input>
 
                     <div class="slds-m-top_small">
@@ -85,7 +85,7 @@
                             label="Product Type"
                             options={bundleTypeOptions}
                             value={pendingFilterBundleType}
-                            onchange={handleBundleTypeChange}>
+                            onchange={handleFilterBundleTypeChange}>
                         </lightning-combobox>
                     </div>
                 </div>
@@ -94,13 +94,13 @@
                     <lightning-button
                         label="Reset"
                         variant="neutral"
-                        onclick={handleRemoveAllFilters}>
+                        onclick={handleResetFilters}>
                     </lightning-button>
                     <lightning-button
                         class="slds-m-left_small"
                         label="Apply"
                         variant="brand"
-                        onclick={applyFilters}>
+                        onclick={handleApplyFilters}>
                     </lightning-button>
                 </div>
             </section>

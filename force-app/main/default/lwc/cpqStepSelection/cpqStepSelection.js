@@ -43,8 +43,10 @@ export default class CpqStepSelection extends LightningElement {
     }
 
     /* ── Reactive Category Change ─────────────── */
+    /* External API: categoryId / categoryLabel (domain-specific) */
     _categoryId = '';
     _categoryLabel = '';
+    _loadRequestCounter = 0;
 
     @api
     get categoryId() {
@@ -133,8 +135,8 @@ export default class CpqStepSelection extends LightningElement {
 
     get activeFilters() {
         const filters = [];
-        if (this.categoryLabel) {
-            filters.push({ id: 'category', label: 'Category: ' + this.categoryLabel, value: this.categoryId, field: 'category' });
+        if (this._categoryLabel) {
+            filters.push({ id: 'category', label: 'Category: ' + this._categoryLabel, value: this._categoryId, field: 'category' });
         }
         if (this.filterProductCode) {
             filters.push({ id: 'productCode', label: 'Product Code', value: this.filterProductCode, field: 'productCode' });
@@ -154,18 +156,31 @@ export default class CpqStepSelection extends LightningElement {
 
     async loadAllProducts(categoryId) {
         this.isLoading = true;
+        const requestId = ++this._loadRequestCounter;
         try {
             if (categoryId) {
-                this.products = await getProductsByCategory(categoryId);
+                const products = await getProductsByCategory(categoryId);
+                if (requestId === this._loadRequestCounter) {
+                    this.products = products;
+                }
             } else {
-                this.products = await getAllProducts();
+                const products = await getAllProducts();
+                if (requestId === this._loadRequestCounter) {
+                    this.products = products;
+                }
             }
         }
         catch (e) {
-            const message = e?.body?.message || e?.message || 'Failed to load products.';
-            showToast(this, 'Error', message, 'error');
+            if (requestId === this._loadRequestCounter) {
+                const message = e?.body?.message || e?.message || 'Failed to load products.';
+                showToast(this, 'Error', message, 'error');
+            }
         }
-        finally { this.isLoading = false; }
+        finally {
+            if (requestId === this._loadRequestCounter) {
+                this.isLoading = false;
+            }
+        }
     }
 
     /* ═══════════════════════════════════════
@@ -267,11 +282,11 @@ export default class CpqStepSelection extends LightningElement {
        EVENT HANDLERS - Filters
        ═══════════════════════════════════════ */
 
-    handleProductCodeChange(event) {
+    handleFilterProductCodeChange(event) {
         this.pendingFilterProductCode = event.detail.value || '';
     }
 
-    handleBundleTypeChange(event) {
+    handleFilterBundleTypeChange(event) {
         this.pendingFilterBundleType = event.detail.value;
     }
 
@@ -280,7 +295,7 @@ export default class CpqStepSelection extends LightningElement {
         if (field === 'category') {
             this._categoryId = '';
             this._categoryLabel = '';
-            this.dispatchEvent(new CustomEvent(EVENTS.CATEGORY_CLEAR));
+            this.dispatchEvent(new CustomEvent(EVENTS.ITEM_DESELECT, { detail: {} }));
             this.loadAllProducts();
         } else if (field === 'productCode') {
             this.filterProductCode = '';
@@ -291,14 +306,13 @@ export default class CpqStepSelection extends LightningElement {
         }
     }
 
-    applyFilters() {
-        /* Apply pending filters to actual filters */
+    handleApplyFilters() {
         this.filterProductCode = this.pendingFilterProductCode;
         this.filterBundleType = this.pendingFilterBundleType;
         this.isFilterPanelOpen = false;
     }
 
-    handleRemoveAllFilters() {
+    handleResetFilters() {
         this.pendingFilterProductCode = '';
         this.pendingFilterBundleType = 'all';
         this.filterProductCode = '';
@@ -306,7 +320,7 @@ export default class CpqStepSelection extends LightningElement {
         this.loadAllProducts(this._categoryId);
     }
 
-    closeFilterPanel() {
+    handleCloseFilterPanel() {
         this.isFilterPanelOpen = false;
     }
 }

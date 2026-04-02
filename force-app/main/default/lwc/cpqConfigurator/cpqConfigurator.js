@@ -1,4 +1,5 @@
 import { LightningElement, api, track, wire } from 'lwc';
+import { NavigationMixin } from 'lightning/navigation';
 import { getRecord, getFieldValue, getFieldDisplayValue } from 'lightning/uiRecordApi';
 import OPP_NAME from '@salesforce/schema/Opportunity.Name';
 import OPP_ACCOUNT_ID from '@salesforce/schema/Opportunity.AccountId';
@@ -12,7 +13,7 @@ import { deepClone, calculateSelectedProductsSubtotal, calculateSelectedProductT
 
 const OPP_FIELDS = [OPP_NAME, OPP_ACCOUNT_ID, OPP_ACCOUNT_NAME, OPP_PRICEBOOK_ID, OPP_PRICEBOOK_NAME ,OPP_OFFER_TYPE];
 
-export default class CpqConfigurator extends LightningElement {
+export default class CpqConfigurator extends NavigationMixin(LightningElement) {
     @api recordId;
     @api objectApiName;
     @api opportunityNumber;
@@ -27,6 +28,22 @@ export default class CpqConfigurator extends LightningElement {
         this.initSidebarData(this.currentStep.key);
     }
 
+    _goNext() {
+        const currentIndex = STEP_LIST.findIndex(s => s.key === this.currentStep.key);
+        if (currentIndex < STEP_LIST.length - 1) {
+            this.currentStep = STEP_LIST[currentIndex + 1];
+            this.initSidebarData(this.currentStep.key);
+        }
+    }
+
+    _goBack() {
+        const currentIndex = STEP_LIST.findIndex(s => s.key === this.currentStep.key);
+        if (currentIndex > 0) {
+            this.currentStep = STEP_LIST[currentIndex - 1];
+            this.initSidebarData(this.currentStep.key);
+        }
+    }
+
     /* ── wizard state ─────────────────────────────── */
     currentStep = STEPS.SELECTION;
 
@@ -36,8 +53,8 @@ export default class CpqConfigurator extends LightningElement {
     @track sidebarSortLabel = 'Name';
     @track sidebarIsLoading = false;
     @track sidebarItems = [];
-    @track selectedCategoryId = '';
-    @track selectedCategoryLabel = '';
+    @track selectedItemId = '';
+    @track selectedItemLabel = '';
 
     /* ── domain state ─────────────────────────────── */
     @track quoteState = {
@@ -157,7 +174,7 @@ export default class CpqConfigurator extends LightningElement {
         const actions = deepClone(this.currentStep.header?.stepActions || []);
         return actions.map(action => {
             if (action.dynamicProperty === 'disableIfCartEmpty') {
-                action.disabled = this.cartItems.length === 0;
+                action.disabled = (this.selectedProducts || []).length === 0;
             }
             return action;
         });
@@ -188,7 +205,7 @@ export default class CpqConfigurator extends LightningElement {
         else if (action === 'next') this._goNext();
         else if (action === 'select') this._goNext();
         else if (action === 'save') this._triggerSave();
-        else if (action === 'cancel') this._showToast('Configuration cancelled', 'error');
+        else if (action === 'cancel') this._navigateToOpportunity();
         else if (action === 'refresh') this._getSelectionStep()?.refreshProducts();
         else if (action === 'clearSelection') this._handleClearSelection();
         else if (action === 'toggleFilters') this._getSelectionStep()?.toggleFilterPanel();
@@ -214,21 +231,21 @@ export default class CpqConfigurator extends LightningElement {
     
     initSidebarData(stepKey) {
         if (stepKey === STEPS.SELECTION.key) {
-            this._loadCategoriesSidebar();
+            this._loadSelectionSidebar();
         } else if (stepKey === STEPS.CONFIGURE.key) {
-            this._loadBundlesSidebar();
+            this._loadConfigureSidebar();
         } else if (stepKey === STEPS.LINE_EDITOR.key) {
-            this._loadLinesSidebar();
+            this._loadLineEditorSidebar();
         } else {
-            this._loadDetailsSidebar();
+            this._loadReviewSidebar();
         }
     }
 
-    _loadCategoriesSidebar() {
+    _loadSelectionSidebar() {
         this.sidebarTitle = 'Categories';
         this.sidebarIcon = 'standard:product';
         this.sidebarSortLabel = 'Products';
-        
+
         if (!this.recordId) {
             this.sidebarItems = [];
             this._showToast('Error', 'Opportunity ID not available', 'error');
@@ -239,9 +256,6 @@ export default class CpqConfigurator extends LightningElement {
         getSidebarCategoriesByOfferType({ opportunityId: this.recordId })
             .then(result => {
                 this.sidebarItems = result || [];
-                if (this.sidebarItems.length === 0) {
-                    this._showToast('Info', 'No categories available for this offer type', 'info');
-                }
             })
             .catch(error => {
                 console.error('Error loading sidebar categories:', error);
@@ -253,7 +267,7 @@ export default class CpqConfigurator extends LightningElement {
             });
     }
 
-    _loadBundlesSidebar() {
+    _loadConfigureSidebar() {
         this.sidebarTitle = 'Bundles';
         this.sidebarIcon = 'standard:bundle';
         this.sidebarSortLabel = 'Price';
@@ -288,7 +302,7 @@ export default class CpqConfigurator extends LightningElement {
         ];
     }
 
-    _loadLinesSidebar() {
+    _loadLineEditorSidebar() {
         this.sidebarTitle = 'Lines';
         this.sidebarIcon = 'standard:list_item';
         this.sidebarSortLabel = 'Added Date';
@@ -299,7 +313,7 @@ export default class CpqConfigurator extends LightningElement {
         }));
     }
 
-    _loadDetailsSidebar() {
+    _loadReviewSidebar() {
         this.sidebarTitle = 'Details';
         this.sidebarIcon = 'standard:info';
         this.sidebarSortLabel = 'Field';
@@ -310,23 +324,16 @@ export default class CpqConfigurator extends LightningElement {
         ];
     }
     
-    handleSidebarItemDeselect(event) {
-        const { itemId } = event.detail;
-        this._showToast('Deselection', `Deselected category: ${itemId}`, 'info');
-
-    }
-
-    handleSidebarItemSelect(event) {
+    handleItemSelect(event) {
         const { selectedItemId } = event.detail;
         const selectedItem = this._findSidebarItemById(selectedItemId);
-        this.selectedCategoryId = selectedItem ? selectedItem.id : '';
-        this.selectedCategoryLabel = selectedItem ? selectedItem.label : '';
+        this.selectedItemId = selectedItem ? selectedItem.id : '';
+        this.selectedItemLabel = selectedItem ? selectedItem.label : '';
     }
 
-
-    handleCategoryClear() {
-        this.selectedCategoryId = '';
-        this.selectedCategoryLabel = '';
+    handleItemDeselect() {
+        this.selectedItemId = '';
+        this.selectedItemLabel = '';
     }
 
     _findSidebarItemById(itemId) {
@@ -347,7 +354,6 @@ export default class CpqConfigurator extends LightningElement {
 
     handleSidebarRefresh(event) {
        this.initSidebarData(this.currentStep.key);
-       this._showToast('Refresh', 'Sidebar data refreshed', 'success');
     }
 
     /* ── Step 1 events ── */
@@ -358,14 +364,12 @@ export default class CpqConfigurator extends LightningElement {
         const items = deepClone(this.selectedProducts);
         items.push(cartItem);
         this.selectedProducts = items;
-        this._showToast(`${cartItem.productName} added to cart`, 'success');
     }
 
     handleProductRemove(event) {
         const { productId } = event.detail;
         const items = deepClone(this.selectedProducts).filter(i => i.productId !== productId);
         this.selectedProducts = items;
-        this._showToast('Success', 'Product removed', 'success');
     }
 
     /* -- Step 3 events -- */
@@ -404,7 +408,6 @@ export default class CpqConfigurator extends LightningElement {
         const { itemKey } = event.detail;
         const items = deepClone(this.selectedProducts).filter(i => i._key !== itemKey);
         this.selectedProducts = items;
-        this._showToast('Removed', 'Line item removed', 'success');
     }
 
     handleGlobalDiscount(event) {
@@ -435,6 +438,17 @@ export default class CpqConfigurator extends LightningElement {
     /* ═══════════════════════════════════════════════
        HELPERS
        ═══════════════════════════════════════════════ */
+
+    _navigateToOpportunity() {
+        this[NavigationMixin.Navigate]({
+            type: 'standard__recordPage',
+            attributes: {
+                recordId: this.recordId,
+                objectApiName: 'Opportunity',
+                actionName: 'view'
+            }
+        });
+    }
 
     _recalcAllTotals() {
         const discount = this.quoteState.additionalDiscountPercent || 0;
