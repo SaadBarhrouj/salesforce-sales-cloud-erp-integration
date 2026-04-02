@@ -1,7 +1,7 @@
 import { LightningElement, api, track } from 'lwc';
 import { getAllProducts, getProductsByCategory } from 'c/cpqDataService';
 import { EVENTS, getIllustration } from 'c/cpqConstants';
-import { generateId } from 'c/cpqUtils';
+import { generateId, showToast } from 'c/cpqUtils';
 
 const COLUMNS = [
     { label: 'Product Code', fieldName: 'ProductCode', type: 'text', sortable: true },
@@ -161,7 +161,10 @@ export default class CpqStepSelection extends LightningElement {
                 this.products = await getAllProducts();
             }
         }
-        catch (e) { console.error('Error loading products:', e); }
+        catch (e) {
+            const message = e?.body?.message || e?.message || 'Failed to load products.';
+            showToast(this, 'Error', message, 'error');
+        }
         finally { this.isLoading = false; }
     }
 
