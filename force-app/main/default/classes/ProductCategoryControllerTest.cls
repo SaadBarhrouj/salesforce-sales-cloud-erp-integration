@@ -3,7 +3,7 @@ private class ProductCategoryControllerTest {
 
     
     @IsTest
-    static void test_getSidebarCategoriesByOfferType_happyPath() {
+    static void testGetSidebarCategoriesByOfferTypeHappyPath() {
         Opportunity opp = TestDataFactory.createOpportunity('Sale', true);
         
         Test.startTest();
@@ -14,7 +14,7 @@ private class ProductCategoryControllerTest {
     }
 
     @IsTest
-    static void test_getSidebarCategoriesByOfferType_nullId_throwsException() {
+    static void testGetSidebarCategoriesByOfferTypeNullIdThrowsException() {
         Test.startTest();
         try {
             ProductCategoryController.getSidebarCategoriesByOfferType(null);

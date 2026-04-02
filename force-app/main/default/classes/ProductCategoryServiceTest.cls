@@ -31,7 +31,7 @@ private class ProductCategoryServiceTest {
 
 
     @IsTest
-    static void test_buildSidebarHierarchyByOfferType_validData_returnsHierarchy() {
+    static void testBuildSidebarHierarchyByOfferTypeValidDataReturnsHierarchy() {
         // Arrange
         Opportunity opp = [SELECT Id FROM Opportunity WHERE Offer_Type__c = 'Sale' LIMIT 1];
 
@@ -68,7 +68,7 @@ private class ProductCategoryServiceTest {
     //  Blank Offer_Type__c → early return, empty list
     // ──────────────────────────────────────────────
     @IsTest
-    static void test_buildSidebarHierarchyByOfferType_blankOfferType_returnsEmpty() {
+    static void testBuildSidebarHierarchyByOfferTypeBlankOfferTypeReturnsEmpty() {
         // Arrange
         Opportunity opp = TestDataFactory.createOpportunity(true);
 
@@ -88,7 +88,7 @@ private class ProductCategoryServiceTest {
     //  No matching catalog → empty list
     // ──────────────────────────────────────────────
     @IsTest
-    static void test_buildSidebarHierarchyByOfferType_noMatchingCatalog_returnsEmpty() {
+    static void testBuildSidebarHierarchyByOfferTypeNoMatchingCatalogReturnsEmpty() {
         // Arrange
         delete [SELECT Id FROM ProductCatalog];
         Opportunity opp = [SELECT Id FROM Opportunity WHERE Offer_Type__c = 'Sale' LIMIT 1];
@@ -108,7 +108,7 @@ private class ProductCategoryServiceTest {
     //  Catalog exists but has zero categories → empty
     // ──────────────────────────────────────────────
     @IsTest
-    static void test_buildSidebarHierarchyByOfferType_emptyCatalog_returnsEmpty() {
+    static void testBuildSidebarHierarchyByOfferTypeEmptyCatalogReturnsEmpty() {
         // Arrange
         Opportunity opp = [SELECT Id FROM Opportunity WHERE Offer_Type__c = 'Rental_and_Services' LIMIT 1];
 
@@ -127,7 +127,7 @@ private class ProductCategoryServiceTest {
     //  Non-existent Opportunity → null opp → empty
     // ──────────────────────────────────────────────
     @IsTest
-    static void test_buildSidebarHierarchyByOfferType_deletedOpportunity_returnsEmpty() {
+    static void testBuildSidebarHierarchyByOfferTypeDeletedOpportunityReturnsEmpty() {
         // Arrange — create then delete so we have a valid-format Id that no longer exists
         Opportunity opp = TestDataFactory.createOpportunity(true);
         Id deletedOppId = opp.Id;
