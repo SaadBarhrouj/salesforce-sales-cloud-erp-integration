@@ -15,6 +15,8 @@
  */
 
 import { LightningElement, api } from 'lwc';
+import { dispatchCustomEvent } from 'c/cpqUtils';
+import { EVENTS } from 'c/cpqConstants';
 
 export default class EmptyState extends LightningElement {
   /**
@@ -64,12 +66,8 @@ export default class EmptyState extends LightningElement {
    * Dispatches custom event to parent component
    */
   handleCtaClick() {
-    this.dispatchEvent(
-      new CustomEvent('ctabuttonclick', {
-        detail: { timestamp: new Date().toISOString() },
-        bubbles: true,
-        composed: true
-      })
-    );
+    dispatchCustomEvent(this, EVENTS.CTA_CLICK, {
+        timestamp: new Date().toISOString()
+    }, true, true);
   }
 }
