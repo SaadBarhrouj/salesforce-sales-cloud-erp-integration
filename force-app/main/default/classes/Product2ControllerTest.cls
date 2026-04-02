@@ -436,4 +436,158 @@ private class Product2ControllerTest {
         // Assert
         System.assertEquals(null, result, 'Should return null for non-existent record');
     }
+
+    @IsTest
+    static void testGetAllByPricebookNullReturnsAllProducts() {
+        // Arrange
+        User testUser = TestDataFactory.createUser(true);
+        List<Product2> result = new List<Product2>();
+
+        // Act
+        System.runAs(testUser) {
+            Test.startTest();
+            result = Product2Controller.getAllByPricebook(null);
+            Test.stopTest();
+        }
+
+        // Assert
+        System.assertEquals(true, result.size() >= 1, 'Should return all products when pricebook is null.');
+    }
+
+    @IsTest
+    static void testGetAllByPricebookBlankReturnsAllProducts() {
+        // Arrange
+        User testUser = TestDataFactory.createUser(true);
+        List<Product2> result = new List<Product2>();
+
+        // Act
+        System.runAs(testUser) {
+            Test.startTest();
+            result = Product2Controller.getAllByPricebook('');
+            Test.stopTest();
+        }
+
+        // Assert
+        System.assertEquals(true, result.size() >= 1, 'Should return all products when pricebook is blank.');
+    }
+
+    @IsTest
+    static void testGetAllByPricebookValidPricebookReturnsFilteredProducts() {
+        // Arrange
+        User testUser = TestDataFactory.createUser(true);
+        Id standardPricebookId;
+        Product2 product1;
+        System.runAs(testUser) {
+            product1 = TestDataFactory.createProduct2(true);
+            standardPricebookId = Test.getStandardPricebookId();
+            TestDataFactory.createPricebookEntry(standardPricebookId, product1.Id, 50.00, true, true);
+        }
+        List<Product2> result = new List<Product2>();
+
+        // Act
+        System.runAs(testUser) {
+            Test.startTest();
+            result = Product2Controller.getAllByPricebook(standardPricebookId);
+            Test.stopTest();
+        }
+
+        // Assert
+        System.assertEquals(1, result.size(), 'Should return only products in the specified pricebook.');
+        System.assertEquals(product1.Id, result[0].Id, 'Returned product should match the one in the pricebook.');
+    }
+
+    @IsTest
+    static void testGetProductsByCategoryAndPricebookNullParamsReturnsAll() {
+        // Arrange
+        User testUser = TestDataFactory.createUser(true);
+        List<Product2> result = new List<Product2>();
+
+        // Act
+        System.runAs(testUser) {
+            Test.startTest();
+            result = Product2Controller.getProductsByCategoryAndPricebook(null, null);
+            Test.stopTest();
+        }
+
+        // Assert
+        System.assertEquals(true, result.size() >= 1, 'Should return all products when both params are null.');
+    }
+
+    @IsTest
+    static void testGetProductsByCategoryAndPricebookBlankParamsReturnsAll() {
+        // Arrange
+        User testUser = TestDataFactory.createUser(true);
+        List<Product2> result = new List<Product2>();
+
+        // Act
+        System.runAs(testUser) {
+            Test.startTest();
+            result = Product2Controller.getProductsByCategoryAndPricebook('', '   ');
+            Test.stopTest();
+        }
+
+        // Assert
+        System.assertEquals(true, result.size() >= 1, 'Should return all products when both params are blank.');
+    }
+
+    @IsTest
+    static void testGetProductsByCategoryAndPricebookValidCategoryAndPricebookReturnsProducts() {
+        // Arrange
+        User testUser = TestDataFactory.createUser(true);
+        Product2 product1;
+        ProductCategory category;
+        Id standardPricebookId;
+        System.runAs(testUser) {
+            product1 = TestDataFactory.createProduct2(true);
+            ProductCatalog catalog = TestDataFactory.createProductCatalog('Test Catalog', true);
+            category = TestDataFactory.createProductCategory(catalog.Id, null, 'Test Cat', true, true);
+            TestDataFactory.createProductCategoryProduct(category.Id, product1.Id, true);
+            standardPricebookId = Test.getStandardPricebookId();
+            TestDataFactory.createPricebookEntry(standardPricebookId, product1.Id, 50.00, true, true);
+        }
+        List<Product2> result = new List<Product2>();
+
+        // Act
+        System.runAs(testUser) {
+            Test.startTest();
+            result = Product2Controller.getProductsByCategoryAndPricebook(category.Id, standardPricebookId);
+            Test.stopTest();
+        }
+
+        // Assert
+        System.assertEquals(true, result.size() >= 1, 'Should return products in both category and pricebook.');
+        Boolean foundProduct = false;
+        for (Product2 p : result) {
+            if (p.Id == product1.Id) {
+                foundProduct = true;
+                break;
+            }
+        }
+        System.assertEquals(true, foundProduct, 'Result should include the product linked to both category and pricebook.');
+    }
+
+    @IsTest
+    static void testSaveRecordsUnexpectedExceptionThrowsAuraHandledException() {
+        // Arrange
+        User testUser = TestDataFactory.createUser(true);
+        Product2 invalidRecord = new Product2(
+            Id = Product2.SObjectType.getDescribe().getKeyPrefix() + '000000000000AAA' //NOPMD
+        );
+        Boolean exceptionThrown = false;
+
+        // Act
+        System.runAs(testUser) {
+            Test.startTest();
+            try {
+                Product2Controller.saveRecords(new List<Product2>{ invalidRecord });
+            } catch (AuraHandledException e) {
+                exceptionThrown = true;
+            }
+            Test.stopTest();
+        }
+
+        // Assert
+        System.assertEquals(true, exceptionThrown, 'Should throw AuraHandledException for malformed ID in save.');
+    }
+
 }

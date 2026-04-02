@@ -268,8 +268,7 @@ public class TestDataFactory {
         Product2 productRecord = createProduct2(true);
         ProductCategoryProduct recordItem = new ProductCategoryProduct(
             ProductCategoryId = categoryRecord.Id,
-            ProductId = productRecord.Id,
-            IsPrimaryCategory = false
+            ProductId = productRecord.Id
         );
         if (doInsert) {
             insert recordItem;
@@ -292,8 +291,7 @@ public class TestDataFactory {
     ) {
         ProductCategoryProduct recordItem = new ProductCategoryProduct(
             ProductCategoryId = categoryId,
-            ProductId = productId,
-            IsPrimaryCategory = false
+            ProductId = productId
         );
         if (doInsert) {
             insert recordItem;
@@ -330,13 +328,12 @@ public class TestDataFactory {
      * @return The created PricebookEntry record.
      */
     public static PricebookEntry createPricebookEntry(Id pricebookId, Id product2Id, Decimal unitPrice, Boolean isActive, Boolean doInsert) {
-        Boolean isStandard = pricebookId == Test.getStandardPricebookId();
         PricebookEntry recordItem = new PricebookEntry(
             Pricebook2Id = pricebookId,
             Product2Id = product2Id,
             UnitPrice = unitPrice,
             IsActive = isActive,
-            UseStandardPrice = isStandard
+            UseStandardPrice = false
         );
         if (doInsert) {
             insert recordItem;
