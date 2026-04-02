@@ -1,5 +1,6 @@
 import { LightningElement, api, track } from 'lwc';
 import { dispatchCustomEvent } from 'c/cpqUtils';
+import { EVENTS } from 'c/cpqConstants';
 
 export default class CpqCollapsibleSidebar extends LightningElement {
 
@@ -8,6 +9,7 @@ export default class CpqCollapsibleSidebar extends LightningElement {
     @api iconName  = 'standard:category';
     @api sortLabel = 'Name';
     @api items     = [];
+    @api isLoading = false;
 
     /* ── Private State ──────────────────────────── */
     @track selectedItemId = null;
@@ -88,9 +90,14 @@ export default class CpqCollapsibleSidebar extends LightningElement {
     handleItemClick(event) {
         event.preventDefault();
         const itemId = event.currentTarget.dataset.itemId;
-        this.selectedItemId = itemId;
-
-        dispatchCustomEvent(this, 'itemselect', { selectedItemId: itemId });
+        
+        if (this.selectedItemId === itemId) {
+            this.selectedItemId = null;
+            dispatchCustomEvent(this, EVENTS.ITEM_DESELECT, { itemId: itemId });
+        } else {
+            this.selectedItemId = itemId;
+            dispatchCustomEvent(this, EVENTS.ITEM_SELECT, { selectedItemId: itemId });
+        }
     }
 
     handleChevronClick(event) {
@@ -110,6 +117,6 @@ export default class CpqCollapsibleSidebar extends LightningElement {
     }
 
     handleRefresh() {
-        dispatchCustomEvent(this, 'refresh', { title: this.title });
+        dispatchCustomEvent(this, EVENTS.SIDEBAR_REFRESH, { title: this.title });
     }
 }

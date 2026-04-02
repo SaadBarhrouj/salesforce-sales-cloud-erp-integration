@@ -68,7 +68,10 @@
             <!-- ═══════════════════════════════════════
                  LIST
                  ═══════════════════════════════════════ -->
-            <div class="slds-grid slds-grid_vertical">
+            <div class="slds-grid slds-grid_vertical slds-is-relative">
+                <template lwc:if={isLoading}>
+                    <lightning-spinner alternative-text="Loading" size="small"></lightning-spinner>
+                </template>
 
                 <div class="slds-split-view__list-header slds-grid">
                     <span class="slds-assistive-text">Sorted by:</span>

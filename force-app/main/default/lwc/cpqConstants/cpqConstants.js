@@ -4,26 +4,66 @@
  */
 
 /* ─── Wizard Steps ─── */
+const DEFAULT_STEP_ACTIONS = [
+    { name: 'back', label: 'Back', variant: 'neutral' },
+    { name: 'save', label: 'Save', variant: 'neutral' },
+    { name: 'next', label: 'Next', variant: 'brand' }
+];
+
+const DEFAULT_GLOBAL_ACTIONS = [
+    { name: 'settings', label: 'List View Controls', variant: 'border-filled', iconName: 'utility:settings', isMenu: true },
+    { name: 'refresh', label: 'Refresh List', variant: 'border-filled', iconName: 'utility:refresh' }
+];
+
 export const STEPS = Object.freeze({
-    SELECTION:   { number: 1, key: 'selection',   label: 'Product Selection', icon: 'standard:product' },
-    CONFIGURE:   { number: 2, key: 'configure',   label: 'Configure Products',icon: 'standard:settings' },
-    LINE_EDITOR: { number: 3, key: 'lineEditor',  label: 'Edit Quote Lines',  icon: 'standard:quote_line_item' },
-    LOGISTICS:   { number: 4, key: 'logistics',   label: 'Logistics',         icon: 'standard:shipment' },
-    REVIEW:      { number: 5, key: 'review',     label: 'Review & Save',     icon: 'standard:task' }
+    SELECTION: {
+        number: 1, key: 'selection', label: 'Product Selection', icon: 'standard:product', subtitle: 'Select and configure products',
+        header: {
+            showSearch: true,
+            searchPlaceholder: 'Search products...',
+            stepActions: [
+                { name: 'cancel', label: 'Cancel', variant: 'neutral' },
+                { name: 'select', label: 'Select', variant: 'brand', dynamicProperty: 'disableIfCartEmpty' }
+            ],
+            globalActions: [
+                { name: 'refresh', label: 'Refresh Catalog', iconName: 'utility:refresh' },
+                {
+                    name: 'changeView', label: 'Change View', iconName: 'utility:table', isMenu: true, variant: 'border-filled',
+                    menuItems: [
+                        { name: 'viewTable', label: 'Table View', iconName: 'utility:table' },
+                        { name: 'viewCards', label: 'Card View', iconName: 'utility:rows' }
+                    ]
+                },
+                {
+                    name: 'selectionGroup', isGroup: true, items: [
+                        { name: 'clearSelection', label: 'Clear Selection', iconName: 'utility:clear', variant: 'border-filled' },
+                        { name: 'toggleFilters', label: 'Filters', iconName: 'utility:filterList', variant: 'border-filled', dynamicProperty: 'highlightIfFiltersOpen' }
+                    ]
+                }
+            ]
+        }
+    },
+    CONFIGURE: {
+        number: 2, key: 'configure', label: 'Bundle Configuration', icon: 'standard:bundle_policy', subtitle: 'Configure bundles and options',
+        header: { showSearch: false, searchPlaceholder: 'Search...', stepActions: DEFAULT_STEP_ACTIONS, globalActions: DEFAULT_GLOBAL_ACTIONS }
+    },
+    LINE_EDITOR: {
+        number: 3, key: 'lineEditor', label: 'Line Editor', icon: 'standard:order_item', subtitle: 'Review and adjust line items',
+        header: { showSearch: false, searchPlaceholder: 'Search...', stepActions: DEFAULT_STEP_ACTIONS, globalActions: DEFAULT_GLOBAL_ACTIONS }
+    },
+    LOGISTICS: {
+        number: 4, key: 'logistics', label: 'Logistics', icon: 'standard:shipment', subtitle: 'Delivery options',
+        header: { showSearch: false, searchPlaceholder: 'Search...', stepActions: DEFAULT_STEP_ACTIONS, globalActions: DEFAULT_GLOBAL_ACTIONS }
+    },
+    REVIEW: {
+        number: 5, key: 'review', label: 'Review & Save', icon: 'standard:task', subtitle: 'Verify everything before saving',
+        header: { showSearch: false, searchPlaceholder: 'Search...', stepActions: DEFAULT_STEP_ACTIONS, globalActions: DEFAULT_GLOBAL_ACTIONS }
+    }
 });
 
 export const STEP_LIST = Object.freeze(
     Object.values(STEPS).sort((a, b) => a.number - b.number)
 );
-
-/* ─── Step Metadata (Header & UI Labels) ─── */
-export const STEP_META = Object.freeze({
-    [STEPS.SELECTION.key]: { label: 'Product Selection', icon: 'standard:product', subtitle: 'Select and configure products' },
-    [STEPS.CONFIGURE.key]: { label: 'Bundle Configuration', icon: 'standard:bundle_policy', subtitle: 'Configure bundles and options' },
-    [STEPS.LINE_EDITOR.key]: { label: 'Line Editor', icon: 'standard:order_item', subtitle: 'Review and adjust line items' },
-    [STEPS.LOGISTICS.key]: { label: 'Logistics', icon: 'standard:shipment', subtitle: 'Delivery options' },
-    [STEPS.REVIEW.key]: { label: 'Review & Save', icon: 'standard:task', subtitle: 'Verify everything before saving' }
-});
 
 /* ─── Option Types (Bundle_Option__c.Option_Type__c) ─── */
 export const OPTION_TYPES = Object.freeze({
@@ -107,8 +147,11 @@ export const EVENTS = Object.freeze({
     SAVE_QUOTE:        'savequote',
     NAVIGATE:          'navigate',
     SIDEBAR_TOGGLE:    'sidebartoggle',
+    SIDEBAR_REFRESH:   'sidebarrefresh',
     BUNDLE_SELECT:     'bundleselect',
     CATEGORY_SELECT:   'categoryselect',
+    ITEM_SELECT:       'itemselect',
+    ITEM_DESELECT:     'itemdeselect',
     CATEGORY_CLEAR:    'categoryclear',
     SEARCH:            'search'
 });
