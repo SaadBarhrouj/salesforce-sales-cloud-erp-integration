@@ -61,11 +61,9 @@ public inherited sharing class OpportunityDAO {
         return records.isEmpty() ? null : records[0];
     }
 
-    // /**
-    //  * @description Retrieves multiple Opportunities by their IDs.
-    //  * @param recordIds Set of Opportunity record IDs
-    //  * @return Map of Opportunity records keyed by ID, or empty map if no records found
-    //  */
+
+
+    //
     // public static Map<Id, Opportunity> getByIds(Set<Id> recordIds) {
     //     if (recordIds == null || recordIds.isEmpty()) {
     //         return new Map<Id, Opportunity>();
@@ -85,11 +83,6 @@ public inherited sharing class OpportunityDAO {
     //     ]);
     // }
 
-    // /**
-    //  * @description Retrieves Opportunities by Name field.
-    //  * @param recordName The Opportunity Name to search for
-    //  * @return List of Opportunity records matching the name
-    //  */
     // public static List<Opportunity> getByName(String recordName) {
     //     if (String.isBlank(recordName)) {
     //         return new List<Opportunity>();
@@ -109,10 +102,6 @@ public inherited sharing class OpportunityDAO {
     //     ];
     // }
 
-    // /**
-    //  * @description Retrieves all Opportunities.
-    //  * @return List of all Opportunity records
-    //  */
     // public static List<Opportunity> getAll() {
     //     return [
     //         SELECT Id, AccountId, Amount, CampaignId, CloseDate, ContractId, CurrentGenerators__c,
