@@ -1,9 +1,12 @@
 /**
- * Service layer for ProductCategory business logic.
+ * @description Service layer for ProductCategory business logic.
  * Orchestrates data access and provides business operations including hierarchy building
  * for sidebar category navigation filtered by opportunity parameters.
  */
 public inherited sharing class ProductCategoryService {
+    /**
+     * @description Custom exception for ProductCategory service operations.
+     */
     public class ServiceException extends Exception {}
 
     /*
@@ -187,6 +190,7 @@ public inherited sharing class ProductCategoryService {
      * 5. Fetches product counts per category
      * 6. Delegates to buildSidebarHierarchy for hierarchy construction
      * 
+     * @description Builds hierarchical category structure filtered by Opportunity offer type for sidebar navigation
      * @param opportunityId Salesforce Opportunity ID
      * @return List of category Maps with hierarchical structure; empty list if opportunity not found or OfferType is blank
      * @throws IllegalArgumentException if opportunityId is null
@@ -225,6 +229,7 @@ public inherited sharing class ProductCategoryService {
      * Filters only categories marked as navigational (IsNavigational = true).
      * Organizes categories into parent-child relationships with null parent as root categories.
      * 
+     * @description Organizes categories into a hierarchical tree structure filtered by navigational flag
      * @param allCategories List of ProductCategory records
      * @param directCounts Map of product counts per category
      * @return List of Maps representing root categories with nested children
@@ -260,6 +265,7 @@ public inherited sharing class ProductCategoryService {
      * Converts a ProductCategory to a Map with nested children structure (recursive).
      * Calculates total products for each category, including products in subcategories.
      * 
+     * @description Recursively transforms a ProductCategory into a Map representation with child hierarchy
      * @param category The ProductCategory record to map
      * @param childrenByParentId Map of parent ID to list of child categories
      * @param directCounts Map of product counts per category
