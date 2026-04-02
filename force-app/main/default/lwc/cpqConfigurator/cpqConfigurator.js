@@ -88,6 +88,14 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
     get isStepLogistics() { return this.currentStep.key === STEPS.LOGISTICS.key; }
     get isStepReview() { return this.currentStep.key === STEPS.REVIEW.key; }
 
+    /* -- opportunity data -- */
+    get opportunityPricebookId() {
+        if (this.opportunityRecord?.data) {
+            return getFieldValue(this.opportunityRecord.data, OPP_PRICEBOOK_ID) || '';
+        }
+        return '';
+    }
+
     /* -- header -- */
     get headerTopLabel() {
         if (this.opportunityRecord?.data) {

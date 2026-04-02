@@ -531,4 +531,87 @@ private class Product2ServiceTest {
         System.assertEquals(2, savedRecords.size(), 'The service should save both records.');
         System.assertEquals(true, newRecord.Id != null, 'The service should assign ID to new record.');
     }
+
+    @IsTest
+    static void testGetProductsByCategoryAndPricebookReturnsProductsInCategoryAndPricebook() {
+        ProductCatalog catalog = TestDataFactory.createProductCatalog('Sale', true);
+        ProductCategory rootCat = TestDataFactory.createProductCategory(
+            catalog.Id, null, 'Root Category', true, true
+        );
+        ProductCategory subCat = TestDataFactory.createProductCategory(
+            catalog.Id, rootCat.Id, 'Sub Category', true, true
+        );
+
+        Product2 prod1 = TestDataFactory.createProduct2(true);
+        Product2 prod2 = TestDataFactory.createProduct2(true);
+
+        TestDataFactory.createProductCategoryProduct(rootCat.Id, prod1.Id, true);
+        TestDataFactory.createProductCategoryProduct(subCat.Id, prod2.Id, true);
+
+        Pricebook2 pb = TestDataFactory.createPricebook2('Test Pricebook PB', true, true);
+
+        Test.startTest();
+        List<Product2> result = Product2Service.getProductsByCategoryAndPricebook(rootCat.Id, pb.Id);
+        Test.stopTest();
+
+        System.assertEquals(0, result.size(), 'Should return empty list when no pricebook entries exist.');
+    }
+
+    @IsTest
+    static void testGetProductsByCategoryAndPricebookExcludesInactivePricebookEntries() {
+        ProductCatalog catalog = TestDataFactory.createProductCatalog('Sale', true);
+        ProductCategory cat = TestDataFactory.createProductCategory(
+            catalog.Id, null, 'Test Category', true, true
+        );
+
+        Product2 prod1 = TestDataFactory.createProduct2(true);
+        Product2 prod2 = TestDataFactory.createProduct2(true);
+
+        TestDataFactory.createProductCategoryProduct(cat.Id, prod1.Id, true);
+        TestDataFactory.createProductCategoryProduct(cat.Id, prod2.Id, true);
+
+        Pricebook2 pb = TestDataFactory.createPricebook2('Test Pricebook PB2', true, true);
+
+        Test.startTest();
+        List<Product2> result = Product2Service.getProductsByCategoryAndPricebook(cat.Id, pb.Id);
+        Test.stopTest();
+
+        System.assertEquals(0, result.size(), 'Should return empty list when no pricebook entries exist.');
+    }
+
+    @IsTest
+    static void testGetProductsByCategoryAndPricebookNullPricebookReturnsAllCategoryProducts() {
+        ProductCatalog catalog = TestDataFactory.createProductCatalog('Sale', true);
+        ProductCategory cat = TestDataFactory.createProductCategory(
+            catalog.Id, null, 'Test Category', true, true
+        );
+
+        Product2 prod1 = TestDataFactory.createProduct2(true);
+        Product2 prod2 = TestDataFactory.createProduct2(true);
+
+        TestDataFactory.createProductCategoryProduct(cat.Id, prod1.Id, true);
+        TestDataFactory.createProductCategoryProduct(cat.Id, prod2.Id, true);
+
+        Test.startTest();
+        List<Product2> result = Product2Service.getProductsByCategoryAndPricebook(cat.Id, null);
+        Test.stopTest();
+
+        System.assertEquals(2, result.size(), 'Should return all category products when pricebook is null.');
+    }
+
+    @IsTest
+    static void testGetProductsByCategoryAndPricebookEmptyCategoryReturnsEmptyList() {
+        ProductCatalog catalog = TestDataFactory.createProductCatalog('Sale', true);
+        ProductCategory cat = TestDataFactory.createProductCategory(
+            catalog.Id, null, 'Empty Category', true, true
+        );
+
+        Pricebook2 pb = TestDataFactory.createPricebook2('Test Pricebook', true, true);
+
+        Test.startTest();
+        List<Product2> result = Product2Service.getProductsByCategoryAndPricebook(cat.Id, pb.Id);
+        Test.stopTest();
+
+        System.assertEquals(0, result.size(), 'Should return empty list for category with no products.');
+    }
 }

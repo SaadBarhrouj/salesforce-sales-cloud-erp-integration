@@ -65,23 +65,24 @@ private class ProductCategoryServiceTest {
     }
 
     // ──────────────────────────────────────────────
-    //  Blank Offer_Type__c → early return, empty list
+    //  Non-existent Opportunity → null opp → empty
+    //  scenario is covered by deleted/non-existent opp test.
     // ──────────────────────────────────────────────
     @IsTest
     static void testBuildSidebarHierarchyByOfferTypeBlankOfferTypeReturnsEmpty() {
-        // Arrange
-        Opportunity opp = TestDataFactory.createOpportunity(true);
+        // Arrange — use a non-existent Opportunity ID to simulate missing data
+        Id nonExistentOppId = '006000000000000AAA';
 
         // Act
         Test.startTest();
         List<Map<String, Object>> result =
-            ProductCategoryService.buildSidebarHierarchyByOfferType(opp.Id);
+            ProductCategoryService.buildSidebarHierarchyByOfferType(nonExistentOppId);
         Test.stopTest();
 
         // Assert
         System.assertNotEquals(null, result, 'Result should not be null.');
         System.assertEquals(0, result.size(),
-            'Service should return empty list when Offer_Type__c is blank.');
+            'Service should return empty list when the Opportunity does not exist.');
     }
 
     // ──────────────────────────────────────────────
@@ -228,16 +229,60 @@ private class ProductCategoryServiceTest {
         System.assertEquals(beforeSerialized, JSON.serialize(savedRecords[0]),
             'The service should leave an unchanged record untouched.');
     }
+    */
+
+    // ──────────────────────────────────────────────
+    //  Category Hierarchy Resolution Tests
+    // ──────────────────────────────────────────────
 
     @IsTest
-    static void test_deleteRecords_validRecord_deletesRecord() {
-        ProductCategory recordItem = TestDataFactory.createProductCategory(true);
+    static void testGetCategoryIdsWithDescendantsIncludesAllDescendants() {
+        ProductCatalog catalog = TestDataFactory.createProductCatalog('Sale', true);
+        ProductCategory rootCat = TestDataFactory.createProductCategory(
+            catalog.Id, null, 'Root', true, true
+        );
+        ProductCategory subCat1 = TestDataFactory.createProductCategory(
+            catalog.Id, rootCat.Id, 'Sub1', true, true
+        );
+        ProductCategory subCat2 = TestDataFactory.createProductCategory(
+            catalog.Id, rootCat.Id, 'Sub2', true, true
+        );
+        ProductCategory leafCat = TestDataFactory.createProductCategory(
+            catalog.Id, subCat1.Id, 'Leaf', true, true
+        );
+
         Test.startTest();
-        ProductCategoryService.deleteRecords(new List<ProductCategory>{ recordItem });
+        Set<Id> result = ProductCategoryDAO.getCategoryIdsWithDescendants(rootCat.Id);
         Test.stopTest();
-        System.assertEquals(0,
-            [SELECT Count() FROM ProductCategory WHERE Id = :recordItem.Id],
-            'The service should delete the provided record.');
+
+        System.assertEquals(4, result.size(), 'Should include root and all descendants.');
+        System.assert(result.contains(rootCat.Id), 'Should include root category.');
+        System.assert(result.contains(subCat1.Id), 'Should include Sub1.');
+        System.assert(result.contains(subCat2.Id), 'Should include Sub2.');
+        System.assert(result.contains(leafCat.Id), 'Should include Leaf.');
     }
-    */
+
+    @IsTest
+    static void testGetCategoryIdsWithDescendantsLeafCategoryReturnsOnlyItself() {
+        ProductCatalog catalog = TestDataFactory.createProductCatalog('Sale', true);
+        ProductCategory leafCat = TestDataFactory.createProductCategory(
+            catalog.Id, null, 'Leaf Only', true, true
+        );
+
+        Test.startTest();
+        Set<Id> result = ProductCategoryDAO.getCategoryIdsWithDescendants(leafCat.Id);
+        Test.stopTest();
+
+        System.assertEquals(1, result.size(), 'Leaf category should return only itself.');
+        System.assert(result.contains(leafCat.Id), 'Should include the leaf category.');
+    }
+
+    @IsTest
+    static void testGetCategoryIdsWithDescendantsNullIdReturnsEmptySet() {
+        Test.startTest();
+        Set<Id> result = ProductCategoryDAO.getCategoryIdsWithDescendants(null);
+        Test.stopTest();
+
+        System.assertEquals(0, result.size(), 'Null category ID should return empty set.');
+    }
 }

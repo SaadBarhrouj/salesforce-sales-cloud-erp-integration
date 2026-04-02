@@ -43,9 +43,10 @@ export default class CpqStepSelection extends LightningElement {
     }
 
     /* ── Reactive Category Change ─────────────── */
-    /* External API: categoryId / categoryLabel (domain-specific) */
+    /* External API: categoryId / categoryLabel / pricebookId (domain-specific) */
     _categoryId = '';
     _categoryLabel = '';
+    _pricebookId = '';
     _loadRequestCounter = 0;
 
     @api
@@ -57,7 +58,7 @@ export default class CpqStepSelection extends LightningElement {
         const oldValue = this._categoryId;
         this._categoryId = value || '';
         if (oldValue !== this._categoryId) {
-            this.loadAllProducts(this._categoryId);
+            this.loadAllProducts(this._categoryId, this._pricebookId);
         }
     }
 
@@ -68,6 +69,19 @@ export default class CpqStepSelection extends LightningElement {
 
     set categoryLabel(value) {
         this._categoryLabel = value || '';
+    }
+
+    @api
+    get pricebookId() {
+        return this._pricebookId;
+    }
+
+    set pricebookId(value) {
+        const oldValue = this._pricebookId;
+        this._pricebookId = value || '';
+        if (oldValue !== this._pricebookId) {
+            this.loadAllProducts(this._categoryId, this._pricebookId);
+        }
     }
 
     /* ═══════════════════════════════════════
@@ -154,17 +168,17 @@ export default class CpqStepSelection extends LightningElement {
        DATA LOADING
        ═══════════════════════════════════════ */
 
-    async loadAllProducts(categoryId) {
+    async loadAllProducts(categoryId, pricebookId) {
         this.isLoading = true;
         const requestId = ++this._loadRequestCounter;
         try {
             if (categoryId) {
-                const products = await getProductsByCategory(categoryId);
+                const products = await getProductsByCategory(categoryId, pricebookId);
                 if (requestId === this._loadRequestCounter) {
                     this.products = products;
                 }
             } else {
-                const products = await getAllProducts();
+                const products = await getAllProducts(pricebookId);
                 if (requestId === this._loadRequestCounter) {
                     this.products = products;
                 }

@@ -77,6 +77,49 @@ public with sharing class Product2Controller {
     }
 
     /**
+     * @description Retrieves all active Product2 records constrained by pricebook.
+     * Only returns products that have active PricebookEntry records in the specified pricebook.
+     * @param pricebookId The Pricebook2 ID to constrain products to. Pass null for no filtering.
+     * @return List of Product2 records with active pricebook entries.
+     */
+    @AuraEnabled(cacheable=true)
+    public static List<Product2> getAllByPricebook(String pricebookId) {
+        try {
+            Id safePricebookId = String.isBlank(pricebookId) ? null : (Id) pricebookId;
+            return Product2Service.getAllByPricebook(safePricebookId);
+        } catch (Product2Exception e) {
+            System.debug(LoggingLevel.ERROR, 'Product2Controller.getAllByPricebook: ' + e.getMessage());
+            throw new AuraHandledException(e.getMessage());
+        } catch (Exception e) {
+            System.debug(LoggingLevel.ERROR, 'Product2Controller.getAllByPricebook unexpected error: ' + e.getMessage() + ' | Stack: ' + e.getStackTraceString());
+            throw new AuraHandledException(getControllerErrorMessage());
+        }
+    }
+
+    /**
+     * @description Retrieves Product2 records filtered by category hierarchy and pricebook.
+     * Resolves all descendant categories and constrains products to those with active
+     * PricebookEntry records in the specified pricebook.
+     * @param categoryId The ProductCategory ID to filter by. Pass null or empty for all products.
+     * @param pricebookId The Pricebook2 ID to constrain products to. Pass null for no pricebook filtering.
+     * @return List of Product2 records in the category hierarchy with active pricebook entries.
+     */
+    @AuraEnabled(cacheable=true)
+    public static List<Product2> getProductsByCategoryAndPricebook(String categoryId, String pricebookId) {
+        try {
+            Id safeCategoryId = String.isBlank(categoryId) ? null : (Id) categoryId;
+            Id safePricebookId = String.isBlank(pricebookId) ? null : (Id) pricebookId;
+            return Product2Service.getProductsByCategoryAndPricebook(safeCategoryId, safePricebookId);
+        } catch (Product2Exception e) {
+            System.debug(LoggingLevel.ERROR, 'Product2Controller.getProductsByCategoryAndPricebook: ' + e.getMessage());
+            throw new AuraHandledException(e.getMessage());
+        } catch (Exception e) {
+            System.debug(LoggingLevel.ERROR, 'Product2Controller.getProductsByCategoryAndPricebook unexpected error: ' + e.getMessage() + ' | Stack: ' + e.getStackTraceString());
+            throw new AuraHandledException(getControllerErrorMessage());
+        }
+    }
+
+    /**
      * @description Inserts or updates Product2 records.
      * @param records The list of Product2 records to save.
      * @return List of saved Product2 records with loaded related data.
