@@ -8,9 +8,7 @@ export default class CpqCollapsibleSidebar extends LightningElement {
     @api iconName  = 'standard:category';
     @api sortLabel = 'Name';
     @api items     = [];
-
-    /* ── Private State ──────────────────────────── */
-    @track selectedItemId = null;
+    @api selectedItemId = null;
     @track isExpanded      = true;
     @track _expandedMap    = {};
 

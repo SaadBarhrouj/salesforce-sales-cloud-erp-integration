@@ -190,7 +190,7 @@ export default class CpqStepSelection extends LightningElement {
     @api
     refreshProducts() {
         this.searchTerm = '';
-        this.loadAllProducts();
+        this.loadAllProducts(this._categoryId);
     }
 
     @api
@@ -284,8 +284,10 @@ export default class CpqStepSelection extends LightningElement {
             this.loadAllProducts();
         } else if (field === 'productCode') {
             this.filterProductCode = '';
+            this.pendingFilterProductCode = '';
         } else if (field === 'bundleType') {
             this.filterBundleType = 'all';
+            this.pendingFilterBundleType = 'all';
         }
     }
 
@@ -301,6 +303,7 @@ export default class CpqStepSelection extends LightningElement {
         this.pendingFilterBundleType = 'all';
         this.filterProductCode = '';
         this.filterBundleType = 'all';
+        this.loadAllProducts(this._categoryId);
     }
 
     closeFilterPanel() {
