@@ -80,7 +80,7 @@ export default class CpqConfigurator extends LightningElement {
         return this.recordId || 'OPP-000000';
     }
     get headerTitle() { return this.currentStep.label; }
-    get headerSubtitle() { return this.currentStep.subtitle || ''; }
+    get headerSubtitle() { return  ''; }
     get headerIcon() { return this.currentStep.icon || 'standard:product'; }
     get headerMetadata() {
         const metadata = [];
@@ -157,7 +157,7 @@ export default class CpqConfigurator extends LightningElement {
         const actions = deepClone(this.currentStep.header?.stepActions || []);
         return actions.map(action => {
             if (action.dynamicProperty === 'disableIfCartEmpty') {
-                action.disabled = this.cartItems.length === 0;
+                action.disabled = this.selectedProducts.length === 0;
             }
             return action;
         });

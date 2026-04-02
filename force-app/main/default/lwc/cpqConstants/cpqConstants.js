@@ -153,7 +153,8 @@ export const EVENTS = Object.freeze({
     ITEM_SELECT:       'itemselect',
     ITEM_DESELECT:     'itemdeselect',
     CATEGORY_CLEAR:    'categoryclear',
-    SEARCH:            'search'
+    SEARCH:            'search',
+    CTA_CLICK:         'ctabuttonclick'
 });
 
 /* ─── Empty State Illustrations ─── */

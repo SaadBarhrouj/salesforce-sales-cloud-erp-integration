@@ -99,6 +99,7 @@ public class TestDataFactory {
      * @param doInsert Whether to insert the record into the database.
      * @return The created Bundle_Option__c record.
      */
+
     public static Bundle_Option__c createBundleOption(Boolean doInsert) {
         Product2 bundleProduct = createProduct2(true);
         Product2 optionProduct = createProduct2(true);
@@ -123,9 +124,9 @@ public class TestDataFactory {
         return recordItem;
     }
 
+
     /**
-     * Creates a test Opportunity record with default OfferType.
-     * 
+     * @description Creates a test Opportunity record with default OfferType and Account.
      * @param doInsert If true, inserts the record into the database
      * @return Opportunity record with test data
      */
@@ -145,10 +146,8 @@ public class TestDataFactory {
         return recordItem;
     }
 
-
     /**
-     * Creates a test Opportunity record with specified OfferType.
-     * 
+     * @description Creates a test Opportunity record with specified OfferType and Account.
      * @param offerType The Offer_Type__c field value
      * @param doInsert If true, inserts the record into the database
      * @return Opportunity record with test data
@@ -172,8 +171,7 @@ public class TestDataFactory {
 
 
     /**
-     * Creates a test ProductCatalog record with auto-generated name.
-     * 
+     * @description Creates a test ProductCatalog record with auto-generated name.
      * @param doInsert If true, inserts the record into the database
      * @return ProductCatalog record with test data
      */
@@ -188,8 +186,7 @@ public class TestDataFactory {
     }
 
     /**
-     * Creates a test ProductCatalog record with specified name.
-     * 
+     * @description Creates a test ProductCatalog record with specified name.
      * @param catalogName The catalog name
      * @param doInsert If true, inserts the record into the database
      * @return ProductCatalog record with test data
@@ -206,8 +203,7 @@ public class TestDataFactory {
 
 
     /**
-     * Creates a test ProductCategory record with default catalog.
-     * 
+     * @description Creates a test ProductCategory record with default catalog.
      * @param doInsert If true, inserts the record into the database
      * @return ProductCategory record with test data
      */
@@ -226,8 +222,7 @@ public class TestDataFactory {
     }
 
     /**
-     * Creates a test ProductCategory record with specified parameters.
-     * 
+     * @description Creates a test ProductCategory record with specified parameters.
      * @param catalogId The parent ProductCatalog ID
      * @param parentCategoryId The parent ProductCategory ID (optional)
      * @param categoryName The category name
@@ -257,8 +252,7 @@ public class TestDataFactory {
 
 
     /**
-     * Creates a test ProductCategoryProduct record with auto-generated category and product.
-     * 
+     * @description Creates a test ProductCategoryProduct record with auto-generated category and product.
      * @param doInsert If true, inserts the record into the database
      * @return ProductCategoryProduct record with test data
      */
@@ -277,8 +271,7 @@ public class TestDataFactory {
     }
 
     /**
-     * Creates a test ProductCategoryProduct record with specified category and product.
-     * 
+     * @description Creates a test ProductCategoryProduct record with specified category and product.
      * @param categoryId The ProductCategory ID
      * @param productId The Product2 ID
      * @param doInsert If true, inserts the record into the database
@@ -298,6 +291,24 @@ public class TestDataFactory {
             insert recordItem;
         }
         return recordItem;
+    }
+
+    /**
+     * @description Creates a test PricebookEntry record in the specified pricebook.
+     * @param productId The Product2 ID to add to the pricebook
+     * @param pricebookId The Pricebook2 ID where the entry will be created
+     * @return PricebookEntry record with test data (UnitPrice = 100, IsActive = true)
+     */
+    public static PricebookEntry createStandardPricebookEntry(Id productId, Id pricebookId) {
+        PricebookEntry pricebookEntryRecord = new PricebookEntry(
+            Pricebook2Id = pricebookId,
+            Product2Id = productId,
+            UnitPrice = 100,
+            IsActive = true,
+            UseStandardPrice = false
+        );
+        insert pricebookEntryRecord;
+        return pricebookEntryRecord;
     }
 
 
@@ -472,18 +483,6 @@ public class TestDataFactory {
         );
         if (doInsert) { insert recordItem; }
         return recordItem;
-    }
-
-    private static PricebookEntry createStandardPricebookEntry(Id productId, Id pricebookId) {
-        PricebookEntry pricebookEntryRecord = new PricebookEntry(
-            Pricebook2Id = pricebookId,
-            Product2Id = productId,
-            UnitPrice = 100,
-            IsActive = true,
-            UseStandardPrice = false
-        );
-        insert pricebookEntryRecord;
-        return pricebookEntryRecord;
     }
     */
 }

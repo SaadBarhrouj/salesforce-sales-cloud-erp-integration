@@ -180,17 +180,8 @@ public inherited sharing class ProductCategoryService {
 
 
     /**
-     * Builds sidebar category hierarchy filtered by Opportunity's OfferType field.
-     * 
-     * Orchestrates all DAO calls and business logic:
-     * 1. Fetches Opportunity by ID
-     * 2. Maps OfferType to ProductCatalog name
-     * 3. Fetches ProductCatalog by name
-     * 4. Fetches Categories for catalog
-     * 5. Fetches product counts per category
-     * 6. Delegates to buildSidebarHierarchy for hierarchy construction
-     * 
-     * @description Builds hierarchical category structure filtered by Opportunity offer type for sidebar navigation
+     
+     * @description Builds hierarchical category structure filtered by Opportunity offer type and pricebook for sidebar navigation
      * @param opportunityId Salesforce Opportunity ID
      * @return List of category Maps with hierarchical structure; empty list if opportunity not found or OfferType is blank
      * @throws IllegalArgumentException if opportunityId is null
@@ -203,6 +194,11 @@ public inherited sharing class ProductCategoryService {
 
         String offerType = opp.Offer_Type__c;
         if (String.isBlank(offerType)) {
+            return new List<Map<String, Object>>();
+        }
+
+        Id pricebookId = opp.Pricebook2Id;
+        if (pricebookId == null) {
             return new List<Map<String, Object>>();
         }
 
@@ -219,20 +215,17 @@ public inherited sharing class ProductCategoryService {
         for (ProductCategory cat : allCategories) {
             catIds.add(cat.Id);
         }
-        Map<Id, Integer> directCounts = ProductCategoryProductDAO.getProductCountForCategories(catIds);
+
+        Map<Id, Integer> directCounts = ProductCategoryProductDAO.getProductCountForCategoriesByPricebook(catIds, pricebookId);
 
         return buildSidebarHierarchy(allCategories, directCounts);
     }
 
     /**
-     * Builds hierarchical category structure for sidebar navigation.
-     * Filters only categories marked as navigational (IsNavigational = true).
-     * Organizes categories into parent-child relationships with null parent as root categories.
-     * 
-     * @description Organizes categories into a hierarchical tree structure filtered by navigational flag
+     * @description Organizes categories into a hierarchical tree structure, filtered by navigational flag and pricebook product availability
      * @param allCategories List of ProductCategory records
-     * @param directCounts Map of product counts per category
-     * @return List of Maps representing root categories with nested children
+     * @param directCounts Map of product counts per category (filtered by pricebook)
+     * @return List of Maps representing root categories with children where value > 0 (only categories with products in pricebook)
      */
     private static List<Map<String, Object>> buildSidebarHierarchy(List<ProductCategory> allCategories, Map<Id, Integer> directCounts) {
         if (allCategories == null || allCategories.isEmpty()) {
@@ -254,22 +247,26 @@ public inherited sharing class ProductCategoryService {
 
         if (childrenByParentId.containsKey(null)) {
             for (ProductCategory rootCategory : childrenByParentId.get(null)) {
-                result.add(mapCategoryToObject(rootCategory, childrenByParentId, directCounts));
+                Map<String, Object> rootMap = mapCategoryToObject(rootCategory, childrenByParentId, directCounts);
+                if ((Integer)rootMap.get('value') > 0) {
+                    result.add(rootMap);
+                }
             }
         }
 
         return result;
     }
 
-    /**
+/**
      * Converts a ProductCategory to a Map with nested children structure (recursive).
      * Calculates total products for each category, including products in subcategories.
+     * Only includes children with value > 0 (products in pricebook).
      * 
      * @description Recursively transforms a ProductCategory into a Map representation with child hierarchy
      * @param category The ProductCategory record to map
      * @param childrenByParentId Map of parent ID to list of child categories
      * @param directCounts Map of product counts per category
-     * @return Map with 'id', 'label', 'value', and optional 'children' fields
+     * @return Map with 'id', 'label', 'value', and optional 'children' fields (only if value > 0)
      */
     private static Map<String, Object> mapCategoryToObject(
         ProductCategory category,
@@ -282,13 +279,15 @@ public inherited sharing class ProductCategoryService {
         
         Integer totalProducts = directCounts.containsKey(category.Id) ? directCounts.get(category.Id) : 0;
 
-        // Recursively add children
         List<Map<String, Object>> children = new List<Map<String, Object>>();
         if (childrenByParentId.containsKey(category.Id)) {
             for (ProductCategory childCategory : childrenByParentId.get(category.Id)) {
                 Map<String, Object> childMap = mapCategoryToObject(childCategory, childrenByParentId, directCounts);
-                children.add(childMap);
-                totalProducts += (Integer)childMap.get('value');
+                Integer childValue = (Integer)childMap.get('value');
+                if (childValue > 0) {
+                    children.add(childMap);
+                    totalProducts += childValue;
+                }
             }
         }
         
