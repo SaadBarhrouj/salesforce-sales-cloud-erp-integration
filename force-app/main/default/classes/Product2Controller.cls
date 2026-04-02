@@ -12,7 +12,11 @@ public with sharing class Product2Controller {
     public static Product2 getById(Id recordId) {
         try {
             return Product2Service.getLoadedRecord(Product2DAO.getById(recordId));
-        } catch (Exception ex) {
+        } catch (Product2Exception e) {
+            System.debug(LoggingLevel.ERROR, 'Product2Controller.getById: ' + e.getMessage());
+            throw new AuraHandledException(e.getMessage());
+        } catch (Exception e) {
+            System.debug(LoggingLevel.ERROR, 'Product2Controller.getById unexpected error: ' + e.getMessage() + ' | Stack: ' + e.getStackTraceString());
             throw new AuraHandledException(getControllerErrorMessage());
         }
     }
@@ -27,7 +31,11 @@ public with sharing class Product2Controller {
         try {
             Set<Id> safeIds = recordIds == null ? new Set<Id>() : new Set<Id>(recordIds);
             return Product2Service.getLoadedRecords(Product2DAO.getByIds(safeIds).values());
-        } catch (Exception ex) {
+        } catch (Product2Exception e) {
+            System.debug(LoggingLevel.ERROR, 'Product2Controller.getByIds: ' + e.getMessage());
+            throw new AuraHandledException(e.getMessage());
+        } catch (Exception e) {
+            System.debug(LoggingLevel.ERROR, 'Product2Controller.getByIds unexpected error: ' + e.getMessage() + ' | Stack: ' + e.getStackTraceString());
             throw new AuraHandledException(getControllerErrorMessage());
         }
     }
@@ -40,7 +48,11 @@ public with sharing class Product2Controller {
     public static List<Product2> getAll() {
         try {
             return Product2Service.getLoadedRecords(Product2DAO.getAll());
-        } catch (Exception ex) {
+        } catch (Product2Exception e) {
+            System.debug(LoggingLevel.ERROR, 'Product2Controller.getAll: ' + e.getMessage());
+            throw new AuraHandledException(e.getMessage());
+        } catch (Exception e) {
+            System.debug(LoggingLevel.ERROR, 'Product2Controller.getAll unexpected error: ' + e.getMessage() + ' | Stack: ' + e.getStackTraceString());
             throw new AuraHandledException(getControllerErrorMessage());
         }
     }
@@ -55,7 +67,11 @@ public with sharing class Product2Controller {
         try {
             Id safeCategoryId = String.isBlank(categoryId) ? null : (Id) categoryId;
             return Product2Service.getByCategoryId(safeCategoryId);
-        } catch (Exception ex) {
+        } catch (Product2Exception e) {
+            System.debug(LoggingLevel.ERROR, 'Product2Controller.getAllByCategory: ' + e.getMessage());
+            throw new AuraHandledException(e.getMessage());
+        } catch (Exception e) {
+            System.debug(LoggingLevel.ERROR, 'Product2Controller.getAllByCategory unexpected error: ' + e.getMessage() + ' | Stack: ' + e.getStackTraceString());
             throw new AuraHandledException(getControllerErrorMessage());
         }
     }
@@ -72,7 +88,11 @@ public with sharing class Product2Controller {
             Map<Id, Product2> persistedRecordsById = Product2DAO.getByIds(recordIds);
             List<Product2> savedRecords = Product2Service.saveRecords(records, persistedRecordsById);
             return Product2Service.getLoadedRecords(Product2DAO.getByIds(collectIds(savedRecords)).values());
-        } catch (Exception ex) {
+        } catch (Product2Exception e) {
+            System.debug(LoggingLevel.ERROR, 'Product2Controller.saveRecords: ' + e.getMessage());
+            throw new AuraHandledException(e.getMessage());
+        } catch (Exception e) {
+            System.debug(LoggingLevel.ERROR, 'Product2Controller.saveRecords unexpected error: ' + e.getMessage() + ' | Stack: ' + e.getStackTraceString());
             throw new AuraHandledException(getControllerErrorMessage());
         }
     }
@@ -89,7 +109,11 @@ public with sharing class Product2Controller {
             Map<Id, Product2> loadedRecordsById = Product2DAO.getByIds(safeIds);
             Product2Service.deleteRecords(loadedRecordsById.values());
             return true;
-        } catch (Exception ex) {
+        } catch (Product2Exception e) {
+            System.debug(LoggingLevel.ERROR, 'Product2Controller.deleteRecords: ' + e.getMessage());
+            throw new AuraHandledException(e.getMessage());
+        } catch (Exception e) {
+            System.debug(LoggingLevel.ERROR, 'Product2Controller.deleteRecords unexpected error: ' + e.getMessage() + ' | Stack: ' + e.getStackTraceString());
             throw new AuraHandledException(getControllerErrorMessage());
         }
     }

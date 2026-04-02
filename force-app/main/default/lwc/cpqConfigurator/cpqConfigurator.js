@@ -319,7 +319,7 @@ export default class CpqConfigurator extends LightningElement {
     handleSidebarItemSelect(event) {
         const { selectedItemId } = event.detail;
         const selectedItem = this._findSidebarItemById(selectedItemId);
-        this.selectedCategoryId = selectedItem ? selectedItem.value : '';
+        this.selectedCategoryId = selectedItem ? selectedItem.id : '';
         this.selectedCategoryLabel = selectedItem ? selectedItem.label : '';
     }
 
