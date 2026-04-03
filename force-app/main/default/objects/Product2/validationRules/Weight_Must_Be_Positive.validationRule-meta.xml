@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Weight_Must_Be_Positive</fullName>
+    <active>true</active>
+    <description>Enforces data integrity on Product2 by preventing zero or negative values on Unit_Weight_Kg__c, while allowing null to preserve field optionality.</description>
+    <errorConditionFormula>AND(
+    NOT(ISBLANK(Unit_Weight_Kg__c)), 
+    Unit_Weight_Kg__c &lt;= 0 
+)</errorConditionFormula>
+    <errorDisplayField>Unit_Weight_Kg__c</errorDisplayField>
+    <errorMessage>Unit Weight (Kg) must be greater than zero.</errorMessage>
+</ValidationRule>

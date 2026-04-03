@@ -27,6 +27,7 @@ jobs:
             ~/.local/share/sf
             ~/.cache/sf
             /usr/local/lib/node_modules/@salesforce
+            /usr/local/bin/sf
           key: sf-cli-${{ runner.os }}-v2
           restore-keys: |
             sf-cli-${{ runner.os }}-
@@ -53,10 +54,17 @@ jobs:
       - name: Deploy to UAT Org
         run: |
           echo "Deploying to UAT Org..."
+          
+          # Use RunLocalTests only if Apex test classes are present
+          TEST_LEVEL="NoTestRun"
+          if [ -n "$(grep -rl "@isTest" force-app --include="*.cls")" ]; then
+            TEST_LEVEL="RunLocalTests"
+          fi
+
           sf project deploy start \
             --source-dir force-app \
             --target-org UATOrg \
-            --test-level RunLocalTests \
+            --test-level $TEST_LEVEL \
             --wait 30
 
       - name: Deployment Summary

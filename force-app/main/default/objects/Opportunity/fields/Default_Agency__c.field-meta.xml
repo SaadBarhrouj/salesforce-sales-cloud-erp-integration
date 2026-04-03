@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Default_Agency__c</fullName>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <description>The default departure Location record (Record Type: Agency) used as the origin point for all trips when no specific agency is set on the line item.</description>
+    <inlineHelpText>Select the default departure agency (depot) for this opportunity. Used as the starting point for all line items that do not specify their own departure agency. Required when &quot;Is Transport Required&quot; is checked.</inlineHelpText>
+    <label>Default Agency</label>
+    <referenceTo>Location</referenceTo>
+    <relationshipLabel>Opportunities (Default Agency)</relationshipLabel>
+    <relationshipName>Opportunities_As_Default_Agency</relationshipName>
+    <required>false</required>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackTrending>false</trackTrending>
+    <type>Lookup</type>
+</CustomField>

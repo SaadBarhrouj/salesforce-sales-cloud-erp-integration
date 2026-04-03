@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Is_Transport_Required__c</fullName>
+    <defaultValue>false</defaultValue>
+    <description>Master switch controlling whether transport trips must be generated for this opportunity. When unchecked, the engine skips all trip creation and cost calculation regardless of line item dates.</description>
+    <inlineHelpText>Check this box if physical transport (delivery and/or pickup) is required for this opportunity. When unchecked, no trips or transport costs will be generated, even if line items have delivery or pickup dates.</inlineHelpText>
+    <label>Is Transport Required</label>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackTrending>false</trackTrending>
+    <type>Checkbox</type>
+</CustomField>

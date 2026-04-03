@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Filter_Field__c</fullName>
+    <externalId>false</externalId>
+    <inlineHelpText>API name for dynamic filtering (e.g., ProductCode, Family). Used if Target Product is blank.</inlineHelpText>
+    <label>Filter Field</label>
+    <length>120</length>
+    <required>false</required>
+    <trackTrending>false</trackTrending>
+    <type>Text</type>
+    <unique>false</unique>
+</CustomField>

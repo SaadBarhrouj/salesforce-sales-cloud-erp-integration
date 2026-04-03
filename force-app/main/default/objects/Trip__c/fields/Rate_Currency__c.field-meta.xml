@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Rate_Currency__c</fullName>
+    <description>ISO 4217 currency code of the original pricing rate used in the calculation. When this differs from the opportunity&apos;s currency, a conversion is performed and documented.</description>
+    <externalId>false</externalId>
+    <inlineHelpText>The original currency of the pricing rate (e.g., EUR, GBP). If different from the opportunity currency, a conversion was applied.</inlineHelpText>
+    <label>Rate Currency</label>
+    <length>3</length>
+    <required>false</required>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Text</type>
+    <unique>false</unique>
+</CustomField>

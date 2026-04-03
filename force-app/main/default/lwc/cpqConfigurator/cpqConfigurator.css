@@ -1,0 +1,56 @@
+/* CPQ Configurator – Layout */
+
+:host {
+    display: block !important;
+    height: calc(100vh - 180px) !important;
+    width: 100% !important;
+    overflow: hidden !important;
+}
+
+/* App Wrapper */
+.cpq-app-wrapper {
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100% !important;
+    width: 100% !important;
+    overflow: hidden !important;
+}
+
+/* Header – Fixed at top */
+c-cpq-sticky-header {
+    flex: 0 0 auto !important;
+    width: 100%;
+    z-index: 10;
+    background-color: #fff;
+}
+
+/* App Body – Two column layout */
+.cpq-app-body {
+    display: flex !important;
+    flex: 1 1 auto !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    width: 100% !important;
+    overflow: hidden !important;
+}
+
+/* Sidebar – Left column */
+c-cpq-collapsible-sidebar {
+    flex: 0 0 auto;
+    height: 100%;
+    min-height: 0 !important;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Main content – Right column (scrollable) */
+.cpq-app-main {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    height: 100% !important;
+    overflow-y: auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+    background-color: #fff;
+    margin-left: 12px;
+}

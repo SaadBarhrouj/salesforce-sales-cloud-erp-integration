@@ -1,0 +1,109 @@
+<template>
+    <div class="step-selection slds-p-around_none slds-grid slds-is-relative slds-scrollable_none">
+
+            <!-- ══════ MAIN CONTENT AREA ══════ -->
+            <div class="step-selection-content slds-col slds-no-space slds-scrollable_y">
+
+                <div lwc:if={isLoading} class="slds-is-relative slds-var-p-around_xx-large">
+                    <lightning-spinner alternative-text="Loading products" size="medium"></lightning-spinner>
+                </div>
+
+                <div lwc:if={hasNoProducts}>
+                    <c-empty-state
+                        illustration-name={emptyStateIllustration}
+                        title="No Products Available"
+                        description="Please adjust your search or filter criteria."
+                        size="large">
+                    </c-empty-state>
+                </div>
+
+                <template lwc:if={hasProducts}>
+                    <!-- TABLE VIEW -->
+                    <template lwc:if={isTableView}>
+                        <lightning-datatable
+                            key-field="Id"
+                            data={filteredProducts}
+                            columns={columns}
+                            selected-rows={selectedProductIds}
+                            onrowselection={handleRowSelection}>
+                        </lightning-datatable>
+                    </template>
+
+                    <!-- CARD VIEW -->
+                    <template lwc:if={isCardView}>
+                        <div class="card-view-grid slds-p-around_small">
+                            <template for:each={cardProducts} for:item="product">
+                                <c-cpq-product-card
+                                    key={product.Id}
+                                    product={product}
+                                    is-in-cart={product._isInCart}
+                                    onproducttoggle={handleProductToggle}>
+                                </c-cpq-product-card>
+                            </template>
+                        </div>
+                    </template>
+                </template>
+            </div>
+
+            <!-- ══════ FILTER PANEL (SLDS Docked Right Drawer) ══════ -->
+            <section class={filterPanelClass} aria-hidden={filterPanelHidden}>
+                <div class="filter-panel__header slds-grid slds-grid_align-spread slds-media_center slds-p-around_medium slds-m-around_none">
+                    <div>
+                        <h2 class="slds-text-heading_small slds-truncate slds-m-around_none" title="Filters">Filters</h2>
+                        <p class="slds-m-top_xxx-small slds-text-body_small slds-color__text_gray-9 slds-m-around_none">Code and type</p>
+                    </div>
+                    <lightning-button-icon
+                        icon-name="utility:close"
+                        variant="border-filled"
+                        alternative-text="Close filters"
+                        title="Close filters"
+                        onclick={handleCloseFilterPanel}>
+                    </lightning-button-icon>
+                </div>
+
+                <div class="filter-panel__summary slds-grid slds-wrap" lwc:if={hasActiveFilters}>
+                    <template for:each={activeFilters} for:item="filter">
+                        <lightning-pill
+                            key={filter.id}
+                            label={filter.label}
+                            name={filter.field}
+                            onremove={handleRemoveFilter}>
+                        </lightning-pill>
+                    </template>
+                </div>
+
+                <div class="filter-panel__body slds-p-around_medium slds-p-top_none">
+                    <lightning-input
+                        label="Product Code"
+                        value={pendingFilterProductCode}
+                        onchange={handleFilterProductCodeChange}>
+                    </lightning-input>
+
+                    <div class="slds-m-top_small">
+                        <lightning-combobox
+                            name="bundleTypeFilter"
+                            label="Product Type"
+                            options={bundleTypeOptions}
+                            value={pendingFilterBundleType}
+                            onchange={handleFilterBundleTypeChange}>
+                        </lightning-combobox>
+                    </div>
+                </div>
+
+                <div class="filter-panel__footer slds-grid slds-grid_align-end slds-gutters_x-small">
+                    <lightning-button
+                        label="Reset"
+                        variant="neutral"
+                        onclick={handleResetFilters}>
+                    </lightning-button>
+                    <lightning-button
+                        class="slds-m-left_small"
+                        label="Apply"
+                        variant="brand"
+                        onclick={handleApplyFilters}>
+                    </lightning-button>
+                </div>
+            </section>
+
+        </div>
+</template>

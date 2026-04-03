@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Is_Required__c</fullName>
+    <defaultValue>false</defaultValue>
+    <inlineHelpText>If checked, this option is automatically selected and cannot be deselected.</inlineHelpText>
+    <label>Is Required</label>
+    <trackTrending>false</trackTrending>
+    <type>Checkbox</type>
+</CustomField>

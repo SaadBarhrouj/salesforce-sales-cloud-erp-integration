@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Delivery_Site__c</fullName>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <description>The destination Location record where the equipment will be delivered. Copied to Destination_Location__c on each generated Delivery Trip.</description>
+    <inlineHelpText>Select the client site where the equipment must be delivered. Only sites associated with this opportunity&apos;s account should be proposed. Required when &quot;Is Transport Required&quot; is checked.</inlineHelpText>
+    <label>Delivery Site</label>
+    <referenceTo>Location</referenceTo>
+    <relationshipLabel>Opportunities (Delivery Site)</relationshipLabel>
+    <relationshipName>Opportunities_As_Delivery_Site</relationshipName>
+    <required>false</required>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackTrending>false</trackTrending>
+    <type>Lookup</type>
+</CustomField>

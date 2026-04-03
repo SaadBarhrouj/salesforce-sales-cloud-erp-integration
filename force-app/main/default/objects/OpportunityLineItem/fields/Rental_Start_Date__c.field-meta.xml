@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Rental_Start_Date__c</fullName>
+    <description>Start date of the rental billing period for this line item. Used exclusively for invoicing and revenue recognition. Has no effect on transport trip creation or cost calculation.</description>
+    <inlineHelpText>Start date of the rental period for billing purposes. This does not affect transport scheduling. Typically the day after the equipment is delivered on site.</inlineHelpText>
+    <label>Rental Start Date</label>
+    <required>false</required>
+    <type>Date</type>
+</CustomField>

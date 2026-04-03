@@ -1,0 +1,191 @@
+<template>
+    <div class={containerClass}>
+
+        <!-- ═══════════════════════════════════════
+             TOGGLE BUTTON
+             ═══════════════════════════════════════ -->
+        <button
+            class={buttonClass}
+            aria-controls="split-view-id"
+            aria-expanded={toggleAriaExpanded}
+            title={toggleTitle}
+            onclick={handleToggle}
+        >
+            <lightning-icon
+                icon-name={toggleIcon}
+                size="x-small"
+                class="slds-button__icon slds-button__icon_x-small"
+            ></lightning-icon>
+            <span class="slds-assistive-text">{toggleTitle}</span>
+        </button>
+
+        <!-- ═══════════════════════════════════════
+             SPLIT VIEW PANEL
+             ═══════════════════════════════════════ -->
+        <article
+            hidden={isCollapsed}
+            id="split-view-id"
+            class="slds-split-view slds-grid slds-grid_vertical slds-grow"
+        >
+            <!-- Header -->
+            <header class="slds-split-view__header">
+                <div class="slds-grid slds-grid_vertical-align-center slds-m-bottom_xx-small">
+                    <div class="slds-has-flexi-truncate">
+                        <div class="slds-media slds-media_center">
+                            <div class="slds-media__figure">
+                                <lightning-icon
+                                    icon-name={iconName}
+                                    size="small"
+                                    alternative-text={title}
+                                ></lightning-icon>
+                            </div>
+                            <div class="slds-media__body">
+                                <h1 class="slds-text-heading_small slds-text-color_default">
+                                    {title}
+                                </h1>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slds-grid slds-grid_vertical-align-center">
+                    <p class="slds-text-body_small slds-text-color_weak">
+                        {itemCount} items • Updated just now
+                    </p>
+                    <div class="slds-no-flex slds-grid slds-col_bump-left">
+                        <lightning-button-icon
+                            icon-name="utility:refresh"
+                            size="small"
+                            variant="border-filled"
+                            alternative-text="Refresh List"
+                            title="Refresh List"
+                            onclick={handleRefresh}
+                        ></lightning-button-icon>
+                    </div>
+                </div>
+            </header>
+
+            <!-- ═══════════════════════════════════════
+                 LIST
+                 ═══════════════════════════════════════ -->
+            <div class="slds-grid slds-grid_vertical slds-is-relative">
+                <template lwc:if={isLoading}>
+                    <lightning-spinner alternative-text="Loading" size="small"></lightning-spinner>
+                </template>
+
+                <div class="slds-split-view__list-header slds-grid">
+                    <span class="slds-assistive-text">Sorted by:</span>
+                    <span>
+                        {sortLabel}
+                        <lightning-icon
+                            icon-name="utility:arrowdown"
+                            size="xx-small"
+                            alternative-text="sorted"
+                            class="slds-icon slds-icon_xx-small slds-icon-text-default slds-align-top"
+                        ></lightning-icon>
+                    </span>
+                    <span class="slds-assistive-text">- Ascending</span>
+                </div>
+
+                <template lwc:if={hasItems}>
+                    <ul
+                        aria-multiselectable="true"
+                        class="slds-scrollable_y"
+                        role="listbox"
+                        aria-label={title}
+                    >
+                        <template for:each={computedItems} for:item="item">
+                            <!-- Parent item -->
+                            <li
+                                key={item.id}
+                                class="slds-split-view__list-item"
+                                role="presentation"
+                            >
+                            <a
+                                href="#"
+                                aria-current={item.ariaCurrent}
+                                role="option"
+                                class="slds-split-view__list-item-action slds-grow slds-has-flexi-truncate"
+                                tabindex={item.tabIndex}
+                                data-item-id={item.id}
+                                onclick={handleItemSelect}
+                            >
+                                <!-- Chevron (only if item has children) -->
+                                <template lwc:if={item.hasChildren}>
+                                    <span
+                                        class={item.chevronClass}
+                                        data-item-id={item.id}
+                                        onclick={handleChevronClick}
+                                    >
+                                        <lightning-icon
+                                            icon-name="utility:chevronright"
+                                            size="x-small"
+                                        ></lightning-icon>
+                                    </span>
+                                </template>
+
+                                <!-- Placeholder for items without children (alignment) -->
+                                <template lwc:if={item.noChildren}>
+                                    <span class="cpq-chevron-placeholder"></span>
+                                </template>
+
+                                <!-- Label and Value in a grid -->
+                                <div class="slds-grid slds-grow">
+                                    <span
+                                        class="slds-truncate slds-text-body_regular slds-text-color_default"
+                                        title={item.label}
+                                    >{item.label}</span>
+                                    <span
+                                        class="slds-truncate slds-col_bump-left"
+                                        title={item.value}
+                                    >{item.value}</span>
+                                </div>
+                            </a>
+                        </li>
+
+                        <!-- Children as siblings of parent -->
+                        <template lwc:if={item.isItemExpanded}>
+                            <template for:each={item.computedChildren} for:item="child">
+                                <li
+                                    key={child.id}
+                                    class="slds-split-view__list-item cpq-child-item"
+                                    role="presentation"
+                                >
+                                    <a
+                                        href="#"
+                                        aria-current={child.ariaCurrent}
+                                        role="option"
+                                        class="slds-split-view__list-item-action slds-grow slds-has-flexi-truncate"
+                                        tabindex={child.tabIndex}
+                                        data-item-id={child.id}
+                                        onclick={handleItemSelect}
+                                    >
+                                        <div class="slds-grid slds-grow">
+                                            <span
+                                                class="slds-truncate slds-text-body_regular slds-text-color_default"
+                                                title={child.label}
+                                            >{child.label}</span>
+                                            <span
+                                                class="slds-truncate slds-col_bump-left"
+                                                title={child.value}
+                                            >{child.value}</span>
+                                        </div>
+                                    </a>
+                                </li>
+                            </template>
+                        </template>
+                    </template>
+                </ul>
+                </template>
+                <template lwc:else>
+                    <c-empty-state
+                        illustration-name={emptyStateIllustration}
+                        title="No Items"
+                        description="There are no items to display."
+                        size="small"
+                    ></c-empty-state>
+                </template>
+            </div>
+        </article>
+    </div>
+</template>

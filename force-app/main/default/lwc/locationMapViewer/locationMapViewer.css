@@ -1,0 +1,112 @@
+/* ═══════════════════════════════════════════════════════════
+   locationMapViewer — Clean Edition
+   ═══════════════════════════════════════════════════════════ */
+
+:host {
+    display: block;
+}
+
+/* ── Map Container ──────────────────────────────────────── */
+
+.map-frame {
+    width: 100%;
+    overflow: hidden;
+    border-top: 1px solid #e5e5e5;
+}
+
+/* ── Coordinates Panel ──────────────────────────────────── */
+
+.coord-panel {
+    padding: 0.75rem 1rem;
+    background: #f3f3f3;
+    border-top: 1px solid #e5e5e5;
+}
+
+.coord-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+}
+
+.kpi {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 0.5rem 0.75rem;
+    background: #ffffff;
+    border: 1px solid #e5e5e5;
+    border-radius: 6px;
+}
+
+.kpi-label {
+    font-size: 0.6875rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #706e6b;
+}
+
+.kpi-value {
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: #032d60;
+    font-variant-numeric: tabular-nums;
+}
+
+/* ── Footer ─────────────────────────────────────────────── */
+
+.footer {
+    padding: 0.5rem 1rem;
+    border-top: 1px solid #e5e5e5;
+    text-align: right;
+}
+
+.footer-link {
+    display: inline-flex;
+    align-items: center;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #0176d3;
+    text-decoration: none;
+}
+
+.footer-link:hover {
+    color: #014486;
+    text-decoration: underline;
+}
+
+/* ── Empty / Loading / Error States ─────────────────────── */
+
+.state-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 1.5rem;
+    text-align: center;
+    min-height: 180px;
+}
+
+.state-heading {
+    font-size: 1rem;
+    font-weight: 700;
+    margin-top: 1rem;
+    color: #032d60;
+}
+
+.state-subtext {
+    font-size: 0.8125rem;
+    color: #706e6b;
+    margin-top: 0.25rem;
+    max-width: 280px;
+}
+
+.empty-icon-ring {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 4rem;
+    height: 4rem;
+    border-radius: 50%;
+    background: #f3f3f3;
+}

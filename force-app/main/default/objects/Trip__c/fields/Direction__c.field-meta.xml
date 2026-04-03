@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Direction__c</fullName>
+    <description>Indicates the direction of the trip. Delivery = outbound from warehouse to site. Pickup = return from site to warehouse. Affects pricing through return discount rules.</description>
+    <inlineHelpText>Select &quot;Delivery&quot; for outbound trips (warehouse → site) or &quot;Pickup&quot; for return trips (site → warehouse). Pickup trips may receive a return discount.</inlineHelpText>
+    <label>Direction</label>
+    <required>true</required>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Delivery</fullName>
+                <default>false</default>
+                <label>Delivery</label>
+            </value>
+            <value>
+                <fullName>Pickup</fullName>
+                <default>false</default>
+                <label>Pickup</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Lower_Bound__c</fullName>
+    <externalId>false</externalId>
+    <inlineHelpText>The minimum quantity for this tier (inclusive). Example: a tier covering quantities 1-20 has a Lower Bound of 1.</inlineHelpText>
+    <label>Lower Bound</label>
+    <precision>10</precision>
+    <required>true</required>
+    <scale>2</scale>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Number</type>
+    <unique>false</unique>
+</CustomField>

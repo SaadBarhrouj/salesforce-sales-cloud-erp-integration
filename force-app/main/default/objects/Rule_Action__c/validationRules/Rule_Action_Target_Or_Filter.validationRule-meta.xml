@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Rule_Action_Target_Or_Filter</fullName>
+    <active>true</active>
+    <description>At least one of Target Product or Filter Field must be specified.</description>
+    <errorConditionFormula>AND(ISBLANK(Target_Product__c), ISBLANK(Filter_Field__c))</errorConditionFormula>
+    <errorDisplayField>Target_Product__c</errorDisplayField>
+    <errorMessage>Set either Target Product or Filter Field (both cannot be blank).</errorMessage>
+</ValidationRule>

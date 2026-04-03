@@ -1,0 +1,95 @@
+<template>
+    <div class="cpq-app-wrapper">
+        <!-- Page Header -->
+        <c-cpq-sticky-header
+            top-label={headerTopLabel}
+            title={headerTitle}
+            subtitle={headerSubtitle}
+            icon-name={headerIcon}
+            step-actions={headerStepActions}
+            global-actions={headerGlobalActions}
+            metadata-items={headerMetadata}
+            show-search={headerShowSearch}
+            search-placeholder={headerSearchPlaceholder}
+            onheaderaction={handleHeaderAction}
+            onheadersearch={handleHeaderSearch}
+        ></c-cpq-sticky-header>
+
+        <!-- BODY: Two-column layout -->
+        <div class="cpq-app-body">
+            <!-- LEFT COLUMN: Split View Sidebar -->
+            <c-cpq-collapsible-sidebar
+                title={sidebarTitle}
+                icon-name={sidebarIcon}
+                sort-label={sidebarSortLabel}
+                items={sidebarItems}
+                selected-item-id={selectedItemId}
+                is-loading={sidebarIsLoading}
+                onitemselect={handleItemSelect}
+                onitemdeselect={handleItemDeselect}
+                onsidebarrefresh={handleSidebarRefresh}
+            ></c-cpq-collapsible-sidebar>
+
+            <!-- RIGHT COLUMN: Main content  -->
+            <main class="cpq-app-main">
+                    <!-- Step 1: Product Selection (Main View) -->
+                    <template lwc:if={isStepSelection}>
+                        <c-cpq-step-selection
+                            category-id={selectedItemId}
+                            category-label={selectedItemLabel}
+                            pricebook-id={opportunityPricebookId}
+                            catalog-id={opportunityCatalogId}
+                            selected-products={selectedProducts}
+                            onproductadd={handleProductAdd}
+                            onproductremove={handleProductRemove}
+                            onnavigate={handleNavigate}
+                            onitemdeselect={handleItemDeselect}
+                        ></c-cpq-step-selection>
+                    </template>
+
+                    <!-- Step 2: Bundle Configurator -->
+                    <template lwc:if={isStepConfigure}>
+                        <c-cpq-step-bundle-config
+                            selected-products={selectedProducts}
+                            onconfigupdate={handleConfigUpdate}
+                            onnavigate={handleNavigate}
+                        ></c-cpq-step-bundle-config>
+                    </template>
+
+                    <!-- Step 3: Line Editor -->
+                    <template lwc:if={isStepLineEditor}>
+                        <c-cpq-step-line-editor
+                            selected-products={selectedProducts}
+                            quote-state={quoteState}
+                            onlineupdate={handleLineUpdate}
+                            onlineremove={handleLineRemove}
+                            onglobaldiscount={handleGlobalDiscount}
+                            onnavigate={handleNavigate}
+                        ></c-cpq-step-line-editor>
+                    </template>
+
+                    <!-- Step 4: Logistics -->
+                    <template lwc:if={isStepLogistics}>
+                        <c-cpq-step-logistics
+                            selected-products={selectedProducts}
+                            quote-state={quoteState}
+                            logistics-state={logisticsState}
+                            onlogisticschange={handleLogisticsChange}
+                            onnavigate={handleNavigate}
+                        ></c-cpq-step-logistics>
+                    </template>
+
+                    <!-- Step 5: Review & Save -->
+                    <template lwc:if={isStepReview}>
+                        <c-cpq-step-review
+                            selected-products={selectedProducts}
+                            quote-state={quoteState}
+                            logistics-state={logisticsState}
+                            onsavequote={handleSaveQuote}
+                            onnavigate={handleNavigate}
+                        ></c-cpq-step-review>
+                    </template>
+            </main>
+        </div>
+    </div>
+</template>

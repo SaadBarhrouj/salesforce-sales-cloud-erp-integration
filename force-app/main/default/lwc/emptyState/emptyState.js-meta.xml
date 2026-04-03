@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<LightningComponentBundle xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>66.0</apiVersion>
+    <isExposed>true</isExposed>
+    <targets>
+        <target>lightning__AppPage</target>
+        <target>lightning__RecordPage</target>
+        <target>lightning__HomePage</target>
+    </targets>
+    <targetConfigs>
+        <targetConfig targets="lightning__AppPage,lightning__RecordPage,lightning__HomePage">
+            <property name="illustrationName" type="String" default="noresults:unknown" label="Illustration Name"/>
+            <property name="title" type="String" default="No Results" label="Title"/>
+            <property name="description" type="String" default="" label="Description"/>
+            <property name="size" type="String" default="medium" label="Size" datasource="small,medium,large"/>
+            <property name="showCtaButton" type="Boolean" default="false" label="Show CTA Button"/>
+            <property name="ctaLabel" type="String" default="Action" label="CTA Button Label"/>
+            <property name="ctaVariant" type="String" default="brand" label="CTA Button Variant" datasource="brand,neutral,destructive"/>
+        </targetConfig>
+    </targetConfigs>
+</LightningComponentBundle>

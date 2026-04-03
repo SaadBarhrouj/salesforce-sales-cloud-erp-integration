@@ -1,0 +1,11 @@
+.configurator-layout {
+    min-height: 500px;
+}
+
+.sidebar-col {
+    flex-shrink: 0;
+}
+
+.main-area {
+    overflow-x: auto;
+}

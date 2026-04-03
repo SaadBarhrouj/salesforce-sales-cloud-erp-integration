@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Opportunity__c</fullName>
+    <description>Parent opportunity for this trip. This master-detail relationship enables automatic cost aggregation via roll-up summary. The trip inherits sharing and security from the parent opportunity. Cannot be reparented after creation.</description>
+    <inlineHelpText>The parent opportunity for this trip. Required at creation and cannot be changed afterward. When creating a trip from an opportunity&apos;s related list, this field is pre-filled.</inlineHelpText>
+    <label>Opportunity</label>
+    <referenceTo>Opportunity</referenceTo>
+    <relationshipLabel>Trips</relationshipLabel>
+    <relationshipName>Trips</relationshipName>
+    <relationshipOrder>0</relationshipOrder>
+    <reparentableMasterDetail>false</reparentableMasterDetail>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>MasterDetail</type>
+    <writeRequiresMasterRead>false</writeRequiresMasterRead>
+</CustomField>

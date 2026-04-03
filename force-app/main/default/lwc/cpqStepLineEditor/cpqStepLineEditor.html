@@ -1,0 +1,100 @@
+<template>
+    <div class="slds-card slds-p-around_medium">
+        <!-- Quote Info Bar -->
+        <div class="slds-grid slds-grid_align-spread slds-m-bottom_medium slds-p-around_small slds-box slds-box_x-small slds-theme_shade">
+            <div class="slds-col">
+                <lightning-layout>
+                    <lightning-layout-item padding="horizontal-small">
+                        <span class="slds-text-title_caps">Start Date</span>
+                        <lightning-input
+                            type="date"
+                            value={quoteState.startDate}
+                            variant="label-hidden"
+                            label="Start Date"
+                            class="inline-field"
+                        ></lightning-input>
+                    </lightning-layout-item>
+                    <lightning-layout-item padding="horizontal-small">
+                        <span class="slds-text-title_caps">Subscription Term</span>
+                        <lightning-input
+                            type="number"
+                            value={quoteState.subscriptionTerm}
+                            variant="label-hidden"
+                            label="Term"
+                            class="inline-field"
+                        ></lightning-input>
+                    </lightning-layout-item>
+                    <lightning-layout-item padding="horizontal-small">
+                        <span class="slds-text-title_caps">Additional Disc. (%)</span>
+                        <lightning-input
+                            type="number"
+                            value={quoteState.additionalDiscountPercent}
+                            variant="label-hidden"
+                            label="Discount"
+                            class="inline-field"
+                            onchange={handleGlobalDiscountChange}
+                        ></lightning-input>
+                    </lightning-layout-item>
+                </lightning-layout>
+            </div>
+        </div>
+
+        <!-- Line Items Table -->
+        <table class="slds-table slds-table_cell-buffer slds-table_bordered slds-table_striped slds-table_fixed-layout">
+            <thead>
+                <tr class="slds-line-height_reset">
+                    <th scope="col" style="width:40px;">#</th>
+                    <th scope="col" style="width:120px;">Product Code</th>
+                    <th scope="col">Product Name</th>
+                    <th scope="col" style="width:90px;">Quantity</th>
+                    <th scope="col" style="width:110px;" class="slds-text-align_right">List Unit Price</th>
+                    <th scope="col" style="width:110px;">Additional Disc.</th>
+                    <th scope="col" style="width:110px;" class="slds-text-align_right">Net Unit Price</th>
+                    <th scope="col" style="width:110px;" class="slds-text-align_right">Net Total</th>
+                    <th scope="col" style="width:50px;"></th>
+                </tr>
+            </thead>
+            <tbody>
+                <template for:each={selectedProducts} for:item="item" for:index="idx">
+                    <c-cpq-line-item
+                        key={item._key}
+                        item={item}
+                        line-number={item._lineNumber}
+                        onlineupdate={handleLineUpdate}
+                        onlineremove={handleLineRemove}
+                    ></c-cpq-line-item>
+                </template>
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="7" class="slds-text-align_right slds-text-title_caps slds-p-right_small">Subtotal:</td>
+                    <td class="slds-text-align_right slds-text-title_bold">{formattedSubtotal}</td>
+                    <td></td>
+                </tr>
+            </tfoot>
+        </table>
+
+        <div lwc:if={isEmpty} class="slds-align_absolute-center slds-p-around_large">
+            <p class="slds-text-body_regular slds-text-color_weak">No products in the quote. Go back to add products.</p>
+        </div>
+
+        <!-- Navigation -->
+        <div class="slds-m-top_large slds-clearfix">
+            <lightning-button
+                label="Back: Configure"
+                icon-name="utility:back"
+                class="slds-float_left"
+                onclick={handleBack}
+            ></lightning-button>
+            <lightning-button
+                label="Next: Logistics"
+                variant="brand"
+                icon-name="utility:forward"
+                icon-position="right"
+                class="slds-float_right"
+                disabled={isEmpty}
+                onclick={handleNext}
+            ></lightning-button>
+        </div>
+    </div>
+</template>

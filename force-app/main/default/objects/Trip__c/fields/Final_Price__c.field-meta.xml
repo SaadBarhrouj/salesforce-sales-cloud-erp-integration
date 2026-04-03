@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Final_Price__c</fullName>
+    <description>Final price for this trip. Defaults to the system-calculated price. Can be manually overridden by authorized users with a documented reason. This value feeds the parent opportunity&apos;s total cost roll-up.</description>
+    <inlineHelpText>The final price for this trip. Equals the system price by default. Override only with manager approval and provide a reason in the Override Reason field.</inlineHelpText>
+    <label>Final Price</label>
+    <precision>18</precision>
+    <required>false</required>
+    <scale>2</scale>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Currency</type>
+</CustomField>

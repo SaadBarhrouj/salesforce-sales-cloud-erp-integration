@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Rule_Action_Filter_Complete</fullName>
+    <active>true</active>
+    <description>If Filter Field is set, Filter Operator and Filter Value must also be set unless Target Product is set.</description>
+    <errorConditionFormula>AND(
+  ISBLANK(Target_Product__c),
+  NOT(ISBLANK(Filter_Field__c)),
+  OR(ISBLANK(TEXT(Filter_Operator__c)), ISBLANK(Filter_Value__c))
+)</errorConditionFormula>
+    <errorDisplayField>Filter_Operator__c</errorDisplayField>
+    <errorMessage>If using Filter, specify Filter Operator and Filter Value. Or use Target Product instead.</errorMessage>
+</ValidationRule>

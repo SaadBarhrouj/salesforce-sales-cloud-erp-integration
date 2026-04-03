@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Urgency_Required_When_Transport</fullName>
+    <active>true</active>
+    <description>Enforces that Transport_Urgency__c is populated when Is_Transport_Required__c is enabled, ensuring every transport request carries an explicit priority level before progression.</description>
+    <errorConditionFormula>AND(Is_Transport_Required__c, ISPICKVAL(Transport_Urgency__c, &quot;&quot;))</errorConditionFormula>
+    <errorDisplayField>Transport_Urgency__c</errorDisplayField>
+    <errorMessage>Transport Urgency must be set when transport is required. Select Standard, Express, or Urgent.</errorMessage>
+</ValidationRule>

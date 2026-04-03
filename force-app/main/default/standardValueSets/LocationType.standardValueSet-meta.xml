@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<StandardValueSet xmlns="http://soap.sforce.com/2006/04/metadata">
+    <sorted>false</sorted>
+    <standardValue>
+        <fullName>Building</fullName>
+        <default>true</default>
+        <label>Building</label>
+    </standardValue>
+    <standardValue>
+        <fullName>Virtual</fullName>
+        <default>false</default>
+        <label>Virtual</label>
+    </standardValue>
+    <standardValue>
+        <fullName>Warehouse</fullName>
+        <default>false</default>
+        <label>Warehouse</label>
+    </standardValue>
+    <standardValue>
+        <fullName>Site</fullName>
+        <default>false</default>
+        <label>Site</label>
+    </standardValue>
+</StandardValueSet>

@@ -61,6 +61,7 @@ jobs:
             ~/.local/share/sf
             ~/.cache/sf
             /usr/local/lib/node_modules/@salesforce
+            /usr/local/bin/sf
           key: sf-cli-${{ runner.os }}-v2
           restore-keys: |
             sf-cli-${{ runner.os }}-
@@ -97,11 +98,15 @@ jobs:
 
       - name: Run Apex Tests
         run: |
-          sf apex run test \
-            --target-org scratch-ci \
-            --wait 15 \
-            --result-format human \
-            --code-coverage
+          if [ -z "$(grep -rl "@isTest" force-app --include="*.cls")" ]; then
+            echo "No Apex test classes found, skipping tests."
+          else
+            sf apex run test \
+              --target-org scratch-ci \
+              --wait 15 \
+              --result-format human \
+              --code-coverage
+          fi
 
       - name: Delete Scratch Org
         if: always()
@@ -129,6 +134,7 @@ jobs:
             ~/.local/share/sf
             ~/.cache/sf
             /usr/local/lib/node_modules/@salesforce
+            /usr/local/bin/sf
           key: sf-cli-${{ runner.os }}-v2
           restore-keys: |
             sf-cli-${{ runner.os }}-
@@ -157,11 +163,17 @@ jobs:
         run: |
           echo "Running full validation against Production..."
           
+          # Use RunLocalTests only if Apex test classes are present
+          TEST_LEVEL="NoTestRun"
+          if [ -n "$(grep -rl "@isTest" force-app --include="*.cls")" ]; then
+            TEST_LEVEL="RunLocalTests"
+          fi
+          
           set +e
           RESULT=$(sf project deploy validate \
             --source-dir force-app \
             --target-org ProductionOrg \
-            --test-level RunLocalTests \
+            --test-level $TEST_LEVEL \
             --wait 30 \
             --json 2>&1)
           EXIT_CODE=$?

@@ -1,0 +1,197 @@
+<template>
+  <!-- Main Card Container -->
+  <div class="slds-m-top_none slds-m-horizontal_none">
+
+    <!-- Page Header -->
+    <div class="slds-page-header">
+
+      <!-- ========== ROW 1: TITLE & PRIMARY ACTIONS ========== -->
+      <div class="slds-page-header__row">
+
+        <!-- LEFT: TITLE SECTION -->
+        <div class="slds-page-header__col-title">
+          <div class="slds-media">
+
+            <!-- Icon -->
+            <div class="slds-media__figure" lwc:if={iconName}>
+              <lightning-icon
+                icon-name={iconName}
+                size="medium"
+                alternative-text={title}>
+              </lightning-icon>
+            </div>
+
+            <!-- Title Content -->
+            <div class="slds-media__body">
+              <div class="slds-page-header__name">
+                <div class="slds-page-header__name-title">
+                  <h1>
+                    <span lwc:if={topLabel}>{topLabel}</span>
+                    <span class="slds-page-header__title slds-truncate" title={title}>
+                      {title}
+                    </span>
+                  </h1>
+                </div>
+              </div>
+              <p lwc:if={subtitle} class="slds-page-header__name-meta slds-truncate">{subtitle}</p>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- RIGHT: PRIMARY ACTIONS -->
+        <div class="slds-page-header__col-actions">
+          <div class="slds-page-header__controls">
+            <div class="slds-page-header__control">
+              <template lwc:if={hasStepActions}>
+                <lightning-button-group>
+                  <template for:each={stepActions} for:item="action">
+                    <lightning-button
+                      key={action.name}
+                      label={action.label}
+                      variant={action.variant}
+                      disabled={action.disabled}
+                      data-action={action.name}
+                      onclick={handleAction}>
+                    </lightning-button>
+                  </template>
+                  <!-- Dropdown for overflow actions if more than 3 -->
+                  <template lwc:if={hasOverflowActions}>
+                    <lightning-button-menu
+                      alternative-text="More actions"
+                      title="More actions"
+                      variant="neutral"
+                      menu-alignment="right"
+                      onselect={handleMenuSelect}>
+                      <template for:each={stepActionsOverflow} for:item="action">
+                        <lightning-menu-item
+                          key={action.name}
+                          value={action.name}
+                          label={action.label}>
+                        </lightning-menu-item>
+                      </template>
+                    </lightning-button-menu>
+                  </template>
+                </lightning-button-group>
+              </template>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ========== ROW 2: METADATA, SEARCH & CONTROLS ========== -->
+      <div class="slds-page-header__row" lwc:if={showRow2}>
+
+        <!-- LEFT: METADATA -->
+        <div class="slds-page-header__col-meta">
+          <ul class="slds-list_horizontal slds-has-dividers_right slds-grid_vertical-align-center">
+            <template for:each={metadataItems} for:item="item">
+              <li key={item.id} class="slds-item">
+                <lightning-icon
+                  lwc:if={item.iconName}
+                  icon-name={item.iconName}
+                  size="xx-small"
+                  alternative-text={item.label}
+                  class="slds-m-right_x-small">
+                </lightning-icon>
+                <template lwc:if={item.isLink}>
+                  <a href="#" 
+                     data-record-id={item.value}
+                     data-object-api-name={item.objectApiName}
+                     onclick={handleLinkClick}
+                     class="slds-text-link">{item.label}</a>
+                </template>
+                <template lwc:else>
+                  <template lwc:if={item.isBold}>
+                    <strong>{item.label}</strong>
+                  </template>
+                  <template lwc:else>
+                    {item.label}
+                  </template>
+                  <span class="slds-m-left_x-small" lwc:if={item.value}>{item.value}</span>
+                </template>
+              </li>
+            </template>
+          </ul>
+        </div>
+
+        <!-- RIGHT: SEARCH & CONTROL BUTTONS -->
+        <div class="slds-grid slds-grid_align-end slds-nowrap">
+
+          <!-- SEARCH -->
+          <div class="slds-m-right_x-small" lwc:if={showSearch}>
+            <lightning-input
+              type="search"
+              placeholder={searchPlaceholder}
+              variant="label-hidden"
+              onchange={handleSearch}>
+            </lightning-input>
+          </div>
+
+          <!-- CONTROL BUTTONS -->
+          <div lwc:if={globalActions}>
+            <div class="slds-page-header__controls">
+              <template for:each={globalActions} for:item="action">
+                <div key={action.name} class="slds-page-header__control">
+                  <template lwc:if={action.isGroup}>
+                    <!-- Grouped actions (button-group) -->
+                    <lightning-button-group>
+                      <template for:each={action.items} for:item="item">
+                        <lightning-button-icon
+                          key={item.name}
+                          icon-name={item.iconName}
+                          title={item.label}
+                          alternative-text={item.label}
+                          variant={item.variant}
+                          data-action={item.name}
+                          onclick={handleAction}>
+                        </lightning-button-icon>
+                      </template>
+                    </lightning-button-group>
+                  </template>
+                  <template lwc:elseif={action.isMenu}>
+                    <!-- Menu action -->
+                    <lightning-button-menu
+                      icon-name={action.iconName}
+                      title={action.label}
+                      alternative-text={action.label}
+                      variant={action.variant}
+                      onselect={handleMenuSelect}>
+                      <template lwc:if={action.menuItems}>
+                        <template for:each={action.menuItems} for:item="menuItem">
+                          <lightning-menu-item
+                            key={menuItem.name}
+                            value={menuItem.name}
+                            label={menuItem.label}
+                            icon-name={menuItem.iconName}>
+                          </lightning-menu-item>
+                        </template>
+                      </template>
+                    </lightning-button-menu>
+                  </template>
+                  <template lwc:else>
+                    <!-- Single icon button -->
+                    <lightning-button-icon
+                      icon-name={action.iconName}
+                      title={action.label}
+                      alternative-text={action.label}
+                      variant={action.variant}
+                      data-action={action.name}
+                      onclick={handleAction}>
+                    </lightning-button-icon>
+                  </template>
+                </div>
+              </template>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</template>

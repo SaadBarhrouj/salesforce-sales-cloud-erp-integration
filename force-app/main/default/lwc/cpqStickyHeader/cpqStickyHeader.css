@@ -1,0 +1,21 @@
+:host {
+    display: block;
+    width: 100%;
+    padding: 0;
+    margin: 0;
+}
+
+.slds-tabs_card {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    background-color: #fff;
+}
+
+.slds-page-header {
+    width: 100%;
+    margin: 0;
+    padding: 1rem;
+    background-color: #fff;
+    border-bottom: 1px solid #dddbda;
+}

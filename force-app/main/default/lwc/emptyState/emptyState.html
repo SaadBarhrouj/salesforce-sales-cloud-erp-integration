@@ -1,0 +1,22 @@
+<template>
+  <lightning-empty-state
+    illustration-name={illustrationName}
+    title={title}
+    size={size}>
+    
+    <!-- Description Slot -->
+    <p slot="description">
+      {description}
+    </p>
+
+    <!-- CTA Button Slot (Conditional) -->
+    <lightning-button
+      lwc:if={showCtaButton}
+      variant={ctaVariant}
+      label={ctaLabel}
+      slot="cta"
+      onclick={handleCtaClick}>
+    </lightning-button>
+
+  </lightning-empty-state>
+</template>

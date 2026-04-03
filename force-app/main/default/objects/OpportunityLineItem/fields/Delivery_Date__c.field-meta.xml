@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Delivery_Date__c</fullName>
+    <description>The scheduled transport date for delivering this equipment to the site. When populated, the trip engine creates or consolidates a Delivery Trip (Direction__c = &quot;Delivery&quot;) grouping all line items sharing the same departure agency and date. This is a transport date, not a billing date.</description>
+    <inlineHelpText>Enter the date when this equipment must be delivered to the site. A delivery trip will be automatically created or updated. Leave blank if no delivery transport is needed for this line item.</inlineHelpText>
+    <label>Delivery Date</label>
+    <required>false</required>
+    <type>Date</type>
+</CustomField>

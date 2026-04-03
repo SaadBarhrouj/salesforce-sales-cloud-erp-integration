@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CompactLayout xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Bundle_Option_Compact_Layout</fullName>
+    <fields>Name</fields>
+    <fields>Option_Product__c</fields>
+    <fields>Bundle_Product__c</fields>
+    <fields>Option_Type__c</fields>
+    <label>Bundle Option Compact Layout</label>
+</CompactLayout>

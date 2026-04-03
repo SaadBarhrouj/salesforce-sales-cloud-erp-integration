@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Bundle_Rule_Assignment_Requires_Product</fullName>
+    <active>true</active>
+    <description>Bundle Product is required.</description>
+    <errorConditionFormula>ISBLANK(Bundle_Product__c)</errorConditionFormula>
+    <errorMessage>Bundle Product is required. Please select a bundle product for this rule assignment.</errorMessage>
+</ValidationRule>

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Trip_Date_Not_Past</fullName>
+    <active>true</active>
+    <description>Prevents creating new trips with a date in the past. Ensures trips are scheduled for current or future dates. Only applies to new records — existing trips can retain historical dates.</description>
+    <errorConditionFormula>AND(
+    ISNEW(),
+    Trip_Date__c &lt; TODAY()
+)</errorConditionFormula>
+    <errorDisplayField>Trip_Date__c</errorDisplayField>
+    <errorMessage>Trip date cannot be in the past for new trips.</errorMessage>
+</ValidationRule>

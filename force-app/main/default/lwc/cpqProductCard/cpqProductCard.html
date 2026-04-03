@@ -1,0 +1,25 @@
+<template>
+    <div class={cardClass} data-id={product.Id} onclick={handleToggle}>
+        <div class="slds-grid slds-grid_align-spread slds-grid_vertical-align-center slds-p-around_small">
+            <div class="slds-col slds-size_1-of-12">
+                <lightning-input
+                    type="checkbox"
+                    checked={isInCart}
+                    label="Select"
+                    variant="label-hidden"
+                    data-id={product.Id}
+                    onchange={handleToggle}
+                ></lightning-input>
+            </div>
+            <div class="slds-col slds-size_2-of-12">
+                <span class="slds-text-body_small slds-text-color_weak">{product.ProductCode}</span>
+            </div>
+            <div class="slds-col slds-size_4-of-12">
+                <p class="slds-text-heading_small slds-truncate" title={product.Name}>{product.Name}</p>
+                <p class="slds-text-body_small slds-text-color_weak slds-truncate" lwc:if={product.Description}>{product.Description}</p>
+            </div>
+            <div class="slds-col slds-size_5-of-12 slds-text-align_right">
+            </div>
+        </div>
+    </div>
+</template>

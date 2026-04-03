@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Departure_Agency__c</fullName>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <description>The specific departure Location record (Record Type: Agency) for this line item. Overrides Opportunity.Default_Agency__c for trip grouping purposes when set. Used as the first grouping dimension: line items sharing the same agency, direction, and date are consolidated into the same Trip.</description>
+    <inlineHelpText>Select the specific departure agency for this line item. Leave blank to use the opportunity&apos;s default agency. Only agency-type locations should be proposed.</inlineHelpText>
+    <label>Departure Agency</label>
+    <referenceTo>Location</referenceTo>
+    <relationshipLabel>Line Items (Departure Agency)</relationshipLabel>
+    <relationshipName>Opportunity_Product</relationshipName>
+    <required>false</required>
+    <type>Lookup</type>
+</CustomField>

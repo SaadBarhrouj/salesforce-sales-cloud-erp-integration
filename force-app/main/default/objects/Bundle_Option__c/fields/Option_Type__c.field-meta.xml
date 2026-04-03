@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Option_Type__c</fullName>
+    <inlineHelpText>Component: qty scales with bundle qty.
+Accessory: fixed qty.
+Related Product: qty independent.</inlineHelpText>
+    <label>Option Type</label>
+    <required>true</required>
+    <trackTrending>false</trackTrending>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Component</fullName>
+                <default>false</default>
+                <label>Component</label>
+            </value>
+            <value>
+                <fullName>Accessory</fullName>
+                <default>false</default>
+                <label>Accessory</label>
+            </value>
+            <value>
+                <fullName>Related Product</fullName>
+                <default>false</default>
+                <label>Related Product</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

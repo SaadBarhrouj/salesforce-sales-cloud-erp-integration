@@ -47,7 +47,11 @@ $RECYCLE.BIN/
 **/.venv/
 **/venv/
 
+# Custom Metadata Type objects (definitions)
+**/objects/*__mdt/
+
 # GitHub & VSCode configuration files
 .github/skills/
+.github/agents/
 .github/copilot-instructions.md
 .vscode/
