@@ -14,7 +14,7 @@ private class ProductCategoryServiceTest {
             saleCatalog.Id, rootCat.Id, 'Sub Category', true, true
         );
         TestDataFactory.createProductCategory(
-            catalog.Id, null, 'Empty Category', true, true
+            saleCatalog.Id, null, 'Empty Category', true, true
         );
         TestDataFactory.createProductCategory(
             saleCatalog.Id, null, 'Non Nav Category', false, true
@@ -32,7 +32,7 @@ private class ProductCategoryServiceTest {
         TestDataFactory.createProductCategoryProduct(subCat.Id, prod2.Id, true);
 
         // Create opportunity with pricebook
-        Opportunity opp = TestDataFactory.createOpportunity(catalog.Id, true);
+        Opportunity opp = TestDataFactory.createOpportunity(saleCatalog.Id, true);
         opp.Pricebook2Id = standardPricebookId;
         update opp;
 
