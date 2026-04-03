@@ -11,7 +11,7 @@ import getSidebarCategoriesByOfferType from '@salesforce/apex/ProductCategoryCon
 import { STEPS, MESSAGES, STEP_LIST, TOAST_DURATION } from 'c/cpqConstants';
 import { deepClone, calculateSelectedProductsSubtotal, calculateSelectedProductTotal, formatCurrency, showToast } from 'c/cpqUtils';
 
-const OPP_FIELDS = [OPP_NAME, OPP_ACCOUNT_ID, OPP_ACCOUNT_NAME, OPP_PRICEBOOK_ID, OPP_PRICEBOOK_NAME ,OPP_OFFER_TYPE];
+const OPP_FIELDS = [OPP_NAME, OPP_ACCOUNT_ID, OPP_ACCOUNT_NAME, OPP_PRICEBOOK_ID, OPP_PRICEBOOK_NAME, OPP_OFFER_TYPE];
 
 export default class CpqConfigurator extends NavigationMixin(LightningElement) {
     @api recordId;
@@ -96,6 +96,13 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
         return '';
     }
 
+    get opportunityCatalogId() {
+        if (this.opportunityRecord?.data) {
+            return getFieldValue(this.opportunityRecord.data, OPP_OFFER_TYPE) || '';
+        }
+        return '';
+    }
+
     /* -- header -- */
     get headerTopLabel() {
         if (this.opportunityRecord?.data) {
@@ -155,13 +162,11 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
         }
         
         if (this.opportunityRecord?.data) {
-           const offerTypeLabel = getFieldDisplayValue(this.opportunityRecord.data, OPP_OFFER_TYPE);
-           const offerType = offerTypeLabel ? offerTypeLabel : getFieldValue(this.opportunityRecord.data, OPP_OFFER_TYPE);
-            // Offer Type: 
+           const offerTypeId = getFieldValue(this.opportunityRecord.data, OPP_OFFER_TYPE);
             metadata.push({
                 id: 'offerType',
                 label: 'Offer Type:',
-                value: offerType || 'Sale',
+                value: offerTypeId || 'Sale',
                 iconName: 'standard:category',
                 isLink: false,
                 isBold: true

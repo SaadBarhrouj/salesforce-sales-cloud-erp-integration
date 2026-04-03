@@ -551,7 +551,7 @@ private class Product2ServiceTest {
         Pricebook2 pb = TestDataFactory.createPricebook2('Test Pricebook PB', true, true);
 
         Test.startTest();
-        List<Product2> result = Product2Service.getProductsByCategoryAndPricebook(rootCat.Id, pb.Id);
+        List<Product2> result = Product2Service.getProductsByCategoryAndPricebook(rootCat.Id, pb.Id, null);
         Test.stopTest();
 
         System.assertEquals(0, result.size(), 'Should return empty list when no pricebook entries exist.');
@@ -573,7 +573,7 @@ private class Product2ServiceTest {
         Pricebook2 pb = TestDataFactory.createPricebook2('Test Pricebook PB2', true, true);
 
         Test.startTest();
-        List<Product2> result = Product2Service.getProductsByCategoryAndPricebook(cat.Id, pb.Id);
+        List<Product2> result = Product2Service.getProductsByCategoryAndPricebook(cat.Id, pb.Id, null);
         Test.stopTest();
 
         System.assertEquals(0, result.size(), 'Should return empty list when no pricebook entries exist.');
@@ -593,7 +593,7 @@ private class Product2ServiceTest {
         TestDataFactory.createProductCategoryProduct(cat.Id, prod2.Id, true);
 
         Test.startTest();
-        List<Product2> result = Product2Service.getProductsByCategoryAndPricebook(cat.Id, null);
+        List<Product2> result = Product2Service.getProductsByCategoryAndPricebook(cat.Id, null, null);
         Test.stopTest();
 
         System.assertEquals(2, result.size(), 'Should return all category products when pricebook is null.');
@@ -609,7 +609,7 @@ private class Product2ServiceTest {
         Pricebook2 pb = TestDataFactory.createPricebook2('Test Pricebook', true, true);
 
         Test.startTest();
-        List<Product2> result = Product2Service.getProductsByCategoryAndPricebook(cat.Id, pb.Id);
+        List<Product2> result = Product2Service.getProductsByCategoryAndPricebook(cat.Id, pb.Id, null);
         Test.stopTest();
 
         System.assertEquals(0, result.size(), 'Should return empty list for category with no products.');

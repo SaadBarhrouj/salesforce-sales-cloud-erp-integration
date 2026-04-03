@@ -210,26 +210,51 @@ public inherited sharing class Product2DAO {
     }
 
     /**
-     * @description Retrieves Product2 records filtered by multiple category IDs and pricebook.
+     * @description Retrieves Product2 records filtered by multiple category IDs, pricebook, and catalog.
      * Intersects products assigned to the specified categories with products having active
-     * PricebookEntry records in the given pricebook.
+     * PricebookEntry records in the given pricebook, constrained to the specified catalog.
      * @param categoryIds Set of ProductCategory IDs to filter by.
      * @param pricebookId The Pricebook2 ID to constrain products to.
+     * @param catalogId The ProductCatalog ID to constrain products to.
      * @return List of Product2 records that are both in the categories and have active pricebook entries.
      */
-    public static List<Product2> getProductsByCategoriesAndPricebook(Set<Id> categoryIds, Id pricebookId) {
+    public static List<Product2> getProductsByCategoriesAndPricebook(Set<Id> categoryIds, Id pricebookId, Id catalogId) {
         try {
-            if (categoryIds == null || categoryIds.isEmpty()) {
-                return getAll();
+            if ((categoryIds == null || categoryIds.isEmpty()) && catalogId == null) {
+                return getAllByPricebook(pricebookId);
             }
 
             SObjectType productCategoryType = Schema.getGlobalDescribe().get('ProductCategoryProduct');
             if (productCategoryType == null) {
-                return getAll();
+                return getAllByPricebook(pricebookId);
+            }
+
+            Set<Id> effectiveCategoryIds = new Set<Id>();
+            if (categoryIds != null && !categoryIds.isEmpty()) {
+                effectiveCategoryIds.addAll(categoryIds);
+            }
+
+            if (catalogId != null) {
+                Set<Id> catalogCategoryIds = new Set<Id>();
+                for (ProductCategory cat : [SELECT Id FROM ProductCategory WHERE CatalogId = :catalogId]) {
+                    catalogCategoryIds.add(cat.Id);
+                }
+                if (catalogCategoryIds.isEmpty()) {
+                    return new List<Product2>();
+                }
+                if (effectiveCategoryIds.isEmpty()) {
+                    effectiveCategoryIds.addAll(catalogCategoryIds);
+                } else {
+                    effectiveCategoryIds.retainAll(catalogCategoryIds);
+                }
+            }
+            
+            if (effectiveCategoryIds.isEmpty()) {
+                return new List<Product2>();
             }
 
             Set<Id> productIdsFromCategories = new Set<Id>();
-            String pcpQuery = 'SELECT ProductId FROM ProductCategoryProduct WHERE ProductCategoryId IN :categoryIds';
+            String pcpQuery = 'SELECT ProductId FROM ProductCategoryProduct WHERE ProductCategoryId IN :effectiveCategoryIds';
             for (SObject pcp : Database.query(pcpQuery)) {
                 productIdsFromCategories.add((Id) pcp.get('ProductId'));
             }

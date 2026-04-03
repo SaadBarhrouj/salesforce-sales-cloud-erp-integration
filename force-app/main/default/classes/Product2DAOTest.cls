@@ -213,7 +213,7 @@ private class Product2DAOTest {
     static void testGetProductsByCategoriesAndPricebookNullCategoryIdsReturnsAll() {
         // Arrange
         Test.startTest();
-        List<Product2> result = Product2DAO.getProductsByCategoriesAndPricebook(null, null);
+        List<Product2> result = Product2DAO.getProductsByCategoriesAndPricebook(null, null, null);
         Test.stopTest();
 
         // Assert
@@ -224,7 +224,7 @@ private class Product2DAOTest {
     static void testGetProductsByCategoriesAndPricebookEmptyCategoryIdsReturnsAll() {
         // Arrange
         Test.startTest();
-        List<Product2> result = Product2DAO.getProductsByCategoriesAndPricebook(new Set<Id>(), null);
+        List<Product2> result = Product2DAO.getProductsByCategoriesAndPricebook(new Set<Id>(), null, null);
         Test.stopTest();
 
         // Assert
@@ -238,7 +238,7 @@ private class Product2DAOTest {
         Set<Id> categoryIds = new Set<Id>{ category.Id };
 
         Test.startTest();
-        List<Product2> result = Product2DAO.getProductsByCategoriesAndPricebook(categoryIds, null);
+        List<Product2> result = Product2DAO.getProductsByCategoriesAndPricebook(categoryIds, null, null);
         Test.stopTest();
 
         // Assert
@@ -253,7 +253,7 @@ private class Product2DAOTest {
         Set<Id> categoryIds = new Set<Id>{ category.Id };
 
         Test.startTest();
-        List<Product2> result = Product2DAO.getProductsByCategoriesAndPricebook(categoryIds, standardPricebookId);
+        List<Product2> result = Product2DAO.getProductsByCategoriesAndPricebook(categoryIds, standardPricebookId, null);
         Test.stopTest();
 
         System.assertEquals(true, result.size() >= 1, 'Should return products in both the category and pricebook.');
@@ -279,7 +279,7 @@ private class Product2DAOTest {
         Set<Id> categoryIds = new Set<Id>{ isolatedCategory.Id };
 
         Test.startTest();
-        List<Product2> result = Product2DAO.getProductsByCategoriesAndPricebook(categoryIds, standardPricebookId);
+        List<Product2> result = Product2DAO.getProductsByCategoriesAndPricebook(categoryIds, standardPricebookId, null);
         Test.stopTest();
 
         System.assertEquals(0, result.size(), 'Should return an empty list when category products have no pricebook entries.');
@@ -292,7 +292,7 @@ private class Product2DAOTest {
         Set<Id> categoryIds = new Set<Id>{ fakeCategoryId };
 
         Test.startTest();
-        List<Product2> result = Product2DAO.getProductsByCategoriesAndPricebook(categoryIds, null);
+        List<Product2> result = Product2DAO.getProductsByCategoriesAndPricebook(categoryIds, null, null);
         Test.stopTest();
 
         // Assert
