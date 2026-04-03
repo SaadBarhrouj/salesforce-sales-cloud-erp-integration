@@ -85,30 +85,6 @@ private class ProductCategoryServiceTest {
     }
 
     // ──────────────────────────────────────────────
-    //  Non-existent Opportunity → null opp → empty
-    //  scenario is covered by deleted/non-existent opp test.
-    // ──────────────────────────────────────────────
-    @IsTest
-    static void testBuildSidebarHierarchyByOfferTypeBlankOfferTypeReturnsEmpty() {
-        // Arrange
-        Id standardPricebookId = Test.getStandardPricebookId();
-        Opportunity opp = TestDataFactory.createOpportunity(true);
-        opp.Pricebook2Id = standardPricebookId;
-        update opp;
-
-        // Act
-        Test.startTest();
-        List<Map<String, Object>> result =
-            ProductCategoryService.buildSidebarHierarchyByOfferType(opp.Id);
-        Test.stopTest();
-
-        // Assert
-        System.assertNotEquals(null, result, 'Result should not be null.');
-        System.assertEquals(0, result.size(),
-            'Service should return empty list when the Opportunity does not exist.');
-    }
-
-    // ──────────────────────────────────────────────
     //  No Pricebook2Id → early return, empty list
     // ──────────────────────────────────────────────
     @IsTest
