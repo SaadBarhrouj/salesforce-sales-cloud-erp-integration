@@ -105,6 +105,10 @@ private class ProductCategoryServiceTest {
     static void testBuildSidebarHierarchyByOfferTypeEmptyCatalogReturnsEmpty() {
         Opportunity opp = [SELECT Id, Offer_Type__c FROM Opportunity WHERE Offer_Type__c != null AND Pricebook2Id != null ORDER BY CreatedDate DESC LIMIT 1];
 
+        // Ensure catalog has no categories by deleting them
+        Id catalogId = opp.Offer_Type__c;
+        delete [SELECT Id FROM ProductCategory WHERE CatalogId = :catalogId];
+
         Test.startTest();
         List<Map<String, Object>> result =
             ProductCategoryService.buildSidebarHierarchyByOfferType(opp.Id);
