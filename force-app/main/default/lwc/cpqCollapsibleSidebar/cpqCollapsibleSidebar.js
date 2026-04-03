@@ -9,10 +9,10 @@ export default class CpqCollapsibleSidebar extends LightningElement {
     @api iconName  = 'standard:category';
     @api sortLabel = 'Name';
     @api items     = [];
+    @api selectedItemId = null;
     @api isLoading = false;
 
     /* ── Private State ──────────────────────────── */
-    @track selectedItemId = null;
     @track isExpanded      = true;
     @track _expandedMap    = {};
 
@@ -95,13 +95,13 @@ export default class CpqCollapsibleSidebar extends LightningElement {
         this.isExpanded = !this.isExpanded;
     }
 
-    handleItemClick(event) {
+    handleItemSelect(event) {
         event.preventDefault();
         const itemId = event.currentTarget.dataset.itemId;
-        
+
         if (this.selectedItemId === itemId) {
             this.selectedItemId = null;
-            dispatchCustomEvent(this, EVENTS.ITEM_DESELECT, { itemId: itemId });
+            dispatchCustomEvent(this, EVENTS.ITEM_DESELECT, { itemId });
         } else {
             this.selectedItemId = itemId;
             dispatchCustomEvent(this, EVENTS.ITEM_SELECT, { selectedItemId: itemId });

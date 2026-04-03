@@ -23,9 +23,10 @@
                 icon-name={sidebarIcon}
                 sort-label={sidebarSortLabel}
                 items={sidebarItems}
+                selected-item-id={selectedItemId}
                 is-loading={sidebarIsLoading}
-                onitemselect={handleSidebarItemSelect}
-                onitemdeselect={handleSidebarItemDeselect}
+                onitemselect={handleItemSelect}
+                onitemdeselect={handleItemDeselect}
                 onsidebarrefresh={handleSidebarRefresh}
             ></c-cpq-collapsible-sidebar>
 
@@ -34,13 +35,14 @@
                     <!-- Step 1: Product Selection (Main View) -->
                     <template lwc:if={isStepSelection}>
                         <c-cpq-step-selection
-                            category-id={selectedCategoryId}
-                            category-label={selectedCategoryLabel}
+                            category-id={selectedItemId}
+                            category-label={selectedItemLabel}
+                            pricebook-id={opportunityPricebookId}
                             selected-products={selectedProducts}
                             onproductadd={handleProductAdd}
                             onproductremove={handleProductRemove}
                             onnavigate={handleNavigate}
-                            oncategoryclear={handleCategoryClear}
+                            onitemdeselect={handleItemDeselect}
                         ></c-cpq-step-selection>
                     </template>
 
@@ -56,7 +58,7 @@
                     <!-- Step 3: Line Editor -->
                     <template lwc:if={isStepLineEditor}>
                         <c-cpq-step-line-editor
-                            selected-products={numberedCartItems}
+                            selected-products={selectedProducts}
                             quote-state={quoteState}
                             onlineupdate={handleLineUpdate}
                             onlineremove={handleLineRemove}

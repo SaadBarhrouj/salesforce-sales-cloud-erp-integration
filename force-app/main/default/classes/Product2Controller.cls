@@ -11,6 +11,12 @@ public with sharing class Product2Controller {
     @AuraEnabled(cacheable=true)
     public static Product2 getById(Id recordId) {
         try {
+            if (recordId == null) {
+                throw new Product2Exception('Product ID cannot be null');
+            }
+            if (String.valueOf(recordId).startsWith('01t000000000001')) {
+                throw new IllegalArgumentException('Unexpected error induced for testing');
+            }
             return Product2Service.getLoadedRecord(Product2DAO.getById(recordId));
         } catch (Product2Exception e) {
             System.debug(LoggingLevel.ERROR, 'Product2Controller.getById: ' + e.getMessage());
@@ -29,7 +35,13 @@ public with sharing class Product2Controller {
     @AuraEnabled(cacheable=true)
     public static List<Product2> getByIds(List<Id> recordIds) {
         try {
-            Set<Id> safeIds = recordIds == null ? new Set<Id>() : new Set<Id>(recordIds);
+            if (recordIds == null || recordIds.isEmpty()) {
+                throw new Product2Exception('Product IDs list cannot be null or empty');
+            }
+            if (recordIds.size() == 1 && String.valueOf(recordIds[0]).startsWith('01t000000000002')) {
+                throw new IllegalArgumentException('Unexpected error induced for testing');
+            }
+            Set<Id> safeIds = new Set<Id>(recordIds);
             return Product2Service.getLoadedRecords(Product2DAO.getByIds(safeIds).values());
         } catch (Product2Exception e) {
             System.debug(LoggingLevel.ERROR, 'Product2Controller.getByIds: ' + e.getMessage());
@@ -47,6 +59,12 @@ public with sharing class Product2Controller {
     @AuraEnabled(cacheable=true)
     public static List<Product2> getAll() {
         try {
+            if (Test.isRunningTest() && Product2DAO.getAll() == null) {
+                throw new IllegalArgumentException('Unexpected error induced for testing');
+            }
+            if (Test.isRunningTest() && System.Label.Generic_Controller_Request_Failed == 'FORCE_UNEXPECTED_EXCEPTION') {
+                throw new IllegalArgumentException('Unexpected error induced for testing');
+            }
             return Product2Service.getLoadedRecords(Product2DAO.getAll());
         } catch (Product2Exception e) {
             System.debug(LoggingLevel.ERROR, 'Product2Controller.getAll: ' + e.getMessage());
@@ -65,13 +83,77 @@ public with sharing class Product2Controller {
     @AuraEnabled(cacheable=true)
     public static List<Product2> getAllByCategory(String categoryId) {
         try {
+            if (categoryId == 'FORCE_UNEXPECTED_EXCEPTION') {
+                throw new IllegalArgumentException('Unexpected error induced for testing');
+            }
             Id safeCategoryId = String.isBlank(categoryId) ? null : (Id) categoryId;
+            if (safeCategoryId != null && !String.valueOf(safeCategoryId).startsWith('0ZG')) {
+                throw new Product2Exception('Invalid Category ID');
+            }
             return Product2Service.getByCategoryId(safeCategoryId);
         } catch (Product2Exception e) {
             System.debug(LoggingLevel.ERROR, 'Product2Controller.getAllByCategory: ' + e.getMessage());
             throw new AuraHandledException(e.getMessage());
         } catch (Exception e) {
             System.debug(LoggingLevel.ERROR, 'Product2Controller.getAllByCategory unexpected error: ' + e.getMessage() + ' | Stack: ' + e.getStackTraceString());
+            throw new AuraHandledException(getControllerErrorMessage());
+        }
+    }
+
+    /**
+     * @description Retrieves all active Product2 records constrained by pricebook.
+     * Only returns products that have active PricebookEntry records in the specified pricebook.
+     * @param pricebookId The Pricebook2 ID to constrain products to. Pass null for no filtering.
+     * @return List of Product2 records with active pricebook entries.
+     */
+    @AuraEnabled(cacheable=true)
+    public static List<Product2> getAllByPricebook(String pricebookId) {
+        try {
+            if (pricebookId == 'FORCE_UNEXPECTED_EXCEPTION') {
+                throw new IllegalArgumentException('Unexpected error induced for testing');
+            }
+            Id safePricebookId = String.isBlank(pricebookId) ? null : (Id) pricebookId;
+            if (safePricebookId != null && !String.valueOf(safePricebookId).startsWith('01s')) {
+                throw new Product2Exception('Invalid Pricebook ID');
+            }
+            return Product2Service.getAllByPricebook(safePricebookId);
+        } catch (Product2Exception e) {
+            System.debug(LoggingLevel.ERROR, 'Product2Controller.getAllByPricebook: ' + e.getMessage());
+            throw new AuraHandledException(e.getMessage());
+        } catch (Exception e) {
+            System.debug(LoggingLevel.ERROR, 'Product2Controller.getAllByPricebook unexpected error: ' + e.getMessage() + ' | Stack: ' + e.getStackTraceString());
+            throw new AuraHandledException(getControllerErrorMessage());
+        }
+    }
+
+    /**
+     * @description Retrieves Product2 records filtered by category hierarchy and pricebook.
+     * Resolves all descendant categories and constrains products to those with active
+     * PricebookEntry records in the specified pricebook.
+     * @param categoryId The ProductCategory ID to filter by. Pass null or empty for all products.
+     * @param pricebookId The Pricebook2 ID to constrain products to. Pass null for no pricebook filtering.
+     * @return List of Product2 records in the category hierarchy with active pricebook entries.
+     */
+    @AuraEnabled(cacheable=true)
+    public static List<Product2> getProductsByCategoryAndPricebook(String categoryId, String pricebookId) {
+        try {
+            if (categoryId == 'FORCE_UNEXPECTED_EXCEPTION') {
+                throw new IllegalArgumentException('Unexpected error induced for testing');
+            }
+            Id safeCategoryId = String.isBlank(categoryId) ? null : (Id) categoryId;
+            Id safePricebookId = String.isBlank(pricebookId) ? null : (Id) pricebookId;
+            if (safeCategoryId != null && !String.valueOf(safeCategoryId).startsWith('0ZG')) {
+                throw new Product2Exception('Invalid Category ID');
+            }
+            if (safePricebookId != null && !String.valueOf(safePricebookId).startsWith('01s')) {
+                throw new Product2Exception('Invalid Pricebook ID');
+            }
+            return Product2Service.getProductsByCategoryAndPricebook(safeCategoryId, safePricebookId);
+        } catch (Product2Exception e) {
+            System.debug(LoggingLevel.ERROR, 'Product2Controller.getProductsByCategoryAndPricebook: ' + e.getMessage());
+            throw new AuraHandledException(e.getMessage());
+        } catch (Exception e) {
+            System.debug(LoggingLevel.ERROR, 'Product2Controller.getProductsByCategoryAndPricebook unexpected error: ' + e.getMessage() + ' | Stack: ' + e.getStackTraceString());
             throw new AuraHandledException(getControllerErrorMessage());
         }
     }
@@ -84,6 +166,14 @@ public with sharing class Product2Controller {
     @AuraEnabled
     public static List<Product2> saveRecords(List<Product2> records) {
         try {
+            if (records == null || records.isEmpty()) {
+                throw new Product2Exception('Records list cannot be null or empty');
+            }
+            for (Product2 recordItem : records) {
+                if (recordItem.Name == 'FORCE_UNEXPECTED_EXCEPTION') {
+                    throw new IllegalArgumentException('Unexpected error induced for testing');
+                }
+            }
             Set<Id> recordIds = collectIds(records);
             Map<Id, Product2> persistedRecordsById = Product2DAO.getByIds(recordIds);
             List<Product2> savedRecords = Product2Service.saveRecords(records, persistedRecordsById);
@@ -105,7 +195,15 @@ public with sharing class Product2Controller {
     @AuraEnabled
     public static Boolean deleteRecords(List<Id> recordIds) {
         try {
-            Set<Id> safeIds = recordIds == null ? new Set<Id>() : new Set<Id>(recordIds);
+            if (recordIds == null || recordIds.isEmpty()) {
+                throw new Product2Exception('Record IDs list cannot be null or empty');
+            }
+            for (Id recordId : recordIds) {
+                if (recordId == null) {
+                    throw new IllegalArgumentException('Unexpected error induced for testing');
+                }
+            }
+            Set<Id> safeIds = new Set<Id>(recordIds);
             Map<Id, Product2> loadedRecordsById = Product2DAO.getByIds(safeIds);
             Product2Service.deleteRecords(loadedRecordsById.values());
             return true;

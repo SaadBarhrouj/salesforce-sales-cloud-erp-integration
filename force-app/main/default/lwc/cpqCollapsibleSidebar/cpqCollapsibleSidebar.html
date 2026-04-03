@@ -108,7 +108,7 @@
                                 class="slds-split-view__list-item-action slds-grow slds-has-flexi-truncate"
                                 tabindex={item.tabIndex}
                                 data-item-id={item.id}
-                                onclick={handleItemClick}
+                                onclick={handleItemSelect}
                             >
                                 <!-- Chevron (only if item has children) -->
                                 <template lwc:if={item.hasChildren}>
@@ -158,7 +158,7 @@
                                         class="slds-split-view__list-item-action slds-grow slds-has-flexi-truncate"
                                         tabindex={child.tabIndex}
                                         data-item-id={child.id}
-                                        onclick={handleItemClick}
+                                        onclick={handleItemSelect}
                                     >
                                         <div class="slds-grid slds-grow">
                                             <span

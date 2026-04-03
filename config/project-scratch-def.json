@@ -1,13 +1,21 @@
 {
   "orgName": "Sales Cloud ERP CI Scratch Org",
   "edition": "Developer",
-  "features": ["EnableSetPasswordInApi", "Communities"],
+  "features": [
+    "EnableSetPasswordInApi",
+    "Communities",
+    "B2BCommerce",
+    "ProductCatalogManagementAddOn"
+  ],
   "settings": {
     "lightningExperienceSettings": {
       "enableS1DesktopEnabled": true
     },
     "mobileSettings": {
       "enableS1EncryptedStoragePref2": false
+    },
+    "communitiesSettings": {
+      "enableNetworksEnabled": true
     }
   }
 }

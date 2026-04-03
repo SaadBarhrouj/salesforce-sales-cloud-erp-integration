@@ -45,6 +45,29 @@ public inherited sharing class Product2Service {
     }
 
     /**
+     * @description Retrieves all active Product2 records constrained by pricebook.
+     * Only returns products that have active PricebookEntry records in the specified pricebook.
+     * @param pricebookId The Pricebook2 ID to constrain products to.
+     * @return List of Product2 records with active pricebook entries.
+     */
+    public static List<Product2> getAllByPricebook(Id pricebookId) {
+        return getLoadedRecords(Product2DAO.getAllByPricebook(pricebookId));
+    }
+
+    /**
+     * @description Retrieves Product2 records filtered by category hierarchy and pricebook.
+     * Resolves all descendant category IDs, then intersects with products having active
+     * PricebookEntry records in the specified pricebook.
+     * @param categoryId The root ProductCategory ID to filter by.
+     * @param pricebookId The Pricebook2 ID to constrain products to.
+     * @return List of Product2 records in the category hierarchy with active pricebook entries.
+     */
+    public static List<Product2> getProductsByCategoryAndPricebook(Id categoryId, Id pricebookId) {
+        Set<Id> categoryIds = ProductCategoryDAO.getCategoryIdsWithDescendants(categoryId);
+        return getLoadedRecords(Product2DAO.getProductsByCategoriesAndPricebook(categoryIds, pricebookId));
+    }
+
+    /**
      * @description Inserts or updates Product2 records after validation.
      * @param records The list of Product2 records to save.
      * @param persistedRecordsById Map of existing persisted records by ID.

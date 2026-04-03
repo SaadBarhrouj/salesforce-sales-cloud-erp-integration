@@ -14,15 +14,6 @@ package.xml
 # Custom Metadata Type objects (definitions)
 **/objects/*__mdt/
 
-# Commerce Cloud objects not available in Developer edition scratch orgs
-**/objects/ProductCatalog/**
-**/objects/ProductCategory/**
-**/objects/ProductCategoryProduct/**
-**/layouts/ProductCatalog-*
-**/layouts/ProductCategory-*
-**/flexipages/Catalog_Record_Page.flexipage-meta.xml
-**/flexipages/Category_Record_Page.flexipage-meta.xml
-
 # Location fields requiring OrderManagement feature
 force-app/main/default/objects/Location/fields/EarliestPickupTimeOffset.field-meta.xml
 force-app/main/default/objects/Location/fields/IsEligibleForPickup.field-meta.xml
