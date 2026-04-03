@@ -192,6 +192,8 @@ public inherited sharing class ProductCategoryService {
             return new List<Map<String, Object>>();
         }
 
+        String offerType = opp.Offer_Type__c;
+
         Id pricebookId = opp.Pricebook2Id;
         if (pricebookId == null) {
             return new List<Map<String, Object>>();
