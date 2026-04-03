@@ -7,7 +7,7 @@ private class Product2ControllerTest {
             TestDataFactory.createProduct2(true);
         }
     }
-q
+    
     @IsTest
     static void testGetAllExistingDataReturnsRecords() {
         // Arrange
