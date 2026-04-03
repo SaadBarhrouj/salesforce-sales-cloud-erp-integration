@@ -3,10 +3,7 @@
  * Promise-based data access layer for the CPQ configurator.
  * Phase 1: Replace the selection screen product source with Product2 records.
  */
-import getProduct2Records from '@salesforce/apex/Product2Controller.getAll';
-import getProduct2RecordsByCategory from '@salesforce/apex/Product2Controller.getAllByCategory';
 import getProduct2RecordsByCategoryAndPricebook from '@salesforce/apex/Product2Controller.getProductsByCategoryAndPricebook';
-import getProduct2RecordsByPricebook from '@salesforce/apex/Product2Controller.getAllByPricebook';
 import {
     ACCOUNTS, CONTACTS, CATALOGS, CATEGORIES, PRODUCTS,
     PRODUCT_CATEGORY_PRODUCTS, BUNDLE_FEATURES, BUNDLE_OPTIONS,
@@ -70,22 +67,12 @@ export function getCategoriesByCatalog(catalogId) {
     return simulateAsync(filtered);
 }
 
-/** Fetch products for a category (including sub-categories), constrained by pricebook. */
-export async function getProductsByCategory(categoryId, pricebookId) {
-    if (!categoryId) {
-        return getAllProducts();
-    }
+/** Fetch products constrained by category, pricebook, and catalog. */
+export async function getProducts(categoryId, pricebookId, catalogId) {
     const products = await getProduct2RecordsByCategoryAndPricebook({ 
-        categoryId, 
-        pricebookId: pricebookId || null 
-    });
-    return deepClone(mapProduct2Records(products));
-}
-
-/** Fetch all active products, constrained by pricebook. */
-export async function getAllProducts(pricebookId) {
-    const products = await getProduct2RecordsByPricebook({ 
-        pricebookId: pricebookId || null 
+        categoryId: categoryId || null,
+        pricebookId: pricebookId || null,
+        catalogId: catalogId || null
     });
     return deepClone(mapProduct2Records(products));
 }

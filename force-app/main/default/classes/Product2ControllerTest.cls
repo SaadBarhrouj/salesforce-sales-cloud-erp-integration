@@ -355,7 +355,7 @@ private class Product2ControllerTest {
         System.runAs(testUser) {
             Test.startTest();
             try {
-                Product2Controller.getProductsByCategoryAndPricebook('FORCE_UNEXPECTED_EXCEPTION', '01s000000000000');
+                Product2Controller.getProductsByCategoryAndPricebook('FORCE_UNEXPECTED_EXCEPTION', '01s000000000000', null);
             } catch (AuraHandledException e) {
                 exceptionThrown = true;
             }
@@ -652,7 +652,7 @@ private class Product2ControllerTest {
         // Act
         System.runAs(testUser) {
             Test.startTest();
-            result = Product2Controller.getProductsByCategoryAndPricebook(null, null);
+            result = Product2Controller.getProductsByCategoryAndPricebook(null, null, null);
             Test.stopTest();
         }
 
@@ -669,7 +669,7 @@ private class Product2ControllerTest {
         // Act
         System.runAs(testUser) {
             Test.startTest();
-            result = Product2Controller.getProductsByCategoryAndPricebook('', '   ');
+            result = Product2Controller.getProductsByCategoryAndPricebook('', '   ', null);
             Test.stopTest();
         }
 
@@ -697,7 +697,7 @@ private class Product2ControllerTest {
         // Act
         System.runAs(testUser) {
             Test.startTest();
-            result = Product2Controller.getProductsByCategoryAndPricebook(category.Id, standardPricebookId);
+            result = Product2Controller.getProductsByCategoryAndPricebook(category.Id, standardPricebookId, null);
             Test.stopTest();
         }
 

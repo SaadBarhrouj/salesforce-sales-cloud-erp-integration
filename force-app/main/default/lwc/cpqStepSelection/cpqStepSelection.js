@@ -1,5 +1,5 @@
 import { LightningElement, api, track } from 'lwc';
-import { getAllProducts, getProductsByCategory } from 'c/cpqDataService';
+import { getProducts } from 'c/cpqDataService';
 import { EVENTS, getIllustration } from 'c/cpqConstants';
 import { generateId, showToast } from 'c/cpqUtils';
 
@@ -39,14 +39,15 @@ export default class CpqStepSelection extends LightningElement {
     emptyStateIllustration = getIllustration('NORESULTS_SEARCH').name;
 
     async connectedCallback() {
-        await this.loadAllProducts(this.categoryId);
+        await this.loadAllProducts(this.categoryId, this.pricebookId, this.catalogId);
     }
 
     /* ── Reactive Category Change ─────────────── */
-    /* External API: categoryId / categoryLabel / pricebookId (domain-specific) */
+    /* External API: categoryId / categoryLabel / pricebookId / catalogId (domain-specific) */
     _categoryId = '';
     _categoryLabel = '';
     _pricebookId = '';
+    _catalogId = '';
     _loadRequestCounter = 0;
 
     @api
@@ -58,7 +59,7 @@ export default class CpqStepSelection extends LightningElement {
         const oldValue = this._categoryId;
         this._categoryId = value || '';
         if (oldValue !== this._categoryId) {
-            this.loadAllProducts(this._categoryId, this._pricebookId);
+            this.loadAllProducts(this._categoryId, this._pricebookId, this._catalogId);
         }
     }
 
@@ -80,7 +81,20 @@ export default class CpqStepSelection extends LightningElement {
         const oldValue = this._pricebookId;
         this._pricebookId = value || '';
         if (oldValue !== this._pricebookId) {
-            this.loadAllProducts(this._categoryId, this._pricebookId);
+            this.loadAllProducts(this._categoryId, this._pricebookId, this._catalogId);
+        }
+    }
+
+    @api
+    get catalogId() {
+        return this._catalogId;
+    }
+
+    set catalogId(value) {
+        const oldValue = this._catalogId;
+        this._catalogId = value || '';
+        if (oldValue !== this._catalogId) {
+            this.loadAllProducts(this._categoryId, this._pricebookId, this._catalogId);
         }
     }
 
@@ -168,20 +182,13 @@ export default class CpqStepSelection extends LightningElement {
        DATA LOADING
        ═══════════════════════════════════════ */
 
-    async loadAllProducts(categoryId, pricebookId) {
+    async loadAllProducts(categoryId, pricebookId, catalogId) {
         this.isLoading = true;
         const requestId = ++this._loadRequestCounter;
         try {
-            if (categoryId) {
-                const products = await getProductsByCategory(categoryId, pricebookId);
-                if (requestId === this._loadRequestCounter) {
-                    this.products = products;
-                }
-            } else {
-                const products = await getAllProducts(pricebookId);
-                if (requestId === this._loadRequestCounter) {
-                    this.products = products;
-                }
+            const products = await getProducts(categoryId, pricebookId, catalogId);
+            if (requestId === this._loadRequestCounter) {
+                this.products = products;
             }
         }
         catch (e) {
@@ -219,7 +226,7 @@ export default class CpqStepSelection extends LightningElement {
     @api
     refreshProducts() {
         this.searchTerm = '';
-        this.loadAllProducts(this._categoryId);
+        this.loadAllProducts(this._categoryId, this._pricebookId, this._catalogId);
     }
 
     @api
@@ -310,7 +317,7 @@ export default class CpqStepSelection extends LightningElement {
             this._categoryId = '';
             this._categoryLabel = '';
             this.dispatchEvent(new CustomEvent(EVENTS.ITEM_DESELECT, { detail: {} }));
-            this.loadAllProducts();
+            this.loadAllProducts(this._categoryId, this._pricebookId, this._catalogId);
         } else if (field === 'productCode') {
             this.filterProductCode = '';
             this.pendingFilterProductCode = '';
@@ -331,7 +338,7 @@ export default class CpqStepSelection extends LightningElement {
         this.pendingFilterBundleType = 'all';
         this.filterProductCode = '';
         this.filterBundleType = 'all';
-        this.loadAllProducts(this._categoryId);
+        this.loadAllProducts(this._categoryId, this._pricebookId, this._catalogId);
     }
 
     handleCloseFilterPanel() {

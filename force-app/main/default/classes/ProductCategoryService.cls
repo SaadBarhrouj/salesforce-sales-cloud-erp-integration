@@ -180,10 +180,9 @@ public inherited sharing class ProductCategoryService {
 
 
     /**
-     
-     * @description Builds hierarchical category structure filtered by Opportunity offer type and pricebook for sidebar navigation
+     * @description Builds hierarchical category structure filtered by Opportunity ProductCatalog lookup and pricebook for sidebar navigation
      * @param opportunityId Salesforce Opportunity ID
-     * @return List of category Maps with hierarchical structure; empty list if opportunity not found or OfferType is blank
+     * @return List of category Maps with hierarchical structure; empty list if opportunity not found or ProductCatalog lookup is blank
      * @throws IllegalArgumentException if opportunityId is null
      */
     public static List<Map<String, Object>> buildSidebarHierarchyByOfferType(Id opportunityId) {
@@ -192,21 +191,20 @@ public inherited sharing class ProductCategoryService {
             return new List<Map<String, Object>>();
         }
 
-        String offerType = opp.Offer_Type__c;
+        Id catalogId = opp.Offer_Type__c;
+        if (catalogId == null) {
+            return new List<Map<String, Object>>();
+        }
 
         Id pricebookId = opp.Pricebook2Id;
         if (pricebookId == null) {
             return new List<Map<String, Object>>();
         }
 
-        String catalogName = offerType.replace('_', ' ');
-
-        List<ProductCatalog> catalogs = ProductCatalogDAO.getByName(catalogName);
-        if (catalogs.isEmpty()) {
+        List<ProductCategory> allCategories = ProductCategoryDAO.getByCatalogId(catalogId);
+        if (allCategories.isEmpty()) {
             return new List<Map<String, Object>>();
         }
-
-        List<ProductCategory> allCategories = ProductCategoryDAO.getByCatalogId(catalogs[0].Id);
 
         Set<Id> catIds = new Set<Id>();
         for (ProductCategory cat : allCategories) {

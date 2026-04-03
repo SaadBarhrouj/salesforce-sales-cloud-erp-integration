@@ -55,16 +55,17 @@ public inherited sharing class Product2Service {
     }
 
     /**
-     * @description Retrieves Product2 records filtered by category hierarchy and pricebook.
+     * @description Retrieves Product2 records filtered by category hierarchy, pricebook, and catalog.
      * Resolves all descendant category IDs, then intersects with products having active
-     * PricebookEntry records in the specified pricebook.
+     * PricebookEntry records in the specified pricebook, limited to the given catalog.
      * @param categoryId The root ProductCategory ID to filter by.
      * @param pricebookId The Pricebook2 ID to constrain products to.
+     * @param catalogId The ProductCatalog ID to constrain products to.
      * @return List of Product2 records in the category hierarchy with active pricebook entries.
      */
-    public static List<Product2> getProductsByCategoryAndPricebook(Id categoryId, Id pricebookId) {
+    public static List<Product2> getProductsByCategoryAndPricebook(Id categoryId, Id pricebookId, Id catalogId) {
         Set<Id> categoryIds = ProductCategoryDAO.getCategoryIdsWithDescendants(categoryId);
-        return getLoadedRecords(Product2DAO.getProductsByCategoriesAndPricebook(categoryIds, pricebookId));
+        return getLoadedRecords(Product2DAO.getProductsByCategoriesAndPricebook(categoryIds, pricebookId, catalogId));
     }
 
     /**

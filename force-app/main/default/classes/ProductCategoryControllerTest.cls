@@ -4,7 +4,8 @@ private class ProductCategoryControllerTest {
     
     @IsTest
     static void testGetSidebarCategoriesByOfferTypeHappyPath() {
-        Opportunity opp = TestDataFactory.createOpportunity('Sale', true);
+        ProductCatalog catalog = TestDataFactory.createProductCatalog('Sale', true);
+        Opportunity opp = TestDataFactory.createOpportunityWithCatalog(catalog.Id, true);
         
         Test.startTest();
         List<Map<String, Object>> result = ProductCategoryController.getSidebarCategoriesByOfferType(opp.Id);

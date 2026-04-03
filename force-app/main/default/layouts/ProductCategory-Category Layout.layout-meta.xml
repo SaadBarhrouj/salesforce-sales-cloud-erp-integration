@@ -78,7 +78,6 @@
     </layoutSections>
     <relatedLists>
         <fields>Product</fields>
-        <fields>p2.ProductClass</fields>
         <fields>IsPrimaryCategory</fields>
         <relatedList>RelatedProducts</relatedList>
     </relatedLists>

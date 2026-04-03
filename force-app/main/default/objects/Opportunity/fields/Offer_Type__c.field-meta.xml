@@ -2,24 +2,11 @@
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Offer_Type__c</fullName>
     <label>Offer Type</label>
-    <required>true</required>
+    <referenceTo>ProductCatalog</referenceTo>
+    <relationshipLabel>Opportunities</relationshipLabel>
+    <relationshipName>Opportunities</relationshipName>
+    <reparentableMasterDetail>false</reparentableMasterDetail>
     <trackFeedHistory>false</trackFeedHistory>
     <trackTrending>false</trackTrending>
-    <type>Picklist</type>
-    <valueSet>
-        <restricted>true</restricted>
-        <valueSetDefinition>
-            <sorted>false</sorted>
-            <value>
-                <fullName>Sale</fullName>
-                <default>false</default>
-                <label>Sale</label>
-            </value>
-            <value>
-                <fullName>Rental_and_Services</fullName>
-                <default>false</default>
-                <label>Rental and Services</label>
-            </value>
-        </valueSetDefinition>
-    </valueSet>
+    <type>Lookup</type>
 </CustomField>
