@@ -14,9 +14,6 @@ public with sharing class Product2Controller {
             if (recordId == null) {
                 throw new Product2Exception('Product ID cannot be null');
             }
-            if (String.valueOf(recordId).startsWith('01t000000000001')) {
-                throw new IllegalArgumentException('Unexpected error induced for testing');
-            }
             return Product2Service.getLoadedRecord(Product2DAO.getById(recordId));
         } catch (Product2Exception e) {
             System.debug(LoggingLevel.ERROR, 'Product2Controller.getById: ' + e.getMessage());
@@ -38,9 +35,6 @@ public with sharing class Product2Controller {
             if (recordIds == null || recordIds.isEmpty()) {
                 throw new Product2Exception('Product IDs list cannot be null or empty');
             }
-            if (recordIds.size() == 1 && String.valueOf(recordIds[0]).startsWith('01t000000000002')) {
-                throw new IllegalArgumentException('Unexpected error induced for testing');
-            }
             Set<Id> safeIds = new Set<Id>(recordIds);
             return Product2Service.getLoadedRecords(Product2DAO.getByIds(safeIds).values());
         } catch (Product2Exception e) {
@@ -59,12 +53,6 @@ public with sharing class Product2Controller {
     @AuraEnabled(cacheable=true)
     public static List<Product2> getAll() {
         try {
-            if (Test.isRunningTest() && Product2DAO.getAll() == null) {
-                throw new IllegalArgumentException('Unexpected error induced for testing');
-            }
-            if (Test.isRunningTest() && System.Label.Generic_Controller_Request_Failed == 'FORCE_UNEXPECTED_EXCEPTION') {
-                throw new IllegalArgumentException('Unexpected error induced for testing');
-            }
             return Product2Service.getLoadedRecords(Product2DAO.getAll());
         } catch (Product2Exception e) {
             System.debug(LoggingLevel.ERROR, 'Product2Controller.getAll: ' + e.getMessage());
@@ -83,9 +71,6 @@ public with sharing class Product2Controller {
     @AuraEnabled(cacheable=true)
     public static List<Product2> getAllByCategory(String categoryId) {
         try {
-            if (categoryId == 'FORCE_UNEXPECTED_EXCEPTION') {
-                throw new IllegalArgumentException('Unexpected error induced for testing');
-            }
             Id safeCategoryId = String.isBlank(categoryId) ? null : (Id) categoryId;
             if (safeCategoryId != null && !String.valueOf(safeCategoryId).startsWith('0ZG')) {
                 throw new Product2Exception('Invalid Category ID');
@@ -109,9 +94,6 @@ public with sharing class Product2Controller {
     @AuraEnabled(cacheable=true)
     public static List<Product2> getAllByPricebook(String pricebookId) {
         try {
-            if (pricebookId == 'FORCE_UNEXPECTED_EXCEPTION') {
-                throw new IllegalArgumentException('Unexpected error induced for testing');
-            }
             Id safePricebookId = String.isBlank(pricebookId) ? null : (Id) pricebookId;
             if (safePricebookId != null && !String.valueOf(safePricebookId).startsWith('01s')) {
                 throw new Product2Exception('Invalid Pricebook ID');
@@ -138,9 +120,6 @@ public with sharing class Product2Controller {
     @AuraEnabled(cacheable=true)
     public static List<Product2> getProductsByCategoryAndPricebook(String categoryId, String pricebookId, String catalogId) {
         try {
-            if (categoryId == 'FORCE_UNEXPECTED_EXCEPTION') {
-                throw new IllegalArgumentException('Unexpected error induced for testing');
-            }
             Id safeCategoryId = String.isBlank(categoryId) ? null : (Id) categoryId;
             Id safePricebookId = String.isBlank(pricebookId) ? null : (Id) pricebookId;
             Id safeCatalogId = String.isBlank(catalogId) ? null : (Id) catalogId;
@@ -171,11 +150,6 @@ public with sharing class Product2Controller {
             if (records == null || records.isEmpty()) {
                 throw new Product2Exception('Records list cannot be null or empty');
             }
-            for (Product2 recordItem : records) {
-                if (recordItem.Name == 'FORCE_UNEXPECTED_EXCEPTION') {
-                    throw new IllegalArgumentException('Unexpected error induced for testing');
-                }
-            }
             Set<Id> recordIds = collectIds(records);
             Map<Id, Product2> persistedRecordsById = Product2DAO.getByIds(recordIds);
             List<Product2> savedRecords = Product2Service.saveRecords(records, persistedRecordsById);
@@ -199,11 +173,6 @@ public with sharing class Product2Controller {
         try {
             if (recordIds == null || recordIds.isEmpty()) {
                 throw new Product2Exception('Record IDs list cannot be null or empty');
-            }
-            for (Id recordId : recordIds) {
-                if (recordId == null) {
-                    throw new IllegalArgumentException('Unexpected error induced for testing');
-                }
             }
             Set<Id> safeIds = new Set<Id>(recordIds);
             Map<Id, Product2> loadedRecordsById = Product2DAO.getByIds(safeIds);

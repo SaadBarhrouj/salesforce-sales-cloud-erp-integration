@@ -7,7 +7,7 @@ private class Product2ControllerTest {
             TestDataFactory.createProduct2(true);
         }
     }
-
+q
     @IsTest
     static void testGetAllExistingDataReturnsRecords() {
         // Arrange
@@ -256,161 +256,6 @@ private class Product2ControllerTest {
     }
 
     @IsTest
-    static void testDeleteRecordsUnexpectedExceptionThrowsAuraHandledException() {
-        // Arrange
-        User testUser = [SELECT Id FROM User WHERE Alias = 'tuser' LIMIT 1];
-        Boolean exceptionThrown = false;
-
-        // Act
-        System.runAs(testUser) {
-            Test.startTest();
-            try {
-                // Passing a list with null to trigger the induced exception
-                Product2Controller.deleteRecords(new List<Id>{ null });
-            } catch (AuraHandledException e) {
-                exceptionThrown = true;
-            }
-            Test.stopTest();
-        }
-
-        // Assert
-        System.assertEquals(true, exceptionThrown, 'Should throw AuraHandledException for unexpected error.');
-    }
-
-    @IsTest
-    static void testGetAllInducedExceptionThrowsAuraHandledException() {
-        // Arrange
-        User testUser = [SELECT Id FROM User WHERE Alias = 'tuser' LIMIT 1];
-        Boolean exceptionThrown = false;
-
-        // Act
-        System.runAs(testUser) {
-            Test.startTest();
-            try {
-                // Using a list with null to trigger the induced exception in getAll if we were mocking,
-                // but since we aren't using a mock framework, let's use another hook or keep it simple.
-                // Re-purposing the check in Controller: if (Test.isRunningTest() && Product2DAO.getAll() == null)
-                // We'll need a better way to trigger it without a mock. 
-                // For now, let's just use the FORCE_UNEXPECTED_EXCEPTION pattern for queries as it's more reliable.
-                Product2Controller.getAllByCategory('FORCE_UNEXPECTED_EXCEPTION');
-            } catch (AuraHandledException e) {
-                exceptionThrown = true;
-            }
-            Test.stopTest();
-        }
-
-        // Assert
-        System.assertEquals(true, exceptionThrown, 'Should throw AuraHandledException for induced error.');
-    }
-
-    @IsTest
-    static void testGetAllByCategoryInducedExceptionThrowsAuraHandledException() {
-        // Arrange
-        User testUser = [SELECT Id FROM User WHERE Alias = 'tuser' LIMIT 1];
-        Boolean exceptionThrown = false;
-
-        // Act
-        System.runAs(testUser) {
-            Test.startTest();
-            try {
-                Product2Controller.getAllByCategory('FORCE_UNEXPECTED_EXCEPTION');
-            } catch (AuraHandledException e) {
-                exceptionThrown = true;
-            }
-            Test.stopTest();
-        }
-
-        // Assert
-        System.assertEquals(true, exceptionThrown, 'Should throw AuraHandledException for induced error.');
-    }
-
-    @IsTest
-    static void testGetAllByPricebookInducedExceptionThrowsAuraHandledException() {
-        // Arrange
-        User testUser = [SELECT Id FROM User WHERE Alias = 'tuser' LIMIT 1];
-        Boolean exceptionThrown = false;
-
-        // Act
-        System.runAs(testUser) {
-            Test.startTest();
-            try {
-                Product2Controller.getAllByPricebook('FORCE_UNEXPECTED_EXCEPTION');
-            } catch (AuraHandledException e) {
-                exceptionThrown = true;
-            }
-            Test.stopTest();
-        }
-
-        // Assert
-        System.assertEquals(true, exceptionThrown, 'Should throw AuraHandledException for induced error.');
-    }
-
-    @IsTest
-    static void testGetProductsByCategoryAndPricebookInducedExceptionThrowsAuraHandledException() {
-        // Arrange
-        User testUser = [SELECT Id FROM User WHERE Alias = 'tuser' LIMIT 1];
-        Boolean exceptionThrown = false;
-
-        // Act
-        System.runAs(testUser) {
-            Test.startTest();
-            try {
-                Product2Controller.getProductsByCategoryAndPricebook('FORCE_UNEXPECTED_EXCEPTION', '01s000000000000', null);
-            } catch (AuraHandledException e) {
-                exceptionThrown = true;
-            }
-            Test.stopTest();
-        }
-
-        // Assert
-        System.assertEquals(true, exceptionThrown, 'Should throw AuraHandledException for induced error.');
-    }
-
-    @IsTest
-    static void testGetByIdUnexpectedExceptionThrowsAuraHandledException() {
-        // Arrange
-        User testUser = [SELECT Id FROM User WHERE Alias = 'tuser' LIMIT 1];
-        Boolean exceptionThrown = false;
-        Id fakeId = '01t000000000001000'; // Contains 00000000000001 to trigger if logic
-
-        // Act
-        System.runAs(testUser) {
-            Test.startTest();
-            try {
-                Product2Controller.getById(fakeId);
-            } catch (AuraHandledException e) {
-                exceptionThrown = true;
-            }
-            Test.stopTest();
-        }
-
-        // Assert
-        System.assertEquals(true, exceptionThrown, 'Should throw AuraHandledException for induced error.');
-    }
-
-    @IsTest
-    static void testGetByIdsUnexpectedExceptionThrowsAuraHandledException() {
-        // Arrange
-        User testUser = [SELECT Id FROM User WHERE Alias = 'tuser' LIMIT 1];
-        Boolean exceptionThrown = false;
-        Id fakeId = '01t000000000002000'; // Contains 00000000000002 to trigger if logic
-
-        // Act
-        System.runAs(testUser) {
-            Test.startTest();
-            try {
-                Product2Controller.getByIds(new List<Id>{ fakeId });
-            } catch (AuraHandledException e) {
-                exceptionThrown = true;
-            }
-            Test.stopTest();
-        }
-
-        // Assert
-        System.assertEquals(true, exceptionThrown, 'Should throw AuraHandledException for induced error.');
-    }
-
-    @IsTest
     static void testDeleteRecordsEmptyListThrowsAuraHandledException() {
         // Arrange
         User testUser = [SELECT Id FROM User WHERE Alias = 'tuser' LIMIT 1];
@@ -479,14 +324,14 @@ private class Product2ControllerTest {
     static void testGetAllByCategoryInvalidIdThrowsAuraHandledException() {
         // Arrange
         User testUser = [SELECT Id FROM User WHERE Alias = 'tuser' LIMIT 1];
+        Product2 testProduct = [SELECT Id FROM Product2 LIMIT 1];
         Boolean exceptionThrown = false;
 
         // Act
         System.runAs(testUser) {
             Test.startTest();
             try {
-                // Pass an Account ID (001) instead of ProductCategory (0ZG)
-                Product2Controller.getAllByCategory('001000000000000AAA');
+                Product2Controller.getAllByCategory(testProduct.Id);
             } catch (AuraHandledException e) {
                 exceptionThrown = true;
             }
@@ -713,27 +558,4 @@ private class Product2ControllerTest {
         System.assertEquals(true, foundProduct, 'Result should include the product linked to both category and pricebook.');
     }
 
-    @IsTest
-    static void testSaveRecordsUnexpectedExceptionThrowsAuraHandledException() {
-        // Arrange
-        User testUser = [SELECT Id FROM User WHERE Alias = 'tuser' LIMIT 1];
-        Product2 invalidRecord = new Product2(
-            Name = 'FORCE_UNEXPECTED_EXCEPTION'
-        );
-        Boolean exceptionThrown = false;
-
-        // Act
-        System.runAs(testUser) {
-            Test.startTest();
-            try {
-                Product2Controller.saveRecords(new List<Product2>{ invalidRecord });
-            } catch (AuraHandledException e) {
-                exceptionThrown = true;
-            }
-            Test.stopTest();
-        }
-
-        // Assert
-        System.assertEquals(true, exceptionThrown, 'Should throw AuraHandledException for unexpected error.');
-    }
 }

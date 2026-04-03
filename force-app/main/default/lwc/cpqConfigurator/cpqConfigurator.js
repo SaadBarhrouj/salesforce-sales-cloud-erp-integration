@@ -20,8 +20,13 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
     @api opportunityNumber;
 
     /* ── wire data ────────────────────────────────── */
-    @wire(getRecord, { recordId: '$recordId', fields: OPP_FIELDS })
     opportunityRecord;
+
+    @wire(getRecord, { recordId: '$recordId', fields: OPP_FIELDS })
+    wiredOpportunityRecord(result) {
+        this.opportunityRecord = result;
+        this.initSidebarData(this.currentStep.key);
+    }
 
     /* ── lifecycle ────────────────────────────────── */
     connectedCallback() {
