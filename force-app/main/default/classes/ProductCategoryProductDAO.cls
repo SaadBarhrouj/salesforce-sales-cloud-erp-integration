@@ -84,4 +84,28 @@ public inherited sharing class ProductCategoryProductDAO {
         
         return countMap;
     }
+
+    public static Map<Id, Integer> getProductCountForCategoriesByPricebook(Set<Id> categoryIds, Id pricebookId) {
+        Map<Id, Integer> countMap = new Map<Id, Integer>();
+        if (categoryIds == null || categoryIds.isEmpty() || pricebookId == null) {
+            return countMap;
+        }
+
+        for (AggregateResult ar : [
+            SELECT ProductCategoryId catId, COUNT(Id) prodCount
+            FROM ProductCategoryProduct
+            WHERE ProductCategoryId IN :categoryIds
+              AND Product.IsActive = true
+              AND ProductId IN (
+                  SELECT Product2Id 
+                  FROM PricebookEntry 
+                  WHERE Pricebook2Id = :pricebookId AND IsActive = true
+              )
+            GROUP BY ProductCategoryId
+        ]) {
+            countMap.put((Id)ar.get('catId'), (Integer)ar.get('prodCount'));
+        }
+
+        return countMap;
+    }
 }

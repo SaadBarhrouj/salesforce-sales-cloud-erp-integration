@@ -151,7 +151,8 @@ export const EVENTS = Object.freeze({
     BUNDLE_SELECT:     'bundleselect',
     ITEM_SELECT:       'itemselect',
     ITEM_DESELECT:     'itemdeselect',
-    SEARCH:            'search'
+    SEARCH:            'search',
+    CTA_CLICK:         'ctabuttonclick'
 });
 
 /* ─── Empty State Illustrations ─── */

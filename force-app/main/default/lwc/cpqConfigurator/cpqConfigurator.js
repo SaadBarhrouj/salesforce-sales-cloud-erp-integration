@@ -105,7 +105,7 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
         return this.recordId || 'OPP-000000';
     }
     get headerTitle() { return this.currentStep.label; }
-    get headerSubtitle() { return this.currentStep.subtitle || ''; }
+    get headerSubtitle() { return  ''; }
     get headerIcon() { return this.currentStep.icon || 'standard:product'; }
     get headerMetadata() {
         const metadata = [];

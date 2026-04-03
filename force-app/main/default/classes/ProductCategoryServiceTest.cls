@@ -3,6 +3,9 @@ private class ProductCategoryServiceTest {
 
     @TestSetup
     static void setup() {
+        // Setup pricebook
+        Id standardPricebookId = Test.getStandardPricebookId();
+        
         // Main catalog with hierarchy
         ProductCatalog catalog = TestDataFactory.createProductCatalog('Sale', true);
 
@@ -12,21 +15,38 @@ private class ProductCategoryServiceTest {
         ProductCategory subCat = TestDataFactory.createProductCategory(
             catalog.Id, rootCat.Id, 'Sub Category', true, true
         );
+        ProductCategory emptyCategory = TestDataFactory.createProductCategory(
+            catalog.Id, null, 'Empty Category', true, true
+        );
         TestDataFactory.createProductCategory(
             catalog.Id, null, 'Non Nav Category', false, true
         );
 
+        // Create products in pricebook
         Product2 prod1 = TestDataFactory.createProduct2(true);
         Product2 prod2 = TestDataFactory.createProduct2(true);
+        Product2 prod3 = TestDataFactory.createProduct2(true);
 
+        // Add products to pricebook
+        TestDataFactory.createStandardPricebookEntry(prod1.Id, standardPricebookId);
+        TestDataFactory.createStandardPricebookEntry(prod2.Id, standardPricebookId);
+        TestDataFactory.createStandardPricebookEntry(prod3.Id, standardPricebookId);
+
+        // Map categories to products
         TestDataFactory.createProductCategoryProduct(rootCat.Id, prod1.Id, true);
         TestDataFactory.createProductCategoryProduct(subCat.Id, prod2.Id, true);
+        // Note: prod3 is not mapped to any category to test product count = 0
 
-        TestDataFactory.createOpportunity('Sale', true);
+        // Create opportunity with pricebook
+        Opportunity opp = TestDataFactory.createOpportunity('Sale', true);
+        opp.Pricebook2Id = standardPricebookId;
+        update opp;
 
         // Empty catalog (no categories)
         TestDataFactory.createProductCatalog('Rental and Services', true);
-        TestDataFactory.createOpportunity('Rental_and_Services', true);
+        Opportunity rentalOpp = TestDataFactory.createOpportunity('Rental_and_Services', true);
+        rentalOpp.Pricebook2Id = standardPricebookId;
+        update rentalOpp;
     }
 
 
@@ -70,13 +90,16 @@ private class ProductCategoryServiceTest {
     // ──────────────────────────────────────────────
     @IsTest
     static void testBuildSidebarHierarchyByOfferTypeBlankOfferTypeReturnsEmpty() {
-        // Arrange — use a non-existent Opportunity ID to simulate missing data
-        Id nonExistentOppId = '006000000000000AAA';
+        // Arrange
+        Id standardPricebookId = Test.getStandardPricebookId();
+        Opportunity opp = TestDataFactory.createOpportunity(true);
+        opp.Pricebook2Id = standardPricebookId;
+        update opp;
 
         // Act
         Test.startTest();
         List<Map<String, Object>> result =
-            ProductCategoryService.buildSidebarHierarchyByOfferType(nonExistentOppId);
+            ProductCategoryService.buildSidebarHierarchyByOfferType(opp.Id);
         Test.stopTest();
 
         // Assert
@@ -86,13 +109,33 @@ private class ProductCategoryServiceTest {
     }
 
     // ──────────────────────────────────────────────
+    //  No Pricebook2Id → early return, empty list
+    // ──────────────────────────────────────────────
+    @IsTest
+    static void testBuildSidebarHierarchyByOfferTypeNoPricebookReturnsEmpty() {
+        // Arrange
+        Opportunity opp = TestDataFactory.createOpportunity('Sale', true);
+        
+        // Act
+        Test.startTest();
+        List<Map<String, Object>> result =
+            ProductCategoryService.buildSidebarHierarchyByOfferType(opp.Id);
+        Test.stopTest();
+
+        // Assert
+        System.assertNotEquals(null, result, 'Result should not be null.');
+        System.assertEquals(0, result.size(),
+            'Service should return empty list when Pricebook2Id is not set.');
+    }
+
+    // ──────────────────────────────────────────────
     //  No matching catalog → empty list
     // ──────────────────────────────────────────────
     @IsTest
     static void testBuildSidebarHierarchyByOfferTypeNoMatchingCatalogReturnsEmpty() {
         // Arrange
-        delete [SELECT Id FROM ProductCatalog];
         Opportunity opp = [SELECT Id FROM Opportunity WHERE Offer_Type__c = 'Sale' LIMIT 1];
+        delete [SELECT Id FROM ProductCatalog WHERE Name = 'Sale'];
 
         // Act
         Test.startTest();
@@ -143,6 +186,33 @@ private class ProductCategoryServiceTest {
         // Assert
         System.assertEquals(0, result.size(),
             'Service should return empty list when the Opportunity does not exist.');
+    }
+
+    // ──────────────────────────────────────────────
+    //  Category with zero products in pricebook → exclude from hierarchy
+    // ──────────────────────────────────────────────
+    @IsTest
+    static void testBuildSidebarHierarchyByOfferTypeCategoryWithZeroProductsFiltered() {
+        // Arrange
+        Opportunity opp = [SELECT Id FROM Opportunity WHERE Offer_Type__c = 'Sale' LIMIT 1];
+
+        // Act
+        Test.startTest();
+        List<Map<String, Object>> result =
+            ProductCategoryService.buildSidebarHierarchyByOfferType(opp.Id);
+        Test.stopTest();
+
+        // Assert — verify empty category is not in result
+        System.assertEquals(1, result.size(),
+            'Only categories with products in pricebook should be returned.');
+        System.assertEquals('Root Category', result[0].get('label'),
+            'Root category should be returned as it has products.');
+        
+        // Verify "Empty Category" is not in the result
+        for (Map<String, Object> item : result) {
+            System.assertNotEquals('Empty Category', item.get('label'),
+                'Empty categories with zero products should be filtered out.');
+        }
     }
 
     /*

@@ -1,6 +1,6 @@
 import { LightningElement, api, track } from 'lwc';
 import { dispatchCustomEvent } from 'c/cpqUtils';
-import { EVENTS } from 'c/cpqConstants';
+import { EVENTS, getIllustration } from 'c/cpqConstants';
 
 export default class CpqCollapsibleSidebar extends LightningElement {
 
@@ -52,6 +52,14 @@ export default class CpqCollapsibleSidebar extends LightningElement {
 
     get itemCount() {
         return this.items.length;
+    }
+
+    get hasItems() {
+        return this.items && this.items.length > 0;
+    }
+
+    get emptyStateIllustration() {
+        return getIllustration('NORESULTS_UNKNOWN').name;
     }
 
     get computedItems() {
@@ -117,6 +125,11 @@ export default class CpqCollapsibleSidebar extends LightningElement {
     }
 
     handleRefresh() {
+        if (this.selectedItemId) {
+            const itemId = this.selectedItemId;
+            this.selectedItemId = null;
+            dispatchCustomEvent(this, EVENTS.ITEM_DESELECT, { itemId: itemId });
+        }
         dispatchCustomEvent(this, EVENTS.SIDEBAR_REFRESH, { title: this.title });
     }
 }

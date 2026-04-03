@@ -87,19 +87,20 @@
                     <span class="slds-assistive-text">- Ascending</span>
                 </div>
 
-                <ul
-                    aria-multiselectable="true"
-                    class="slds-scrollable_y"
-                    role="listbox"
-                    aria-label={title}
-                >
-                    <template for:each={computedItems} for:item="item">
-                        <!-- Parent item -->
-                        <li
-                            key={item.id}
-                            class="slds-split-view__list-item"
-                            role="presentation"
-                        >
+                <template lwc:if={hasItems}>
+                    <ul
+                        aria-multiselectable="true"
+                        class="slds-scrollable_y"
+                        role="listbox"
+                        aria-label={title}
+                    >
+                        <template for:each={computedItems} for:item="item">
+                            <!-- Parent item -->
+                            <li
+                                key={item.id}
+                                class="slds-split-view__list-item"
+                                role="presentation"
+                            >
                             <a
                                 href="#"
                                 aria-current={item.ariaCurrent}
@@ -175,6 +176,15 @@
                         </template>
                     </template>
                 </ul>
+                </template>
+                <template lwc:else>
+                    <c-empty-state
+                        illustration-name={emptyStateIllustration}
+                        title="No Items"
+                        description="There are no items to display."
+                        size="small"
+                    ></c-empty-state>
+                </template>
             </div>
         </article>
     </div>
