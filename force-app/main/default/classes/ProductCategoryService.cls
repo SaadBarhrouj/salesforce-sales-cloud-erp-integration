@@ -180,9 +180,10 @@ public inherited sharing class ProductCategoryService {
 
 
     /**
-     * @description Builds hierarchical category structure filtered by Opportunity ProductCatalog lookup and pricebook for sidebar navigation
+     
+     * @description Builds hierarchical category structure filtered by Opportunity offer type (via lookup to ProductCatalog) and pricebook for sidebar navigation
      * @param opportunityId Salesforce Opportunity ID
-     * @return List of category Maps with hierarchical structure; empty list if opportunity not found or ProductCatalog lookup is blank
+     * @return List of category Maps with hierarchical structure; empty list if opportunity not found or OfferType lookup is blank
      * @throws IllegalArgumentException if opportunityId is null
      */
     public static List<Map<String, Object>> buildSidebarHierarchyByOfferType(Id opportunityId) {
