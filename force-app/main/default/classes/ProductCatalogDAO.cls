@@ -48,7 +48,8 @@ public inherited sharing class ProductCatalogDAO {
      * @param recordName The catalog name to search for
      * @return List of ProductCatalog records matching the name
      */
-    public static List<ProductCatalog> getByName(String recordName) {
+   
+     /**public static List<ProductCatalog> getByName(String recordName) {
         if (String.isBlank(recordName)) {
             return new List<ProductCatalog>();
         }
@@ -62,7 +63,7 @@ public inherited sharing class ProductCatalogDAO {
             FROM ProductCatalog
             WHERE Name = :recordName
         ];
-    }
+    }*/
 
     /*
     public static List<ProductCatalog> getAll() {

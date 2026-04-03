@@ -7,11 +7,12 @@ import OPP_ACCOUNT_NAME from '@salesforce/schema/Opportunity.Account.Name';
 import OPP_PRICEBOOK_ID from '@salesforce/schema/Opportunity.Pricebook2Id';
 import OPP_PRICEBOOK_NAME from '@salesforce/schema/Opportunity.Pricebook2.Name';
 import OPP_OFFER_TYPE from '@salesforce/schema/Opportunity.Offer_Type__c';
+import OPP_OFFER_TYPE_NAME from '@salesforce/schema/Opportunity.Offer_Type__r.Name';
 import getSidebarCategoriesByOfferType from '@salesforce/apex/ProductCategoryController.getSidebarCategoriesByOfferType';
 import { STEPS, MESSAGES, STEP_LIST, TOAST_DURATION } from 'c/cpqConstants';
 import { deepClone, calculateSelectedProductsSubtotal, calculateSelectedProductTotal, formatCurrency, showToast } from 'c/cpqUtils';
 
-const OPP_FIELDS = [OPP_NAME, OPP_ACCOUNT_ID, OPP_ACCOUNT_NAME, OPP_PRICEBOOK_ID, OPP_PRICEBOOK_NAME, OPP_OFFER_TYPE];
+const OPP_FIELDS = [OPP_NAME, OPP_ACCOUNT_ID, OPP_ACCOUNT_NAME, OPP_PRICEBOOK_ID, OPP_PRICEBOOK_NAME, OPP_OFFER_TYPE, OPP_OFFER_TYPE_NAME];
 
 export default class CpqConfigurator extends NavigationMixin(LightningElement) {
     @api recordId;
@@ -162,11 +163,12 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
         }
         
         if (this.opportunityRecord?.data) {
-           const offerTypeId = getFieldValue(this.opportunityRecord.data, OPP_OFFER_TYPE);
+           const offerTypeName = getFieldValue(this.opportunityRecord.data, OPP_OFFER_TYPE_NAME);
+            // Offer Type: 
             metadata.push({
                 id: 'offerType',
                 label: 'Offer Type:',
-                value: offerTypeId || 'Sale',
+                value: offerTypeName || 'Catalog',
                 iconName: 'standard:category',
                 isLink: false,
                 isBold: true
