@@ -26,3 +26,15 @@ force-app/main/default/objects/Account/fields/ChannelProgramLevelName.field-meta
 force-app/main/default/objects/Account/fields/ChannelProgramName.field-meta.xml
 force-app/main/default/objects/Account/fields/IsCustomerPortal.field-meta.xml
 force-app/main/default/objects/Account/fields/IsPartner.field-meta.xml
+
+# Added by Illuminated Cloud
+/.illuminatedCloud/
+**/*.ts
+**/tsconfig*.json
+**/*.tsbuildinfo
+**/eslint.config.mjs
+**/graphql.config.yml
+
+# IntelliJ IDEA
+.idea/
+*.iml
