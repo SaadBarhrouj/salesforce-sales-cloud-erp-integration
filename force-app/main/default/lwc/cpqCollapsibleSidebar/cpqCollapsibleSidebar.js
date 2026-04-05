@@ -88,6 +88,14 @@ export default class CpqCollapsibleSidebar extends LightningElement {
     }
 
     /* ═══════════════════════════════════════════════
+       LIFECYCLE
+       ═══════════════════════════════════════════════ */
+
+    connectedCallback() {
+        this.handleRefresh();
+    }
+
+    /* ═══════════════════════════════════════════════
        HANDLERS
        ═══════════════════════════════════════════════ */
 

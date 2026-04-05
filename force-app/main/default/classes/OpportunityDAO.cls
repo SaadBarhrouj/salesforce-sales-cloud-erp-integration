@@ -51,6 +51,7 @@ public inherited sharing class OpportunityDAO {
                 Contract.ContractNumber,
                 Default_Agency__r.Name,
                 Delivery_Site__r.Name,
+                Offer_Type__r.Name,
                 Owner.Name,
                 Pricebook2.Name
             FROM Opportunity
