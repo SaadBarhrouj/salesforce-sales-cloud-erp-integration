@@ -1,4 +1,4 @@
-import { LightningElement, api } from 'lwc';
+import { LightningElement, api, track } from 'lwc';
 import { getFeaturesByProduct, getOptionsByFeature } from 'c/cpqDataService';
 import { deepClone, isSingleSelect, getSelectionMode, validateFeatureSelections, calculateCompleteness, formatCurrency } from 'c/cpqUtils';
 import { SELECTION_MODES } from 'c/cpqConstants';
@@ -6,23 +6,52 @@ import { SELECTION_MODES } from 'c/cpqConstants';
 export default class CpqStepBundleConfig extends LightningElement {
     @api selectedProducts = [];
 
-    features = [];
-    activeBundleKey = null;
-    activeFeatureId = null;
-    isLoading = false;
+    _selectedBundleId = null;
 
-    _optionsByFeature = {}; // { featureId: [options] }
-    _sidebarCollapsed = false;
+    @api
+    get selectedBundleId() {
+        return this._selectedBundleId;
+    }
+
+    set selectedBundleId(value) {
+        const oldValue = this._selectedBundleId;
+        this._selectedBundleId = value || null;
+
+        if (oldValue !== this._selectedBundleId && this._selectedBundleId) {
+            this.activeBundleKey = this._selectedBundleId;
+            const bundle = this.bundleItems.find(
+                (b) => b._key === this._selectedBundleId
+            );
+            if (bundle) {
+                this.loadFeaturesForBundle(bundle.productId);
+            }
+        }
+    }
+
+    @track features = [];
+    @track activeBundleKey = null;
+    @track activeFeatureId = null;
+    @track isLoading = false;
+    @track hasError = false;
+    @track errorMessage = '';
+    @track featureOrganization = 'default';
+
+    _optionsByFeature = {};
 
     async connectedCallback() {
         const bundles = this.bundleItems;
         if (bundles.length > 0) {
-            this.activeBundleKey = bundles[0]._key;
-            await this.loadFeaturesForBundle(bundles[0].productId);
+            const initialBundleKey =
+                this._selectedBundleId || bundles[0]._key;
+            this.activeBundleKey = initialBundleKey;
+            const bundle = bundles.find((b) => b._key === initialBundleKey);
+            if (bundle) {
+                await this.loadFeaturesForBundle(bundle.productId);
+            }
         }
     }
 
-    /* ─── Computed ─── */
+    /* ─── Computed Properties ─── */
 
     get bundleItems() {
         return (this.selectedProducts || []).filter(i => i.isBundle);
@@ -39,6 +68,11 @@ export default class CpqStepBundleConfig extends LightningElement {
     get activeBundleName() {
         const item = this.bundleItems.find(b => b._key === this.activeBundleKey);
         return item ? item.productName : '';
+    }
+
+    get activeBundleProductId() {
+        const item = this.bundleItems.find(b => b._key === this.activeBundleKey);
+        return item ? item.productId : null;
     }
 
     get sidebarItems() {
@@ -73,23 +107,64 @@ export default class CpqStepBundleConfig extends LightningElement {
         return `width: ${this.completenessValue}%`;
     }
 
+    /* ─── Public API Methods ─── */
+
+    @api
+    refresh() {
+        if (this.activeBundleKey && this.activeBundleProductId) {
+            this.loadFeaturesForBundle(this.activeBundleProductId);
+        }
+    }
+
+    @api
+    resetCurrentBundle() {
+        if (!this.activeBundleKey) return;
+        
+        this._optionsByFeature = {};
+        this.features = [];
+        
+        if (this.activeBundleProductId) {
+            this.loadFeaturesForBundle(this.activeBundleProductId);
+        }
+    }
+
+    @api
+    setFeatureOrganization(organization) {
+        this.featureOrganization = organization;
+        if (organization === 'section') {
+            this._groupFeaturesBySection();
+        } else if (organization === 'tab') {
+            this.featureOrganization = 'default';
+        }
+    }
+
     /* ─── Data Loading ─── */
 
     async loadFeaturesForBundle(productId) {
+        if (!productId) return;
+        
         this.isLoading = true;
+        this.hasError = false;
+        this.errorMessage = '';
+
         try {
             const rawFeatures = await getFeaturesByProduct(productId);
+            
+            if (!rawFeatures || rawFeatures.length === 0) {
+                this.features = [];
+                this.isLoading = false;
+                return;
+            }
+
             this._optionsByFeature = {};
 
-            // Load options for each feature in parallel
             const optionPromises = rawFeatures.map(f => getOptionsByFeature(f.Id));
             const optionResults = await Promise.all(optionPromises);
 
             rawFeatures.forEach((f, idx) => {
-                this._optionsByFeature[f.Id] = optionResults[idx];
+                this._optionsByFeature[f.Id] = optionResults[idx] || [];
             });
 
-            // Restore previously saved selections from cart
             const activeBundle = this.bundleItems.find(b => b._key === this.activeBundleKey);
             if (activeBundle && activeBundle.options && activeBundle.options.length > 0) {
                 this.restoreSelectionsFromCart(activeBundle.options);
@@ -102,6 +177,8 @@ export default class CpqStepBundleConfig extends LightningElement {
             }
         } catch (e) {
             console.error('Error loading bundle configuration:', e);
+            this.hasError = true;
+            this.errorMessage = e.message || 'Failed to load bundle configuration';
         } finally {
             this.isLoading = false;
         }
@@ -145,31 +222,24 @@ export default class CpqStepBundleConfig extends LightningElement {
 
     getBundleCompleteness(bundleItem) {
         if (!bundleItem.isBundle) return 100;
-        // If this bundle is actively being configured, use live data
         if (bundleItem._key === this.activeBundleKey && this.features.length > 0) {
             return calculateCompleteness(this.features, this._optionsByFeature);
         }
-        // Otherwise check if previously configured
         return bundleItem.configured ? 100 : 0;
     }
 
+    _groupFeaturesBySection() {
+        const sections = {};
+        this.features.forEach(f => {
+            const section = f.Section__c || 'Default';
+            if (!sections[section]) {
+                sections[section] = [];
+            }
+            sections[section].push(f);
+        });
+    }
+
     /* ─── Event Handlers ─── */
-
-    async handleBundleSelect(event) {
-        // Save current config before switching
-        this.saveCurrentConfig();
-
-        const itemId = event.detail.itemId;
-        this.activeBundleKey = itemId;
-        const bundle = this.bundleItems.find(b => b._key === itemId);
-        if (bundle) {
-            await this.loadFeaturesForBundle(bundle.productId);
-        }
-    }
-
-    handleSidebarToggle(event) {
-        this._sidebarCollapsed = event.detail.collapsed;
-    }
 
     handleFeatureTabChange(event) {
         this.activeFeatureId = event.target.value;
@@ -184,7 +254,6 @@ export default class CpqStepBundleConfig extends LightningElement {
         let options = deepClone(this._optionsByFeature[featureId]);
 
         if (isSingleSelect(feature)) {
-            // Deselect all others, select clicked one
             options = options.map(o => ({
                 ...o,
                 isSelected: o.Id === optionId ? selected : false
@@ -192,7 +261,7 @@ export default class CpqStepBundleConfig extends LightningElement {
         } else {
             options = options.map(o => {
                 if (o.Id === optionId) {
-                    if (o.Is_Required__c && !selected) return o; // Can't deselect required
+                    if (o.Is_Required__c && !selected) return o;
                     return { ...o, isSelected: selected };
                 }
                 return o;
@@ -204,6 +273,8 @@ export default class CpqStepBundleConfig extends LightningElement {
             const { _options, _isSingleSelect, _radioGroup, _selectionLabel, _minLabel, _maxLabel, _errors, ...raw } = f;
             return raw;
         }));
+        
+        this._autoSaveConfig();
     }
 
     handleOptionQuantity(event) {
@@ -222,16 +293,8 @@ export default class CpqStepBundleConfig extends LightningElement {
             const { _options, _isSingleSelect, _radioGroup, _selectionLabel, _minLabel, _maxLabel, _errors, ...raw } = f;
             return raw;
         }));
-    }
-
-    handleBack() {
-        this.saveCurrentConfig();
-        this.dispatchEvent(new CustomEvent('navigate', { detail: { direction: 'back' } }));
-    }
-
-    handleNext() {
-        this.saveCurrentConfig();
-        this.dispatchEvent(new CustomEvent('navigate', { detail: { direction: 'next' } }));
+        
+        this._autoSaveConfig();
     }
 
     /* ─── Internal Helpers ─── */
@@ -245,10 +308,14 @@ export default class CpqStepBundleConfig extends LightningElement {
         return null;
     }
 
+    _autoSaveConfig() {
+        this.saveCurrentConfig();
+    }
+
+    @api
     saveCurrentConfig() {
         if (!this.activeBundleKey) return;
 
-        // Flatten all options across all features
         const allOptions = [];
         Object.entries(this._optionsByFeature).forEach(([featureId, options]) => {
             options.forEach(o => {

@@ -22,12 +22,15 @@
                 title={sidebarTitle}
                 icon-name={sidebarIcon}
                 sort-label={sidebarSortLabel}
+                sort-field={sidebarSortField}
+                sort-direction={sidebarSortDirection}
                 items={sidebarItems}
                 selected-item-id={selectedItemId}
                 is-loading={sidebarIsLoading}
                 onitemselect={handleItemSelect}
                 onitemdeselect={handleItemDeselect}
                 onsidebarrefresh={handleSidebarRefresh}
+                onsortchange={handleSortChange}
             ></c-cpq-collapsible-sidebar>
 
             <!-- RIGHT COLUMN: Main content  -->
@@ -50,6 +53,7 @@
                     <!-- Step 2: Bundle Configurator -->
                     <template lwc:if={isStepConfigure}>
                         <c-cpq-step-bundle-config
+                            selected-bundle-id={selectedItemId}
                             selected-products={selectedProducts}
                             onconfigupdate={handleConfigUpdate}
                             onnavigate={handleNavigate}

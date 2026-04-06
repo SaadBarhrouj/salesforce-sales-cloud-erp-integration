@@ -23,6 +23,27 @@ export default class CpqStickyHeader extends NavigationMixin(LightningElement) {
         this._stepActions = value || [];
     }
 
+    get standaloneStepActions() {
+        return (this._stepActions || [])
+            .filter(a => a.isStandalone === true)
+            .map(action => this.normalizeAction(action));
+    }
+
+    get groupedStepActions() {
+        return (this._stepActions || [])
+            .filter(a => a.isStandalone !== true)
+            .slice(0, 3)
+            .map(action => this.normalizeAction(action));
+    }
+
+    get hasStandaloneActions() {
+        return (this._stepActions || []).some(a => a.isStandalone === true);
+    }
+
+    get hasGroupedActions() {
+        return (this._stepActions || []).some(a => a.isStandalone !== true);
+    }
+
     get hasStepActions() {
         return (this._stepActions || []).length > 0;
     }

@@ -20,7 +20,7 @@
                 alternative-text={title}>
               </lightning-icon>
             </div>
-
+            
             <!-- Title Content -->
             <div class="slds-media__body">
               <div class="slds-page-header__name">
@@ -42,10 +42,24 @@
         <!-- RIGHT: PRIMARY ACTIONS -->
         <div class="slds-page-header__col-actions">
           <div class="slds-page-header__controls">
+            <!-- Standalone buttons (rendered outside button group) -->
+            <template for:each={standaloneStepActions} for:item="action">
+              <div key={action.name} class="slds-page-header__control">
+                <lightning-button
+                  label={action.label}
+                  variant={action.variant}
+                  icon-name={action.iconName}
+                  disabled={action.disabled}
+                  data-action={action.name}
+                  onclick={handleAction}>
+                </lightning-button>
+              </div>
+            </template>
+            <!-- Grouped buttons (in button group) -->
             <div class="slds-page-header__control">
-              <template lwc:if={hasStepActions}>
+              <template lwc:if={hasGroupedActions}>
                 <lightning-button-group>
-                  <template for:each={stepActions} for:item="action">
+                  <template for:each={groupedStepActions} for:item="action">
                     <lightning-button
                       key={action.name}
                       label={action.label}
@@ -55,7 +69,6 @@
                       onclick={handleAction}>
                     </lightning-button>
                   </template>
-                  <!-- Dropdown for overflow actions if more than 3 -->
                   <template lwc:if={hasOverflowActions}>
                     <lightning-button-menu
                       alternative-text="More actions"
@@ -96,11 +109,17 @@
                   class="slds-m-right_x-small">
                 </lightning-icon>
                 <template lwc:if={item.isLink}>
+                  <template lwc:if={item.isBold}>
+                    <strong>{item.label}</strong>
+                  </template>
+                  <template lwc:else>
+                    {item.label}
+                  </template>
                   <a href="#" 
-                     data-record-id={item.value}
+                     data-record-id={item.secondary}
                      data-object-api-name={item.objectApiName}
                      onclick={handleLinkClick}
-                     class="slds-text-link">{item.label}</a>
+                     class="slds-text-link slds-m-left_x-small">{item.value}</a>
                 </template>
                 <template lwc:else>
                   <template lwc:if={item.isBold}>
@@ -157,6 +176,7 @@
                       title={action.label}
                       alternative-text={action.label}
                       variant={action.variant}
+                      menu-alignment="right"
                       onselect={handleMenuSelect}>
                       <template lwc:if={action.menuItems}>
                         <template for:each={action.menuItems} for:item="menuItem">
