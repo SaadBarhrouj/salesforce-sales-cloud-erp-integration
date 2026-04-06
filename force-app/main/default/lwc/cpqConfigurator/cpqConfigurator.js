@@ -63,6 +63,10 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
     );
     if (currentIndex > 0) {
       this.currentStep = STEP_LIST[currentIndex - 1];
+      if (this.currentStep.key === STEPS.SELECTION.key) {
+        this.selectedItemId = "";
+        this.selectedItemLabel = "";
+      }
       this.initSidebarData(this.currentStep.key);
     }
   }
