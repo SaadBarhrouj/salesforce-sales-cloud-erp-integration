@@ -43,10 +43,35 @@ export const STEPS = Object.freeze({
             ]
         }
     },
+
     CONFIGURE: {
         number: 2, key: 'configure', label: 'Bundle Configuration', icon: 'standard:bundle_policy', subtitle: 'Configure bundles and options',
-        header: { showSearch: false, searchPlaceholder: 'Search...', stepActions: DEFAULT_STEP_ACTIONS, globalActions: DEFAULT_GLOBAL_ACTIONS }
+        header: { showSearch: false, searchPlaceholder: 'Search...',
+
+            stepActions: [
+                { name: 'cancel', label: 'Cancel', variant: 'neutral' },
+                { name: 'select', label: 'Select', variant: 'brand', dynamicProperty: 'disableIfCartEmpty' }
+            ],
+
+            globalActions: [
+                { name: 'refresh', label: 'Refresh Catalog', iconName: 'utility:refresh' },
+                {
+                    name: 'changeView', label: 'Change View', iconName: 'utility:table', isMenu: true, variant: 'border-filled',
+                    menuItems: [
+                        { name: 'viewTable', label: 'Table View', iconName: 'utility:table' },
+                        { name: 'viewCards', label: 'Card View', iconName: 'utility:rows' }
+                    ]
+                },
+                {
+                    name: 'selectionGroup', isGroup: true, items: [
+                        { name: 'clearSelection', label: 'Clear Selection', iconName: 'utility:clear', variant: 'border-filled' },
+                        { name: 'toggleFilters', label: 'Filters', iconName: 'utility:filterList', variant: 'border-filled', dynamicProperty: 'highlightIfFiltersOpen' }
+                    ]
+                }
+            ]
+        }
     },
+
     LINE_EDITOR: {
         number: 3, key: 'lineEditor', label: 'Line Editor', icon: 'standard:order_item', subtitle: 'Review and adjust line items',
         header: { showSearch: false, searchPlaceholder: 'Search...', stepActions: DEFAULT_STEP_ACTIONS, globalActions: DEFAULT_GLOBAL_ACTIONS }
@@ -186,11 +211,7 @@ export const ILLUSTRATIONS = Object.freeze({
     SUCCESS_SELF_ASSIGNED: { name: 'success:selfassigned',  label: 'Self Assigned',         description: 'A flag planted on a hill' }
 });
 
-/**
- * Get illustration by key
- * @param {string} key - Illustration key (e.g., 'CART_NO_ITEMS')
- * @returns {Object} Illustration object with name, label, and description
- */
+
 export const getIllustration = (key) => {
     return ILLUSTRATIONS[key] || ILLUSTRATIONS.NORESULTS_UNKNOWN;
 };
