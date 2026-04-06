@@ -1,27 +1,37 @@
 <template>
     <div class="slds-grid slds-gutters configurator-layout">
-        <!-- Left: Collapsible Sidebar -->
-        <div class="slds-col slds-shrink-none sidebar-col">
-            <c-cpq-collapsible-sidebar
-                title="Bundles"
-                items={sidebarItems}
-                active-item-id={activeBundleKey}
-                onitemselect={handleBundleSelect}
-                onsidebartoggle={handleSidebarToggle}
-            ></c-cpq-collapsible-sidebar>
-        </div>
-
-        <!-- Right: Feature Tabs + Options -->
+        <!-- Feature Tabs + Options (Full Width) -->
         <div class="slds-col slds-grow main-area">
-            <div lwc:if={isLoading} class="slds-align_absolute-center slds-p-around_x-large">
+            <!-- Loading State -->
+            <div lwc:if={isLoading} class="slds-grid slds-grid_vertical slds-is-relative slds-align_absolute-center slds-p-around_x-large">
                 <lightning-spinner alternative-text="Loading configuration" size="medium"></lightning-spinner>
+            </div>
+
+            <!-- Error State -->
+            <div lwc:if={hasError} class="slds-align_absolute-center slds-p-around_x-large">
+                <div class="slds-notify slds-notify_alert slds-alert_error" role="alert">
+                    <lightning-icon icon-name="utility:error" size="small" class="slds-m-right_x-small"></lightning-icon>
+                    <span>{errorMessage}</span>
+                </div>
             </div>
 
             <template lwc:if={hasActiveBundle}>
                 <!-- Bundle Header -->
                 <div class="slds-p-around_small slds-border_bottom">
-                    <h2 class="slds-text-heading_medium">{activeBundleName}</h2>
-                    <!-- Completeness bar (Little Extra) -->
+                    <div class="slds-grid slds-grid_vertical-align-center">
+                        <div class="slds-col slds-grow">
+                            <h2 class="slds-text-heading_medium">{activeBundleName}</h2>
+                        </div>
+                        <div class="slds-col slds-shrink-none">
+                            <lightning-button-icon 
+                                icon-name="utility:save" 
+                                variant="border-filled" 
+                                title="Save Configuration" 
+                                onclick={saveCurrentConfig}>
+                            </lightning-button-icon>
+                        </div>
+                    </div>
+                    <!-- Completeness bar -->
                     <div class="slds-grid slds-grid_vertical-align-center slds-m-top_x-small">
                         <div class="slds-col slds-grow slds-m-right_small">
                             <div class="slds-progress-bar slds-progress-bar_x-small" aria-valuemin="0" aria-valuemax="100" aria-valuenow={completenessValue} role="progressbar">
@@ -74,8 +84,8 @@
                                             is-single-select={feature._isSingleSelect}
                                             radio-group-name={feature._radioGroup}
                                             onoptionselect={handleOptionSelect}
-                                            onoptionquantity={handleOptionQuantity}
-                                        ></c-cpq-option-row>
+                                            onoptionquantity={handleOptionQuantity}>
+                                        </c-cpq-option-row>
                                     </template>
                                 </tbody>
                             </table>
@@ -94,27 +104,9 @@
 
             <div lwc:elseif={hasNoBundles} class="slds-align_absolute-center slds-p-around_x-large">
                 <p class="slds-text-body_regular slds-text-color_weak">
-                    No configurable bundles in the cart. Add bundle products in Step 2 or proceed to the Line Editor.
+                    No configurable bundles in the cart. Add bundle products in Step 1 or proceed to the Line Editor.
                 </p>
             </div>
         </div>
-    </div>
-
-    <!-- Navigation -->
-    <div class="slds-m-top_medium slds-clearfix slds-p-horizontal_medium">
-        <lightning-button
-            label="Back: Products"
-            icon-name="utility:back"
-            class="slds-float_left"
-            onclick={handleBack}
-        ></lightning-button>
-        <lightning-button
-            label="Next: Line Editor"
-            variant="brand"
-            icon-name="utility:forward"
-            icon-position="right"
-            class="slds-float_right"
-            onclick={handleNext}
-        ></lightning-button>
     </div>
 </template>

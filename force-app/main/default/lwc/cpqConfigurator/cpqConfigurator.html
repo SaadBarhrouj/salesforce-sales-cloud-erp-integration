@@ -50,6 +50,7 @@
                     <!-- Step 2: Bundle Configurator -->
                     <template lwc:if={isStepConfigure}>
                         <c-cpq-step-bundle-config
+                            selected-bundle-id={selectedItemId}
                             selected-products={selectedProducts}
                             onconfigupdate={handleConfigUpdate}
                             onnavigate={handleNavigate}
