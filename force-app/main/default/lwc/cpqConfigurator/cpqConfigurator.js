@@ -78,6 +78,8 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
   @track sidebarTitle = "Categories";
   @track sidebarIcon = "standard:category";
   @track sidebarSortLabel = "Name";
+  @track sidebarSortField = "label";
+  @track sidebarSortDirection = "asc";
   @track sidebarIsLoading = false;
   @track sidebarItems = [];
   @track selectedItemId = "";
@@ -361,7 +363,9 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
   _loadSelectionSidebar() {
     this.sidebarTitle = "Categories";
     this.sidebarIcon = "standard:category";
-    this.sidebarSortLabel = "Products";
+    this.sidebarSortLabel = "Name";
+    this.sidebarSortField = "label";
+    this.sidebarSortDirection = "asc";
 
     if (!this.recordId) {
       this.sidebarItems = [];
@@ -387,7 +391,9 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
   _loadConfigureSidebar() {
     this.sidebarTitle = "Bundles";
     this.sidebarIcon = "standard:bundle_config";
-    this.sidebarSortLabel = "Configuration";
+    this.sidebarSortLabel = "Name";
+    this.sidebarSortField = "label";
+    this.sidebarSortDirection = "asc";
 
     this.sidebarIsLoading = true;
 
@@ -472,6 +478,11 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
 
   handleSidebarRefresh() {
     this.initSidebarData(this.currentStep.key);
+  }
+
+  handleSortChange(event) {
+    this.sidebarSortField = event.detail.sortField;
+    this.sidebarSortDirection = event.detail.sortDirection;
   }
 
   /* ── Step 1 events ── */

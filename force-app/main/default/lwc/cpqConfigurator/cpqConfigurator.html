@@ -22,12 +22,15 @@
                 title={sidebarTitle}
                 icon-name={sidebarIcon}
                 sort-label={sidebarSortLabel}
+                sort-field={sidebarSortField}
+                sort-direction={sidebarSortDirection}
                 items={sidebarItems}
                 selected-item-id={selectedItemId}
                 is-loading={sidebarIsLoading}
                 onitemselect={handleItemSelect}
                 onitemdeselect={handleItemDeselect}
                 onsidebarrefresh={handleSidebarRefresh}
+                onsortchange={handleSortChange}
             ></c-cpq-collapsible-sidebar>
 
             <!-- RIGHT COLUMN: Main content  -->

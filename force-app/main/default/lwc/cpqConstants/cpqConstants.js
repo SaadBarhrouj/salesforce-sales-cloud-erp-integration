@@ -175,6 +175,7 @@ export const EVENTS = Object.freeze({
     BUNDLE_SELECT:     'bundleselect',
     ITEM_SELECT:       'itemselect',
     ITEM_DESELECT:     'itemdeselect',
+    SORT_CHANGE:       'sortchange',
     SEARCH:            'search',
     CTA_CLICK:         'ctabuttonclick'
 });
