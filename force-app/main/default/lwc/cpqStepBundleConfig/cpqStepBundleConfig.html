@@ -2,12 +2,13 @@
     <div class="step-configure slds-p-around_none slds-grid slds-is-relative slds-scrollable_none">
         <div class="step-configure-content slds-col slds-no-space slds-scrollable_y">
 
-            <!-- LOADING & EMPTY STATES -->
-            <div if:true={isLoading} class="slds-is-relative slds-var-p-around_xx-large">
+            <!-- ── LOADING STATE ────────────────────────────────────────── -->
+            <div lwc:if={isLoading} class="slds-is-relative slds-var-p-around_xx-large">
                 <lightning-spinner alternative-text="Loading bundle configuration" size="medium"></lightning-spinner>
             </div>
 
-            <div if:true={hasNoFeatures}>
+            <!-- ── EMPTY STATE ───────────────────────────────────────────── -->
+            <div lwc:if= {hasNoFeatures}>
                 <c-empty-state
                   illustration-name={emptyStateIllustration}
                   title="No Configuration Options"
@@ -16,15 +17,11 @@
                 </c-empty-state>
             </div>
 
-            <!-- VIEW MODE TOGGLE + CONTENT -->
-            <template if:true={hasFeatures}>
+            <!-- ── MAIN CONTENT ──────────────────────────────────────────── -->
+            <template lwc:if={hasFeatures}>
                 <div class="slds-p-around_medium">
-                    <h1 class="slds-text-heading_medium slds-truncate">
-                        {bundleName}
-                    </h1>
-
-                    <!-- Toggle Sections/Tabs (2 boutons LWC) -->
-                    <div class="slds-m-top_small slds-grid slds-gutters_x-small">
+                    <!-- View toggle (Sections / Tabs) -->
+                    <div class="slds-m-top_small slds-m-bottom_medium slds-grid slds-gutters_x-small">
                         <lightning-button
                           label="Sections"
                           variant={sectionsButtonVariant}
@@ -39,46 +36,74 @@
                         </lightning-button>
                     </div>
 
-                    <!-- SECTIONS VIEW (PAR DÉFAUT) -->
-                    <template if:true={isSectionsView}>
-                        <div class="slds-box slds-m-bottom_large">
+                    <!-- Bundle title -->
+                    <h1 class="slds-text-heading_medium slds-truncate slds-m-bottom_small">
+                        {bundleName}
+                    </h1>
+
+
+                    <!-- ── SECTIONS VIEW ────────────────────────────────── -->
+                    <template lwc:if={isSectionsView}>
+                        <div class="slds-m-bottom_large">
                             <template for:each={processedFeatures} for:item="feature">
-                                <section key={feature.Id} class="slds-section">
-                                    <div class="slds-section__title slds-theme_shade">
-                                        <h3 class="slds-section__title-action slds-truncate" title={feature.Name}>
-                                            {feature.Name}
-                                            <span class="slds-badge slds-theme_shade slds-m-left_xx-small">
-                                                {feature.Min_Options__c}-{feature.Max_Options__c}
+                                <div key={feature.Id} class="slds-box slds-p-around_none slds-m-bottom_medium slds-theme_default">
+                                    <section data-feature-id={feature.Id} class="slds-section slds-is-open slds-m-bottom_none">
+                                        <div class="slds-section__title slds-theme_shade slds-p-around_small">
+                                            <span class="slds-truncate slds-text-heading_small slds-text-title_bold slds-text-align_left" title={feature.Name}>
+                                                {feature.Name}
                                             </span>
-                                        </h3>
-                                    </div>
-                                    <div class="slds-section__content">
-                                        <lightning-datatable
-                                          key-field="Id"
-                                          data={feature.options}
-                                          columns={columns}
-                                          draft-values={draftValues}
-                                          onsave={handleSaveTable}
-                                          max-row-selection={feature.maxSelection}
-                                          selected-rows={feature.selectedRows}
-                                          onrowselection={handleFeatureSelection}
-                                          hide-checkbox-column="false">
-                                        </lightning-datatable>
-                                    </div>
-                                </section>
+                                        </div>
+                                        <div class="slds-section__content slds-p-top_none">
+                                            <div class="slds-p-horizontal_medium slds-p-top_medium slds-p-bottom_small slds-text-align_left" if:true={feature.helpText}>
+                                                <p class="slds-text-body_regular slds-text-color_weak">{feature.helpText}</p>
+                                            </div>
+                                            <div class="slds-p-horizontal_medium slds-p-bottom_small slds-text-align_left">
+                                                <span class={feature.badgeClass}>
+                                                    Min: {feature.minOptions} / Max: {feature.maxOptions}
+                                                </span>
+                                            </div>
+                                            <div class="slds-p-bottom_medium">
+                                                <lightning-datatable
+                                                  key-field="Id"
+                                                  data={feature.options}
+                                                  columns={columns}
+                                                  draft-values={draftValues}
+                                                  onsave={handleSaveTable}
+                                                  max-row-selection={feature.maxSelection}
+                                                  selected-rows={feature.selectedRows}
+                                                  disabled-rows={feature.disabledRows}
+                                                  onrowselection={handleFeatureSelection}>
+                                                </lightning-datatable>
+                                            </div>
+                                        </div>
+                                    </section>
+                                </div>
                             </template>
                         </div>
                     </template>
 
-                    <!-- TABS VIEW -->
-                    <template if:true={isTabsView}>
+                    <!-- ── TABS VIEW ────────────────────────────────────── -->
+                    <template lwc:if={isTabsView}>
                         <lightning-tabset class="slds-m-bottom_large">
                             <template for:each={processedFeatures} for:item="feature">
-                                <lightning-tab key={feature.Id} label={feature.Name}>
+                                <lightning-tab key={feature.Id} data-feature-id={feature.Id} label={feature.Name}>
                                     <div class="slds-p-around_medium">
-                                        <span class="slds-badge slds-theme_shade">
-                                            {feature.Min_Options__c}-{feature.Max_Options__c}
-                                        </span>
+
+                                        <!-- Help text (optional) -->
+                                        <p lwc:if={feature.helpText}
+                                           class="slds-text-body_small slds-text-color_weak slds-m-bottom_x-small"
+                                           style="text-align: left;">
+                                            {feature.helpText}
+                                        </p>
+
+                                        <!-- Min / Max badge -->
+                                        <div class="slds-m-bottom_small" style="text-align: left;">
+                                            <span class={feature.badgeClass}>
+                                                Min: {feature.minOptions} &nbsp;|&nbsp; Max: {feature.maxOptions}
+                                            </span>
+                                        </div>
+
+                                        <!-- Datatable -->
                                         <lightning-datatable
                                           key-field="Id"
                                           data={feature.options}
@@ -87,15 +112,19 @@
                                           onsave={handleSaveTable}
                                           max-row-selection={feature.maxSelection}
                                           selected-rows={feature.selectedRows}
+                                          disabled-rows={feature.disabledRows}
                                           onrowselection={handleFeatureSelection}>
                                         </lightning-datatable>
+
                                     </div>
                                 </lightning-tab>
                             </template>
                         </lightning-tabset>
                     </template>
+
                 </div>
             </template>
+
         </div>
     </div>
 </template>
