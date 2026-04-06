@@ -27,7 +27,8 @@ const DATATABLE_COLUMNS = [
         label: 'Price',
         fieldName: 'unitPrice',
         type: 'currency',
-        typeAttributes: { currencyCode: 'USD' }
+        typeAttributes: { currencyCode: 'USD' },
+        cellAttributes: {alignment: 'left'}
     }
 ];
 
@@ -53,7 +54,11 @@ export default class cpqStepBundleConfig extends LightningElement {
                 {
                     Id: 'opt_sd64_001',
                     Name: 'SanDisk Ultra 64GB',
-                    defaultQuantity:4,
+                    productCode: 'SDU64',
+                    productName: 'SanDisk Ultra 64GB',
+                    description: 'Required 64GB storage',
+                    unitPrice: 12.00,
+                    defaultQuantity: 1,
                     minQuantity: 1,
                     maxQuantity: 1,
                     quantityEditable: false,
@@ -64,6 +69,10 @@ export default class cpqStepBundleConfig extends LightningElement {
                 {
                     Id: 'opt_sd128_001',
                     Name: 'SanDisk Ultra 128GB',
+                    productCode: 'SD128',
+                    productName: 'SanDisk Ultra 128GB',
+                    description: 'Upgrade 128GB storage',
+                    unitPrice: 15.00,
                     defaultQuantity: 0,
                     minQuantity: 0,
                     maxQuantity: 1,
@@ -86,25 +95,32 @@ export default class cpqStepBundleConfig extends LightningElement {
                 {
                     Id: 'opt_hb01_001',
                     Name: 'Basic Headset',
-                    productCode : 'CODE1',
+                    productCode: 'HB01',
+                    productName: 'Basic Headset',
+                    description: 'Standard wired headphones',
+                    unitPrice: 25.00,
                     defaultQuantity: 0,
                     minQuantity: 0,
                     maxQuantity: 5,
                     quantityEditable: true,
                     isRequired: false,
                     isSelected: false,
-                    optionType: 'Accessory',
+                    optionType: 'Accessory'
                 },
                 {
                     Id: 'opt_hb02_001',
                     Name: 'Premium Headset',
+                    productCode: 'HB02',
+                    productName: 'Premium Headset',
+                    description: 'Wireless over-ear',
+                    unitPrice: 45.00,
                     defaultQuantity: 0,
                     minQuantity: 0,
                     maxQuantity: 3,
                     quantityEditable: true,
                     isRequired: false,
                     isSelected: true,
-                    optionType: 'Accessory',
+                    optionType: 'Accessory'
                 }
             ]
         },
@@ -120,24 +136,32 @@ export default class cpqStepBundleConfig extends LightningElement {
                 {
                     Id: 'opt_mc01_001',
                     Name: 'Mobile Card Standard',
+                    productCode: 'MC01',
+                    productName: 'Mobile Card Standard',
+                    description: 'Required SIM card',
+                    unitPrice: 10.00,
                     defaultQuantity: 1,
                     minQuantity: 1,
                     maxQuantity: 1,
                     quantityEditable: false,
                     isRequired: true,
                     isSelected: true,
-                    optionType: 'Component',
+                    optionType: 'Component'
                 },
                 {
                     Id: 'opt_mc02_001',
                     Name: 'Mobile Card High-speed',
+                    productCode: 'MC02',
+                    productName: 'Mobile Card High-speed',
+                    description: '5G upgrade option',
+                    unitPrice: 18.00,
                     defaultQuantity: 0,
                     minQuantity: 0,
                     maxQuantity: 1,
                     quantityEditable: true,
                     isRequired: false,
                     isSelected: false,
-                    optionType: 'Related Product',
+                    optionType: 'Related Product'
                 }
             ]
         }
@@ -175,17 +199,26 @@ export default class cpqStepBundleConfig extends LightningElement {
             const min = feature.minOptions || 0;
             const max = feature.maxOptions || 999;
 
+            const selectedIds = options.filter(opt => opt.isSelected).map(opt => opt.Id);
+            const requiredIds = options.filter(opt => opt.isRequired).map(opt => opt.Id);
+
+            let disabledIds = [];
+            if (requiredIds.length >= max && max > 0) {
+                disabledIds = options.map(opt => opt.Id);
+            } else {
+                disabledIds = requiredIds;
+            }
+
             return {
                 Id:           feature.Id,
                 Name:         feature.Name,
                 helpText:     feature.helpText,
                 minOptions:   min,
                 maxOptions:   max,
-                maxSelection: max,
                 badgeClass:   'slds-badge',
                 options:      this.processOptions(options),
-                selectedRows: options.filter(opt => opt.isSelected).map(opt => opt.Id),
-                disabledRows: options.filter(opt => opt.isRequired).map(opt => opt.Id)
+                selectedRows: selectedIds,
+                disabledRows: disabledIds
             };
         });
     }
@@ -196,17 +229,17 @@ export default class cpqStepBundleConfig extends LightningElement {
 
     processOptions(options) {
         return (options || []).map(option => ({
-            Id:           option.Id,
-            quantity:     option.defaultQuantity ?? option.minQuantity ?? 0,
-            minQuantity:  option.minQuantity || 0,
-            maxQuantity:  option.maxQuantity || 999,
-            productCode:  option.optionProduct?.ProductCode || option.productCode || '',
-            productName:  option.optionProduct?.Name || option.Name,
-            description:  option.optionProduct?.Description || '',
-            unitPrice:    option.optionProduct?.UnitPrice || 0,
+            Id:            option.Id,
+            quantity:      option.defaultQuantity ?? option.minQuantity ?? 0,
+            minQuantity:   option.minQuantity || 0,
+            maxQuantity:   option.maxQuantity || 999,
+            productCode:   option.productCode || '',
+            productName:   option.productName || option.Name || '',
+            description:   option.description || '',
+            unitPrice:     option.unitPrice || 0,
             isQtyEditable: option.quantityEditable !== false,
-            isRequired:   option.isRequired,
-            isSelected:   option.isSelected,
+            isRequired:    option.isRequired,
+            isSelected:    option.isSelected,
             rowClass: {
                 isDisabled: !option.quantityEditable || option.isRequired
             }
@@ -233,54 +266,5 @@ export default class cpqStepBundleConfig extends LightningElement {
             message: 'Quantities updated',
             variant: 'success'
         }));
-    }
-
-    handleFeatureSelection(event) {
-        // Identify the feature via the closest dataset attribute
-        const featureId =
-          event.target.closest('section')?.dataset?.featureId ||
-          event.target.closest('lightning-tab')?.dataset?.featureId;
-
-        const selectedRows = event.detail.selectedRows;
-        const datatable    = event.target;
-
-        // Find the feature in the tracked array
-        const featureIndex = this.features.findIndex(f => f.Id === featureId);
-        if (featureIndex === -1) return;
-
-        const feat = this.features[featureIndex];
-
-        // 1. Prevent de-selection of required options
-        const requiredRowIds   = feat.options.filter(opt => opt.isRequired).map(opt => opt.Id);
-        const missingRequired  = requiredRowIds.filter(reqId => !selectedRows.some(row => row.Id === reqId));
-
-        if (missingRequired.length > 0) {
-            const currentSelectedIds = selectedRows.map(row => row.Id);
-            const correctedIds       = [...new Set([...currentSelectedIds, ...requiredRowIds])];
-
-            datatable.selectedRows = correctedIds;
-
-            this.dispatchEvent(new ShowToastEvent({
-                title:   'Info',
-                message: 'Certaines options sont obligatoires et ne peuvent pas être désélectionnées.',
-                variant: 'info'
-            }));
-            return;
-        }
-
-        // 2. Update reactive state so processedFeatures recomputes (badge refresh)
-        const selectedRowIds  = selectedRows.map(r => r.Id);
-        const updatedOptions  = feat.options.map(opt => ({
-            ...opt,
-            isSelected: selectedRowIds.includes(opt.Id)
-        }));
-
-        this.features = [
-            ...this.features.slice(0, featureIndex),
-            { ...feat, options: updatedOptions },
-            ...this.features.slice(featureIndex + 1)
-        ];
-
-        console.log('Feature selection updated:', featureId, '| selected count:', selectedRows.length);
     }
 }
