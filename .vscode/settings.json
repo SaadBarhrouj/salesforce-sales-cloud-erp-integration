@@ -8,5 +8,7 @@
   "xml.preferences.showSchemaDocumentationType": "none",
   "apexPMD.rulesets": [
     "config/ruleset.xml"
-  ]
+  ],
+  "salesforcedx-vscode-apex.java.home": "C:\\Program Files\\Eclipse Adoptium\\jdk-21.0.10.7-hotspot",
+  "salesforcedx-vscode-apex.advanced.enable-completion-statistics": true
 }

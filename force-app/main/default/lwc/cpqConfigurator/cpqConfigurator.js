@@ -253,9 +253,13 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
     });
   }
 
-  get headerGlobalActions() {
+    get headerGlobalActions() {
     const actions = deepClone(this.currentStep.header?.globalActions || []);
-    const filtersOpen = this._getSelectionStep()?.filterPanelOpen;
+    let filtersOpen = false;
+
+    if (this.isStepSelection) {
+      filtersOpen = this._getSelectionStep()?.filterPanelOpen;
+    }
 
     return actions.map((action) => {
       if (action.isGroup && action.items) {
@@ -286,6 +290,15 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
     else if (action === "groupBySection") this._getBundleConfigStep()?.setFeatureOrganization("section");
     else if (action === "groupByTab") this._getBundleConfigStep()?.setFeatureOrganization("tab");
     else if (action === "applyRules") this._handleApplyRules();
+    else if (action === "toggleFilters") this._handleToggleFilters();
+  }
+
+  _handleToggleFilters() {
+    if (this.isStepSelection) {
+      this._getSelectionStep()?.toggleFilterPanel();
+    } else if (this.isStepConfigure) {
+      this._showToast("Info", "Filters are not currently available for this step.", "info");
+    }
   }
 
   _handleRefresh() {
