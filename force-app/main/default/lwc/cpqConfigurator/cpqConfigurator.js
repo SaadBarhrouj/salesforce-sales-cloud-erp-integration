@@ -63,6 +63,10 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
     );
     if (currentIndex > 0) {
       this.currentStep = STEP_LIST[currentIndex - 1];
+      if (this.currentStep.key === STEPS.SELECTION.key) {
+        this.selectedItemId = "";
+        this.selectedItemLabel = "";
+      }
       this.initSidebarData(this.currentStep.key);
     }
   }
@@ -74,6 +78,8 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
   @track sidebarTitle = "Categories";
   @track sidebarIcon = "standard:category";
   @track sidebarSortLabel = "Name";
+  @track sidebarSortField = "label";
+  @track sidebarSortDirection = "asc";
   @track sidebarIsLoading = false;
   @track sidebarItems = [];
   @track selectedItemId = "";
@@ -169,11 +175,12 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
       if (accountName) {
         metadata.push({
           id: "account",
-          label: accountName,
-          value: accountId, // Link value (recordId)
+          label: "Account:",
+          value: accountName,
+          secondary: accountId,
           iconName: "standard:account",
           isLink: true,
-          isBold: false,
+          isBold: true,
           objectApiName: "Account"
         });
       }
@@ -189,31 +196,33 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
 
       metadata.push({
         id: "pricebook",
-        label: pbName || "Standard Pricebook",
-        value: pbId || "#",
+        label: "Pricebook:",
+        value: pbName || "Standard Pricebook",
+        secondary: pbId,
         iconName: "standard:pricebook",
         isLink: true,
-        isBold: false,
+        isBold: true,
         objectApiName: "Pricebook2"
       });
     } else {
       metadata.push({
         id: "pricebook",
-        label: "Standard Pricebook",
-        value: "#",
+        label: "Pricebook:",
+        value: "Standard Pricebook",
+        secondary: "#",
         iconName: "standard:pricebook",
-        isLink: true,
-        isBold: false,
+        isLink: false,
+        isBold: true,
         objectApiName: "Pricebook2"
       });
     }
 
+    // Offer Type
     if (this.opportunityRecord?.data) {
       const offerTypeName = getFieldValue(
         this.opportunityRecord.data,
         OPP_OFFER_TYPE_NAME
       );
-      // Offer Type:
       metadata.push({
         id: "offerType",
         label: "Offer Type:",
@@ -269,14 +278,54 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
     else if (action === "select") this._goNext();
     else if (action === "save") this._triggerSave();
     else if (action === "cancel") this._navigateToOpportunity();
-    else if (action === "refresh") this._getSelectionStep()?.refreshProducts();
+    else if (action === "refresh") this._handleRefresh();
     else if (action === "clearSelection") this._handleClearSelection();
-    else if (action === "toggleFilters")
-      this._getSelectionStep()?.toggleFilterPanel();
-    else if (action === "viewTable")
-      this._getSelectionStep()?.setViewMode("table");
-    else if (action === "viewCards")
-      this._getSelectionStep()?.setViewMode("cards");
+    else if (action === "changeView") this._handleChangeView(event);
+    else if (action === "resetConfig") this._handleResetConfig();
+    else if (action === "saveConfig") this._handleSaveConfig();
+    else if (action === "groupBySection") this._getBundleConfigStep()?.switchToSections();
+    else if (action === "groupByTab") this._getBundleConfigStep()?.switchToTabs();
+    else if (action === "applyRules") this._handleApplyRules();
+  }
+
+  _handleRefresh() {
+    if (this.isStepSelection) {
+      this._getSelectionStep()?.refreshProducts();
+    } else if (this.isStepConfigure) {
+      this._getBundleConfigStep()?.refresh();
+    } else {
+      this.initSidebarData(this.currentStep.key);
+    }
+  }
+
+  _handleSettings() {
+    this._showToast("Settings", "Settings panel opened", "info");
+  }
+
+  _handleChangeView(event) {
+    const viewType = event.detail.value;
+    if (viewType === "viewTable") this._getSelectionStep()?.setViewMode("table");
+    else if (viewType === "viewCards") this._getSelectionStep()?.setViewMode("cards");
+  }
+
+  _handleResetConfig() {
+    const bundleConfig = this._getBundleConfigStep();
+    if (bundleConfig) {
+      bundleConfig.resetCurrentBundle();
+      this._showToast("Configuration Reset", "Bundle configuration has been reset", "info");
+    }
+  }
+
+  _handleSaveConfig() {
+    const bundleConfig = this._getBundleConfigStep();
+    if (bundleConfig) {
+      bundleConfig.saveCurrentConfig();
+      this._showToast("Configuration Saved", "Bundle configuration saved successfully", "success");
+    }
+  }
+
+  _handleApplyRules() {
+    this._showToast("Apply Rules", "Rules applied successfully", "success");
   }
 
   handleHeaderSearch(event) {
@@ -287,6 +336,10 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
 
   _getSelectionStep() {
     return this.template.querySelector("c-cpq-step-selection");
+  }
+
+  _getBundleConfigStep() {
+    return this.template.querySelector("c-cpq-step-bundle-config");
   }
 
   _handleClearSelection() {
@@ -309,8 +362,10 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
 
   _loadSelectionSidebar() {
     this.sidebarTitle = "Categories";
-    this.sidebarIcon = "standard:product";
-    this.sidebarSortLabel = "Products";
+    this.sidebarIcon = "standard:category";
+    this.sidebarSortLabel = "Name";
+    this.sidebarSortField = "label";
+    this.sidebarSortDirection = "asc";
 
     if (!this.recordId) {
       this.sidebarItems = [];
@@ -335,35 +390,33 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
 
   _loadConfigureSidebar() {
     this.sidebarTitle = "Bundles";
-    this.sidebarIcon = "standard:bundle";
-    this.sidebarSortLabel = "Price";
-    this.sidebarItems = [
-      {
-        id: "bun-001",
-        label: "Starter Pack",
-        value: "2",
-        children: [{ id: "bun-001-1", label: "Option 1", value: "$99" }]
-      },
-      {
-        id: "bun-002",
-        label: "Professional",
-        value: "4",
-        children: [
-          { id: "bun-002-1", label: "Option 1", value: "$199" },
-          { id: "bun-002-2", label: "Option 2", value: "$149" }
-        ]
-      },
-      {
-        id: "bun-003",
-        label: "Enterprise",
-        value: "6"
-      },
-      {
-        id: "bun-004",
-        label: "Custom Bundle",
-        value: "8"
+    this.sidebarIcon = "standard:bundle_config";
+    this.sidebarSortLabel = "Name";
+    this.sidebarSortField = "label";
+    this.sidebarSortDirection = "asc";
+
+    this.sidebarIsLoading = true;
+
+    setTimeout(() => {
+      const bundleItems = (this.selectedProducts || []).filter(
+        (item) => item.isBundle === true
+      );
+
+      if (bundleItems.length === 0) {
+        this.sidebarItems = [];
+        this.sidebarIsLoading = false;
+        return;
       }
-    ];
+
+      this.sidebarItems = bundleItems.map((bundle) => {
+        return {
+          id: bundle._key,
+          label: bundle.productName,
+          subtitle: bundle.productCode
+        };
+      });
+      this.sidebarIsLoading = false;
+    }, 300);
   }
 
   _loadLineEditorSidebar() {
@@ -397,6 +450,9 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
     const selectedItem = this._findSidebarItemById(selectedItemId);
     this.selectedItemId = selectedItem ? selectedItem.id : "";
     this.selectedItemLabel = selectedItem ? selectedItem.label : "";
+
+    // For Step 2 (Bundle Configuration), this triggers reactive change in cpqStepBundleConfig
+    // via the selectedBundleId prop setter, which loads features for the selected bundle
   }
 
   handleItemDeselect() {
@@ -424,6 +480,11 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
     this.initSidebarData(this.currentStep.key);
   }
 
+  handleSortChange(event) {
+    this.sidebarSortField = event.detail.sortField;
+    this.sidebarSortDirection = event.detail.sortDirection;
+  }
+
   /* ── Step 1 events ── */
   handleProductAdd(event) {
     const cartItem = deepClone(event.detail.cartItem);
@@ -434,6 +495,11 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
     const items = deepClone(this.selectedProducts);
     items.push(cartItem);
     this.selectedProducts = items;
+
+    // If now in Step 2 (Configure), refresh sidebar to show updated bundle list
+    if (this.isStepConfigure) {
+      this._loadConfigureSidebar();
+    }
   }
 
   handleProductRemove(event) {

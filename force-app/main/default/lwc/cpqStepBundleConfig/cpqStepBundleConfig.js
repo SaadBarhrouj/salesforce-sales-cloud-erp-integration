@@ -63,14 +63,14 @@ export default class cpqStepBundleConfig extends LightningElement {
 
 
     @api bundleId;
-    @api bundleName = 'Apple iPhone X Package';
+
 
 
     @track isLoading   = true;
-    @track viewMode    = 'sections';
     @track draftValues = [];
     @track localFeatures = [];
-
+    @track bundleName = 'Apple iPhone X Package';
+    @track viewMode    = 'sections';
 
     connectedCallback() {
         this.loadConfiguration();
@@ -188,11 +188,11 @@ export default class cpqStepBundleConfig extends LightningElement {
 
         this.localFeatures = [...this.localFeatures];
     }
-
+    @api
     switchToSections() {
         this.viewMode = 'sections';
     }
-
+    @api
     switchToTabs() {
         this.viewMode = 'tabs';
     }

@@ -73,18 +73,18 @@
                     <lightning-spinner alternative-text="Loading" size="small"></lightning-spinner>
                 </template>
 
-                <div class="slds-split-view__list-header slds-grid">
+                <div class={sortHeaderClass} onclick={handleSortToggle} title="Toggle sort direction">
                     <span class="slds-assistive-text">Sorted by:</span>
-                    <span>
+                    <span class="cpq-sort-label">
                         {sortLabel}
                         <lightning-icon
-                            icon-name="utility:arrowdown"
+                            icon-name={sortIconName}
                             size="xx-small"
-                            alternative-text="sorted"
+                            alternative-text={sortDirectionLabel}
                             class="slds-icon slds-icon_xx-small slds-icon-text-default slds-align-top"
                         ></lightning-icon>
                     </span>
-                    <span class="slds-assistive-text">- Ascending</span>
+                    <span class="slds-assistive-text">- {sortDirectionLabel}</span>
                 </div>
 
                 <template lwc:if={hasItems}>

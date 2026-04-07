@@ -80,7 +80,7 @@ export default class CpqStepSelection extends LightningElement {
     set pricebookId(value) {
         const oldValue = this._pricebookId;
         this._pricebookId = value || '';
-        if (oldValue !== this._pricebookId) {
+        if (this._pricebookId && oldValue !== this._pricebookId) {
             this.loadAllProducts(this._categoryId, this._pricebookId, this._catalogId);
         }
     }
@@ -93,7 +93,7 @@ export default class CpqStepSelection extends LightningElement {
     set catalogId(value) {
         const oldValue = this._catalogId;
         this._catalogId = value || '';
-        if (oldValue !== this._catalogId) {
+        if (this._catalogId && oldValue !== this._catalogId) {
             this.loadAllProducts(this._categoryId, this._pricebookId, this._catalogId);
         }
     }
