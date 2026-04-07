@@ -8,6 +8,8 @@ export default class CpqCollapsibleSidebar extends LightningElement {
     @api title     = 'Categories';
     @api iconName  = 'standard:category';
     @api sortLabel = 'Name';
+    @api sortField = 'label';
+    @api sortDirection = 'asc';
     @api items     = [];
     @api selectedItemId = null;
     @api isLoading = false;
@@ -47,6 +49,24 @@ export default class CpqCollapsibleSidebar extends LightningElement {
     }
 
     /* ═══════════════════════════════════════════════
+       GETTERS — Sort
+       ═══════════════════════════════════════════════ */
+
+    get sortIconName() {
+        return this.sortDirection === 'asc'
+            ? 'utility:arrowup'
+            : 'utility:arrowdown';
+    }
+
+    get sortDirectionLabel() {
+        return this.sortDirection === 'asc' ? 'Ascending' : 'Descending';
+    }
+
+    get sortHeaderClass() {
+        return 'cpq-sort-header slds-split-view__list-header slds-grid';
+    }
+
+    /* ═══════════════════════════════════════════════
        GETTERS — List
        ═══════════════════════════════════════════════ */
 
@@ -62,10 +82,37 @@ export default class CpqCollapsibleSidebar extends LightningElement {
         return getIllustration('NORESULTS_UNKNOWN').name;
     }
 
+    /* ═══════════════════════════════════════════════
+       SORTING LOGIC
+       ═══════════════════════════════════════════════ */
+
+    _sortItems(items) {
+        if (!items || items.length === 0) {
+            return items;
+        }
+
+        const sorted = [...items];
+        const field = this.sortField || 'label';
+        const direction = this.sortDirection === 'desc' ? -1 : 1;
+
+        sorted.sort((a, b) => {
+            const aVal = (a[field] ?? '').toString().toLowerCase();
+            const bVal = (b[field] ?? '').toString().toLowerCase();
+            return aVal.localeCompare(bVal) * direction;
+        });
+
+        return sorted;
+    }
+
     get computedItems() {
-        return this.items.map(item => {
+        const sortedItems = this._sortItems(this.items);
+
+        return sortedItems.map(item => {
             const hasChildren    = !!(item.children && item.children.length);
             const isItemExpanded = !!this._expandedMap[item.id];
+            const sortedChildren = hasChildren
+                ? this._sortItems(item.children)
+                : [];
 
             return {
                 ...item,
@@ -76,13 +123,11 @@ export default class CpqCollapsibleSidebar extends LightningElement {
                 isItemExpanded,
                 chevronClass: 'cpq-chevron'
                             + (isItemExpanded ? ' cpq-chevron-rotated' : ''),
-                computedChildren: hasChildren
-                    ? item.children.map(child => ({
-                          ...child,
-                          ariaCurrent: child.id === this.selectedItemId ? 'page' : null,
-                          tabIndex:    child.id === this.selectedItemId ? '0'    : '-1'
-                      }))
-                    : []
+                computedChildren: sortedChildren.map(child => ({
+                    ...child,
+                    ariaCurrent: child.id === this.selectedItemId ? 'page' : null,
+                    tabIndex:    child.id === this.selectedItemId ? '0'    : '-1'
+                }))
             };
         });
     }
@@ -98,6 +143,17 @@ export default class CpqCollapsibleSidebar extends LightningElement {
     /* ═══════════════════════════════════════════════
        HANDLERS
        ═══════════════════════════════════════════════ */
+
+    handleSortToggle() {
+        const newDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+        
+        console.log('[Sidebar] handleSortToggle: current direction =', this.sortDirection, 'new direction =', newDirection);
+        
+        dispatchCustomEvent(this, EVENTS.SORT_CHANGE, {
+            sortField: this.sortField,
+            sortDirection: newDirection
+        });
+    }
 
     handleToggle() {
         this.isExpanded = !this.isExpanded;

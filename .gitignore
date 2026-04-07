@@ -55,3 +55,18 @@ $RECYCLE.BIN/
 .github/agents/
 .github/copilot-instructions.md
 .vscode/
+
+# Added by Illuminated Cloud
+/IlluminatedCloud/
+/out/
+target/
+/.illuminatedCloud/
+**/tsconfig*.json
+**/*.tsbuildinfo
+**/graphql.config.yml
+
+
+
+# IntelliJ IDEA
+.idea/
+*.iml

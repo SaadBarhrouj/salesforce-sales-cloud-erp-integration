@@ -1,120 +1,130 @@
 <template>
-    <div class="slds-grid slds-gutters configurator-layout">
-        <!-- Left: Collapsible Sidebar -->
-        <div class="slds-col slds-shrink-none sidebar-col">
-            <c-cpq-collapsible-sidebar
-                title="Bundles"
-                items={sidebarItems}
-                active-item-id={activeBundleKey}
-                onitemselect={handleBundleSelect}
-                onsidebartoggle={handleSidebarToggle}
-            ></c-cpq-collapsible-sidebar>
-        </div>
+    <div class="step-configure slds-p-around_none slds-grid slds-is-relative slds-scrollable_none">
+        <div class="step-configure-content slds-col slds-no-space slds-scrollable_y">
 
-        <!-- Right: Feature Tabs + Options -->
-        <div class="slds-col slds-grow main-area">
-            <div lwc:if={isLoading} class="slds-align_absolute-center slds-p-around_x-large">
-                <lightning-spinner alternative-text="Loading configuration" size="medium"></lightning-spinner>
+            <!-- ── LOADING STATE ────────────────────────────────────────── -->
+            <div lwc:if={isLoading} class="slds-is-relative slds-var-p-around_xx-large">
+                <lightning-spinner alternative-text="Loading bundle configuration" size="medium"></lightning-spinner>
             </div>
 
-            <template lwc:if={hasActiveBundle}>
-                <!-- Bundle Header -->
-                <div class="slds-p-around_small slds-border_bottom">
-                    <h2 class="slds-text-heading_medium">{activeBundleName}</h2>
-                    <!-- Completeness bar (Little Extra) -->
-                    <div class="slds-grid slds-grid_vertical-align-center slds-m-top_x-small">
-                        <div class="slds-col slds-grow slds-m-right_small">
-                            <div class="slds-progress-bar slds-progress-bar_x-small" aria-valuemin="0" aria-valuemax="100" aria-valuenow={completenessValue} role="progressbar">
-                                <span class="slds-progress-bar__value" style={completenessStyle}>
-                                    <span class="slds-assistive-text">Configuration: {completenessValue}%</span>
-                                </span>
-                            </div>
-                        </div>
-                        <div class="slds-col slds-shrink-none">
-                            <span class="slds-text-body_small">{completenessLabel}</span>
-                        </div>
+            <!-- ── EMPTY STATE ───────────────────────────────────────────── -->
+            <div lwc:if= {hasNoFeatures}>
+                <c-empty-state
+                  illustration-name={emptyStateIllustration}
+                  title="No Configuration Options"
+                  description="This bundle has no configurable features."
+                  size="large">
+                </c-empty-state>
+            </div>
+
+            <!-- ── MAIN CONTENT ──────────────────────────────────────────── -->
+            <template lwc:if={hasFeatures}>
+                <div class="slds-p-around_medium">
+                    <!-- View toggle (Sections / Tabs) -->
+                    <div class="slds-m-top_small slds-m-bottom_medium slds-grid slds-gutters_x-small">
+                        <lightning-button
+                          label="Sections"
+                          variant={sectionsButtonVariant}
+                          onclick={switchToSections}
+                          class="slds-size_1-of-2">
+                        </lightning-button>
+                        <lightning-button
+                          label="Tabs"
+                          variant={tabsButtonVariant}
+                          onclick={switchToTabs}
+                          class="slds-size_1-of-2">
+                        </lightning-button>
                     </div>
-                </div>
 
-                <!-- Feature Tabs -->
-                <lightning-tabset active-tab-value={activeFeatureId} onactive={handleFeatureTabChange}>
-                    <template for:each={features} for:item="feature">
-                        <lightning-tab key={feature.Id} label={feature.Name} value={feature.Id}>
-                            <!-- Help text -->
-                            <div lwc:if={feature.Help_Text__c} class="slds-notify slds-notify_alert slds-alert_texture slds-theme_info slds-m-bottom_small" role="alert">
-                                <lightning-icon icon-name="utility:info" size="x-small" class="slds-m-right_x-small"></lightning-icon>
-                                <span>{feature.Help_Text__c}</span>
-                            </div>
+                    <!-- Bundle title -->
+                    <h1 class="slds-text-heading_medium slds-truncate slds-m-bottom_small">
+                        {bundleName}
+                    </h1>
 
-                            <!-- Selection constraint badges -->
-                            <div class="slds-m-bottom_small">
-                                <span class="slds-badge" lwc:if={feature._minLabel}>{feature._minLabel}</span>
-                                <span class="slds-badge" lwc:if={feature._maxLabel}>{feature._maxLabel}</span>
-                                <span class="slds-badge slds-badge_inverse" lwc:if={feature._selectionLabel}>{feature._selectionLabel}</span>
-                            </div>
 
-                            <!-- Options table -->
-                            <table class="slds-table slds-table_cell-buffer slds-table_bordered slds-table_col-bordered slds-no-row-hover">
-                                <thead>
-                                    <tr class="slds-line-height_reset">
-                                        <th scope="col" class="slds-cell-wrap" style="width:60px;"></th>
-                                        <th scope="col" style="width:80px;">Quantity</th>
-                                        <th scope="col">Product Code</th>
-                                        <th scope="col">Product Name</th>
-                                        <th scope="col">Description</th>
-                                        <th scope="col" class="slds-text-align_right" style="width:100px;">Unit Price</th>
-                                        <th scope="col" style="width:50px;"></th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <template for:each={feature._options} for:item="opt">
-                                        <c-cpq-option-row
-                                            key={opt.Id}
-                                            option={opt}
-                                            is-single-select={feature._isSingleSelect}
-                                            radio-group-name={feature._radioGroup}
-                                            onoptionselect={handleOptionSelect}
-                                            onoptionquantity={handleOptionQuantity}
-                                        ></c-cpq-option-row>
-                                    </template>
-                                </tbody>
-                            </table>
-
-                            <!-- Validation messages -->
-                            <template for:each={feature._errors} for:item="err">
-                                <div key={err} class="slds-text-color_error slds-m-top_x-small slds-text-body_small">
-                                    <lightning-icon icon-name="utility:error" size="xx-small" class="slds-m-right_xx-small"></lightning-icon>
-                                    {err}
+                    <!-- ── SECTIONS VIEW ────────────────────────────────── -->
+                    <template lwc:if={isSectionsView}>
+                        <div class="slds-m-bottom_large">
+                            <template for:each={processedFeatures} for:item="feature">
+                                <div key={feature.Id} class="slds-box slds-p-around_none slds-m-bottom_medium slds-theme_default">
+                                    <section data-feature-id={feature.Id} class="slds-section slds-is-open slds-m-bottom_none">
+                                        <div class="slds-section__title slds-theme_shade slds-p-around_small">
+                                            <span class="slds-truncate slds-text-heading_small slds-text-title_bold slds-text-align_left" title={feature.Name}>
+                                                {feature.Name}
+                                            </span>
+                                        </div>
+                                        <div class="slds-section__content slds-p-top_none">
+                                            <div class="slds-p-horizontal_medium slds-p-top_medium slds-p-bottom_small slds-text-align_left" if:true={feature.helpText}>
+                                                <p class="slds-text-body_regular slds-text-color_weak">{feature.helpText}</p>
+                                            </div>
+                                            <div class="slds-p-horizontal_medium slds-p-bottom_small slds-text-align_left">
+                                                <span class={feature.badgeClass}>
+                                                    Min: {feature.minOptions} / Max: {feature.maxOptions}
+                                                </span>
+                                            </div>
+                                            <div class="slds-p-bottom_medium">
+                                                <lightning-datatable
+                                                  key-field="Id"
+                                                  data={feature.options}
+                                                  columns={columns}
+                                                  draft-values={draftValues}
+                                                  onsave={handleSaveTable}
+                                                  max-row-selection={feature.maxOptions}
+                                                  selected-rows={feature.selectedRows}
+                                                  disabled-rows={feature.disabledRows}
+                                                  onrowselection={handleFeatureSelection}>
+                                                </lightning-datatable>
+                                            </div>
+                                        </div>
+                                    </section>
                                 </div>
                             </template>
-                        </lightning-tab>
+                        </div>
                     </template>
-                </lightning-tabset>
+
+                    <!-- ── TABS VIEW ────────────────────────────────────── -->
+                    <template lwc:if={isTabsView}>
+                        <lightning-tabset class="slds-m-bottom_large">
+                            <template for:each={processedFeatures} for:item="feature">
+                                <lightning-tab key={feature.Id} data-feature-id={feature.Id} label={feature.Name}>
+                                    <div class="slds-p-around_medium">
+
+                                        <!-- Help text (optional) -->
+                                        <p lwc:if={feature.helpText}
+                                           class="slds-text-body_small slds-text-color_weak slds-m-bottom_x-small"
+                                           style="text-align: left;">
+                                            {feature.helpText}
+                                        </p>
+
+                                        <!-- Min / Max badge -->
+                                        <div class="slds-m-bottom_small" style="text-align: left;">
+                                            <span class={feature.badgeClass}>
+                                                Min: {feature.minOptions} &nbsp;|&nbsp; Max: {feature.maxOptions}
+                                            </span>
+                                        </div>
+
+                                        <!-- Datatable -->
+                                        <lightning-datatable
+                                          key-field="Id"
+                                          data={feature.options}
+                                          columns={columns}
+                                          draft-values={draftValues}
+                                          onsave={handleSaveTable}
+                                          max-row-selection={feature.maxOptions}
+                                          selected-rows={feature.selectedRows}
+                                          disabled-rows={feature.disabledRows}
+                                          onrowselection={handleFeatureSelection}>
+                                        </lightning-datatable>
+
+                                    </div>
+                                </lightning-tab>
+                            </template>
+                        </lightning-tabset>
+                    </template>
+
+                </div>
             </template>
 
-            <div lwc:elseif={hasNoBundles} class="slds-align_absolute-center slds-p-around_x-large">
-                <p class="slds-text-body_regular slds-text-color_weak">
-                    No configurable bundles in the cart. Add bundle products in Step 2 or proceed to the Line Editor.
-                </p>
-            </div>
         </div>
-    </div>
-
-    <!-- Navigation -->
-    <div class="slds-m-top_medium slds-clearfix slds-p-horizontal_medium">
-        <lightning-button
-            label="Back: Products"
-            icon-name="utility:back"
-            class="slds-float_left"
-            onclick={handleBack}
-        ></lightning-button>
-        <lightning-button
-            label="Next: Line Editor"
-            variant="brand"
-            icon-name="utility:forward"
-            icon-position="right"
-            class="slds-float_right"
-            onclick={handleNext}
-        ></lightning-button>
     </div>
 </template>

@@ -1,281 +1,204 @@
-import { LightningElement, api } from 'lwc';
-import { getFeaturesByProduct, getOptionsByFeature } from 'c/cpqDataService';
-import { deepClone, isSingleSelect, getSelectionMode, validateFeatureSelections, calculateCompleteness, formatCurrency } from 'c/cpqUtils';
-import { SELECTION_MODES } from 'c/cpqConstants';
+import { LightningElement, api, track } from 'lwc';
+import { getIllustration } from 'c/cpqConstants';
+import { showToast, deepClone } from 'c/cpqUtils';
+// import getBundleData from '@salesforce/apex/CpqController.getBundleData';
 
-export default class CpqStepBundleConfig extends LightningElement {
-    @api selectedProducts = [];
 
-    features = [];
-    activeBundleKey = null;
-    activeFeatureId = null;
-    isLoading = false;
+const DATATABLE_COLUMNS = [
+    {
+        label: 'Qty',
+        fieldName: 'quantity',
+        type: 'number',
+        editable: { fieldName: 'isQtyEditable' },
+        typeAttributes: { step: 1, min: 0 },
+        cellAttributes: { alignment: 'left' }
+    },
+    { label: 'Code',        fieldName: 'productCode',  type: 'text' },
+    { label: 'Name',        fieldName: 'productName',  type: 'text' },
+    { label: 'Description', fieldName: 'description',  type: 'text' },
+    {
+        label: 'Price',
+        fieldName: 'unitPrice',
+        type: 'currency',
+        typeAttributes: { currencyCode: 'USD' },
+        cellAttributes: { alignment: 'left' }
+    }
+];
 
-    _optionsByFeature = {}; // { featureId: [options] }
-    _sidebarCollapsed = false;
+const MOCK_FEATURES = [
+    {
+        Id: 'feature_memory_001',
+        Name: 'Memory Cards',
+        helpText: 'Veuillez sélectionner exactement une carte mémoire pour cet appareil.',
+        minOptions: 1, maxOptions: 1,
+        options: [
+            { Id: 'opt_sd64_001', Name: 'SanDisk Ultra 64GB', productCode: 'SDU64', productName: 'SanDisk Ultra 64GB', description: 'Required 64GB storage', unitPrice: 12.00, defaultQuantity: 1, minQuantity: 1, maxQuantity: 1, quantityEditable: false, isRequired: true, isSelected: true, optionType: 'Component' },
+            { Id: 'opt_sd128_001', Name: 'SanDisk Ultra 128GB', productCode: 'SD128', productName: 'SanDisk Ultra 128GB', description: 'Upgrade 128GB storage', unitPrice: 15.00, defaultQuantity: 0, minQuantity: 0, maxQuantity: 1, quantityEditable: true, isRequired: false, isSelected: false, optionType: 'Component' }
+        ]
+    },
+    {
+        Id: 'feature_headphones_001',
+        Name: 'Headphones',
+        helpText: 'Vous pouvez sélectionner plusieurs casques ou écouteurs facultatifs.',
+        minOptions: 1, maxOptions: 2,
+        options: [
+            { Id: 'opt_hb01_001', Name: 'Basic Headset', productCode: 'HB01', productName: 'Basic Headset', description: 'Standard wired', unitPrice: 25.00, defaultQuantity: 0, minQuantity: 0, maxQuantity: 2, quantityEditable: true, isRequired: false, isSelected: false, optionType: 'Accessory' },
+            { Id: 'opt_hb02_001', Name: 'Premium Headset', productCode: 'HB02', productName: 'Premium Headset', description: 'Wireless', unitPrice: 45.00, defaultQuantity: 0, minQuantity: 0, maxQuantity: 3, quantityEditable: true, isRequired: false, isSelected: true, optionType: 'Accessory' }
+        ]
+    },
+    {
+        Id: 'feature_mobilecards_001',
+        Name: 'Mobile Cards',
+        helpText: 'Option de connectivité requise. Le standard est inclus par défaut.',
+        minOptions: 1, maxOptions: 1,
+        options: [
+            { Id: 'opt_mc01_001', Name: 'Mobile Card Standard', productCode: 'MC01', productName: 'Mobile Card Standard', description: 'Required SIM card', unitPrice: 10.00, defaultQuantity: 1, minQuantity: 1, maxQuantity: 1, quantityEditable: false, isRequired: true, isSelected: true, optionType: 'Component' },
+            { Id: 'opt_mc02_001', Name: 'Mobile Card High-speed', productCode: 'MC02', productName: 'Mobile Card High-speed', description: '5G upgrade option', unitPrice: 18.00, defaultQuantity: 0, minQuantity: 0, maxQuantity: 1, quantityEditable: true, isRequired: false, isSelected: false, optionType: 'Related Product' }
+        ]
+    }
+];
 
-    async connectedCallback() {
-        const bundles = this.bundleItems;
-        if (bundles.length > 0) {
-            this.activeBundleKey = bundles[0]._key;
-            await this.loadFeaturesForBundle(bundles[0].productId);
-        }
+
+export default class cpqStepBundleConfig extends LightningElement {
+
+
+    @api bundleId;
+
+
+
+    @track isLoading   = true;
+    @track draftValues = [];
+    @track localFeatures = [];
+    @track bundleName = 'Apple iPhone X Package';
+    @track viewMode    = 'sections';
+
+    connectedCallback() {
+        this.loadConfiguration();
     }
 
-    /* ─── Computed ─── */
-
-    get bundleItems() {
-        return (this.selectedProducts || []).filter(i => i.isBundle);
-    }
-
-    get hasActiveBundle() {
-        return !!this.activeBundleKey && this.features.length > 0;
-    }
-
-    get hasNoBundles() {
-        return this.bundleItems.length === 0 && !this.isLoading;
-    }
-
-    get activeBundleName() {
-        const item = this.bundleItems.find(b => b._key === this.activeBundleKey);
-        return item ? item.productName : '';
-    }
-
-    get sidebarItems() {
-        return this.bundleItems.map(b => {
-            const completeness = this.getBundleCompleteness(b);
-            return {
-                id: b._key,
-                label: b.productName,
-                subtitle: b.productCode,
-                badge: `${completeness}%`,
-                badgeClass: completeness === 100
-                    ? 'slds-badge slds-theme_success'
-                    : 'slds-badge slds-theme_warning',
-                isActive: b._key === this.activeBundleKey,
-                itemClass: [
-                    'slds-listbox__item',
-                    b._key === this.activeBundleKey ? 'slds-is-selected' : ''
-                ].filter(Boolean).join(' ')
-            };
-        });
-    }
-
-    get completenessValue() {
-        return calculateCompleteness(this.features, this._optionsByFeature);
-    }
-
-    get completenessLabel() {
-        return `${this.completenessValue}% configured`;
-    }
-
-    get completenessStyle() {
-        return `width: ${this.completenessValue}%`;
-    }
-
-    /* ─── Data Loading ─── */
-
-    async loadFeaturesForBundle(productId) {
+    async loadConfiguration() {
         this.isLoading = true;
+
         try {
-            const rawFeatures = await getFeaturesByProduct(productId);
-            this._optionsByFeature = {};
-
-            // Load options for each feature in parallel
-            const optionPromises = rawFeatures.map(f => getOptionsByFeature(f.Id));
-            const optionResults = await Promise.all(optionPromises);
-
-            rawFeatures.forEach((f, idx) => {
-                this._optionsByFeature[f.Id] = optionResults[idx];
-            });
-
-            // Restore previously saved selections from cart
-            const activeBundle = this.bundleItems.find(b => b._key === this.activeBundleKey);
-            if (activeBundle && activeBundle.options && activeBundle.options.length > 0) {
-                this.restoreSelectionsFromCart(activeBundle.options);
+            if (this.bundleId) {
+                /*
+                // 1. APPEL APEX RÉEL (À décommenter plus tard)
+                const result = await getBundleData({ bundleId: this.bundleId });
+                // On suppose que l'Apex renvoie un objet avec les features
+                this.localFeatures = deepClone(result.features);
+                this.bundleName = result.bundleName || this.bundleName;
+                */
+            } else {
+                // 2. MOCK DATA (Fallback si pas de bundleId pour les tests)
+                // On simule un délai réseau de 500ms pour voir le spinner
+                await new Promise(resolve => setTimeout(resolve, 500));
+                this.localFeatures = deepClone(MOCK_FEATURES);
             }
-
-            this.rebuildFeatures(rawFeatures);
-
-            if (rawFeatures.length > 0) {
-                this.activeFeatureId = rawFeatures[0].Id;
-            }
-        } catch (e) {
-            console.error('Error loading bundle configuration:', e);
+        } catch (error) {
+            console.error('Erreur lors du chargement des données :', error);
+            showToast(this, 'Erreur de chargement', 'Impossible de charger la configuration du Bundle.', 'error');
         } finally {
             this.isLoading = false;
         }
     }
 
-    restoreSelectionsFromCart(savedOptions) {
-        const savedMap = {};
-        savedOptions.forEach(o => { savedMap[o.optionId] = o; });
 
-        Object.keys(this._optionsByFeature).forEach(featureId => {
-            this._optionsByFeature[featureId] = this._optionsByFeature[featureId].map(opt => {
-                const saved = savedMap[opt.Id];
-                if (saved) {
-                    return { ...opt, isSelected: saved.isSelected, quantity: saved.quantity };
-                }
-                return opt;
-            });
-        });
-    }
+    get columns()               { return DATATABLE_COLUMNS; }
+    get isSectionsView()        { return this.viewMode === 'sections'; }
+    get isTabsView()            { return this.viewMode === 'tabs'; }
+    get sectionsButtonVariant() { return this.isSectionsView ? 'brand' : 'neutral'; }
+    get tabsButtonVariant()     { return this.isTabsView    ? 'brand' : 'neutral'; }
+    get hasFeatures()           { return (this.processedFeatures || []).length > 0; }
+    get hasNoFeatures()         { return !this.isLoading && !this.hasFeatures; }
+    get emptyStateIllustration(){ return getIllustration('NORESULTS_SEARCH').name; }
 
-    rebuildFeatures(rawFeatures) {
-        this.features = rawFeatures.map(f => {
-            const mode = getSelectionMode(f);
-            const isSingle = isSingleSelect(f);
-            const options = this._optionsByFeature[f.Id] || [];
-            const selectedCount = options.filter(o => o.isSelected).length;
-            const errors = validateFeatureSelections(f, selectedCount);
+    get processedFeatures() {
+        return this.localFeatures.map(feature => {
+            const options = feature.options || [];
+            const min = feature.minOptions || 0;
+            const max = feature.maxOptions || 999;
+
+            const selectedIds = options.filter(opt => opt.isSelected).map(opt => opt.Id);
+            const requiredIds = options.filter(opt => opt.isRequired).map(opt => opt.Id);
+
+            let disabledIds = [];
+            if (requiredIds.length >= max && max > 0) {
+                disabledIds = options.map(opt => opt.Id);
+            } else {
+                disabledIds = requiredIds;
+            }
 
             return {
-                ...f,
-                _options: options,
-                _isSingleSelect: isSingle,
-                _radioGroup: `radio-${f.Id}`,
-                _selectionLabel: isSingle ? 'Single Select' : 'Multi Select',
-                _minLabel: f.Min_Options__c ? `Min: ${f.Min_Options__c}` : null,
-                _maxLabel: f.Max_Options__c ? `Max: ${f.Max_Options__c}` : null,
-                _errors: errors
+                Id:           feature.Id,
+                Name:         feature.Name,
+                helpText:     feature.helpText,
+                minOptions:   min,
+                maxOptions:   max,
+                badgeClass:   'slds-badge',
+                options:      this.processOptions(options),
+                selectedRows: selectedIds,
+                disabledRows: disabledIds
             };
         });
     }
 
-    getBundleCompleteness(bundleItem) {
-        if (!bundleItem.isBundle) return 100;
-        // If this bundle is actively being configured, use live data
-        if (bundleItem._key === this.activeBundleKey && this.features.length > 0) {
-            return calculateCompleteness(this.features, this._optionsByFeature);
-        }
-        // Otherwise check if previously configured
-        return bundleItem.configured ? 100 : 0;
-    }
 
-    /* ─── Event Handlers ─── */
-
-    async handleBundleSelect(event) {
-        // Save current config before switching
-        this.saveCurrentConfig();
-
-        const itemId = event.detail.itemId;
-        this.activeBundleKey = itemId;
-        const bundle = this.bundleItems.find(b => b._key === itemId);
-        if (bundle) {
-            await this.loadFeaturesForBundle(bundle.productId);
-        }
-    }
-
-    handleSidebarToggle(event) {
-        this._sidebarCollapsed = event.detail.collapsed;
-    }
-
-    handleFeatureTabChange(event) {
-        this.activeFeatureId = event.target.value;
-    }
-
-    handleOptionSelect(event) {
-        const { optionId, selected } = event.detail;
-        const featureId = this.findFeatureIdForOption(optionId);
-        if (!featureId) return;
-
-        const feature = this.features.find(f => f.Id === featureId);
-        let options = deepClone(this._optionsByFeature[featureId]);
-
-        if (isSingleSelect(feature)) {
-            // Deselect all others, select clicked one
-            options = options.map(o => ({
-                ...o,
-                isSelected: o.Id === optionId ? selected : false
-            }));
-        } else {
-            options = options.map(o => {
-                if (o.Id === optionId) {
-                    if (o.Is_Required__c && !selected) return o; // Can't deselect required
-                    return { ...o, isSelected: selected };
-                }
-                return o;
-            });
-        }
-
-        this._optionsByFeature[featureId] = options;
-        this.rebuildFeatures(this.features.map(f => {
-            const { _options, _isSingleSelect, _radioGroup, _selectionLabel, _minLabel, _maxLabel, _errors, ...raw } = f;
-            return raw;
+    processOptions(options) {
+        return (options || []).map(option => ({
+            Id:            option.Id,
+            quantity:      option.defaultQuantity ?? option.minQuantity ?? 0,
+            minQuantity:   option.minQuantity || 0,
+            maxQuantity:   option.maxQuantity || 999,
+            productCode:   option.productCode || '',
+            productName:   option.productName || option.Name || '',
+            description:   option.description || '',
+            unitPrice:     option.unitPrice || 0,
+            isQtyEditable: option.quantityEditable !== false,
+            isRequired:    option.isRequired,
+            isSelected:    option.isSelected
         }));
     }
 
-    handleOptionQuantity(event) {
-        const { optionId, quantity } = event.detail;
-        const featureId = this.findFeatureIdForOption(optionId);
-        if (!featureId) return;
 
-        this._optionsByFeature[featureId] = this._optionsByFeature[featureId].map(o => {
-            if (o.Id === optionId) {
-                const clampedQty = Math.min(Math.max(quantity, o.Min_Quantity__c || 1), o.Max_Quantity__c || 999);
-                return { ...o, quantity: clampedQty };
-            }
-            return o;
-        });
-        this.rebuildFeatures(this.features.map(f => {
-            const { _options, _isSingleSelect, _radioGroup, _selectionLabel, _minLabel, _maxLabel, _errors, ...raw } = f;
-            return raw;
-        }));
-    }
 
-    handleBack() {
-        this.saveCurrentConfig();
-        this.dispatchEvent(new CustomEvent('navigate', { detail: { direction: 'back' } }));
-    }
+    handleFeatureSelection(event) {
+        const featureId = event.target.dataset.featureId;
+        const selectedRows = event.detail.selectedRows;
 
-    handleNext() {
-        this.saveCurrentConfig();
-        this.dispatchEvent(new CustomEvent('navigate', { detail: { direction: 'next' } }));
-    }
+        const featureIndex = this.localFeatures.findIndex(f => f.Id === featureId);
+        const feature = this.localFeatures[featureIndex];
 
-    /* ─── Internal Helpers ─── */
-
-    findFeatureIdForOption(optionId) {
-        for (const [featureId, options] of Object.entries(this._optionsByFeature)) {
-            if (options.some(o => o.Id === optionId)) {
-                return featureId;
-            }
+        if (selectedRows.length < feature.minOptions) {
+            showToast(
+              this,
+              'Action impossible',
+              `Vous devez sélectionner au moins ${feature.minOptions} option(s) pour "${feature.Name}".`,
+              'warning'
+            );
+            this.localFeatures = [...this.localFeatures];
+            return;
         }
-        return null;
+
+        const selectedIds = selectedRows.map(row => row.Id);
+
+        this.localFeatures[featureIndex].options = feature.options.map(opt => ({
+            ...opt,
+            isSelected: selectedIds.includes(opt.Id)
+        }));
+
+        this.localFeatures = [...this.localFeatures];
+    }
+    @api
+    switchToSections() {
+        this.viewMode = 'sections';
+    }
+    @api
+    switchToTabs() {
+        this.viewMode = 'tabs';
     }
 
-    saveCurrentConfig() {
-        if (!this.activeBundleKey) return;
-
-        // Flatten all options across all features
-        const allOptions = [];
-        Object.entries(this._optionsByFeature).forEach(([featureId, options]) => {
-            options.forEach(o => {
-                allOptions.push({
-                    optionId: o.Id,
-                    featureId,
-                    featureName: o.featureName || '',
-                    productId: o.Option_Product__c,
-                    productCode: o.productCode,
-                    productName: o.productName,
-                    optionType: o.Option_Type__c,
-                    isSelected: o.isSelected,
-                    isRequired: o.Is_Required__c,
-                    quantity: o.quantity,
-                    listUnitPrice: o.listUnitPrice,
-                    additionalDiscount: 0,
-                    weight: o.weight || 0
-                });
-            });
-        });
-
-        this.dispatchEvent(new CustomEvent('configupdate', {
-            detail: {
-                itemKey: this.activeBundleKey,
-                options: deepClone(allOptions),
-                configured: this.completenessValue === 100
-            }
-        }));
+    handleSaveTable(event) {
+        this.draftValues = event.detail.draftValues;
+        showToast(this, 'Succès', 'Les quantités ont été mises à jour', 'success');
     }
 }
