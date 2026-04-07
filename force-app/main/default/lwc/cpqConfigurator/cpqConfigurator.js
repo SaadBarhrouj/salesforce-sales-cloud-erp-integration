@@ -283,8 +283,8 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
     else if (action === "changeView") this._handleChangeView(event);
     else if (action === "resetConfig") this._handleResetConfig();
     else if (action === "saveConfig") this._handleSaveConfig();
-    else if (action === "groupBySection") this._getBundleConfigStep()?.setFeatureOrganization("section");
-    else if (action === "groupByTab") this._getBundleConfigStep()?.setFeatureOrganization("tab");
+    else if (action === "groupBySection") this._getBundleConfigStep()?.switchToSections();
+    else if (action === "groupByTab") this._getBundleConfigStep()?.switchToTabs();
     else if (action === "applyRules") this._handleApplyRules();
   }
 

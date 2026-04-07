@@ -34,7 +34,7 @@ const CONFIGURE_GLOBAL_ACTIONS = [
         name: 'configGroup', isGroup: true, items: [
             { name: 'resetConfig', label: 'Reset Configuration', iconName: 'utility:clear', variant: 'border-filled' },
             { name: 'toggleFilters', label: 'Filters', iconName: 'utility:filterList', variant: 'border-filled', dynamicProperty: 'highlightIfFiltersOpen' }
-            
+
         ]
     }
 ];
@@ -175,7 +175,6 @@ export const EVENTS = Object.freeze({
     BUNDLE_SELECT:     'bundleselect',
     ITEM_SELECT:       'itemselect',
     ITEM_DESELECT:     'itemdeselect',
-    SORT_CHANGE:       'sortchange',
     SEARCH:            'search',
     CTA_CLICK:         'ctabuttonclick'
 });
