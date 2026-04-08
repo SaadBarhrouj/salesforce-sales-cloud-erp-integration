@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @description Service layer for Bundle_Option__c business logic.
  * Handles bundle data retrieval, option payload construction, validation, and CRUD operations.
  * Builds dynamic bundle configuration data for LWC consumption.

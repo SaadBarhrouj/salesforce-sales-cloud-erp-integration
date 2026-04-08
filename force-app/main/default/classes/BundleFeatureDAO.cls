@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @description Data Access Object for Bundle_Feature__c records.
  * Provides query methods for retrieving bundle feature data from Salesforce.
  * @author Sales Cloud ERP Integration Team

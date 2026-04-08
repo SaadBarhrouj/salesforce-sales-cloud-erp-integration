@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @description Controller layer for Bundle_Option__c operations exposed to Lightning components.
  * Provides access to bundle configuration data for the bundle configurator LWC.
  * Contains reserved CRUD endpoints for future use when direct option management is needed.
