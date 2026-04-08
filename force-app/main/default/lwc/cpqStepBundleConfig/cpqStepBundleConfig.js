@@ -27,7 +27,19 @@ const DATATABLE_COLUMNS = [
 ];
 
 export default class cpqStepBundleConfig extends LightningElement {
-    @api bundleId;
+    _bundleId;
+
+    @api
+    get bundleId() {
+        return this._bundleId;
+    }
+    set bundleId(value) {
+        const hasChanged = value !== this._bundleId;
+        this._bundleId = value;
+        if (hasChanged && value) {
+            this.loadConfiguration();
+        }
+    }
 
     @track isLoading = true;
     @track draftValues = [];
@@ -35,12 +47,8 @@ export default class cpqStepBundleConfig extends LightningElement {
     @track bundleName = '';
     @track viewMode = 'sections';
 
-    @wire(getRecord, { recordId: '$bundleId', fields: [PRODUCT_NAME_FIELD] })
+    @wire(getRecord, { recordId: '$_bundleId', fields: [PRODUCT_NAME_FIELD] })
     bundleRecord;
-
-    connectedCallback() {
-        this.loadConfiguration();
-    }
 
     async loadConfiguration() {
         this.isLoading = true;

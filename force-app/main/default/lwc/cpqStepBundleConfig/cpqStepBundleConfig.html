@@ -20,7 +20,7 @@
             <!-- ── MAIN CONTENT ──────────────────────────────────────────── -->
             <template lwc:if={hasFeatures}>
                 <div class="slds-p-around_medium">
-                    
+
                     <!-- Bundle title -->
                     <h1 class="slds-text-heading_medium slds-truncate slds-m-bottom_small">
                         {bundleName}
@@ -32,62 +32,51 @@
                         <div class="slds-m-bottom_large">
                             <template for:each={processedFeatures} for:item="feature">
                                 <div key={feature.Id} class="slds-box slds-p-around_none slds-m-bottom_medium slds-theme_default">
-                                    <section data-feature-id={feature.Id} class="slds-section slds-is-open slds-m-bottom_none">
-                                        <div class="slds-section__title slds-theme_shade slds-p-around_small">
-                                            <span class="slds-truncate slds-text-heading_small slds-text-title_bold slds-text-align_left" title={feature.Name}>
-                                                {feature.Name}
+
+                                    <div class="slds-theme_shade slds-p-around_small slds-border_bottom">
+                                        <div class="slds-grid slds-grid_align-spread slds-grid_vertical-align-end">
+
+                                            <div class="slds-col slds-text-align_left">
+                                                <h3 class="slds-text-heading_small slds-m-bottom_xxx-small" title={feature.Name}>
+                                                    {feature.Name}
+                                                </h3>
+                                                <p lwc:if={feature.helpText} class="slds-text-body_regular slds-text-color_weak">
+                                                    {feature.helpText}
+                                                </p>
+                                            </div>
+
+                                            <div class="slds-col slds-text-align_right">
+                                            <span class="slds-text-body_regular slds-text-color_weak">
+                                                Min: {feature.minOptions} / Max: {feature.maxOptions}
                                             </span>
+                                            </div>
+
                                         </div>
-                                        <div class="slds-section__content slds-p-top_none">
-                                            <div class="slds-p-horizontal_medium slds-p-top_medium slds-p-bottom_small slds-text-align_left" if:true={feature.helpText}>
-                                                <p class="slds-text-body_regular slds-text-color_weak">{feature.helpText}</p>
-                                            </div>
-                                            <div class="slds-p-horizontal_medium slds-p-bottom_small slds-text-align_left">
-                                                <span class={feature.badgeClass}>
-                                                    Min: {feature.minOptions} / Max: {feature.maxOptions}
-                                                </span>
-                                            </div>
-                                            <div class="slds-p-bottom_medium">
-                                                <lightning-datatable
-                                                  key-field="Id"
-                                                  data={feature.options}
-                                                  columns={columns}
-                                                  draft-values={draftValues}
-                                                  onsave={handleSaveTable}
-                                                  max-row-selection={feature.maxOptions}
-                                                  selected-rows={feature.selectedRows}
-                                                  disabled-rows={feature.disabledRows}
-                                                  onrowselection={handleFeatureSelection}>
-                                                </lightning-datatable>
-                                            </div>
-                                        </div>
-                                    </section>
+                                    </div>
+
+                                    <div>
+                                        <lightning-datatable
+                                          key-field="Id"
+                                          data={feature.options}
+                                          columns={columns}
+                                          draft-values={draftValues}
+                                          onsave={handleSaveTable}
+                                          max-row-selection={feature.maxOptions}
+                                          selected-rows={feature.selectedRows}
+                                          disabled-rows={feature.disabledRows}
+                                          onrowselection={handleFeatureSelection}>
+                                        </lightning-datatable>
+                                    </div>
+
                                 </div>
                             </template>
                         </div>
                     </template>
-
                     <!-- ── TABS VIEW ────────────────────────────────────── -->
                     <template lwc:if={isTabsView}>
-                        <lightning-tabset class="slds-m-bottom_large">
+                        <lightning-tabset>
                             <template for:each={processedFeatures} for:item="feature">
                                 <lightning-tab key={feature.Id} data-feature-id={feature.Id} label={feature.Name}>
-                                    <div class="slds-p-around_medium">
-
-                                        <!-- Help text (optional) -->
-                                        <p lwc:if={feature.helpText}
-                                           class="slds-text-body_small slds-text-color_weak slds-m-bottom_x-small"
-                                           style="text-align: left;">
-                                            {feature.helpText}
-                                        </p>
-
-                                        <!-- Min / Max badge -->
-                                        <div class="slds-m-bottom_small" style="text-align: left;">
-                                            <span class={feature.badgeClass}>
-                                                Min: {feature.minOptions} &nbsp;|&nbsp; Max: {feature.maxOptions}
-                                            </span>
-                                        </div>
-
                                         <!-- Datatable -->
                                         <lightning-datatable
                                           key-field="Id"
@@ -100,8 +89,6 @@
                                           disabled-rows={feature.disabledRows}
                                           onrowselection={handleFeatureSelection}>
                                         </lightning-datatable>
-
-                                    </div>
                                 </lightning-tab>
                             </template>
                         </lightning-tabset>

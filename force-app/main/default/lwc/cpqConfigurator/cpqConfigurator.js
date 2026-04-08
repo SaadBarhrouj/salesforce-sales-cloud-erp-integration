@@ -127,6 +127,15 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
     return this.currentStep.key === STEPS.REVIEW.key;
   }
 
+  /* -- bundle config -- */
+  get selectedBundleProductId() {
+    if (!this.selectedItemId || !this.isStepConfigure) return "";
+    const selectedBundle = (this.selectedProducts || []).find(
+      (item) => item._key === this.selectedItemId && item.isBundle
+    );
+    return selectedBundle?.productId || "";
+  }
+
   /* -- opportunity data -- */
   get opportunityPricebookId() {
     if (this.opportunityRecord?.data) {
