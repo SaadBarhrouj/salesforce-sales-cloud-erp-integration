@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @description Data Access Object for Bundle_Option__c records.
  * Provides query methods for retrieving bundle option data from Salesforce.
  * @author Sales Cloud ERP Integration Team
@@ -202,17 +202,4 @@ public inherited sharing class BundleOptionDAO {
         ];
     }
     */
-}
-                // Min_Quantity__c,
-                // Option_Product__c,
-                // Option_Type__c,
-                // Quantity_Editable__c,
-                // Sort_Order__c,
-                // Bundle_Product__r.Name,
-                // Feature__r.Name,
-                // Option_Product__r.Name
-            // FROM Bundle_Option__c
-            // WHERE Name = :recordName
-        // ];
-    // }
 }
