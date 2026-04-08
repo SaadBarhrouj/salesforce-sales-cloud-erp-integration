@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @description Data Access Object for Bundle_Option__c records.
  * Provides query methods for retrieving bundle option data from Salesforce.
  * @author Sales Cloud ERP Integration Team
