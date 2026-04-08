@@ -205,5 +205,14 @@ public with sharing class Product2Controller {
         return recordIds;
     }
 
+    /**
+     * @description Generates a standardized error message for controller failures.
+     * Formats a system label with the Product2 object label.
+     * @return Error message string formatted with the object label
+     */
+    private static String getControllerErrorMessage() {
+        return String.format(System.Label.Generic_Controller_Request_Failed, new List<String>{ Product2.SObjectType.getDescribe().getLabel() });
+    }
+
 
 }

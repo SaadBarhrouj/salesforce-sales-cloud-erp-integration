@@ -268,10 +268,9 @@ public inherited sharing class BundleOptionService {
      * @param rightValue The second value to compare
      * @return True if the string representations differ, false if they are the same
      */
-   /*private static Boolean valuesDiffer(Object leftValue, Object rightValue) {
+    private static Boolean valuesDiffer(Object leftValue, Object rightValue) {
         return String.valueOf(leftValue) != String.valueOf(rightValue);
     }
- */
     /**
      * @description Retrieves the label of the Bundle_Option__c SObject type.
      * @return The localized label for Bundle_Option__c
