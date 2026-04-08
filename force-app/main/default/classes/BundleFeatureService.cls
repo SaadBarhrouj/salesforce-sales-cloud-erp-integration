@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @description Service layer for Bundle_Feature__c business logic.
  * Handles validation, change tracking, CRUD operations, and data preparation for bundle features.
  * @author Sales Cloud ERP Integration Team

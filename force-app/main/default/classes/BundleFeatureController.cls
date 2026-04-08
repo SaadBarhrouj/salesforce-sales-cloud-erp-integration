@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @description Controller layer for Bundle_Feature__c operations exposed to Lightning components.
  * Currently provides minimal functionality as feature management is handled indirectly through BundleOptionService.
  * Contains reserved CRUD endpoints for future use when direct feature management is needed.
