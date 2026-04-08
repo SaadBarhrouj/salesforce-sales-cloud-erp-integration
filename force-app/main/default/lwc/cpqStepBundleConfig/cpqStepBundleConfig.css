@@ -5,3 +5,8 @@
 .main-area {
     overflow-x: auto;
 }
+
+lightning-datatable {
+    height: 100%;
+    --_slds-c-datatable-radius-border: 0px;
+}

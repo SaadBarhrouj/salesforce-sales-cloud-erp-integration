@@ -8,11 +8,19 @@
             </div>
 
             <!-- ── EMPTY STATE ───────────────────────────────────────────── -->
-            <div lwc:if= {hasNoFeatures}>
+            <div lwc:if={noBundleSelected}>
                 <c-empty-state
                   illustration-name={emptyStateIllustration}
-                  title="No Configuration Options"
-                  description="This bundle has no configurable features."
+                  title={emptyStateTitle}
+                  description={emptyStateDescription}
+                  size="large">
+                </c-empty-state>
+            </div>
+            <div lwc:elseif={hasNoFeatures}>
+                <c-empty-state
+                  illustration-name={emptyStateIllustration}
+                  title={emptyStateTitle}
+                  description={emptyStateDescription}
                   size="large">
                 </c-empty-state>
             </div>

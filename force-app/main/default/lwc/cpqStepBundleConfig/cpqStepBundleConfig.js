@@ -41,7 +41,7 @@ export default class cpqStepBundleConfig extends LightningElement {
         }
     }
 
-    @track isLoading = true;
+    @track isLoading = false;
     @track draftValues = [];
     @track localFeatures = [];
     @track bundleName = '';
@@ -100,11 +100,32 @@ export default class cpqStepBundleConfig extends LightningElement {
         return (this.processedFeatures || []).length > 0;
     }
 
+    get noBundleSelected() {
+        return !this.isLoading && !this._bundleId;
+    }
+
     get hasNoFeatures() {
-        return !this.isLoading && !this.hasFeatures;
+        return !this.isLoading && this._bundleId && !this.hasFeatures;
+    }
+
+    get emptyStateTitle() {
+        if (this.noBundleSelected) {
+            return 'No Bundle Selected';
+        }
+        return 'No Configuration Options';
+    }
+
+    get emptyStateDescription() {
+        if (this.noBundleSelected) {
+            return 'Select a bundle above to configure its features and options.';
+        }
+        return 'This bundle has no configurable features.';
     }
 
     get emptyStateIllustration() {
+        if (this.noBundleSelected) {
+            return getIllustration('CART_NO_ITEMS').name;
+        }
         return getIllustration('NORESULTS_SEARCH').name;
     }
 
