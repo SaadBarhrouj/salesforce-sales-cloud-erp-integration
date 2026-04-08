@@ -29,10 +29,6 @@ public inherited sharing class BundleOptionService {
         'Sort_Order__c'
     };
 
-    // ============================================================================
-    // ACTIVE METHODS - Currently used in bundleConfigure feature
-    // ============================================================================
-
     /**
      * @description Retrieves complete bundle configuration data including features and options.
      * Organizes options by feature and creates special "Other" feature for unassigned options.
@@ -54,7 +50,6 @@ public inherited sharing class BundleOptionService {
 
         List<Bundle_Feature__c> featureRecords = BundleFeatureDAO.getByProductId(bundleId);
         List<Bundle_Option__c> optionRecords = BundleOptionDAO.getByBundleProductId(bundleId);
-        Map<Id, Product2> optionProductsById = Product2DAO.getByIds(collectOptionProductIds(optionRecords));
 
         List<Map<String, Object>> featurePayloads = new List<Map<String, Object>>();
         Map<Id, Map<String, Object>> featurePayloadById = new Map<Id, Map<String, Object>>();
@@ -75,7 +70,7 @@ public inherited sharing class BundleOptionService {
         List<Map<String, Object>> otherOptions = new List<Map<String, Object>>();
 
         for (Bundle_Option__c optionRecord : optionRecords) {
-            Map<String, Object> optionPayload = buildOptionPayload(optionRecord, optionProductsById.get(optionRecord.Option_Product__c));
+            Map<String, Object> optionPayload = buildOptionPayload(optionRecord);
 
             if (optionRecord.Feature__c != null && featurePayloadById.containsKey(optionRecord.Feature__c)) {
                 List<Map<String, Object>> featureOptions = (List<Map<String, Object>>) featurePayloadById.get(optionRecord.Feature__c).get('options');
@@ -101,6 +96,41 @@ public inherited sharing class BundleOptionService {
         };
     }
 
+    
+    /**
+     * @description Constructs a normalized option payload map for LWC consumption.
+     * Uses only the data already loaded in the optionRecord (including relationships).
+     * Handles null values with sensible defaults.
+     * @param optionRecord The Bundle_Option__c record to transform
+     * @return Map with keys: Id, Name, productCode, productName, description, unitPrice,
+     *         defaultQuantity, minQuantity, maxQuantity, quantityEditable, isRequired, isSelected, optionType
+     */
+    private static Map<String, Object> buildOptionPayload(Bundle_Option__c optionRecord) {
+        Product2 product = optionRecord.Option_Product__r;
+        
+        return new Map<String, Object>{
+            'Id' => String.valueOf(optionRecord.Id),
+            'Name' => optionRecord.Name,
+            'productCode' => product?.ProductCode ?? '',
+            'productName' => product?.Name ?? '',
+            'description' => product?.Description ?? '',
+            'unitPrice' => 0,
+            'defaultQuantity' => optionRecord.Default_Quantity__c ?? 0,
+            'minQuantity' => optionRecord.Min_Quantity__c ?? 0,
+            'maxQuantity' => optionRecord.Max_Quantity__c ?? 999,
+            'quantityEditable' => optionRecord.Quantity_Editable__c ?? false,
+            'isRequired' => optionRecord.Is_Required__c ?? false,
+            'isSelected' => optionRecord.Is_Selected__c ?? false,
+            'optionType' => optionRecord.Option_Type__c
+        };
+    }
+
+
+    
+    // ============================================================================
+    // HELPER METHODS - Used by active methods above
+    // ============================================================================
+    
     /**
      * @description Saves a collection of Bundle_Option__c records (insert or update).
      * Validates all records before persistence and compares with persisted records to detect changes.
@@ -110,7 +140,7 @@ public inherited sharing class BundleOptionService {
      * @return The same list of records that were saved
      * @throws ServiceException If records list is empty or required fields are missing
      */
-    public static List<Bundle_Option__c> saveRecords(List<Bundle_Option__c> records, Map<Id, Bundle_Option__c> persistedRecordsById) {
+   /* public static List<Bundle_Option__c> saveRecords(List<Bundle_Option__c> records, Map<Id, Bundle_Option__c> persistedRecordsById) {
         validateCollection(records);
 
         Map<Id, Bundle_Option__c> safePersistedRecordsById = persistedRecordsById == null
@@ -144,14 +174,14 @@ public inherited sharing class BundleOptionService {
 
         return records;
     }
-
+*/
     /**
      * @description Deletes a collection of Bundle_Option__c records.
      * Validates that all records have IDs before deletion.
      * @param records List of Bundle_Option__c records to delete
      * @throws ServiceException If records list is empty or any record lacks an ID
      */
-    public static void deleteRecords(List<Bundle_Option__c> records) {
+    /*public static void deleteRecords(List<Bundle_Option__c> records) {
         validateCollection(records);
         for (Bundle_Option__c recordItem : records) {
             if (recordItem.Id == null) {
@@ -159,29 +189,28 @@ public inherited sharing class BundleOptionService {
             }
         }
         delete records;
-    }
+    }*/
 
-    // ============================================================================
-    // HELPER METHODS - Used by active methods above
-    // ============================================================================
 
     /**
      * @description Validates that a record collection is not null and not empty.
      * @param records The collection to validate
      * @throws ServiceException If records is null or empty
      */
-    private static void validateCollection(List<Bundle_Option__c> records) {
+    /*private static void validateCollection(List<Bundle_Option__c> records) {
         if (records == null || records.isEmpty()) {
             throw new BundleOptionException(formatLabel(System.Label.Generic_Service_Records_Required, new List<String>{ getObjectLabel() }));
         }
     }
+*/
 
+    /*
     /**
      * @description Collects all option product IDs from a list of bundle options.
      * Used to batch-query related Product2 records for efficiency.
      * @param optionRecords List of Bundle_Option__c records to extract IDs from
      * @return Set of Product2 IDs referenced by the options
-     */
+     * /
     private static Set<Id> collectOptionProductIds(List<Bundle_Option__c> optionRecords) {
         Set<Id> optionProductIds = new Set<Id>();
         for (Bundle_Option__c optionRecord : optionRecords) {
@@ -191,37 +220,7 @@ public inherited sharing class BundleOptionService {
         }
         return optionProductIds;
     }
-
-    /**
-     * @description Constructs a normalized option payload map for LWC consumption.
-     * Handles null values with defaults and extracts product information from multiple sources.
-     * @param optionRecord The Bundle_Option__c record to transform
-     * @param optionProduct The related Product2 record (may be null)
-     * @return Map with keys: Id, Name, productCode, productName, description, unitPrice,
-     *         defaultQuantity, minQuantity, maxQuantity, quantityEditable, isRequired, isSelected, optionType
-     */
-    private static Map<String, Object> buildOptionPayload(Bundle_Option__c optionRecord, Product2 optionProduct) {
-        String relatedName = optionRecord.Option_Product__r == null ? null : optionRecord.Option_Product__r.Name;
-        String relatedCode = optionRecord.Option_Product__r == null ? null : optionRecord.Option_Product__r.ProductCode;
-        String relatedDescription = optionRecord.Option_Product__r == null ? null : optionRecord.Option_Product__r.Description;
-        String optionName = optionProduct == null ? relatedName : optionProduct.Name;
-
-        return new Map<String, Object>{
-            'Id' => String.valueOf(optionRecord.Id),
-            'Name' => optionRecord.Name,
-            'productCode' => optionProduct == null ? relatedCode : optionProduct.ProductCode,
-            'productName' => optionName,
-            'description' => optionProduct == null ? relatedDescription : optionProduct.Description,
-            'unitPrice' => 0,
-            'defaultQuantity' => optionRecord.Default_Quantity__c == null ? 0 : Integer.valueOf(optionRecord.Default_Quantity__c),
-            'minQuantity' => optionRecord.Min_Quantity__c == null ? 0 : Integer.valueOf(optionRecord.Min_Quantity__c),
-            'maxQuantity' => optionRecord.Max_Quantity__c == null ? 999 : Integer.valueOf(optionRecord.Max_Quantity__c),
-            'quantityEditable' => optionRecord.Quantity_Editable__c == null ? false : optionRecord.Quantity_Editable__c,
-            'isRequired' => optionRecord.Is_Required__c == null ? false : optionRecord.Is_Required__c,
-            'isSelected' => optionRecord.Is_Selected__c == null ? false : optionRecord.Is_Selected__c,
-            'optionType' => optionRecord.Option_Type__c
-        };
-    }
+    */
 
     /**
      * @description Validates that all required fields are populated on a record.
@@ -229,7 +228,7 @@ public inherited sharing class BundleOptionService {
      * @param recordItem The Bundle_Option__c record to validate
      * @throws BundleOptionException If any required field is missing or blank
      */
-    private static void validateRequiredFields(Bundle_Option__c recordItem) {
+     /*private static void validateRequiredFields(Bundle_Option__c recordItem) {
         Map<String, Schema.SObjectField> fieldMap = Bundle_Option__c.SObjectType.getDescribe().fields.getMap();
         for (String fieldApiName : REQUIRED_FIELDS) {
             Object rawValue = recordItem.get(fieldApiName);
@@ -245,7 +244,7 @@ public inherited sharing class BundleOptionService {
             }
         }
     }
-
+*/
     /**
      * @description Compares a current record against its persisted version to detect field-level changes.
      * Only tracked fields are compared. Uses string value comparison to handle different data types.
@@ -269,18 +268,18 @@ public inherited sharing class BundleOptionService {
      * @param rightValue The second value to compare
      * @return True if the string representations differ, false if they are the same
      */
-    private static Boolean valuesDiffer(Object leftValue, Object rightValue) {
+   /*private static Boolean valuesDiffer(Object leftValue, Object rightValue) {
         return String.valueOf(leftValue) != String.valueOf(rightValue);
     }
-
+ */
     /**
      * @description Retrieves the label of the Bundle_Option__c SObject type.
      * @return The localized label for Bundle_Option__c
      */
-    private static String getObjectLabel() {
+     /*private static String getObjectLabel() {
         return Bundle_Option__c.SObjectType.getDescribe().getLabel();
     }
-
+*/
     /**
      * @description Formats a label string with placeholder tokens.
      * Uses String.format() to replace placeholders with provided values.
@@ -288,9 +287,9 @@ public inherited sharing class BundleOptionService {
      * @param tokens List of values to substitute into the label
      * @return The formatted label string
      */
-    private static String formatLabel(String labelValue, List<String> tokens) {
+    /*private static String formatLabel(String labelValue, List<String> tokens) {
         return String.format(labelValue, tokens);
-    }
+    }*/
 
     // ============================================================================
     // UNUSED METHODS - Commented for future use or reference

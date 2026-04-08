@@ -24,19 +24,20 @@ public inherited sharing class BundleFeatureService {
      * @param loadedRecord The Bundle_Feature__c record to return
      * @return The same Bundle_Feature__c record passed in
      */
-    public static Bundle_Feature__c getLoadedRecord(Bundle_Feature__c loadedRecord) {
+    /*public static Bundle_Feature__c getLoadedRecord(Bundle_Feature__c loadedRecord) {
         return loadedRecord;
     }
-
+*/
     /**
      * @description Safely returns a list of loaded records, handling null inputs.
      * Placeholder method for future data transformation needs.
      * @param loadedRecords The list of Bundle_Feature__c records to return
      * @return The records list if not null, otherwise an empty list
      */
-    public static List<Bundle_Feature__c> getLoadedRecords(List<Bundle_Feature__c> loadedRecords) {
+    /*public static List<Bundle_Feature__c> getLoadedRecords(List<Bundle_Feature__c> loadedRecords) {
         return loadedRecords == null ? new List<Bundle_Feature__c>() : loadedRecords;
     }
+*/
 
     /**
      * @description Saves a collection of Bundle_Feature__c records (insert or update).
@@ -47,7 +48,7 @@ public inherited sharing class BundleFeatureService {
      * @return The same list of records that were saved
      * @throws BundleFeatureException If records list is empty or required fields are missing
      */
-    public static List<Bundle_Feature__c> saveRecords(List<Bundle_Feature__c> records, Map<Id, Bundle_Feature__c> persistedRecordsById) {
+   /* public static List<Bundle_Feature__c> saveRecords(List<Bundle_Feature__c> records, Map<Id, Bundle_Feature__c> persistedRecordsById) {
         validateCollection(records);
 
         Map<Id, Bundle_Feature__c> safePersistedRecordsById = persistedRecordsById == null
@@ -88,7 +89,7 @@ public inherited sharing class BundleFeatureService {
      * @param records List of Bundle_Feature__c records to delete
      * @throws ServiceException If records list is empty or any record lacks an ID
      */
-    public static void deleteRecords(List<Bundle_Feature__c> records) {
+    /*public static void deleteRecords(List<Bundle_Feature__c> records) {
         validateCollection(records);
         for (Bundle_Feature__c recordItem : records) {
             if (recordItem.Id == null) {
@@ -105,19 +106,19 @@ public inherited sharing class BundleFeatureService {
      * @param records The collection to validate
      * @throws ServiceException If records is null or empty
      */
-    private static void validateCollection(List<Bundle_Feature__c> records) {
+    /*private static void validateCollection(List<Bundle_Feature__c> records) {
         if (records == null || records.isEmpty()) {
             throw new BundleFeatureException(formatLabel(System.Label.Generic_Service_Records_Required, new List<String>{ getObjectLabel() }));
         }
     }
-
+    
     /**
      * @description Validates that all required fields are populated on a record.
      * Required fields: Sort_Order__c, Name
      * @param recordItem The Bundle_Feature__c record to validate
      * @throws BundleFeatureException If any required field is missing or blank
      */
-    private static void validateRequiredFields(Bundle_Feature__c recordItem) {
+    /*private static void validateRequiredFields(Bundle_Feature__c recordItem) {
         Map<String, Schema.SObjectField> fieldMap = Bundle_Feature__c.SObjectType.getDescribe().fields.getMap();
         for (String fieldApiName : REQUIRED_FIELDS) {
             Object rawValue = recordItem.get(fieldApiName);
@@ -141,7 +142,7 @@ public inherited sharing class BundleFeatureService {
      * @param persistedRecord The previously saved state of the Bundle_Feature__c record
      * @return True if any tracked field has changed, false otherwise
      */
-    private static Boolean hasChanges(Bundle_Feature__c currentRecord, Bundle_Feature__c persistedRecord) {
+    /*private static Boolean hasChanges(Bundle_Feature__c currentRecord, Bundle_Feature__c persistedRecord) {
         for (String fieldApiName : TRACKED_FIELDS) {
             if (valuesDiffer(currentRecord.get(fieldApiName), persistedRecord.get(fieldApiName))) {
                 return true;
@@ -157,7 +158,7 @@ public inherited sharing class BundleFeatureService {
      * @param rightValue The second value to compare
      * @return True if the string representations differ, false if they are the same
      */
-    private static Boolean valuesDiffer(Object leftValue, Object rightValue) {
+    /*private static Boolean valuesDiffer(Object leftValue, Object rightValue) {
         return String.valueOf(leftValue) != String.valueOf(rightValue);
     }
 
@@ -165,7 +166,7 @@ public inherited sharing class BundleFeatureService {
      * @description Retrieves the label of the Bundle_Feature__c SObject type.
      * @return The localized label for Bundle_Feature__c
      */
-    private static String getObjectLabel() {
+    /*private static String getObjectLabel() {
         return Bundle_Feature__c.SObjectType.getDescribe().getLabel();
     }
 
@@ -176,10 +177,10 @@ public inherited sharing class BundleFeatureService {
      * @param tokens List of values to substitute into the label
      * @return The formatted label string
      */
-    private static String formatLabel(String labelValue, List<String> tokens) {
+    /*private static String formatLabel(String labelValue, List<String> tokens) {
         return String.format(labelValue, tokens);
     }
-
+*/
     /* ========== FUTURE USE: Commented trigger-style hooks reserved for future trigger orchestration ========== */
 
     /*

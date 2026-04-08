@@ -1,5 +1,5 @@
 import { LightningElement, api, track, wire } from 'lwc';
-import { getRecord } from 'lightning/uiRecordApi';
+import { getRecord, getFieldValue } from 'lightning/uiRecordApi';
 import { getIllustration } from 'c/cpqConstants';
 import { showToast, deepClone } from 'c/cpqUtils';
 import getBundleData from '@salesforce/apex/BundleOptionController.getBundleData';
@@ -26,32 +26,6 @@ const DATATABLE_COLUMNS = [
     }
 ];
 
-/* MOCK DATA - Used only when bundleId is not provided or Apex is unavailable */
-const MOCK_FEATURES = [
-    {
-        Id: 'feature_001',
-        Name: 'Feature 1',
-        helpText: 'Please select exactly one option for this feature.',
-        minOptions: 1,
-        maxOptions: 1,
-        options: [
-            { Id: 'opt_001', Name: 'Option 1A', productCode: 'OPT001A', productName: 'Option 1A', description: 'First option', unitPrice: 10.0, defaultQuantity: 1, minQuantity: 1, maxQuantity: 1, quantityEditable: false, isRequired: true, isSelected: true, optionType: 'Component' },
-            { Id: 'opt_002', Name: 'Option 1B', productCode: 'OPT001B', productName: 'Option 1B', description: 'Second option', unitPrice: 15.0, defaultQuantity: 0, minQuantity: 0, maxQuantity: 1, quantityEditable: true, isRequired: false, isSelected: false, optionType: 'Component' }
-        ]
-    },
-    {
-        Id: 'feature_002',
-        Name: 'Feature 2',
-        helpText: 'You can select multiple options from this feature.',
-        minOptions: 0,
-        maxOptions: 3,
-        options: [
-            { Id: 'opt_003', Name: 'Option 2A', productCode: 'OPT002A', productName: 'Option 2A', description: 'Optional item', unitPrice: 20.0, defaultQuantity: 0, minQuantity: 0, maxQuantity: 2, quantityEditable: true, isRequired: false, isSelected: false, optionType: 'Accessory' },
-            { Id: 'opt_004', Name: 'Option 2B', productCode: 'OPT002B', productName: 'Option 2B', description: 'Additional item', unitPrice: 25.0, defaultQuantity: 0, minQuantity: 0, maxQuantity: 3, quantityEditable: true, isRequired: false, isSelected: false, optionType: 'Accessory' }
-        ]
-    }
-];
-
 export default class cpqStepBundleConfig extends LightningElement {
     @api bundleId;
 
@@ -72,34 +46,26 @@ export default class cpqStepBundleConfig extends LightningElement {
         this.isLoading = true;
 
         try {
-            if (this.bundleId) {
-                // Fetch features via Apex
-                const result = await getBundleData({ bundleId: this.bundleId });
-                this.localFeatures = deepClone((result && result.features) || []);
-                
-                // Fetch bundle name from LDS wire (automatic via @wire decorator)
-                if (this.bundleRecord?.data?.fields?.Name?.value) {
-                    this.bundleName = this.bundleRecord.data.fields.Name.value;
-                } else {
-                    // Fallback to generic name if LDS data not available
-                    this.bundleName = 'Bundle Configuration';
-                }
+            if (!this.bundleId) {
+                throw new Error('Bundle ID is required');
+            }
+
+            // Fetch features via Apex
+            const result = await getBundleData({ bundleId: this.bundleId });
+            this.localFeatures = deepClone((result && result.features) || []);
+            
+            // Fetch bundle name from LDS wire (automatic via @wire decorator)
+            if (this.bundleRecord?.data) {
+                this.bundleName = getFieldValue(this.bundleRecord.data, PRODUCT_NAME_FIELD) || 'Bundle Configuration';
             } else {
-                await this.loadMockConfiguration();
+                this.bundleName = 'Bundle Configuration';
             }
         } catch (error) {
-            console.error('Erreur lors du chargement des donnees Bundle:', error);
-            showToast(this, 'Erreur de chargement', 'Chargement Apex indisponible, affichage du mode mock.', 'warning');
-            await this.loadMockConfiguration();
+            console.error('Error loading bundle data:', error);
+            showToast(this, 'Loading Error', 'Unable to load bundle configuration.', 'error');
         } finally {
             this.isLoading = false;
         }
-    }
-
-    async loadMockConfiguration() {
-        await new Promise((resolve) => setTimeout(resolve, 300));
-        this.localFeatures = deepClone(MOCK_FEATURES);
-        this.bundleName = 'Bundle Configuration';
     }
 
     get columns() {
@@ -167,14 +133,14 @@ export default class cpqStepBundleConfig extends LightningElement {
     processOptions(options) {
         return (options || []).map((option) => ({
             Id: option.Id,
-            quantity: option.defaultQuantity ?? option.minQuantity ?? 0,
-            minQuantity: option.minQuantity || 0,
-            maxQuantity: option.maxQuantity || 999,
-            productCode: option.productCode || '',
-            productName: option.productName || option.Name || '',
-            description: option.description || '',
-            unitPrice: option.unitPrice || 0,
-            isQtyEditable: option.quantityEditable !== false,
+            quantity: option.defaultQuantity,
+            minQuantity: option.minQuantity,
+            maxQuantity: option.maxQuantity,
+            productCode: option.productCode,
+            productName: option.productName,
+            description: option.description,
+            unitPrice: option.unitPrice,
+            isQtyEditable: option.quantityEditable,
             isRequired: option.isRequired,
             isSelected: option.isSelected
         }));
@@ -190,8 +156,8 @@ export default class cpqStepBundleConfig extends LightningElement {
         if (selectedRows.length < feature.minOptions) {
             showToast(
                 this,
-                'Action impossible',
-                `Vous devez selectionner au moins ${feature.minOptions} option(s) pour "${feature.Name}".`,
+                'Action Not Allowed',
+                `You must select at least ${feature.minOptions} option(s) for "${feature.Name}".`,
                 'warning'
             );
             this.localFeatures = [...this.localFeatures];
@@ -220,6 +186,6 @@ export default class cpqStepBundleConfig extends LightningElement {
 
     handleSaveTable(event) {
         this.draftValues = event.detail.draftValues;
-        showToast(this, 'Succes', 'Les quantites ont ete mises a jour', 'success');
+        showToast(this, 'Success', 'Quantities have been updated', 'success');
     }
 }
