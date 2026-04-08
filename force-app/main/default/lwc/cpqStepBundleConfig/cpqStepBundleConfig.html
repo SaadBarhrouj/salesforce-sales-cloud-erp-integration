@@ -20,22 +20,7 @@
             <!-- ── MAIN CONTENT ──────────────────────────────────────────── -->
             <template lwc:if={hasFeatures}>
                 <div class="slds-p-around_medium">
-                    <!-- View toggle (Sections / Tabs) -->
-                    <div class="slds-m-top_small slds-m-bottom_medium slds-grid slds-gutters_x-small">
-                        <lightning-button
-                          label="Sections"
-                          variant={sectionsButtonVariant}
-                          onclick={switchToSections}
-                          class="slds-size_1-of-2">
-                        </lightning-button>
-                        <lightning-button
-                          label="Tabs"
-                          variant={tabsButtonVariant}
-                          onclick={switchToTabs}
-                          class="slds-size_1-of-2">
-                        </lightning-button>
-                    </div>
-
+                    
                     <!-- Bundle title -->
                     <h1 class="slds-text-heading_medium slds-truncate slds-m-bottom_small">
                         {bundleName}

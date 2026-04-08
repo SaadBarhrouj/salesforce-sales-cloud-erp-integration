@@ -205,11 +205,5 @@ public with sharing class Product2Controller {
         return recordIds;
     }
 
-    /**
-     * @description Returns the formatted error message for controller exceptions.
-     * @return The formatted error message string.
-     */
-    private static String getControllerErrorMessage() {
-        return String.format(System.Label.Generic_Controller_Request_Failed, new List<String>{ Product2.SObjectType.getDescribe().getLabel() });
-    }
+
 }

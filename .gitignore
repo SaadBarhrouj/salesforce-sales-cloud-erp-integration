@@ -70,3 +70,5 @@ target/
 # IntelliJ IDEA
 .idea/
 *.iml
+# Ignore local custom skills
+.github/skills/
