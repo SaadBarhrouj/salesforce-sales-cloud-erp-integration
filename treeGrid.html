@@ -1,0 +1,717 @@
+<div class="slds-table_edit_container slds-is-relative">
+    <table aria-multiselectable="true"
+        class="slds-table slds-table_bordered slds-table_edit slds-table_fixed-layout slds-table_resizable-cols slds-tree slds-table_tree"
+        role="treegrid" aria-label="Example tree grid with selected row">
+        <thead>
+            <tr class="slds-line-height_reset">
+                <th class="slds-cell_action-mode" scope="col" style="width:3.75rem">
+                    <div class="slds-truncate slds-assistive-text" title="Errors">Errors</div>
+                </th>
+                <th class="slds-text-align_right slds-cell_action-mode" role="cell" style="width:3.25rem">
+                <div class="slds-th__action slds-th__action_form">
+                    <div class="slds-checkbox">
+                        <input type="checkbox" name="options" id="checkbox-unique-id-353" tabindex="-1"
+                            aria-label="Select All" value="checkbox-unique-id-353" />
+                        <label class="slds-checkbox__label" for="checkbox-unique-id-353" id="check-select-all-label"
+                            aria-hidden="true">
+                            <span class="slds-checkbox_faux"></span>
+                            <span class="slds-form-element__label slds-assistive-text">Select All</span>
+                        </label>
+                    </div>
+                </div>
+            </th>
+            <th aria-sort="none" class="slds-has-button-menu slds-is-resizable slds-is-sortable slds-cell_action-mode" scope="col">
+                <a class="slds-th__action slds-text-link_reset" href="#" role="button" tabindex="-1">
+                    <span class="slds-assistive-text">Sort by: </span>
+                    <div class="slds-grid slds-grid_vertical-align-center slds-has-flexi-truncate">
+                        <span class="slds-truncate" title="Account Name">Account Name</span>
+                        <span class="slds-icon_container slds-icon-utility-arrowdown">
+                            <svg class="slds-icon slds-icon-text-default slds-is-sortable__icon " aria-hidden="true">
+                                <use xlink:href="/assets/icons/utility-sprite/svg/symbols.svg#arrowdown"></use>
+                            </svg>
+                        </span>
+                    </div>
+                </a>
+                <button class="slds-button slds-button_icon slds-th__action-button slds-button_icon-x-small"
+                    aria-haspopup="true" tabindex="-1" title="Show Account Name column actions">
+                    <svg class="slds-button__icon slds-button__icon_hint slds-button__icon_small" aria-hidden="true">
+                        <use xlink:href="/assets/icons/utility-sprite/svg/symbols.svg#chevrondown"></use>
+                    </svg>
+                    <span class="slds-assistive-text">Show Account Name column actions</span>
+                </button>
+                <div class="slds-resizable">
+                    <input aria-label="Account Name column width" class="slds-resizable__input slds-assistive-text"
+                        id="cell-resize-handle-251" max="1000" min="20" tabindex="-1" type="range" />
+                    <span class="slds-resizable__handle">
+                        <span class="slds-resizable__divider"></span>
+                    </span>
+                </div>
+            </th>
+            <th aria-sort="none" class="slds-has-button-menu slds-is-resizable slds-is-sortable slds-cell_action-mode" scope="col">
+                <a class="slds-th__action slds-text-link_reset" href="#" role="button" tabindex="-1">
+                    <span class="slds-assistive-text">Sort by: </span>
+                    <div class="slds-grid slds-grid_vertical-align-center slds-has-flexi-truncate">
+                        <span class="slds-truncate" title="Employees">Employees</span>
+                        <span class="slds-icon_container slds-icon-utility-arrowdown">
+                            <svg class="slds-icon slds-icon-text-default slds-is-sortable__icon " aria-hidden="true">
+                                <use xlink:href="/assets/icons/utility-sprite/svg/symbols.svg#arrowdown"></use>
+                            </svg>
+                        </span>
+                    </div>
+                </a>
+                <button class="slds-button slds-button_icon slds-th__action-button slds-button_icon-x-small"
+                    aria-haspopup="true" tabindex="-1" title="Show Employees column actions">
+                    <svg class="slds-button__icon slds-button__icon_hint slds-button__icon_small" aria-hidden="true">
+                        <use xlink:href="/assets/icons/utility-sprite/svg/symbols.svg#chevrondown"></use>
+                    </svg>
+                    <span class="slds-assistive-text">Show Employees column actions</span>
+                </button>
+                <div class="slds-resizable">
+                    <input aria-label="Employees column width" class="slds-resizable__input slds-assistive-text"
+                        id="cell-resize-handle-252" max="1000" min="20" tabindex="-1" type="range" />
+                    <span class="slds-resizable__handle">
+                        <span class="slds-resizable__divider"></span>
+                    </span>
+                </div>
+            </th>
+            <th aria-sort="none" class="slds-has-button-menu slds-is-resizable slds-is-sortable slds-cell_action-mode" scope="col">
+                <a class="slds-th__action slds-text-link_reset" href="#" role="button" tabindex="-1">
+                    <span class="slds-assistive-text">Sort by: </span>
+                    <div class="slds-grid slds-grid_vertical-align-center slds-has-flexi-truncate">
+                        <span class="slds-truncate" title="Phone Number">Phone Number</span>
+                        <span class="slds-icon_container slds-icon-utility-arrowdown">
+                            <svg class="slds-icon slds-icon-text-default slds-is-sortable__icon " aria-hidden="true">
+                                <use xlink:href="/assets/icons/utility-sprite/svg/symbols.svg#arrowdown"></use>
+                            </svg>
+                        </span>
+                    </div>
+                </a>
+                <button class="slds-button slds-button_icon slds-th__action-button slds-button_icon-x-small"
+                    aria-haspopup="true" tabindex="-1" title="Show Phone Number column actions">
+                    <svg class="slds-button__icon slds-button__icon_hint slds-button__icon_small" aria-hidden="true">
+                        <use xlink:href="/assets/icons/utility-sprite/svg/symbols.svg#chevrondown"></use>
+                    </svg>
+                    <span class="slds-assistive-text">Show Phone Number column actions</span>
+                </button>
+                <div class="slds-resizable">
+                    <input aria-label="Phone Number column width" class="slds-resizable__input slds-assistive-text"
+                        id="cell-resize-handle-253" max="1000" min="20" tabindex="-1" type="range" />
+                    <span class="slds-resizable__handle">
+                        <span class="slds-resizable__divider"></span>
+                    </span>
+                </div>
+            </th>
+            <th aria-sort="none" class="slds-has-button-menu slds-is-resizable slds-is-sortable slds-cell_action-mode" scope="col">
+                <a class="slds-th__action slds-text-link_reset" href="#" role="button" tabindex="-1">
+                    <span class="slds-assistive-text">Sort by: </span>
+                    <div class="slds-grid slds-grid_vertical-align-center slds-has-flexi-truncate">
+                        <span class="slds-truncate" title="Account Owner">Account Owner</span>
+                        <span class="slds-icon_container slds-icon-utility-arrowdown">
+                            <svg class="slds-icon slds-icon-text-default slds-is-sortable__icon " aria-hidden="true">
+                                <use xlink:href="/assets/icons/utility-sprite/svg/symbols.svg#arrowdown"></use>
+                            </svg>
+                        </span>
+                    </div>
+                </a>
+                <button class="slds-button slds-button_icon slds-th__action-button slds-button_icon-x-small"
+                    aria-haspopup="true" tabindex="-1" title="Show Account Owner column actions">
+                    <svg class="slds-button__icon slds-button__icon_hint slds-button__icon_small" aria-hidden="true">
+                        <use xlink:href="/assets/icons/utility-sprite/svg/symbols.svg#chevrondown"></use>
+                    </svg>
+                    <span class="slds-assistive-text">Show Account Owner column actions</span>
+                </button>
+                <div class="slds-resizable">
+                    <input aria-label="Account Owner column width" class="slds-resizable__input slds-assistive-text"
+                        id="cell-resize-handle-254" max="1000" min="20" tabindex="-1" type="range" />
+                    <span class="slds-resizable__handle">
+                        <span class="slds-resizable__divider"></span>
+                    </span>
+                </div>
+            </th>
+            <th aria-sort="none" class="slds-has-button-menu slds-is-resizable slds-is-sortable slds-cell_action-mode" scope="col">
+                <a class="slds-th__action slds-text-link_reset" href="#" role="button" tabindex="-1">
+                    <span class="slds-assistive-text">Sort by: </span>
+                    <div class="slds-grid slds-grid_vertical-align-center slds-has-flexi-truncate">
+                        <span class="slds-truncate" title="Billing City">Billing City</span>
+                        <span class="slds-icon_container slds-icon-utility-arrowdown">
+                            <svg class="slds-icon slds-icon-text-default slds-is-sortable__icon " aria-hidden="true">
+                                <use xlink:href="/assets/icons/utility-sprite/svg/symbols.svg#arrowdown"></use>
+                            </svg>
+                        </span>
+                    </div>
+                </a>
+                <button class="slds-button slds-button_icon slds-th__action-button slds-button_icon-x-small"
+                    aria-haspopup="true" tabindex="-1" title="Show Billing City column actions">
+                    <svg class="slds-button__icon slds-button__icon_hint slds-button__icon_small" aria-hidden="true">
+                        <use xlink:href="/assets/icons/utility-sprite/svg/symbols.svg#chevrondown"></use>
+                    </svg>
+                    <span class="slds-assistive-text">Show Billing City column actions</span>
+                </button>
+                <div class="slds-resizable">
+                    <input aria-label="Billing City column width" class="slds-resizable__input slds-assistive-text"
+                        id="cell-resize-handle-255" max="1000" min="20" tabindex="-1" type="range" />
+                    <span class="slds-resizable__handle">
+                        <span class="slds-resizable__divider"></span>
+                    </span>
+                </div>
+            </th>
+            <th class="slds-cell_action-mode" scope="col" style="width:3.25rem">
+                <div class="slds-truncate slds-assistive-text" title="Actions">Actions</div>
+            </th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr aria-level="1" aria-posinset="1" aria-selected="false" aria-setsize="4" class="slds-hint-parent"
+            tabindex="0">
+            <td class="slds-cell-edit slds-cell-error slds-cell_action-mode" role="gridcell">
+                <button id="error-01"
+                    class="slds-button slds-button_icon slds-button_icon-error slds-m-horizontal_xxx-small slds-hidden"
+                    aria-hidden="true" tabindex="0" title="Item 1 has errors">
+                    <svg class="slds-button__icon" aria-hidden="true">
+                        <use xlink:href="/assets/icons/utility-sprite/svg/symbols.svg#error"></use>
+                    </svg>
+                    <span class="slds-assistive-text">Item 1 has errors</span>
+                </button>
+                <span class="slds-row-number slds-text-body_small slds-text-color_weak"></span>
+            </td>
+            <td class="slds-text-align_right slds-cell_action-mode" role="gridcell" style="width:3.25rem">
+                <div class="slds-checkbox">
+                    <input type="checkbox" name="options" id="checkbox-0314" aria-label="Select item 314"
+                        value="checkbox-0314" />
+                    <label class="slds-checkbox__label" for="checkbox-0314" id="check-button-label-0314"
+                        aria-hidden="true">
+                        <span class="slds-checkbox_faux"></span>
+                        <span class="slds-form-element__label slds-assistive-text">Select item 314</span>
+                    </label>
+                </div>
+            </td>
+            <th class="slds-tree__item slds-cell-edit slds-cell_action-mode" data-label="Account Name" scope="row">
+                <button
+                    class="slds-button slds-button_icon slds-button_icon-x-small slds-m-right_x-small slds-is-disabled"
+                    aria-hidden="true" tabindex="-1" title="Expand Rewis Inc">
+                    <svg class="slds-button__icon slds-button__icon_small" aria-hidden="true">
+                        <use xlink:href="/assets/icons/utility-sprite/svg/symbols.svg#chevronright"></use>
+                    </svg>
+                    <span class="slds-assistive-text">Expand Rewis Inc</span>
+                </button>
+                <div class="slds-truncate" title="Rewis Inc">
+                    <span class="slds-grid slds-grid_align-spread">
+                        <a href="#" tabindex="-1">Rewis Inc</a>
+                        <button class="slds-button slds-button_icon slds-cell-edit__button slds-m-left_x-small"
+                            tabindex="0" title="Edit Account Name of Rewis Inc">
+                            <svg class="slds-button__icon slds-button__icon_hint slds-button__icon_edit"
+                                aria-hidden="true">
+                                <use xlink:href="/assets/icons/utility-sprite/svg/symbols.svg#edit"></use>
+                            </svg>
+                            <span class="slds-assistive-text">Edit Account Name of Rewis Inc</span>
+                        </button>
+                    </span>
+                </div>
+            </th>
+            <td data-label="Employees" role="gridcell" class="slds-cell-edit slds-cell_action-mode">
+                <span class="slds-grid slds-grid_align-spread">
+                    <div class="slds-truncate" title="3,100">3,100</div>
+                    <button class="slds-button slds-button_icon slds-cell-edit__button slds-m-left_x-small"
+                        tabindex="0" title="Edit Employees of Rewis Inc">
+                        <svg class="slds-button__icon slds-button__icon_hint slds-button__icon_edit"
+                            aria-hidden="true">
+                            <use xlink:href="/assets/icons/utility-sprite/svg/symbols.svg#edit"></use>
+                        </svg>
+                        <span class="slds-assistive-text">Edit Employees of Rewis Inc</span>
+                    </button>
+                </span>
+            </td>
+            <td data-label="Phone Number" role="gridcell" class="slds-cell-edit slds-cell_action-mode">
+                <span class="slds-grid slds-grid_align-spread">
+                    <div class="slds-truncate" title="837-555-1212">837-555-1212</div>
+                    <button class="slds-button slds-button_icon slds-cell-edit__button slds-m-left_x-small"
+                        tabindex="0" title="Edit Phone Number of Rewis Inc">
+                        <svg class="slds-button__icon slds-button__icon_hint slds-button__icon_edit"
+                            aria-hidden="true">
+                            <use xlink:href="/assets/icons/utility-sprite/svg/symbols.svg#edit"></use>
+                        </svg>
+                        <span class="slds-assistive-text">Edit Phone Number of Rewis Inc</span>
+                    </button>
+                </span>
+            </td>
+            <td data-label="Account Owner" role="gridcell" class="slds-cell-edit slds-cell_action-mode">
+                <span class="slds-grid slds-grid_align-spread">
+                    <div class="slds-truncate" title="Jane Doe">
+                        <a href="#" tabindex="-1">Jane Doe</a>
+                    </div>
+                    <button class="slds-button slds-button_icon slds-cell-edit__button slds-m-left_x-small"
+                        tabindex="0" title="Edit Account Owner of Rewis Inc">
+                        <svg class="slds-button__icon slds-button__icon_hint slds-button__icon_edit"
+                            aria-hidden="true">
+                            <use xlink:href="/assets/icons/utility-sprite/svg/symbols.svg#edit"></use>
+                        </svg>
+                        <span class="slds-assistive-text">Edit Account Owner of Rewis Inc</span>
+                    </button>
+                </span>
+            </td>
+            <td data-label="Billing City" role="gridcell" class="slds-cell-edit slds-cell_action-mode">
+                <span class="slds-grid slds-grid_align-spread">
+                    <div class="slds-truncate" title="Phoenix, AZ">Phoenix, AZ</div>
+                    <button class="slds-button slds-button_icon slds-cell-edit__button slds-m-left_x-small"
+                        tabindex="0" title="Edit Billing City of Rewis Inc">
+                        <svg class="slds-button__icon slds-button__icon_hint slds-button__icon_edit"
+                            aria-hidden="true">
+                            <use xlink:href="/assets/icons/utility-sprite/svg/symbols.svg#edit"></use>
+                        </svg>
+                        <span class="slds-assistive-text">Edit Billing City of Rewis Inc</span>
+                    </button>
+                </span>
+            </td>
+            <td role="gridcell" style="width:3.25rem" class="slds-cell_action-mode">
+                <button class="slds-button slds-button_icon slds-button_icon-border-filled slds-button_icon-x-small"
+                    aria-haspopup="true" tabindex="-1" title="More actions for Rewis Inc">
+                    <svg class="slds-button__icon slds-button__icon_hint slds-button__icon_small" aria-hidden="true">
+                        <use xlink:href="/assets/icons/utility-sprite/svg/symbols.svg#down"></use>
+                    </svg>
+                    <span class="slds-assistive-text">More actions for Rewis Inc</span>
+                </button>
+            </td>
+        </tr>
+        <tr aria-expanded="true" aria-level="1" aria-posinset="2" aria-selected="true" aria-setsize="4"
+            class="slds-hint-parent slds-is-selected">
+            <td class="slds-cell-edit slds-cell-error slds-cell_action-mode" role="gridcell">
+                <button id="error-02"
+                    class="slds-button slds-button_icon slds-button_icon-error slds-m-horizontal_xxx-small"
+                    tabindex="0" title="Item 2 has errors">
+                    <svg class="slds-button__icon" aria-hidden="true">
+                        <use xlink:href="/assets/icons/utility-sprite/svg/symbols.svg#error"></use>
+                    </svg>
+                    <span class="slds-assistive-text">Item 2 has errors</span>
+                </button>
+                <span class="slds-row-number slds-text-body_small slds-text-color_weak"></span>
+            </td>
+            <td class="slds-text-align_right slds-cell_action-mode" role="gridcell" style="width:3.25rem">
+                <div class="slds-checkbox">
+                    <input type="checkbox" name="options" id="checkbox-0315" aria-label="Select item 315" checked=""
+                        value="checkbox-0315" />
+                    <label class="slds-checkbox__label" for="checkbox-0315" id="check-button-label-0315"
+                        aria-hidden="true">
+                        <span class="slds-checkbox_faux"></span>
+                        <span class="slds-form-element__label slds-assistive-text">Select item 315</span>
+                    </label>
+                </div>
+            </td>
+            <th class="slds-tree__item slds-cell-edit slds-cell_action-mode" data-label="Account Name" scope="row">
+                <button class="slds-button slds-button_icon slds-button_icon-x-small slds-m-right_x-small"
+                    aria-hidden="true" tabindex="-1" title="Collapse Acme Corporation">
+                    <svg class="slds-button__icon slds-button__icon_small" aria-hidden="true">
+                        <use xlink:href="/assets/icons/utility-sprite/svg/symbols.svg#chevronright"></use>
+                    </svg>
+                    <span class="slds-assistive-text">Collapse Acme Corporation</span>
+                </button>
+                <div class="slds-truncate" title="Acme Corporation">
+                    <span class="slds-grid slds-grid_align-spread">
+                        <a href="#" tabindex="-1">Acme Corporation</a>
+                        <button class="slds-button slds-button_icon slds-cell-edit__button slds-m-left_x-small"
+                            tabindex="0" title="Edit Account Name of Acme Corporation">
+                            <svg class="slds-button__icon slds-button__icon_hint slds-button__icon_edit"
+                                aria-hidden="true">
+                                <use xlink:href="/assets/icons/utility-sprite/svg/symbols.svg#edit"></use>
+                            </svg>
+                            <span class="slds-assistive-text">Edit Account Name of Acme Corporation</span>
+                        </button>
+                    </span>
+                </div>
+            </th>
+            <td data-label="Employees" role="gridcell" class="slds-cell-edit slds-cell_action-mode">
+                <span class="slds-grid slds-grid_align-spread">
+                    <div class="slds-truncate" title="10,000">10,000</div>
+                    <button class="slds-button slds-button_icon slds-cell-edit__button slds-m-left_x-small"
+                        tabindex="0" title="Edit Employees of Acme Corporation">
+                        <svg class="slds-button__icon slds-button__icon_hint slds-button__icon_edit"
+                            aria-hidden="true">
+                            <use xlink:href="/assets/icons/utility-sprite/svg/symbols.svg#edit"></use>
+                        </svg>
+                        <span class="slds-assistive-text">Edit Employees of Acme Corporation</span>
+                    </button>
+                </span>
+            </td>
+            <td data-label="Phone Number" role="gridcell" class="slds-cell-edit slds-cell_action-mode">
+                <span class="slds-grid slds-grid_align-spread">
+                    <div class="slds-truncate" title="837-555-1212">837-555-1212</div>
+                    <button class="slds-button slds-button_icon slds-cell-edit__button slds-m-left_x-small"
+                        tabindex="0" title="Edit Phone Number of Acme Corporation">
+                        <svg class="slds-button__icon slds-button__icon_hint slds-button__icon_edit"
+                            aria-hidden="true">
+                            <use xlink:href="/assets/icons/utility-sprite/svg/symbols.svg#edit"></use>
+                        </svg>
+                        <span class="slds-assistive-text">Edit Phone Number of Acme Corporation</span>
+                    </button>
+                </span>
+            </td>
+            <td data-label="Account Owner" role="gridcell" class="slds-cell-edit slds-cell_action-mode">
+                <span class="slds-grid slds-grid_align-spread">
+                    <div class="slds-truncate" title="John Doe">
+                        <a href="#" tabindex="-1">John Doe</a>
+                    </div>
+                    <button class="slds-button slds-button_icon slds-cell-edit__button slds-m-left_x-small"
+                        tabindex="0" title="Edit Account Owner of Acme Corporation">
+                        <svg class="slds-button__icon slds-button__icon_hint slds-button__icon_edit"
+                            aria-hidden="true">
+                            <use xlink:href="/assets/icons/utility-sprite/svg/symbols.svg#edit"></use>
+                        </svg>
+                        <span class="slds-assistive-text">Edit Account Owner of Acme Corporation</span>
+                    </button>
+                </span>
+            </td>
+            <td data-label="Billing City" role="gridcell" class="slds-cell-edit slds-cell_action-mode">
+                <span class="slds-grid slds-grid_align-spread">
+                    <div class="slds-truncate" title="San Francisco, CA">San Francisco, CA</div>
+                    <button class="slds-button slds-button_icon slds-cell-edit__button slds-m-left_x-small"
+                        tabindex="0" title="Edit Billing City of Acme Corporation">
+                        <svg class="slds-button__icon slds-button__icon_hint slds-button__icon_edit"
+                            aria-hidden="true">
+                            <use xlink:href="/assets/icons/utility-sprite/svg/symbols.svg#edit"></use>
+                        </svg>
+                        <span class="slds-assistive-text">Edit Billing City of Acme Corporation</span>
+                    </button>
+                </span>
+            </td>
+            <td role="gridcell" style="width:3.25rem" class="slds-cell_action-mode">
+                <button class="slds-button slds-button_icon slds-button_icon-border-filled slds-button_icon-x-small"
+                    aria-haspopup="true" tabindex="-1" title="More actions for Acme Corporation">
+                    <svg class="slds-button__icon slds-button__icon_hint slds-button__icon_small" aria-hidden="true">
+                        <use xlink:href="/assets/icons/utility-sprite/svg/symbols.svg#down"></use>
+                    </svg>
+                    <span class="slds-assistive-text">More actions for Acme Corporation</span>
+                </button>
+            </td>
+        </tr>
+        <tr aria-level="2" aria-posinset="1" aria-selected="false" aria-setsize="1" class="slds-hint-parent">
+            <td class="slds-cell-edit slds-cell-error slds-cell_action-mode" role="gridcell">
+                <button id="error-03"
+                    class="slds-button slds-button_icon slds-button_icon-error slds-m-horizontal_xxx-small slds-hidden"
+                    aria-hidden="true" tabindex="0" title="Item 3 has errors">
+                    <svg class="slds-button__icon" aria-hidden="true">
+                        <use xlink:href="/assets/icons/utility-sprite/svg/symbols.svg#error"></use>
+                    </svg>
+                    <span class="slds-assistive-text">Item 3 has errors</span>
+                </button>
+                <span class="slds-row-number slds-text-body_small slds-text-color_weak"></span>
+            </td>
+            <td class="slds-text-align_right slds-cell_action-mode" role="gridcell" style="width:3.25rem">
+                <div class="slds-checkbox">
+                    <input type="checkbox" name="options" id="checkbox-0316" aria-label="Select item 316"
+                        value="checkbox-0316" />
+                    <label class="slds-checkbox__label" for="checkbox-0316" id="check-button-label-0316"
+                        aria-hidden="true">
+                        <span class="slds-checkbox_faux"></span>
+                        <span class="slds-form-element__label slds-assistive-text">Select item 316</span>
+                    </label>
+                </div>
+            </td>
+            <th class="slds-tree__item slds-cell-edit slds-cell_action-mode" data-label="Account Name" scope="row">
+                <button
+                    class="slds-button slds-button_icon slds-button_icon-x-small slds-m-right_x-small slds-is-disabled"
+                    aria-hidden="true" tabindex="-1" title="Expand Acme Corporation (Oakland)">
+                    <svg class="slds-button__icon slds-button__icon_small" aria-hidden="true">
+                        <use xlink:href="/assets/icons/utility-sprite/svg/symbols.svg#chevronright"></use>
+                    </svg>
+                    <span class="slds-assistive-text">Expand Acme Corporation (Oakland)</span>
+                </button>
+                <div class="slds-truncate" title="Acme Corporation (Oakland)">
+                    <span class="slds-grid slds-grid_align-spread">
+                        <a href="#" tabindex="-1">Acme Corporation (Oakland)</a>
+                        <button class="slds-button slds-button_icon slds-cell-edit__button slds-m-left_x-small"
+                            tabindex="0" title="Edit Account Name of Acme Corporation (Oakland)">
+                            <svg class="slds-button__icon slds-button__icon_hint slds-button__icon_edit"
+                                aria-hidden="true">
+                                <use xlink:href="/assets/icons/utility-sprite/svg/symbols.svg#edit"></use>
+                            </svg>
+                            <span class="slds-assistive-text">Edit Account Name of Acme Corporation (Oakland)</span>
+                        </button>
+                    </span>
+                </div>
+            </th>
+            <td data-label="Employees" role="gridcell" class="slds-cell-edit slds-cell_action-mode">
+                <span class="slds-grid slds-grid_align-spread">
+                    <div class="slds-truncate" title="745">745</div>
+                    <button class="slds-button slds-button_icon slds-cell-edit__button slds-m-left_x-small"
+                        tabindex="0" title="Edit Employees of Acme Corporation (Oakland)">
+                        <svg class="slds-button__icon slds-button__icon_hint slds-button__icon_edit"
+                            aria-hidden="true">
+                            <use xlink:href="/assets/icons/utility-sprite/svg/symbols.svg#edit"></use>
+                        </svg>
+                        <span class="slds-assistive-text">Edit Employees of Acme Corporation (Oakland)</span>
+                    </button>
+                </span>
+            </td>
+            <td data-label="Phone Number" role="gridcell" class="slds-cell-edit slds-cell_action-mode">
+                <span class="slds-grid slds-grid_align-spread">
+                    <div class="slds-truncate" title="837-555-1212">837-555-1212</div>
+                    <button class="slds-button slds-button_icon slds-cell-edit__button slds-m-left_x-small"
+                        tabindex="0" title="Edit Phone Number of Acme Corporation (Oakland)">
+                        <svg class="slds-button__icon slds-button__icon_hint slds-button__icon_edit"
+                            aria-hidden="true">
+                            <use xlink:href="/assets/icons/utility-sprite/svg/symbols.svg#edit"></use>
+                        </svg>
+                        <span class="slds-assistive-text">Edit Phone Number of Acme Corporation (Oakland)</span>
+                    </button>
+                </span>
+            </td>
+            <td data-label="Account Owner" role="gridcell" class="slds-cell-edit slds-cell_action-mode">
+                <span class="slds-grid slds-grid_align-spread">
+                    <div class="slds-truncate" title="John Doe">
+                        <a href="#" tabindex="-1">John Doe</a>
+                    </div>
+                    <button class="slds-button slds-button_icon slds-cell-edit__button slds-m-left_x-small"
+                        tabindex="0" title="Edit Account Owner of Acme Corporation (Oakland)">
+                        <svg class="slds-button__icon slds-button__icon_hint slds-button__icon_edit"
+                            aria-hidden="true">
+                            <use xlink:href="/assets/icons/utility-sprite/svg/symbols.svg#edit"></use>
+                        </svg>
+                        <span class="slds-assistive-text">Edit Account Owner of Acme Corporation (Oakland)</span>
+                    </button>
+                </span>
+            </td>
+            <td data-label="Billing City" role="gridcell" class="slds-cell-edit slds-cell_action-mode">
+                <span class="slds-grid slds-grid_align-spread">
+                    <div class="slds-truncate" title="New York, NY">New York, NY</div>
+                    <button class="slds-button slds-button_icon slds-cell-edit__button slds-m-left_x-small"
+                        tabindex="0" title="Edit Billing City of Acme Corporation (Oakland)">
+                        <svg class="slds-button__icon slds-button__icon_hint slds-button__icon_edit"
+                            aria-hidden="true">
+                            <use xlink:href="/assets/icons/utility-sprite/svg/symbols.svg#edit"></use>
+                        </svg>
+                        <span class="slds-assistive-text">Edit Billing City of Acme Corporation (Oakland)</span>
+                    </button>
+                </span>
+            </td>
+            <td role="gridcell" style="width:3.25rem" class="slds-cell_action-mode">
+                <button class="slds-button slds-button_icon slds-button_icon-border-filled slds-button_icon-x-small"
+                    aria-haspopup="true" tabindex="-1" title="More actions for Acme Corporation (Oakland)">
+                    <svg class="slds-button__icon slds-button__icon_hint slds-button__icon_small" aria-hidden="true">
+                        <use xlink:href="/assets/icons/utility-sprite/svg/symbols.svg#down"></use>
+                    </svg>
+                    <span class="slds-assistive-text">More actions for Acme Corporation (Oakland)</span>
+                </button>
+            </td>
+        </tr>
+        <tr aria-expanded="false" aria-level="1" aria-posinset="3" aria-selected="false" aria-setsize="4"
+            class="slds-hint-parent">
+            <td class="slds-cell-edit slds-cell-error slds-cell_action-mode" role="gridcell">
+                <button id="error-04"
+                    class="slds-button slds-button_icon slds-button_icon-error slds-m-horizontal_xxx-small slds-hidden"
+                    aria-hidden="true" tabindex="0" title="Item 4 has errors">
+                    <svg class="slds-button__icon" aria-hidden="true">
+                        <use xlink:href="/assets/icons/utility-sprite/svg/symbols.svg#error"></use>
+                    </svg>
+                    <span class="slds-assistive-text">Item 4 has errors</span>
+                </button>
+                <span class="slds-row-number slds-text-body_small slds-text-color_weak"></span>
+            </td>
+            <td class="slds-text-align_right slds-cell_action-mode" role="gridcell" style="width:3.25rem">
+                <div class="slds-checkbox">
+                    <input type="checkbox" name="options" id="checkbox-0317" aria-label="Select item 317"
+                        value="checkbox-0317" />
+                    <label class="slds-checkbox__label" for="checkbox-0317" id="check-button-label-0317"
+                        aria-hidden="true">
+                        <span class="slds-checkbox_faux"></span>
+                        <span class="slds-form-element__label slds-assistive-text">Select item 317</span>
+                    </label>
+                </div>
+            </td>
+            <th class="slds-tree__item slds-cell-edit slds-cell_action-mode" data-label="Account Name" scope="row">
+                <button class="slds-button slds-button_icon slds-button_icon-x-small slds-m-right_x-small"
+                    aria-hidden="true" tabindex="-1" title="Expand Rohde Enterprises">
+                    <svg class="slds-button__icon slds-button__icon_small" aria-hidden="true">
+                        <use xlink:href="/assets/icons/utility-sprite/svg/symbols.svg#chevronright"></use>
+                    </svg>
+                    <span class="slds-assistive-text">Expand Rohde Enterprises</span>
+                </button>
+                <div class="slds-truncate" title="Rohde Enterprises">
+                    <span class="slds-grid slds-grid_align-spread">
+                        <a href="#" tabindex="-1">Rohde Enterprises</a>
+                        <button class="slds-button slds-button_icon slds-cell-edit__button slds-m-left_x-small"
+                            tabindex="0" title="Edit Account Name of Rohde Enterprises">
+                            <svg class="slds-button__icon slds-button__icon_hint slds-button__icon_edit"
+                                aria-hidden="true">
+                                <use xlink:href="/assets/icons/utility-sprite/svg/symbols.svg#edit"></use>
+                            </svg>
+                            <span class="slds-assistive-text">Edit Account Name of Rohde Enterprises</span>
+                        </button>
+                    </span>
+                </div>
+            </th>
+            <td data-label="Employees" role="gridcell" class="slds-cell-edit slds-cell_action-mode">
+                <span class="slds-grid slds-grid_align-spread">
+                    <div class="slds-truncate" title="6,000">6,000</div>
+                    <button class="slds-button slds-button_icon slds-cell-edit__button slds-m-left_x-small"
+                        tabindex="0" title="Edit Employees of Rohde Enterprises">
+                        <svg class="slds-button__icon slds-button__icon_hint slds-button__icon_edit"
+                            aria-hidden="true">
+                            <use xlink:href="/assets/icons/utility-sprite/svg/symbols.svg#edit"></use>
+                        </svg>
+                        <span class="slds-assistive-text">Edit Employees of Rohde Enterprises</span>
+                    </button>
+                </span>
+            </td>
+            <td data-label="Phone Number" role="gridcell" class="slds-cell-edit slds-cell_action-mode">
+                <span class="slds-grid slds-grid_align-spread">
+                    <div class="slds-truncate" title="837-555-1212">837-555-1212</div>
+                    <button class="slds-button slds-button_icon slds-cell-edit__button slds-m-left_x-small"
+                        tabindex="0" title="Edit Phone Number of Rohde Enterprises">
+                        <svg class="slds-button__icon slds-button__icon_hint slds-button__icon_edit"
+                            aria-hidden="true">
+                            <use xlink:href="/assets/icons/utility-sprite/svg/symbols.svg#edit"></use>
+                        </svg>
+                        <span class="slds-assistive-text">Edit Phone Number of Rohde Enterprises</span>
+                    </button>
+                </span>
+            </td>
+            <td data-label="Account Owner" role="gridcell" class="slds-cell-edit slds-cell_action-mode">
+                <span class="slds-grid slds-grid_align-spread">
+                    <div class="slds-truncate" title="John Doe">
+                        <a href="#" tabindex="-1">John Doe</a>
+                    </div>
+                    <button class="slds-button slds-button_icon slds-cell-edit__button slds-m-left_x-small"
+                        tabindex="0" title="Edit Account Owner of Rohde Enterprises">
+                        <svg class="slds-button__icon slds-button__icon_hint slds-button__icon_edit"
+                            aria-hidden="true">
+                            <use xlink:href="/assets/icons/utility-sprite/svg/symbols.svg#edit"></use>
+                        </svg>
+                        <span class="slds-assistive-text">Edit Account Owner of Rohde Enterprises</span>
+                    </button>
+                </span>
+            </td>
+            <td data-label="Billing City" role="gridcell" class="slds-cell-edit slds-cell_action-mode">
+                <span class="slds-grid slds-grid_align-spread">
+                    <div class="slds-truncate" title="New York, NY">New York, NY</div>
+                    <button class="slds-button slds-button_icon slds-cell-edit__button slds-m-left_x-small"
+                        tabindex="0" title="Edit Billing City of Rohde Enterprises">
+                        <svg class="slds-button__icon slds-button__icon_hint slds-button__icon_edit"
+                            aria-hidden="true">
+                            <use xlink:href="/assets/icons/utility-sprite/svg/symbols.svg#edit"></use>
+                        </svg>
+                        <span class="slds-assistive-text">Edit Billing City of Rohde Enterprises</span>
+                    </button>
+                </span>
+            </td>
+            <td role="gridcell" style="width:3.25rem" class="slds-cell_action-mode">
+                <button class="slds-button slds-button_icon slds-button_icon-border-filled slds-button_icon-x-small"
+                    aria-haspopup="true" tabindex="-1" title="More actions for Rohde Enterprises">
+                    <svg class="slds-button__icon slds-button__icon_hint slds-button__icon_small" aria-hidden="true">
+                        <use xlink:href="/assets/icons/utility-sprite/svg/symbols.svg#down"></use>
+                    </svg>
+                    <span class="slds-assistive-text">More actions for Rohde Enterprises</span>
+                </button>
+            </td>
+        </tr>
+        <tr aria-level="1" aria-posinset="4" aria-selected="false" aria-setsize="4" class="slds-hint-parent">
+            <td class="slds-cell-edit slds-cell-error slds-cell_action-mode" role="gridcell">
+                <button id="error-05"
+                    class="slds-button slds-button_icon slds-button_icon-error slds-m-horizontal_xxx-small slds-hidden"
+                    aria-hidden="true" tabindex="0" title="Item 5 has errors">
+                    <svg class="slds-button__icon" aria-hidden="true">
+                        <use xlink:href="/assets/icons/utility-sprite/svg/symbols.svg#error"></use>
+                    </svg>
+                    <span class="slds-assistive-text">Item 5 has errors</span>
+                </button>
+                <span class="slds-row-number slds-text-body_small slds-text-color_weak"></span>
+            </td>
+            <td class="slds-text-align_right slds-cell_action-mode" role="gridcell" style="width:3.25rem">
+                <div class="slds-checkbox">
+                    <input type="checkbox" name="options" id="checkbox-0318" aria-label="Select item 318"
+                        value="checkbox-0318" />
+                    <label class="slds-checkbox__label" for="checkbox-0318" id="check-button-label-0318"
+                        aria-hidden="true">
+                        <span class="slds-checkbox_faux"></span>
+                        <span class="slds-form-element__label slds-assistive-text">Select item 318</span>
+                    </label>
+                </div>
+            </td>
+            <th class="slds-tree__item slds-cell-edit slds-cell_action-mode" data-label="Account Name" scope="row">
+                <button
+                    class="slds-button slds-button_icon slds-button_icon-x-small slds-m-right_x-small slds-is-disabled"
+                    aria-hidden="true" tabindex="-1" title="Expand Cheese Corp">
+                    <svg class="slds-button__icon slds-button__icon_small" aria-hidden="true">
+                        <use xlink:href="/assets/icons/utility-sprite/svg/symbols.svg#chevronright"></use>
+                    </svg>
+                    <span class="slds-assistive-text">Expand Cheese Corp</span>
+                </button>
+                <div class="slds-truncate" title="Cheese Corp">
+                    <span class="slds-grid slds-grid_align-spread">
+                        <a href="#" tabindex="-1">Cheese Corp</a>
+                        <button class="slds-button slds-button_icon slds-cell-edit__button slds-m-left_x-small"
+                            tabindex="0" title="Edit Account Name of Cheese Corp">
+                            <svg class="slds-button__icon slds-button__icon_hint slds-button__icon_edit"
+                                aria-hidden="true">
+                                <use xlink:href="/assets/icons/utility-sprite/svg/symbols.svg#edit"></use>
+                            </svg>
+                            <span class="slds-assistive-text">Edit Account Name of Cheese Corp</span>
+                        </button>
+                    </span>
+                </div>
+            </th>
+            <td data-label="Employees" role="gridcell" class="slds-cell-edit slds-cell_action-mode">
+                <span class="slds-grid slds-grid_align-spread">
+                    <div class="slds-truncate" title="1,234">1,234</div>
+                    <button class="slds-button slds-button_icon slds-cell-edit__button slds-m-left_x-small"
+                        tabindex="0" title="Edit Employees of Cheese Corp">
+                        <svg class="slds-button__icon slds-button__icon_hint slds-button__icon_edit"
+                            aria-hidden="true">
+                            <use xlink:href="/assets/icons/utility-sprite/svg/symbols.svg#edit"></use>
+                        </svg>
+                        <span class="slds-assistive-text">Edit Employees of Cheese Corp</span>
+                    </button>
+                </span>
+            </td>
+            <td data-label="Phone Number" role="gridcell" class="slds-cell-edit slds-cell_action-mode">
+                <span class="slds-grid slds-grid_align-spread">
+                    <div class="slds-truncate" title="837-555-1212">837-555-1212</div>
+                    <button class="slds-button slds-button_icon slds-cell-edit__button slds-m-left_x-small"
+                        tabindex="0" title="Edit Phone Number of Cheese Corp">
+                        <svg class="slds-button__icon slds-button__icon_hint slds-button__icon_edit"
+                            aria-hidden="true">
+                            <use xlink:href="/assets/icons/utility-sprite/svg/symbols.svg#edit"></use>
+                        </svg>
+                        <span class="slds-assistive-text">Edit Phone Number of Cheese Corp</span>
+                    </button>
+                </span>
+            </td>
+            <td data-label="Account Owner" role="gridcell" class="slds-cell-edit slds-cell_action-mode">
+                <span class="slds-grid slds-grid_align-spread">
+                    <div class="slds-truncate" title="Jane Doe">
+                        <a href="#" tabindex="-1">Jane Doe</a>
+                    </div>
+                    <button class="slds-button slds-button_icon slds-cell-edit__button slds-m-left_x-small"
+                        tabindex="0" title="Edit Account Owner of Cheese Corp">
+                        <svg class="slds-button__icon slds-button__icon_hint slds-button__icon_edit"
+                            aria-hidden="true">
+                            <use xlink:href="/assets/icons/utility-sprite/svg/symbols.svg#edit"></use>
+                        </svg>
+                        <span class="slds-assistive-text">Edit Account Owner of Cheese Corp</span>
+                    </button>
+                </span>
+            </td>
+            <td data-label="Billing City" role="gridcell" class="slds-cell-edit slds-cell_action-mode">
+                <span class="slds-grid slds-grid_align-spread">
+                    <div class="slds-truncate" title="Paris, France">Paris, France</div>
+                    <button class="slds-button slds-button_icon slds-cell-edit__button slds-m-left_x-small"
+                        tabindex="0" title="Edit Billing City of Cheese Corp">
+                        <svg class="slds-button__icon slds-button__icon_hint slds-button__icon_edit"
+                            aria-hidden="true">
+                            <use xlink:href="/assets/icons/utility-sprite/svg/symbols.svg#edit"></use>
+                        </svg>
+                        <span class="slds-assistive-text">Edit Billing City of Cheese Corp</span>
+                    </button>
+                </span>
+            </td>
+            <td role="gridcell" style="width:3.25rem" class="slds-cell_action-mode">
+                <button class="slds-button slds-button_icon slds-button_icon-border-filled slds-button_icon-x-small"
+                    aria-haspopup="true" tabindex="-1" title="More actions for Cheese Corp">
+                    <svg class="slds-button__icon slds-button__icon_hint slds-button__icon_small" aria-hidden="true">
+                        <use xlink:href="/assets/icons/utility-sprite/svg/symbols.svg#down"></use>
+                    </svg>
+                    <span class="slds-assistive-text">More actions for Cheese Corp</span>
+                </button>
+            </td>
+        </tr>
+    </tbody>
+</table>
+</div>

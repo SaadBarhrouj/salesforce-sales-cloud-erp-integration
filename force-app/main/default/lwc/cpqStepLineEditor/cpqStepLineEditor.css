@@ -1,4 +1,54 @@
-.inline-field {
-    max-width: 150px;
-    display: inline-block;
+.step-line-editor {
+    position: relative;
 }
+
+.row-error {
+    background-color: #fff1f1 !important;
+}
+
+.row-error:hover {
+    background-color: #ffe5e5 !important;
+}
+
+.slds-table_edit_container {
+    border: 1px solid #dddbda;
+    border-radius: 0.25rem;
+}
+
+.slds-tree__item {
+    display: flex;
+    align-items: center;
+    height: 100%;
+}
+
+/* Fix height for the Product Column inner wrapper */
+.product-cell-inner {
+    min-height: 2rem;
+    height: 100%;
+}
+.slds-table_fixed-layout {
+    min-width: 800px;
+}
+
+.input-right-align {
+    text-align: right;
+    width: 100%;
+    --sds-c-input-text-align: right;
+}
+
+.error-icon {
+    cursor: help;
+}
+
+.slds-row-number::before {
+    content: counter(row-counter);
+}
+
+tbody {
+    counter-reset: row-counter;
+}
+
+tr {
+    counter-increment: row-counter;
+}
+

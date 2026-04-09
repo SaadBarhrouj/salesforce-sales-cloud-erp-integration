@@ -146,6 +146,10 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
     return this.currentStep.key === STEPS.REVIEW.key;
   }
 
+  get showSidebar() {
+    return !this.isStepLineEditor;
+  }
+
   /* -- bundle config -- */
   get selectedBundleProductId() {
     if (!this.selectedItemId || !this.isStepConfigure) return "";
@@ -179,6 +183,13 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
   }
 
   /* -- header -- */
+  get opportunityOfferType() {
+    if (this.opportunityRecord?.data) {
+      return getFieldValue(this.opportunityRecord.data, OPP_OFFER_TYPE) || "";
+    }
+    return "";
+  }
+
   get headerTopLabel() {
     if (this.opportunityRecord?.data) {
       const name = getFieldValue(this.opportunityRecord.data, OPP_NAME);
@@ -289,6 +300,8 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
     });
   }
 
+  @track hasLineSelection = false;
+
     get headerGlobalActions() {
     const actions = deepClone(this.currentStep.header?.globalActions || []);
     let filtersOpen = false;
@@ -298,6 +311,10 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
     }
 
     return actions.map((action) => {
+      if (action.dynamicProperty === "disableIfNoSelection") {
+        action.disabled = !this.hasLineSelection;
+      }
+
       if (action.isGroup && action.items) {
         action.items = action.items.map((item) => {
           if (item.dynamicProperty === "highlightIfFiltersOpen") {
@@ -310,7 +327,7 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
     });
   }
 
-  /* -- header actions -- */
+    /* -- header actions -- */
   handleHeaderAction(event) {
     const action = event.detail.action;
     if (action === "back") this._goBack();
@@ -327,6 +344,9 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
     else if (action === "groupByTab") this._getBundleConfigStep()?.switchToTabs();
     else if (action === "applyRules") this._handleApplyRules();
     else if (action === "toggleFilters") this._handleToggleFilters();
+    else if (action === "refreshPricing") this._getLineEditorStep()?.handleHeaderAction('refreshPricing');
+    else if (action === "validateAll") this._getLineEditorStep()?.handleHeaderAction('validateAll');
+    else if (action === "deleteSelected") this._getLineEditorStep()?.handleHeaderAction('deleteSelected');
   }
 
   _handleToggleFilters() {
@@ -410,6 +430,10 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
 
   _getBundleConfigStep() {
     return this.template.querySelector("c-cpq-step-bundle-config");
+  }
+
+  _getLineEditorStep() {
+    return this.template.querySelector("c-cpq-step-line-editor");
   }
 
   _handleClearSelection() {
@@ -600,7 +624,7 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
     const discount = this.quoteState.additionalDiscountPercent || 0;
     const idx = items.findIndex((i) => i._key === itemKey);
     if (idx !== -1) {
-      items[idx].options = deepClone(options);
+      items[idx].configuredOptions = deepClone(options);
       items[idx].configured = configured;
       items[idx]._formattedTotal = formatCurrency(
         calculateSelectedProductTotal(items[idx], discount)
@@ -617,12 +641,19 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
     const idx = items.findIndex((i) => i._key === itemKey);
     if (idx !== -1) {
       if (field === "quantity") items[idx].quantity = value;
-      else if (field === "additionalDiscount")
-        items[idx].additionalDiscount = value;
+      else if (field === "additionalDiscount") items[idx].additionalDiscount = value;
       else if (field === "optionQuantity" && optionId) {
-        const opt = (items[idx].options || []).find((o) => o.Id === optionId);
+        const opt = (items[idx].configuredOptions || []).find((o) => o.Id === optionId);
         if (opt) opt.quantity = value;
-      }
+      } else if (field === "pricingMethod") items[idx].pricingMethod = value;
+      else if (field === "isOptional") items[idx].isOptional = value;
+      else if (field === "packageProductCode") items[idx].packageProductCode = value;
+      else if (field === "originalPrice") items[idx].originalPrice = value;
+      else if (field === "unitCost") items[idx].unitCost = value;
+      else if (field === "markup") items[idx].markup = value;
+      else if (field === "specialPrice") items[idx].specialPrice = value;
+      else if (field === "regularUnitPrice") items[idx].regularUnitPrice = value;
+      else if (field === "customerUnitPrice") items[idx].customerUnitPrice = value;
       items[idx]._formattedTotal = formatCurrency(
         calculateSelectedProductTotal(items[idx], discount)
       );
@@ -638,12 +669,33 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
     this.selectedProducts = items;
   }
 
+  handleLineProductChange(event) {
+    const { itemKey, field, value, optionId } = event.detail;
+    const items = deepClone(this.selectedProducts);
+    const idx = items.findIndex((i) => i._key === itemKey);
+    if (idx !== -1) {
+      if (optionId) {
+        const optIdx = items[idx].configuredOptions?.findIndex((o) => o.Id === optionId);
+        if (optIdx !== -1) {
+          items[idx].configuredOptions[optIdx][field] = value;
+        }
+      } else {
+        items[idx][field] = value;
+      }
+      this.selectedProducts = items;
+    }
+  }
+
   handleGlobalDiscount(event) {
     const disc = event.detail.value;
     const qs = deepClone(this.quoteState);
     qs.additionalDiscountPercent = disc;
     this.quoteState = qs;
     this._recalcAllTotals();
+  }
+
+  handleLineSelectionChange(event) {
+    this.hasLineSelection = event.detail.hasSelection;
   }
 
   /* -- Step 5 events -- */

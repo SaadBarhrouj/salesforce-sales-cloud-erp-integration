@@ -16,22 +16,24 @@
         ></c-cpq-sticky-header>
 
         <!-- BODY: Two-column layout -->
-        <div class="cpq-app-body">
+        <div class="cpq-app-body" data-has-sidebar={showSidebar}>
             <!-- LEFT COLUMN: Split View Sidebar -->
-            <c-cpq-collapsible-sidebar
-                title={sidebarTitle}
-                icon-name={sidebarIcon}
-                sort-label={sidebarSortLabel}
-                sort-field={sidebarSortField}
-                sort-direction={sidebarSortDirection}
-                items={sidebarItems}
-                selected-item-id={selectedItemId}
-                is-loading={sidebarIsLoading}
-                onitemselect={handleItemSelect}
-                onitemdeselect={handleItemDeselect}
-                onsidebarrefresh={handleSidebarRefresh}
-                onsortchange={handleSortChange}
-            ></c-cpq-collapsible-sidebar>
+            <template lwc:if={showSidebar}>
+                <c-cpq-collapsible-sidebar
+                    title={sidebarTitle}
+                    icon-name={sidebarIcon}
+                    sort-label={sidebarSortLabel}
+                    sort-field={sidebarSortField}
+                    sort-direction={sidebarSortDirection}
+                    items={sidebarItems}
+                    selected-item-id={selectedItemId}
+                    is-loading={sidebarIsLoading}
+                    onitemselect={handleItemSelect}
+                    onitemdeselect={handleItemDeselect}
+                    onsidebarrefresh={handleSidebarRefresh}
+                    onsortchange={handleSortChange}
+                ></c-cpq-collapsible-sidebar>
+            </template>
 
             <!-- RIGHT COLUMN: Main content  -->
             <main class="cpq-app-main">
@@ -64,11 +66,12 @@
                     <template lwc:if={isStepLineEditor}>
                         <c-cpq-step-line-editor
                             selected-products={selectedProducts}
-                            quote-state={quoteState}
-                            onlineupdate={handleLineUpdate}
+                            pricebook-id={opportunityPricebookId}
+                            offer-type={opportunityOfferType}
+                            onproductchange={handleLineProductChange}
                             onlineremove={handleLineRemove}
-                            onglobaldiscount={handleGlobalDiscount}
                             onnavigate={handleNavigate}
+                            onselectionchange={handleLineSelectionChange}
                         ></c-cpq-step-line-editor>
                     </template>
 
