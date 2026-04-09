@@ -579,7 +579,7 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
     const discount = this.quoteState.additionalDiscountPercent || 0;
     const idx = items.findIndex((i) => i._key === itemKey);
     if (idx !== -1) {
-      items[idx].options = deepClone(options);
+      items[idx].configuredOptions = deepClone(options);
       items[idx].configured = configured;
       items[idx]._formattedTotal = formatCurrency(
         calculateSelectedProductTotal(items[idx], discount)
@@ -598,7 +598,7 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
       if (field === "quantity") items[idx].quantity = value;
       else if (field === "additionalDiscount") items[idx].additionalDiscount = value;
       else if (field === "optionQuantity" && optionId) {
-        const opt = (items[idx].options || []).find((o) => o.Id === optionId);
+        const opt = (items[idx].configuredOptions || []).find((o) => o.Id === optionId);
         if (opt) opt.quantity = value;
       } else if (field === "pricingMethod") items[idx].pricingMethod = value;
       else if (field === "isOptional") items[idx].isOptional = value;
@@ -630,9 +630,9 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
     const idx = items.findIndex((i) => i._key === itemKey);
     if (idx !== -1) {
       if (optionId) {
-        const optIdx = items[idx].options?.findIndex((o) => o.Id === optionId);
+        const optIdx = items[idx].configuredOptions?.findIndex((o) => o.Id === optionId);
         if (optIdx !== -1) {
-          items[idx].options[optIdx][field] = value;
+          items[idx].configuredOptions[optIdx][field] = value;
         }
       } else {
         items[idx][field] = value;

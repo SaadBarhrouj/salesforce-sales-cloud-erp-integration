@@ -55,104 +55,6 @@ const COLUMNS = [
     }
 ];
 
-const MOCK_PRODUCTS = [
-    {
-        _key: 'prod-001',
-        productId: '01t5g000000XXXXAA1',
-        productCode: 'SALE-001',
-        productName: 'Professional Workstation',
-        quantity: 5,
-        listUnitPrice: 1299.99,
-        additionalDiscount: 10,
-        netUnitPrice: 1169.99,
-        netTotal: 5849.95,
-        isBundle: false
-    },
-    {
-        _key: 'prod-002',
-        productId: '01t5g000000XXXXAA2',
-        productCode: 'SALE-002',
-        productName: 'UltraWide Monitor 34"',
-        quantity: 3,
-        listUnitPrice: 899.00,
-        additionalDiscount: 5,
-        netUnitPrice: 854.05,
-        netTotal: 2562.15,
-        isBundle: false
-    },
-    {
-        _key: 'bundle-001',
-        productId: '01t5g000000XXXXAA3',
-        productCode: 'BUNDLE-001',
-        productName: 'Developer Starter Pack',
-        quantity: 2,
-        listUnitPrice: 2499.00,
-        additionalDiscount: 0,
-        netUnitPrice: 2499.00,
-        netTotal: 4998.00,
-        isBundle: true,
-        options: [
-            {
-                _key: 'bundle-001-opt-1',
-                productId: '01t5g000000XXXXAA4',
-                productCode: 'DEV-IDE',
-                productName: 'IDE License',
-                quantity: 2,
-                listUnitPrice: 299.00,
-                additionalDiscount: 0,
-                netUnitPrice: 299.00,
-                netTotal: 598.00
-            },
-            {
-                _key: 'bundle-001-opt-2',
-                productId: '01t5g000000XXXXAA5',
-                productCode: 'DEV-CLOUD',
-                productName: 'Cloud Workspace',
-                quantity: 2,
-                listUnitPrice: 199.00,
-                additionalDiscount: 0,
-                netUnitPrice: 199.00,
-                netTotal: 398.00
-            },
-            {
-                _key: 'bundle-001-opt-3',
-                productId: '01t5g000000XXXXAA6',
-                productCode: 'DEV-SUPPORT',
-                productName: 'Premium Support',
-                quantity: 2,
-                listUnitPrice: 99.00,
-                additionalDiscount: 0,
-                netUnitPrice: 99.00,
-                netTotal: 198.00
-            }
-        ]
-    },
-    {
-        _key: 'prod-003',
-        productId: '01t5g000000XXXXAA7',
-        productCode: 'RENT-001',
-        productName: 'Projector Rental - Daily',
-        quantity: 10,
-        listUnitPrice: 75.00,
-        additionalDiscount: 0,
-        netUnitPrice: 75.00,
-        netTotal: 750.00,
-        isBundle: false
-    },
-    {
-        _key: 'prod-004',
-        productId: '01t5g000000XXXXAA8',
-        productCode: 'SVC-001',
-        productName: 'Installation Service',
-        quantity: 4,
-        listUnitPrice: 150.00,
-        additionalDiscount: 20,
-        netUnitPrice: 120.00,
-        netTotal: 480.00,
-        isBundle: false
-    }
-];
-
 export default class CpqStepLineEditor extends LightningElement {
     @api pricebookId = '';
     @api offerType = null;
@@ -165,6 +67,16 @@ export default class CpqStepLineEditor extends LightningElement {
 
     _pendingChanges = new Map();
     _debounceTimer = null;
+    _selectedProducts = [];
+
+    @api
+    get selectedProducts() {
+        return this._selectedProducts;
+    }
+    set selectedProducts(value) {
+        this._selectedProducts = value || [];
+        this._prepareGridData();
+    }
 
     // Use our custom flattened data property for the template's table loop
     get flattenedData() {
@@ -239,38 +151,42 @@ export default class CpqStepLineEditor extends LightningElement {
     }
 
     _prepareGridData() {
-        this.gridData = MOCK_PRODUCTS.map(item => {
-            const hasOptions = item.isBundle && item.options && item.options.length > 0;
+        if (!this._selectedProducts) return;
+
+        this.gridData = this._selectedProducts.map(item => {
+            const hasOptions = item.isBundle && item.configuredOptions && item.configuredOptions.length > 0;
+            const itemKey = item._key || item.key || item.productId || `prod-${Math.random()}`;
 
             const row = {
-                _key: item._key,
+                _key: itemKey,
                 _hasError: false,
                 _errorMessage: '',
                 productId: item.productId,
-                productCode: item.productCode,
-                productName: item.productName,
+                productCode: item.productCode || item.ProductCode,
+                productName: item.productName || item.Name,
                 quantity: item.quantity || 1,
-                listUnitPrice: item.listUnitPrice || 0,
+                listUnitPrice: item.unitPrice || item.listUnitPrice || 0,
                 additionalDiscount: item.additionalDiscount || 0,
-                netUnitPrice: item.netUnitPrice || (item.listUnitPrice || 0) * (1 - (item.additionalDiscount || 0) / 100),
-                netTotal: item.netTotal || 0,
+                netUnitPrice: item.netUnitPrice || item.unitPrice || item.listUnitPrice || 0,
+                netTotal: item.netTotal || ((item.netUnitPrice || item.unitPrice || item.listUnitPrice || 0) * (item.quantity || 1)),
                 isBundle: item.isBundle || false
             };
 
             // Only add _children property for bundles to show expand/collapse icon
             if (hasOptions) {
                 row._children = [];
-                item.options.forEach((opt, optIdx) => {
+                item.configuredOptions.forEach((opt, optIdx) => {
+                    const optKey = opt.Id || opt._key || `${itemKey}-opt-${optIdx}`;
                     row._children.push({
-                        _key: opt._key || `${item._key}-opt-${optIdx}`,
-                        productId: opt.productId,
-                        productCode: opt.productCode,
-                        productName: opt.productName,
+                        _key: optKey,
+                        productId: opt.productId || opt.Id,
+                        productCode: opt.productCode || opt.ProductCode,
+                        productName: opt.productName || opt.Name,
                         quantity: opt.quantity || 1,
-                        listUnitPrice: opt.listUnitPrice || 0,
+                        listUnitPrice: opt.unitPrice || opt.listUnitPrice || 0,
                         additionalDiscount: 0,
-                        netUnitPrice: opt.netUnitPrice || opt.listUnitPrice || 0,
-                        netTotal: opt.netTotal || 0,
+                        netUnitPrice: opt.netUnitPrice || opt.unitPrice || opt.listUnitPrice || 0,
+                        netTotal: opt.netTotal || ((opt.netUnitPrice || opt.unitPrice || opt.listUnitPrice || 0) * (opt.quantity || 1)),
                         _isOption: true
                     });
                 });
