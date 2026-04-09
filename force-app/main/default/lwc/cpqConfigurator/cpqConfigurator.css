@@ -52,6 +52,7 @@ c-cpq-collapsible-sidebar {
     display: flex !important;
     flex-direction: column !important;
     background-color: #fff;
+    margin-left: 12px;
 }
 
 /* Full width when sidebar is hidden (Line Editor step) */

@@ -39,6 +39,11 @@ const CONFIGURE_GLOBAL_ACTIONS = [
     }
 ];
 
+const LINE_EDITOR_GLOBAL_ACTIONS = [
+    { name: 'refreshPricing', label: 'Refresh Pricing', iconName: 'utility:refresh', variant: 'border-filled' },
+    { name: 'validateAll', label: 'Validate All', iconName: 'utility:check', variant: 'border-filled' }
+];
+
 export const STEPS = Object.freeze({
     SELECTION: {
         number: 1, key: 'selection', label: 'Product Selection', icon: 'standard:product', subtitle: 'Select and configure products',
@@ -77,7 +82,7 @@ export const STEPS = Object.freeze({
             showSearch: false, 
             searchPlaceholder: 'Search...', 
             stepActions: DEFAULT_STEP_ACTIONS, 
-            globalActions: []  // No sidebar in line editor
+            globalActions: LINE_EDITOR_GLOBAL_ACTIONS
         }
     },
     LOGISTICS: {

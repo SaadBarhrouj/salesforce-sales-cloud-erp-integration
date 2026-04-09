@@ -1,38 +1,43 @@
 .step-line-editor {
-    padding: 0;
+    position: relative;
 }
 
-.main-row td {
-    vertical-align: middle;
+.row-error {
+    background-color: #fff1f1 !important;
 }
 
-.expanded-row {
-    background-color: #f8f9fa;
+.row-error:hover {
+    background-color: #ffe5e5 !important;
 }
 
-.expanded-row td {
-    padding: 0;
+.slds-table_edit_container {
+    border: 1px solid #dddbda;
+    border-radius: 0.25rem;
 }
 
-.expanded-row .slds-p-around_medium {
-    background-color: #f8f9fa;
-    border-top: 1px solid #dddbda;
+.slds-tree__item {
+    display: flex;
+    align-items: center;
 }
 
-.options-toggle-row td {
-    padding: 0;
-    cursor: pointer;
+/* Ensure the horizontal scroll works correctly with fixed layout */
+.slds-table_fixed-layout {
+    min-width: 800px;
 }
 
-.option-child-row td {
-    background-color: #fafafa;
-    border-top: 1px solid #dddbda;
+.error-icon {
+    cursor: help;
 }
 
-.qty-field {
-    width: 80px;
+.slds-row-number::before {
+    content: counter(row-counter);
 }
 
-.disc-field {
-    width: 90px;
+tbody {
+    counter-reset: row-counter;
 }
+
+tr {
+    counter-increment: row-counter;
+}
+

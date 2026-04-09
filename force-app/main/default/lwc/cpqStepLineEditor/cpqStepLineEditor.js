@@ -1,27 +1,228 @@
 import { LightningElement, api, track } from 'lwc';
-import { formatCurrency, calculateSelectedProductsSubtotal, deepClone } from 'c/cpqUtils';
+import { formatCurrency, deepClone } from 'c/cpqUtils';
 import calculateLinePricesBatch from '@salesforce/apex/PricebookController.calculateLinePricesBatch';
+import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 
 const DEBOUNCE_DELAY = 500;
 
+const COLUMNS = [
+    {
+        type: 'text',
+        fieldName: 'productName',
+        label: 'Product',
+        isProduct: true
+    },
+    {
+        type: 'text',
+        fieldName: 'productCode',
+        label: 'Code',
+        isCode: true
+    },
+    {
+        type: 'number',
+        fieldName: 'quantity',
+        label: 'Qty',
+        editable: true,
+        isQty: true
+    },
+    {
+        type: 'currency',
+        fieldName: 'listUnitPrice',
+        label: 'List Price',
+        isCurrency: true,
+        isListPrice: true
+    },
+    {
+        type: 'number',
+        fieldName: 'additionalDiscount',
+        label: 'Disc. %',
+        editable: true,
+        isDiscount: true
+    },
+    {
+        type: 'currency',
+        fieldName: 'netUnitPrice',
+        label: 'Net Price',
+        isCurrency: true,
+        isNetPrice: true
+    },
+    {
+        type: 'currency',
+        fieldName: 'netTotal',
+        label: 'Total',
+        isCurrency: true,
+        isTotal: true
+    }
+];
+
+const MOCK_PRODUCTS = [
+    {
+        _key: 'prod-001',
+        productId: '01t5g000000XXXXAA1',
+        productCode: 'SALE-001',
+        productName: 'Professional Workstation',
+        quantity: 5,
+        listUnitPrice: 1299.99,
+        additionalDiscount: 10,
+        netUnitPrice: 1169.99,
+        netTotal: 5849.95,
+        isBundle: false
+    },
+    {
+        _key: 'prod-002',
+        productId: '01t5g000000XXXXAA2',
+        productCode: 'SALE-002',
+        productName: 'UltraWide Monitor 34"',
+        quantity: 3,
+        listUnitPrice: 899.00,
+        additionalDiscount: 5,
+        netUnitPrice: 854.05,
+        netTotal: 2562.15,
+        isBundle: false
+    },
+    {
+        _key: 'bundle-001',
+        productId: '01t5g000000XXXXAA3',
+        productCode: 'BUNDLE-001',
+        productName: 'Developer Starter Pack',
+        quantity: 2,
+        listUnitPrice: 2499.00,
+        additionalDiscount: 0,
+        netUnitPrice: 2499.00,
+        netTotal: 4998.00,
+        isBundle: true,
+        options: [
+            {
+                _key: 'bundle-001-opt-1',
+                productId: '01t5g000000XXXXAA4',
+                productCode: 'DEV-IDE',
+                productName: 'IDE License',
+                quantity: 2,
+                listUnitPrice: 299.00,
+                additionalDiscount: 0,
+                netUnitPrice: 299.00,
+                netTotal: 598.00
+            },
+            {
+                _key: 'bundle-001-opt-2',
+                productId: '01t5g000000XXXXAA5',
+                productCode: 'DEV-CLOUD',
+                productName: 'Cloud Workspace',
+                quantity: 2,
+                listUnitPrice: 199.00,
+                additionalDiscount: 0,
+                netUnitPrice: 199.00,
+                netTotal: 398.00
+            },
+            {
+                _key: 'bundle-001-opt-3',
+                productId: '01t5g000000XXXXAA6',
+                productCode: 'DEV-SUPPORT',
+                productName: 'Premium Support',
+                quantity: 2,
+                listUnitPrice: 99.00,
+                additionalDiscount: 0,
+                netUnitPrice: 99.00,
+                netTotal: 198.00
+            }
+        ]
+    },
+    {
+        _key: 'prod-003',
+        productId: '01t5g000000XXXXAA7',
+        productCode: 'RENT-001',
+        productName: 'Projector Rental - Daily',
+        quantity: 10,
+        listUnitPrice: 75.00,
+        additionalDiscount: 0,
+        netUnitPrice: 75.00,
+        netTotal: 750.00,
+        isBundle: false
+    },
+    {
+        _key: 'prod-004',
+        productId: '01t5g000000XXXXAA8',
+        productCode: 'SVC-001',
+        productName: 'Installation Service',
+        quantity: 4,
+        listUnitPrice: 150.00,
+        additionalDiscount: 20,
+        netUnitPrice: 120.00,
+        netTotal: 480.00,
+        isBundle: false
+    }
+];
+
 export default class CpqStepLineEditor extends LightningElement {
-    @api selectedProducts = [];
     @api pricebookId = '';
     @api offerType = null;
 
-    @track expandedItemKeys = new Set();
+    @track gridData = [];
     @track isCalculating = false;
-    @track pricingErrors = new Map();
+    @track hasErrors = false;
+    @track errorMessages = [];
+    @track expandedRows = new Set();
 
     _pendingChanges = new Map();
     _debounceTimer = null;
 
+    // Use our custom flattened data property for the template's table loop
+    get flattenedData() {
+        const flat = [];
+        const processItems = (items, level = 1) => {
+            items.forEach((item, index) => {
+                const isExpanded = this.expandedRows.has(item._key);
+                const hasChildren = item._children && item._children.length > 0;
+
+                flat.push({
+                    ...item,
+                    rowId: item._key,
+                    level,
+                    ariaLevel: level,
+                    posInSet: index + 1,
+                    setSize: items.length,
+                    isExpanded,
+                    hasChildren,
+                    chevronClass: (hasChildren && !isExpanded) ? 'utility:chevronright' : 'utility:chevrondown',
+                    buttonStyle: hasChildren ? '' : 'visibility: hidden;',
+                    isQtyEditable: !item._isOption, // quantity is read-only for options
+                    isDiscountEditable: true, // discount is editable for both parents and options
+                    showCheckbox: !item._isOption, // hide checkbox for bundle options
+                    rowClass: `slds-hint-parent ${item._hasError ? 'slds-is-selected row-error' : ''}`,
+                    paddingStyle: `padding-left: ${level > 1 ? level * 1.5 : 0}rem;`, // Ensure proper indentation for children
+                    formattedListPrice: formatCurrency(item.listUnitPrice),
+                    formattedNetPrice: formatCurrency(item.netUnitPrice),
+                    formattedNetTotal: formatCurrency(item.netTotal),
+                    actionTitle: `More actions for ${item.productName}`
+                });
+
+                if (isExpanded && hasChildren) {
+                    processItems(item._children, level + 1);
+                }
+            });
+        };
+
+        processItems(this.gridData || []);
+        return flat;
+    }
+
+    connectedCallback() {
+        this._prepareGridData();
+    }
+
+    get columns() {
+        return COLUMNS;
+    }
+
     get totalItemCount() {
-        return (this.selectedProducts || []).length;
+        return (this.gridData || []).length;
     }
 
     get subtotal() {
-        return calculateSelectedProductsSubtotal(this.selectedProducts || []);
+        if (this.gridData && this.gridData.length > 0) {
+            return this.gridData.reduce((sum, item) => Math.max(0, sum + (item.netTotal || 0)), 0);
+        }
+        return 0;
     }
 
     get formattedSubtotal() {
@@ -29,77 +230,104 @@ export default class CpqStepLineEditor extends LightningElement {
     }
 
     get isEmpty() {
-        return !this.selectedProducts || this.selectedProducts.length === 0;
+        return !this.gridData || this.gridData.length === 0;
     }
 
     get isNotEmpty() {
         return !this.isEmpty;
     }
 
-    get hasErrors() {
-        return this.pricingErrors.size > 0;
-    }
+    _prepareGridData() {
+        this.gridData = MOCK_PRODUCTS.map(item => {
+            const hasOptions = item.isBundle && item.options && item.options.length > 0;
 
-    get errorCount() {
-        return this.pricingErrors.size;
-    }
-
-    get isEmptyOrHasErrors() {
-        return this.isEmpty || this.hasErrors;
-    }
-
-    get numberedItems() {
-        return (this.selectedProducts || []).map((item, idx) => {
-            const isExpanded = this.expandedItemKeys.has(item._key);
-            const hasError = this.pricingErrors.has(item._key);
-            const errorMessage = this.pricingErrors.get(item._key) || '';
-            
-            return {
-                ...item,
-                _lineNumber: idx + 1,
-                _isExpanded: isExpanded,
-                _expandIcon: isExpanded ? 'utility:chevronup' : 'utility:chevrondown',
-                _expandAltText: isExpanded ? 'Collapse' : 'Expand',
-                _showOptions: item.isBundle && isExpanded,
-                _hasError: hasError,
-                _errorKey: item._key + '-error',
-                _errorMessage: errorMessage,
+            const row = {
+                _key: item._key,
+                _hasError: false,
+                _errorMessage: '',
+                productId: item.productId,
+                productCode: item.productCode,
+                productName: item.productName,
+                quantity: item.quantity || 1,
                 listUnitPrice: item.listUnitPrice || 0,
                 additionalDiscount: item.additionalDiscount || 0,
-                netUnitPrice: (item.listUnitPrice || 0) * (1 - (item.additionalDiscount || 0) / 100),
-                netTotal: ((item.listUnitPrice || 0) * (1 - (item.additionalDiscount || 0) / 100)) * (item.quantity || 1)
+                netUnitPrice: item.netUnitPrice || (item.listUnitPrice || 0) * (1 - (item.additionalDiscount || 0) / 100),
+                netTotal: item.netTotal || 0,
+                isBundle: item.isBundle || false
             };
+
+            // Only add _children property for bundles to show expand/collapse icon
+            if (hasOptions) {
+                row._children = [];
+                item.options.forEach((opt, optIdx) => {
+                    row._children.push({
+                        _key: opt._key || `${item._key}-opt-${optIdx}`,
+                        productId: opt.productId,
+                        productCode: opt.productCode,
+                        productName: opt.productName,
+                        quantity: opt.quantity || 1,
+                        listUnitPrice: opt.listUnitPrice || 0,
+                        additionalDiscount: 0,
+                        netUnitPrice: opt.netUnitPrice || opt.listUnitPrice || 0,
+                        netTotal: opt.netTotal || 0,
+                        _isOption: true
+                    });
+                });
+            }
+
+            return row;
         });
+        // Force track array
+        this.gridData = [...this.gridData];
+        // Ensure expandedRows is clear initially (collapsed by default)
+        this.expandedRows = new Set();
     }
 
     handleToggleExpand(event) {
-        const itemKey = event.currentTarget.dataset.itemKey;
-        if (this.expandedItemKeys.has(itemKey)) {
-            this.expandedItemKeys.delete(itemKey);
+        const rowId = event.currentTarget.dataset.id;
+        if (this.expandedRows.has(rowId)) {
+            this.expandedRows.delete(rowId);
         } else {
-            this.expandedItemKeys.add(itemKey);
+            this.expandedRows.add(rowId);
         }
-        this.expandedItemKeys = new Set(this.expandedItemKeys);
+        // assigning a new set preserves reactivity in LWC
+        this.expandedRows = new Set(this.expandedRows);
     }
 
-    handleLineChange(event) {
-        const target = event.target;
-        const itemKey = target.dataset.itemKey;
-        const field = target.dataset.field;
-        let value = target.value;
-
-        if (target.type === 'checkbox') {
-            value = target.checked;
-        } else if (target.type === 'number' || target.type === 'currency') {
-            value = parseFloat(value) || 0;
+    // Removed standard datatable handleCellChange. Using manual custom input events.
+    handleInlineEdit(event) {
+        const itemKey = event.currentTarget.dataset.id;
+        const fieldName = event.currentTarget.dataset.field;
+        let value = event.target.value;
+        if(fieldName === 'quantity' || fieldName === 'additionalDiscount') {
+             value = parseFloat(value);
         }
 
-        if (field === 'quantity' || field === 'additionalDiscount') {
-            this._pendingChanges.set(itemKey, { ...this._pendingChanges.get(itemKey), [field]: value });
-            this._scheduleBatchCalculation();
-        }
+        this._pendingChanges.set(itemKey, {
+            ...this._pendingChanges.get(itemKey),
+            [fieldName]: value
+        });
 
-        this._notifyParent(itemKey, field, value);
+        this._updateLocalData(itemKey, fieldName, value);
+        this._scheduleBatchCalculation();
+    }
+
+    _updateLocalData(itemKey, field, value) {
+        const updatedData = [...this.gridData];
+        const rowIndex = updatedData.findIndex(row => row._key === itemKey);
+
+        if (rowIndex !== -1) {
+            const row = { ...updatedData[rowIndex] };
+            row[field] = value;
+
+            if (field === 'quantity' || field === 'additionalDiscount') {
+                row.netUnitPrice = (row.listUnitPrice || 0) * (1 - (row.additionalDiscount || 0) / 100);
+                row.netTotal = row.netUnitPrice * row.quantity;
+            }
+
+            updatedData[rowIndex] = row;
+            this.gridData = updatedData;
+        }
     }
 
     _scheduleBatchCalculation() {
@@ -116,159 +344,178 @@ export default class CpqStepLineEditor extends LightningElement {
 
         this.isCalculating = true;
         const lineItems = [];
-        
+
         for (const [itemKey, changes] of this._pendingChanges) {
-            const product = this.selectedProducts.find(p => p._key === itemKey);
-            if (product) {
+            const row = this.gridData.find(r => r._key === itemKey);
+            if (row) {
                 lineItems.push({
-                    productId: product.productId,
-                    quantity: changes.quantity ?? product.quantity,
-                    discount: changes.additionalDiscount ?? product.additionalDiscount
+                    productId: row.productId,
+                    quantity: changes.quantity ?? row.quantity,
+                    discount: changes.additionalDiscount ?? row.additionalDiscount
                 });
             }
         }
 
         try {
-            const results = await calculateLinePricesBatch({ 
+            const results = await calculateLinePricesBatch({
                 lineItems: lineItems,
                 offerType: this.offerType,
                 pricebookId: this.pricebookId
             });
 
-            const updatedProducts = deepClone(this.selectedProducts);
-            const newErrors = new Map();
-            
+            const updatedData = [...this.gridData];
+            let hasErrors = false;
+
             for (let i = 0; i < results.length; i++) {
                 const result = results[i];
                 const itemKey = Array.from(this._pendingChanges.keys())[i];
-                const productIdx = updatedProducts.findIndex(p => p._key === itemKey);
-                
-                if (productIdx !== -1) {
+                const rowIndex = updatedData.findIndex(r => r._key === itemKey);
+
+                if (rowIndex !== -1) {
+                    const row = { ...updatedData[rowIndex] };
+
                     if (result.success) {
-                        updatedProducts[productIdx].listUnitPrice = result.listPrice;
-                        updatedProducts[productIdx].netUnitPrice = result.netPrice;
-                        updatedProducts[productIdx].netTotal = result.totalPrice;
+                        row.listUnitPrice = result.listPrice;
+                        row.netUnitPrice = result.netPrice;
+                        row.netTotal = result.totalPrice;
+                        row._hasError = false;
+                        row._errorMessage = '';
                     } else {
-                        newErrors.set(itemKey, result.errorMessage);
+                        row._hasError = true;
+                        row._errorMessage = result.errorMessage;
+                        hasErrors = true;
                     }
+
+                    updatedData[rowIndex] = row;
                 }
             }
 
-            this.pricingErrors = newErrors;
+            this.gridData = updatedData;
             this._pendingChanges.clear();
-            
-            this.dispatchEvent(new CustomEvent('productchange', {
-                detail: { updatedProducts }
-            }));
+
+            if (hasErrors) {
+                this.dispatchEvent(new ShowToastEvent({
+                    title: 'Pricing Warning',
+                    message: 'Some items could not be priced. Check the line editor for details.',
+                    variant: 'warning'
+                }));
+            }
 
         } catch (error) {
             console.error('Pricing calculation error:', error);
-            this.pricingErrors.set('global', error.message || 'Pricing calculation failed');
-            this.pricingErrors = new Map(this.pricingErrors);
+            this.dispatchEvent(new ShowToastEvent({
+                title: 'Pricing Error',
+                message: error.message || 'Pricing calculation failed',
+                variant: 'error'
+            }));
         } finally {
             this.isCalculating = false;
         }
     }
 
-    _notifyParent(itemKey, field, value) {
-        this.dispatchEvent(new CustomEvent('productchange', {
-            detail: { itemKey, field, value }
-        }));
-    }
-
-    handleLineRemove(event) {
-        const itemKey = event.currentTarget.dataset.itemKey || event.detail?.itemKey;
-        this.dispatchEvent(new CustomEvent('lineremove', {
-            detail: { itemKey }
-        }));
-    }
-
-    handleViewDetails(event) {
-        const itemKey = event.detail.item?.dataset?.itemKey;
-        if (this.expandedItemKeys.has(itemKey)) {
-            this.expandedItemKeys.delete(itemKey);
-        } else {
-            this.expandedItemKeys.add(itemKey);
-        }
-        this.expandedItemKeys = new Set(this.expandedItemKeys);
-    }
-
     handleApplyBulkDiscount() {
         const discount = prompt('Enter discount percentage (0-100):');
-        if (discount !== null) {
-            const discValue = parseFloat(discount);
-            if (!isNaN(discValue) && discValue >= 0 && discValue <= 100) {
-                const items = deepClone(this.selectedProducts);
-                items.forEach(item => {
-                    item.additionalDiscount = discValue;
-                });
-                this._setAllPendingChanges('additionalDiscount', discValue);
-                this._executeBatchCalculation();
-            }
-        }
-    }
+        if (discount === null) return;
 
-    _setAllPendingChanges(field, value) {
-        (this.selectedProducts || []).forEach(item => {
-            this._pendingChanges.set(item._key, { 
-                ...this._pendingChanges.get(item._key), 
-                [field]: value 
+        const discValue = parseFloat(discount);
+        if (isNaN(discValue) || discValue < 0 || discValue > 100) {
+            this.dispatchEvent(new ShowToastEvent({
+                title: 'Invalid Discount',
+                message: 'Discount must be between 0 and 100',
+                variant: 'error'
+            }));
+            return;
+        }
+
+        const updatedData = this.gridData.map(row => {
+            this._pendingChanges.set(row._key, {
+                ...this._pendingChanges.get(row._key),
+                additionalDiscount: discValue
             });
+            return {
+                ...row,
+                additionalDiscount: discValue,
+                netUnitPrice: (row.listUnitPrice || 0) * (1 - discValue / 100),
+                netTotal: (row.listUnitPrice || 0) * (1 - discValue / 100) * (row.quantity || 1)
+            };
         });
+
+        this.gridData = updatedData;
+        this._executeBatchCalculation();
+
+        this.dispatchEvent(new ShowToastEvent({
+            title: 'Discount Applied',
+            message: `${discValue}% discount applied to all items`,
+            variant: 'success'
+        }));
     }
 
     async handleRefreshPricing() {
         this._pendingChanges.clear();
-        (this.selectedProducts || []).forEach(item => {
-            this._pendingChanges.set(item._key, {
-                quantity: item.quantity,
-                additionalDiscount: item.additionalDiscount
+        this.gridData.forEach(row => {
+            this._pendingChanges.set(row._key, {
+                quantity: row.quantity,
+                additionalDiscount: row.additionalDiscount
             });
         });
         await this._executeBatchCalculation();
+
+        this.dispatchEvent(new ShowToastEvent({
+            title: 'Pricing Refreshed',
+            message: 'All prices have been recalculated',
+            variant: 'success'
+        }));
     }
 
     handleValidateAll() {
-        const items = deepClone(this.selectedProducts);
-        const errors = new Map();
-        
-        items.forEach(item => {
-            if (item.additionalDiscount < 0 || item.additionalDiscount > 100) {
-                errors.set(item._key, 'Discount must be between 0 and 100');
-            }
-            if (!item.quantity || item.quantity < 1) {
-                errors.set(item._key, 'Quantity must be at least 1');
+        const errors = [];
+        const updatedData = [...this.gridData];
+
+        updatedData.forEach(row => {
+            if (row.additionalDiscount < 0 || row.additionalDiscount > 100) {
+                row._hasError = true;
+                row._errorMessage = 'Discount must be between 0 and 100';
+                errors.push(`${row.productName}: Invalid discount`);
+            } else if (row.quantity < 1) {
+                row._hasError = true;
+                row._errorMessage = 'Quantity must be at least 1';
+                errors.push(`${row.productName}: Invalid quantity`);
+            } else {
+                row._hasError = false;
+                row._errorMessage = '';
             }
         });
 
-        this.pricingErrors = errors;
-        
-        if (errors.size > 0) {
-            this.dispatchEvent(new CustomEvent('showtoast', {
-                detail: { 
-                    title: 'Validation Errors', 
-                    message: `${errors.size} item(s) have validation errors`, 
-                    variant: 'error' 
-                }
+        this.gridData = updatedData;
+
+        if (errors.length > 0) {
+            this.dispatchEvent(new ShowToastEvent({
+                title: 'Validation Failed',
+                message: `${errors.size} item(s) have validation errors: ${errors.join(', ')}`,
+                variant: 'error'
+            }));
+        } else {
+            this.dispatchEvent(new ShowToastEvent({
+                title: 'Validation Passed',
+                message: 'All line items are valid',
+                variant: 'success'
             }));
         }
     }
 
-    handleBack() {
-        this.dispatchEvent(new CustomEvent('navigate', { detail: { direction: 'back' } }));
-    }
-
-    handleNext() {
-        if (this.hasErrors) {
-            this.dispatchEvent(new CustomEvent('showtoast', {
-                detail: { 
-                    title: 'Cannot Proceed', 
-                    message: 'Please fix all pricing errors before continuing', 
-                    variant: 'error' 
-                }
-            }));
-            return;
+    handleHeaderAction(actionName) {
+        switch (actionName) {
+            case 'applyDiscount':
+                this.handleApplyBulkDiscount();
+                break;
+            case 'refreshPricing':
+                this.handleRefreshPricing();
+                break;
+            case 'validateAll':
+                this.handleValidateAll();
+                break;
+            default:
+                break;
         }
-        this.dispatchEvent(new CustomEvent('navigate', { detail: { direction: 'next' } }));
     }
 }

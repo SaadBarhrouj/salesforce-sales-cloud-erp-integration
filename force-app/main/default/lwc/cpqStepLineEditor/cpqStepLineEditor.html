@@ -1,236 +1,237 @@
 <template>
-    <div class="step-line-editor slds-is-relative">
+    <div class="step-line-editor slds-is-relative slds-p-around_medium">
         <!-- Loading Spinner -->
-        <div lwc:if={isCalculating} class="slds-backdrop slds-backdrop_open">
-            <div class="slds-spinner_container slds-align_absolute-center">
-                <div role="status" class="slds-spinner slds-spinner_large slds-spinner_brand">
-                    <span class="slds-assistive-text">Loading</span>
-                    <div class="slds-spinner__dot-a"></div>
-                    <div class="slds-spinner__dot-b"></div>
-                </div>
-            </div>
-        </div>
+        <template lwc:if={isCalculating}>
+            <lightning-spinner alternative-text="Calculating pricing..." size="medium" variant="brand"></lightning-spinner>
+        </template>
 
         <!-- Empty State -->
-        <div lwc:if={isEmpty} class="slds-align_absolute-center slds-p-around_large">
-            <c-empty-state
-                illustration-name="cart:noitems"
-                title="No Selected Products"
-                description="Go back to the selection step to add products."
-                size="large">
-            </c-empty-state>
-        </div>
-
-        <!-- Main Content -->
-        <template lwc:if={isNotEmpty}>
-            <!-- Bulk Actions Toolbar -->
-            <div class="slds-m-bottom_medium slds-grid slds-grid_align-spread">
-                <div class="slds-col">
-                    <lightning-button-group>
-                        <lightning-button
-                            label="Apply Discount"
-                            icon-name="utility:discount"
-                            onclick={handleApplyBulkDiscount}>
-                        </lightning-button>
-                        <lightning-button
-                            label="Refresh Pricing"
-                            icon-name="utility:refresh"
-                            onclick={handleRefreshPricing}>
-                        </lightning-button>
-                        <lightning-button
-                            label="Validate All"
-                            icon-name="utility:check"
-                            onclick={handleValidateAll}>
-                        </lightning-button>
-                    </lightning-button-group>
-                </div>
-                <div class="slds-col slds-text-align_right">
-                    <span class="slds-text-title_caps">Total Items: {totalItemCount}</span>
-                </div>
-            </div>
-
-            <!-- Line Items Table -->
-            <div class="slds-table_container">
-                <table class="slds-table slds-table_cell-buffer slds-table_bordered slds-table_fixed-layout slds-max-medium-table_stacked">
-                    <thead>
-                        <tr class="slds-line-height_reset">
-                            <th scope="col" style="width: 40px;"></th>
-                            <th scope="col" style="width: 40px;">#</th>
-                            <th scope="col" style="width: 140px;">Product Code</th>
-                            <th scope="col">Product Name</th>
-                            <th scope="col" style="width: 100px;">Quantity</th>
-                            <th scope="col" style="width: 120px;" class="slds-text-align_right">List Price</th>
-                            <th scope="col" style="width: 120px;">Disc. %</th>
-                            <th scope="col" style="width: 120px;" class="slds-text-align_right">Net Price</th>
-                            <th scope="col" style="width: 130px;" class="slds-text-align_right">Total</th>
-                            <th scope="col" style="width: 60px;"></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <template for:each={numberedItems} for:item="item" for:index="idx">
-                            <!-- Error Row -->
-                            <tr key={item._errorKey} lwc:if={item._hasError} class="slds-theme_error">
-                                <td colspan="10">
-                                    <div class="slds-p-around_x-small slds-text-color_error">
-                                        <lightning-icon icon-name="utility:error" size="small" class="slds-m-right_x-small"></lightning-icon>
-                                        {item._errorMessage}
-                                    </div>
-                                </td>
-                            </tr>
-
-                            <!-- Main Line Item Row -->
-                            <tr key={item._key} class="slds-hint-parent main-row" data-item-key={item._key}>
-                                <td>
-                                    <lightning-button-icon
-                                        lwc:if={item.isBundle}
-                                        icon-name={item._expandIcon}
-                                        variant="bare"
-                                        size="small"
-                                        alternative-text={item._expandAltText}
-                                        data-item-key={item._key}
-                                        onclick={handleToggleExpand}>
-                                    </lightning-button-icon>
-                                </td>
-                                <td data-label="#">
-                                    <span class="slds-truncate" title={item._lineNumber}>{item._lineNumber}</span>
-                                </td>
-                                <td data-label="Product Code">
-                                    <span class="slds-truncate slds-text-body_regular slds-text-title_bold" title={item.productCode}>
-                                        {item.productCode}
-                                    </span>
-                                </td>
-                                <td data-label="Product Name">
-                                    <div class="slds-truncate">
-                                        <span title={item.productName}>{item.productName}</span>
-                                        <lightning-icon lwc:if={item.isBundle} icon-name="utility:package" size="xx-small" class="slds-m-left_xx-small" alternative-text="Bundle"></lightning-icon>
-                                    </div>
-                                </td>
-                                <td data-label="Quantity">
-                                    <lightning-input
-                                        type="number"
-                                        value={item.quantity}
-                                        min="1"
-                                        step="1"
-                                        label="Quantity"
-                                        variant="label-hidden"
-                                        class="qty-input"
-                                        data-item-key={item._key}
-                                        data-field="quantity"
-                                        onchange={handleLineChange}>
-                                    </lightning-input>
-                                </td>
-                                <td data-label="List Price" class="slds-text-align_right">
-                                    <lightning-formatted-number value={item.listUnitPrice} format-style="currency" currency-code="USD"></lightning-formatted-number>
-                                </td>
-                                <td data-label="Discount %">
-                                    <lightning-input
-                                        type="number"
-                                        value={item.additionalDiscount}
-                                        min="0"
-                                        max="100"
-                                        step="0.01"
-                                        label="Discount %"
-                                        variant="label-hidden"
-                                        formatter="percent-fixed"
-                                        class="disc-input"
-                                        data-item-key={item._key}
-                                        data-field="additionalDiscount"
-                                        onchange={handleLineChange}>
-                                    </lightning-input>
-                                </td>
-                                <td data-label="Net Price" class="slds-text-align_right">
-                                    <lightning-formatted-number value={item.netUnitPrice} format-style="currency" currency-code="USD"></lightning-formatted-number>
-                                </td>
-                                <td data-label="Total" class="slds-text-align_right">
-                                    <span class="slds-text-title_bold">
-                                        <lightning-formatted-number value={item.netTotal} format-style="currency" currency-code="USD"></lightning-formatted-number>
-                                    </span>
-                                </td>
-                                <td class="slds-text-align_center">
-                                    <lightning-button-menu
-                                        icon-name="utility:actions"
-                                        menu-alignment="auto"
-                                        alternative-text="Line actions">
-                                        <lightning-menu-item value="view" label="View Details" onclick={handleViewDetails}></lightning-menu-item>
-                                        <lightning-menu-item value="remove" label="Remove" onclick={handleLineRemove}></lightning-menu-item>
-                                    </lightning-button-menu>
-                                </td>
-                            </tr>
-
-                            <!-- Bundle Options (Child Rows) -->
-                            <template lwc:if={item._showOptions}>
-                                <template for:each={item.options} for:item="opt">
-                                    <tr key={opt._key} class="option-child-row slds-theme_shade">
-                                        <td></td>
-                                        <td></td>
-                                        <td data-label="Option Code" class="slds-text-color_weak">
-                                            <span class="slds-p-left_large slds-truncate" title={opt.productCode}>{opt.productCode}</span>
-                                        </td>
-                                        <td data-label="Option Name" class="slds-text-color_weak">
-                                            <div class="slds-truncate">
-                                                <lightning-icon icon-name="utility:connected_apps" size="x-small" class="slds-m-right_xx-small"></lightning-icon>
-                                                <span title={opt.productName}>{opt.productName}</span>
-                                            </div>
-                                        </td>
-                                        <td data-label="Quantity">
-                                            <span class="slds-truncate">{opt.quantity}</span>
-                                        </td>
-                                        <td data-label="List Price" class="slds-text-align_right slds-text-color_weak">
-                                            <lightning-formatted-number value={opt.listUnitPrice} format-style="currency" currency-code="USD"></lightning-formatted-number>
-                                        </td>
-                                        <td data-label="Disc." class="slds-text-color_weak">—</td>
-                                        <td data-label="Net Price" class="slds-text-align_right slds-text-color_weak">
-                                            <lightning-formatted-number value={opt.netUnitPrice} format-style="currency" currency-code="USD"></lightning-formatted-number>
-                                        </td>
-                                        <td data-label="Total" class="slds-text-align_right slds-text-color_weak">
-                                            <lightning-formatted-number value={opt.netTotal} format-style="currency" currency-code="USD"></lightning-formatted-number>
-                                        </td>
-                                        <td></td>
-                                    </tr>
-                                </template>
-                            </template>
-                        </template>
-                    </tbody>
-                    <tfoot>
-                        <tr class="slds-theme_shade slds-text-title_bold">
-                            <td colspan="8" class="slds-text-align_right slds-p-right_medium">Subtotal:</td>
-                            <td class="slds-text-align_right slds-p-right_medium">
-                                <lightning-formatted-number value={subtotal} format-style="currency" currency-code="USD"></lightning-formatted-number>
-                            </td>
-                            <td></td>
-                        </tr>
-                    </tfoot>
-                </table>
-            </div>
-
-            <!-- Validation Errors Summary -->
-            <div lwc:if={hasErrors} class="slds-m-top_medium slds-notify slds-notify_error" role="alert">
-                <div class="slds-notify__content">
-                    <h2 class="slds-text-heading_small">Pricing Errors ({errorCount})</h2>
-                    <p>Please fix the errors above before proceeding.</p>
-                </div>
+        <template lwc:if={isEmpty}>
+            <div class="slds-align_absolute-center slds-p-around_large">
+                <c-empty-state
+                    illustration-name="cart:noitems"
+                    title="No Selected Products"
+                    description="Add products to see them here."
+                    size="large">
+                </c-empty-state>
             </div>
         </template>
 
-        <!-- Navigation Footer -->
-        <div class="slds-m-top_large slds-grid slds-grid_align-spread">
-            <div>
-                <lightning-button
-                    label="Back"
-                    icon-name="utility:back"
-                    onclick={handleBack}>
-                </lightning-button>
+        <!-- Main Content -->
+        <template lwc:if={isNotEmpty}>
+            <!-- Line Items Tree Grid (Custom Blueprint) -->
+            <div class="slds-table_edit_container slds-is-relative slds-m-bottom_medium slds-scrollable_x">
+                <table aria-multiselectable="true"
+                    class="slds-table slds-table_bordered slds-table_edit slds-table_fixed-layout slds-table_resizable-cols slds-tree slds-table_tree"
+                    role="treegrid" aria-label="CPQ Line Editor Tree Grid">
+                    <thead>
+                        <tr class="slds-line-height_reset">
+                            <th class="slds-cell_action-mode" scope="col" style="width:3.75rem">
+                                <div class="slds-truncate slds-assistive-text" title="Errors">Errors</div>
+                            </th>
+                            <th class="slds-text-align_right slds-cell_action-mode" role="cell" style="width:3.25rem">
+                                <div class="slds-th__action slds-th__action_form">
+                                    <div class="slds-checkbox">
+                                        <input type="checkbox" name="options" id="checkbox-all" tabindex="-1"
+                                            aria-label="Select All" value="checkbox-all" />
+                                        <label class="slds-checkbox__label" for="checkbox-all">
+                                            <span class="slds-checkbox_faux"></span>
+                                            <span class="slds-form-element__label slds-assistive-text">Select All</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </th>
+
+                            <!-- Dynamic Columns -->
+                            <template for:each={columns} for:item="col">
+                                <th key={col.fieldName} aria-sort="none" class="slds-is-resizable slds-cell_action-mode" scope="col">
+                                    <div class="slds-th__action slds-text-link_reset">
+                                        <div class="slds-grid slds-grid_vertical-align-center slds-has-flexi-truncate">
+                                            <span class="slds-truncate" title={col.label}>{col.label}</span>
+                                        </div>
+                                    </div>
+                                    <div class="slds-resizable">
+                                        <input aria-label={col.label} class="slds-resizable__input slds-assistive-text"
+                                            max="1000" min="20" tabindex="-1" type="range" />
+                                        <span class="slds-resizable__handle">
+                                            <span class="slds-resizable__divider"></span>
+                                        </span>
+                                    </div>
+                                </th>
+                            </template>
+
+                            <th class="slds-cell_action-mode" scope="col" style="width:3.25rem">
+                                <div class="slds-truncate slds-assistive-text" title="Actions">Actions</div>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <template for:each={flattenedData} for:item="row">
+                            <tr key={row.rowId}
+                                aria-level={row.ariaLevel}
+                                aria-posinset={row.posInSet}
+                                aria-setsize={row.setSize}
+                                aria-expanded={row.isExpanded}
+                                class={row.rowClass}
+                                tabindex="0">
+
+                                <!-- Error Cell -->
+                                <td class="slds-cell-edit slds-cell-error slds-cell_action-mode" role="gridcell">
+                                    <div class="slds-grid slds-grid_vertical-align-center">
+                                        <span class="slds-row-number slds-text-body_small slds-text-color_weak slds-m-right_xx-small"></span>
+                                        <template lwc:if={row._hasError}>
+                                            <lightning-icon
+                                                icon-name="utility:error"
+                                                size="xx-small"
+                                                variant="error"
+                                                title={row._errorMessage}
+                                                class="slds-m-left_xx-small error-icon">
+                                            </lightning-icon>
+                                        </template>
+                                    </div>
+                                </td>
+
+                                <!-- Checkbox Cell -->
+                                <td class="slds-text-align_right slds-cell_action-mode" role="gridcell">
+                                    <template lwc:if={row.showCheckbox}>
+                                        <div class="slds-checkbox">
+                                            <input type="checkbox" name="options" id={row.rowId} aria-label={row.productName} />
+                                            <label class="slds-checkbox__label" for={row.rowId}>
+                                                <span class="slds-checkbox_faux"></span>
+                                                <span class="slds-form-element__label slds-assistive-text">Select item</span>
+                                            </label>
+                                        </div>
+                                    </template>
+                                </td>
+
+                                <!-- Product Column (Tree Column) -->
+                                <th class="slds-tree__item slds-cell-edit slds-cell_action-mode" scope="row" data-label="Product" style={row.paddingStyle}>
+                                    <button class="slds-button slds-button_icon slds-button_icon-x-small slds-m-right_x-small"
+                                        onclick={handleToggleExpand} data-id={row.rowId} tabindex="-1"
+                                        style={row.buttonStyle}>
+                                        <lightning-icon icon-name={row.chevronClass} size="xx-small"></lightning-icon>
+                                        <span class="slds-assistive-text">Toggle Expand</span>
+                                    </button>
+                                    <div class="slds-truncate" title={row.productName}>
+                                        <span class="slds-grid slds-grid_align-spread">
+                                            <span>{row.productName}</span>
+                                        </span>
+                                    </div>
+                                </th>
+
+                                <!-- Other Columns -->
+                                <template for:each={columns} for:item="col">
+                                    <template lwc:if={col.isProduct}>
+                                        <!-- Skip as handled by the th product column -->
+                                    </template>
+                                    <template lwc:else>
+                                        <td key={col.fieldName} data-label={col.label} role="gridcell" class="slds-cell-edit slds-cell_action-mode">
+                                            <span class="slds-grid slds-grid_align-spread">
+                                                <template lwc:if={col.editable}>
+                                                    <!-- Quantity Field -->
+                                                    <template lwc:if={col.isQty}>
+                                                        <template lwc:if={row.isQtyEditable}>
+                                                            <lightning-input type="number"
+                                                                variant="label-hidden"
+                                                                class="slds-text-align_right"
+                                                                value={row.quantity}
+                                                                data-id={row.rowId}
+                                                                data-field="quantity"
+                                                                onchange={handleInlineEdit}>
+                                                            </lightning-input>
+                                                        </template>
+                                                        <template lwc:else>
+                                                            <lightning-input type="number"
+                                                                variant="label-hidden"
+                                                                class="slds-text-align_right"
+                                                                value={row.quantity}
+                                                                disabled>
+                                                            </lightning-input>
+                                                        </template>
+                                                    </template>
+
+                                                    <!-- Discount Field -->
+                                                    <template lwc:if={col.isDiscount}>
+                                                        <template lwc:if={row.isDiscountEditable}>
+                                                            <lightning-input type="number"
+                                                                variant="label-hidden"
+                                                                class="slds-text-align_right"
+                                                                value={row.additionalDiscount}
+                                                                data-id={row.rowId}
+                                                                data-field="additionalDiscount"
+                                                                onchange={handleInlineEdit}>
+                                                            </lightning-input>
+                                                        </template>
+                                                        <template lwc:else>
+                                                            <lightning-input type="number"
+                                                                variant="label-hidden"
+                                                                class="slds-text-align_right"
+                                                                value={row.additionalDiscount}
+                                                                formatter="percent-fixed"
+                                                                disabled>
+                                                            </lightning-input>
+                                                        </template>
+                                                    </template>
+                                                </template>
+                                                <template lwc:else>
+                                                    <div class="slds-truncate slds-text-align_right slds-grow" title={row.formattedNetPrice} lwc:if={col.isCurrency}>
+                                                        <template lwc:if={col.isListPrice}>{row.formattedListPrice}</template>
+                                                        <template lwc:if={col.isNetPrice}>{row.formattedNetPrice}</template>
+                                                        <template lwc:if={col.isTotal}>{row.formattedNetTotal}</template>
+                                                    </div>
+                                                    <div class="slds-truncate slds-grow" title={row.productCode} lwc:else>
+                                                        {row.productCode}
+                                                    </div>
+                                                </template>
+                                            </span>
+                                        </td>
+                                    </template>
+                                </template>
+
+                                <!-- Action Cell -->
+                                <td role="gridcell" class="slds-cell_action-mode">
+                                    <button class="slds-button slds-button_icon slds-button_icon-border-filled slds-button_icon-x-small"
+                                        title={row.actionTitle}>
+                                        <lightning-icon icon-name="utility:down" size="xx-small"></lightning-icon>
+                                        <span class="slds-assistive-text">{row.actionTitle}</span>
+                                    </button>
+                                </td>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table>
             </div>
-            <div>
-                <lightning-button
-                    label="Next"
-                    variant="brand"
-                    icon-name="utility:forward"
-                    icon-position="right"
-                    disabled={isEmptyOrHasErrors}
-                    onclick={handleNext}>
-                </lightning-button>
+
+            <!-- Error Summary -->
+            <template lwc:if={hasErrors}>
+                <div class="slds-box slds-theme_error slds-m-bottom_medium">
+                    <div class="slds-media slds-media_center">
+                        <div class="slds-media__figure">
+                            <lightning-icon icon-name="utility:error" size="small" variant="inverse"></lightning-icon>
+                        </div>
+                        <div class="slds-media__body">
+                            <h3 class="slds-text-heading_small slds-text-color_inverse">Validation Errors</h3>
+                            <ul class="slds-list_dotted slds-text-color_inverse">
+                                <template for:each={errorMessages} for:item="msg">
+                                    <li key={msg}>{msg}</li>
+                                </template>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </template>
+
+            <!-- Subtotal Footer -->
+            <div class="slds-box slds-theme_shade">
+                <div class="slds-grid slds-grid_align-end">
+                    <div class="slds-col slds-text-align_right slds-text-title_caps slds-p-right_small">
+                        Subtotal:
+                        <span class="slds-text-align_right slds-text-title_bold">
+                            {formattedSubtotal}
+                        </span>
+                    </div>
+                </div>
             </div>
-        </div>
+        </template>
     </div>
 </template>

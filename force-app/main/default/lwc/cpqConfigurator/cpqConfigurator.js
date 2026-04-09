@@ -294,7 +294,7 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
     });
   }
 
-  /* -- header actions -- */
+    /* -- header actions -- */
   handleHeaderAction(event) {
     const action = event.detail.action;
     if (action === "back") this._goBack();
@@ -311,6 +311,8 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
     else if (action === "groupByTab") this._getBundleConfigStep()?.switchToTabs();
     else if (action === "applyRules") this._handleApplyRules();
     else if (action === "toggleFilters") this._handleToggleFilters();
+    else if (action === "refreshPricing") this._getLineEditorStep()?.handleHeaderAction('refreshPricing');
+    else if (action === "validateAll") this._getLineEditorStep()?.handleHeaderAction('validateAll');
   }
 
   _handleToggleFilters() {
@@ -373,6 +375,10 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
 
   _getBundleConfigStep() {
     return this.template.querySelector("c-cpq-step-bundle-config");
+  }
+
+  _getLineEditorStep() {
+    return this.template.querySelector("c-cpq-step-line-editor");
   }
 
   _handleClearSelection() {
