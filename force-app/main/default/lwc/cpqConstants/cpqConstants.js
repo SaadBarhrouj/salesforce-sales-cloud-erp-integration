@@ -69,8 +69,17 @@ export const STEPS = Object.freeze({
     },
     CONFIGURE: {
         number: 2, key: 'configure', label: 'Configure Products', icon: 'standard:custom', subtitle: 'Configure bundles and options',
-        header: { showSearch: false, searchPlaceholder: 'Search...', stepActions: CONFIGURE_STEP_ACTIONS, globalActions: CONFIGURE_GLOBAL_ACTIONS }
+        header: { showSearch: false, searchPlaceholder: 'Search...',
+        stepActions:
+        [
+        { name: 'applyRules', label: 'Apply Rules', variant: 'neutral', isStandalone: true },
+        { name: 'back', label: 'Back', variant: 'neutral' },
+        { name: 'saveConfig', label: 'Save', variant: 'brand' }
+        ],
+         globalActions: CONFIGURE_GLOBAL_ACTIONS
+         }
     },
+
     LINE_EDITOR: {
         number: 3, key: 'lineEditor', label: 'Line Editor', icon: 'standard:order_item', subtitle: 'Review and adjust line items',
         header: { showSearch: false, searchPlaceholder: 'Search...', stepActions: DEFAULT_STEP_ACTIONS, globalActions: DEFAULT_GLOBAL_ACTIONS }
@@ -148,14 +157,6 @@ export const MESSAGES = Object.freeze({
     CONFIRM_REMOVE:   'Remove "{0}" from the quote?',
     NOT_CONFIGURED:   'One or more bundles have not been configured.',
     LOGISTICS_INCOMPLETE: 'Please complete all required logistics fields.'
-});
-
-/* ─── Feature Selection Mode (derived from min/max) ─── */
-export const SELECTION_MODES = Object.freeze({
-    SINGLE_REQUIRED: 'single-required',   // min=1, max=1
-    SINGLE_OPTIONAL: 'single-optional',   // min=0, max=1
-    MULTI_REQUIRED:  'multi-required',    // min>=1, max>1
-    MULTI_OPTIONAL:  'multi-optional'     // min=0, max>1 or no max
 });
 
 /* ─── Custom Event Names ─── */

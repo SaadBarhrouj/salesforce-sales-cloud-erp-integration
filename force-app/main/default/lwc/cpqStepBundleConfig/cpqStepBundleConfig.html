@@ -54,8 +54,8 @@
                                             </div>
 
                                             <div class="slds-col slds-text-align_right">
-                                            <span class="slds-text-body_regular slds-text-color_weak">
-                                                Min: {feature.minOptions} / Max: {feature.maxOptions}
+                                            <span lwc:if={feature.minMaxDisplay} class="slds-text-body_regular slds-text-color_weak">
+                                                {feature.minMaxDisplay}
                                             </span>
                                             </div>
 
@@ -65,10 +65,12 @@
                                     <div>
                                         <lightning-datatable
                                           key-field="Id"
+                                          data-feature-id={feature.Id}
                                           data={feature.options}
                                           columns={columns}
-                                          draft-values={draftValues}
+                                          draft-values={feature.draftValues}
                                           onsave={handleSaveTable}
+                                          oncancel={handleCancelTable}
                                           max-row-selection={feature.maxOptions}
                                           selected-rows={feature.selectedRows}
                                           disabled-rows={feature.disabledRows}
@@ -88,10 +90,12 @@
                                         <!-- Datatable -->
                                         <lightning-datatable
                                           key-field="Id"
+                                          data-feature-id={feature.Id}
                                           data={feature.options}
                                           columns={columns}
-                                          draft-values={draftValues}
+                                          draft-values={feature.draftValues}
                                           onsave={handleSaveTable}
+                                          oncancel={handleCancelTable}
                                           max-row-selection={feature.maxOptions}
                                           selected-rows={feature.selectedRows}
                                           disabled-rows={feature.disabledRows}

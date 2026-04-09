@@ -17,13 +17,6 @@ const DATATABLE_COLUMNS = [
     { label: 'Code', fieldName: 'productCode', type: 'text' },
     { label: 'Name', fieldName: 'productName', type: 'text' },
     { label: 'Description', fieldName: 'description', type: 'text' },
-    {
-        label: 'Price',
-        fieldName: 'unitPrice',
-        type: 'currency',
-        typeAttributes: { currencyCode: 'USD' },
-        cellAttributes: { alignment: 'left' }
-    }
 ];
 
 export default class cpqStepBundleConfig extends LightningElement {
@@ -42,7 +35,7 @@ export default class cpqStepBundleConfig extends LightningElement {
     }
 
     @track isLoading = false;
-    @track draftValues = [];
+    @track featureDraftValues = {};
     @track localFeatures = [];
     @track bundleName = '';
     @track viewMode = 'sections';
@@ -96,8 +89,8 @@ export default class cpqStepBundleConfig extends LightningElement {
         return this.isTabsView ? 'brand' : 'neutral';
     }
 
-    get hasFeatures() {
-        return (this.processedFeatures || []).length > 0;
+    get hasFeatures() { 
+        return (this.processedFeatures?.length > 0) && !!this._bundleId;
     }
 
     get noBundleSelected() {
@@ -132,14 +125,14 @@ export default class cpqStepBundleConfig extends LightningElement {
     get processedFeatures() {
         return this.localFeatures.map((feature) => {
             const options = feature.options || [];
-            const min = feature.minOptions || 0;
-            const max = feature.maxOptions || 999;
+            const min = feature.minOptions;
+            const max = feature.maxOptions;
 
             const selectedIds = options.filter((opt) => opt.isSelected).map((opt) => opt.Id);
             const requiredIds = options.filter((opt) => opt.isRequired).map((opt) => opt.Id);
 
             let disabledIds = [];
-            if (requiredIds.length >= max && max > 0) {
+            if (max != null && requiredIds.length >= max && max > 0) {
                 disabledIds = options.map((opt) => opt.Id);
             } else {
                 disabledIds = requiredIds;
@@ -151,12 +144,25 @@ export default class cpqStepBundleConfig extends LightningElement {
                 helpText: feature.helpText,
                 minOptions: min,
                 maxOptions: max,
+                minMaxDisplay: this.getMinMaxDisplay(min, max),
                 badgeClass: 'slds-badge',
                 options: this.processOptions(options),
                 selectedRows: selectedIds,
-                disabledRows: disabledIds
+                disabledRows: disabledIds,
+                draftValues: this.featureDraftValues[feature.Id] || []
             };
         });
+    }
+
+    getMinMaxDisplay(min, max) {
+        if (min != null && max != null) {
+            return `Min: ${min} / Max: ${max}`;
+        } else if (min != null) {
+            return `Min: ${min}`;
+        } else if (max != null) {
+            return `Max: ${max}`;
+        }
+        return '';
     }
 
     processOptions(options) {
@@ -213,8 +219,82 @@ export default class cpqStepBundleConfig extends LightningElement {
         this.viewMode = 'tabs';
     }
 
+    applyDraftValues(featureId, drafts) {
+            const featureIndex = this.localFeatures.findIndex(f => f.Id === featureId);
+            if (featureIndex !== -1) {
+                let feature = { ...this.localFeatures[featureIndex] };
+                let options = [...feature.options];
+                
+                drafts.forEach(draft => {
+                    let optionIndex = options.findIndex(opt => opt.Id === draft.Id);
+                    if (optionIndex !== -1) {
+                        // Update defaultQuantity which drives the UI default quantity
+                        options[optionIndex] = { ...options[optionIndex], defaultQuantity: Number(draft.quantity) };
+                    }
+                });
+                feature.options = options;
+                
+                let newFeatures = [...this.localFeatures];
+                newFeatures[featureIndex] = feature;
+                this.localFeatures = newFeatures;
+            }
+        }
+
+    handleCancelTable(event) {
+        const featureId = event.target.dataset.featureId;
+        this.featureDraftValues = { ...this.featureDraftValues, [featureId]: [] };
+    }
+
     handleSaveTable(event) {
-        this.draftValues = event.detail.draftValues;
-        showToast(this, 'Success', 'Quantities have been updated', 'success');
+        const featureId = event.target.dataset.featureId;
+        const drafts = event.detail.draftValues;
+        
+        this.applyDraftValues(featureId, drafts);
+        
+        this.featureDraftValues = { ...this.featureDraftValues, [featureId]: [] };
+    }
+
+    @api
+    saveCurrentConfig() {
+        Object.keys(this.featureDraftValues).forEach(featureId => {
+            const drafts = this.featureDraftValues[featureId];
+            if (drafts && drafts.length > 0) {
+                this.applyDraftValues(featureId, drafts);
+            }
+        });
+
+        this.featureDraftValues = {}; 
+        
+        // Validation Min/Max rules
+        let isValid = true;
+        let selectedOptions = [];
+
+        this.localFeatures.forEach(feature => {
+            const selectedCount = feature.options.filter(opt => opt.isSelected).length;
+            if (selectedCount < feature.minOptions) {
+                isValid = false;
+                showToast(this, 'Validation Error', `Please select at least ${feature.minOptions} option(s) for ${feature.Name}`, 'error');
+            }
+            if (feature.maxOptions != null && selectedCount > feature.maxOptions && feature.maxOptions > 0) {
+                isValid = false;
+                showToast(this, 'Validation Error', `Maximum ${feature.maxOptions} option(s) allowed for ${feature.Name}`, 'error');
+            }
+
+            feature.options.filter(opt => opt.isSelected).forEach(opt => {
+                selectedOptions.push(opt);
+            });
+        });
+
+        if (!isValid) return false;
+
+        this.dispatchEvent(new CustomEvent('bundlesave', {
+            detail: {
+                bundleId: this.bundleId,
+                selectedOptions: selectedOptions,
+                featuresState: this.localFeatures
+            }
+        }));
+
+        return true;
     }
 }
