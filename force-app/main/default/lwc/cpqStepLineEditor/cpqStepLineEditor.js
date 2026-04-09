@@ -155,38 +155,36 @@ export default class CpqStepLineEditor extends LightningElement {
 
         this.gridData = this._selectedProducts.map(item => {
             const hasOptions = item.isBundle && item.configuredOptions && item.configuredOptions.length > 0;
-            const itemKey = item._key || item.key || item.productId || `prod-${Math.random()}`;
 
             const row = {
-                _key: itemKey,
+                _key: item._key,
                 _hasError: false,
                 _errorMessage: '',
                 productId: item.productId,
-                productCode: item.productCode || item.ProductCode,
-                productName: item.productName || item.Name,
-                quantity: item.quantity || 1,
-                listUnitPrice: item.unitPrice || item.listUnitPrice || 0,
-                additionalDiscount: item.additionalDiscount || 0,
-                netUnitPrice: item.netUnitPrice || item.unitPrice || item.listUnitPrice || 0,
-                netTotal: item.netTotal || ((item.netUnitPrice || item.unitPrice || item.listUnitPrice || 0) * (item.quantity || 1)),
-                isBundle: item.isBundle || false
+                productCode: item.productCode,
+                productName: item.productName,
+                quantity: item.quantity,
+                listUnitPrice: item.listUnitPrice,
+                additionalDiscount: item.additionalDiscount,
+                netUnitPrice: item.netUnitPrice,
+                netTotal: item.netTotal,
+                isBundle: item.isBundle
             };
 
             // Only add _children property for bundles to show expand/collapse icon
             if (hasOptions) {
                 row._children = [];
-                item.configuredOptions.forEach((opt, optIdx) => {
-                    const optKey = opt.Id || opt._key || `${itemKey}-opt-${optIdx}`;
+                item.configuredOptions.forEach((opt) => {
                     row._children.push({
-                        _key: optKey,
-                        productId: opt.productId || opt.Id,
-                        productCode: opt.productCode || opt.ProductCode,
-                        productName: opt.productName || opt.Name,
-                        quantity: opt.quantity || 1,
-                        listUnitPrice: opt.unitPrice || opt.listUnitPrice || 0,
+                        _key: opt.Id,
+                        productId: opt.Id,
+                        productCode: opt.productCode,
+                        productName: opt.productName,
+                        quantity: opt.quantity,
+                        listUnitPrice: opt.unitPrice,
                         additionalDiscount: 0,
-                        netUnitPrice: opt.netUnitPrice || opt.unitPrice || opt.listUnitPrice || 0,
-                        netTotal: opt.netTotal || ((opt.netUnitPrice || opt.unitPrice || opt.listUnitPrice || 0) * (opt.quantity || 1)),
+                        netUnitPrice: opt.unitPrice,
+                        netTotal: opt.unitPrice * opt.quantity,
                         _isOption: true
                     });
                 });

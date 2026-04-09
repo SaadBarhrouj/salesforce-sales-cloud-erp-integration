@@ -264,8 +264,8 @@ export default class cpqStepBundleConfig extends LightningElement {
                 drafts.forEach(draft => {
                     let optionIndex = options.findIndex(opt => opt.Id === draft.Id);
                     if (optionIndex !== -1) {
-                        // Update defaultQuantity which drives the UI default quantity
-                        options[optionIndex] = { ...options[optionIndex], defaultQuantity: Number(draft.quantity) };
+                        // Update quantity which drives the UI quantity
+                        options[optionIndex] = { ...options[optionIndex], quantity: Number(draft.quantity) };
                     }
                 });
                 feature.options = options;
