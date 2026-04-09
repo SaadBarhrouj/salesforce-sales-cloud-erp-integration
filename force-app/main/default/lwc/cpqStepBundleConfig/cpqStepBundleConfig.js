@@ -1,7 +1,7 @@
 import { LightningElement, api, track, wire } from 'lwc';
 import { getRecord, getFieldValue } from 'lightning/uiRecordApi';
 import { getIllustration } from 'c/cpqConstants';
-import { showToast, deepClone } from 'c/cpqUtils';
+import { showToast, deepClone, formatMessage } from 'c/cpqUtils';
 import getBundleData from '@salesforce/apex/BundleOptionController.getBundleData';
 import PRODUCT_NAME_FIELD from '@salesforce/schema/Product2.Name';
 
@@ -20,6 +20,16 @@ const DATATABLE_COLUMNS = [
 ];
 
 export default class cpqStepBundleConfig extends LightningElement {
+    _itemKey;
+    @api
+    get itemKey() {
+        return this._itemKey;
+    }
+    set itemKey(value) {
+        this._itemKey = value;
+        this.scheduleLoad();
+    }
+    
     _bundleId;
 
     @api
@@ -27,11 +37,29 @@ export default class cpqStepBundleConfig extends LightningElement {
         return this._bundleId;
     }
     set bundleId(value) {
-        const hasChanged = value !== this._bundleId;
         this._bundleId = value;
-        if (hasChanged && value) {
+        this.scheduleLoad();
+    }
+
+    _cachedFeatures = null;
+
+    @api
+    get cachedFeatures() {
+        return this._cachedFeatures;
+    }
+    set cachedFeatures(value) {
+        this._cachedFeatures = value;
+        this.scheduleLoad();
+    }
+
+    _loadTimer;
+    scheduleLoad() {
+        // Prevents loading twice sequentially if properties set together
+        if (!this._bundleId || !this._itemKey) return;
+        clearTimeout(this._loadTimer);
+        this._loadTimer = setTimeout(() => {
             this.loadConfiguration();
-        }
+        }, 0);
     }
 
     @track isLoading = false;
@@ -40,6 +68,11 @@ export default class cpqStepBundleConfig extends LightningElement {
     @track bundleName = '';
     @track viewMode = 'sections';
 
+    @api
+    get currentFeaturesState() {
+        return this.localFeatures;
+    }
+
     @wire(getRecord, { recordId: '$_bundleId', fields: [PRODUCT_NAME_FIELD] })
     bundleRecord;
 
@@ -47,13 +80,16 @@ export default class cpqStepBundleConfig extends LightningElement {
         this.isLoading = true;
 
         try {
-            if (!this.bundleId) {
-                throw new Error('Bundle ID is required');
+            if (!this.bundleId || !this.itemKey) {
+                return;
             }
 
-            // Fetch features via Apex
-            const result = await getBundleData({ bundleId: this.bundleId });
-            this.localFeatures = deepClone((result && result.features) || []);
+            if (this._cachedFeatures && this._cachedFeatures.length > 0) {
+                this.localFeatures = deepClone(this._cachedFeatures);
+            } else {
+                const result = await getBundleData({ bundleId: this.bundleId });
+                this.localFeatures = deepClone((result && result.features) || []);
+            }
             
             // Fetch bundle name from LDS wire (automatic via @wire decorator)
             if (this.bundleRecord?.data) {
@@ -287,13 +323,21 @@ export default class cpqStepBundleConfig extends LightningElement {
 
         if (!isValid) return false;
 
-        this.dispatchEvent(new CustomEvent('bundlesave', {
-            detail: {
-                bundleId: this.bundleId,
-                selectedOptions: selectedOptions,
-                featuresState: this.localFeatures
-            }
-        }));
+        // Deep clone to remove LWC reactive proxies and ensure serializability
+        try {
+            this.dispatchEvent(new CustomEvent('bundlesave', {
+                detail: {
+                    itemKey: this.itemKey,
+                    bundleId: this.bundleId,
+                    selectedOptions: deepClone(selectedOptions),
+                    featuresState: deepClone(this.localFeatures)
+                }
+            }));
+        } catch (error) {
+            console.error('[cpqStepBundleConfig.saveCurrentConfig] Error dispatching bundlesave event:', error);
+            showToast(this, 'Save Error', 'Unable to save configuration. Please try again.', 'error');
+            return false;
+        }
 
         return true;
     }

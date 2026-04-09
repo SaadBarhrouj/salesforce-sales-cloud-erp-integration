@@ -3,6 +3,7 @@
  * Pure functions for formatting, calculations, deep cloning, and validation.
  */
 import { SELECTION_MODES } from 'c/cpqConstants';
+import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 
 /* ─── Unique Id Generator ─── */
 let _idCounter = 0;
@@ -218,7 +219,6 @@ export function debounce(fn, delay = 300) {
 }
 
 /* ─── Standard Toast Event ─── */
-import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 
 export function showToast(component, title, message, variant = 'success') {
     if(!component) return;

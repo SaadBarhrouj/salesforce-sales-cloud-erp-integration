@@ -68,6 +68,6 @@ export default class EmptyState extends LightningElement {
   handleCtaClick() {
     dispatchCustomEvent(this, EVENTS.CTA_CLICK, {
         timestamp: new Date().toISOString()
-    }, true, true);
+    });
   }
 }
