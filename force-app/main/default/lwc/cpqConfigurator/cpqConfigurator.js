@@ -156,6 +156,13 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
   }
 
   /* -- header -- */
+  get opportunityOfferType() {
+    if (this.opportunityRecord?.data) {
+      return getFieldValue(this.opportunityRecord.data, OPP_OFFER_TYPE) || "";
+    }
+    return "";
+  }
+
   get headerTopLabel() {
     if (this.opportunityRecord?.data) {
       const name = getFieldValue(this.opportunityRecord.data, OPP_NAME);
@@ -586,6 +593,23 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
       (i) => i._key !== itemKey
     );
     this.selectedProducts = items;
+  }
+
+  handleLineProductChange(event) {
+    const { itemKey, field, value, optionId } = event.detail;
+    const items = deepClone(this.selectedProducts);
+    const idx = items.findIndex((i) => i._key === itemKey);
+    if (idx !== -1) {
+      if (optionId) {
+        const optIdx = items[idx].options?.findIndex((o) => o.Id === optionId);
+        if (optIdx !== -1) {
+          items[idx].options[optIdx][field] = value;
+        }
+      } else {
+        items[idx][field] = value;
+      }
+      this.selectedProducts = items;
+    }
   }
 
   handleGlobalDiscount(event) {

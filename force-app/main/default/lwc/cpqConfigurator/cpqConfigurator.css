@@ -52,11 +52,10 @@ c-cpq-collapsible-sidebar {
     display: flex !important;
     flex-direction: column !important;
     background-color: #fff;
-    margin-left: 12px;
 }
 
-/* Full width when sidebar is hidden */
-.cpq-app-body[data-has-sidebar="false"] .cpq-app-main {
+/* Full width when sidebar is hidden (Line Editor step) */
+.cpq-app-body:not([data-has-sidebar="true"]) .cpq-app-main {
     margin-left: 0;
     max-width: 100%;
 }

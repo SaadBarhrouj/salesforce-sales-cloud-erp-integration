@@ -63,7 +63,9 @@
                     <template lwc:if={isStepLineEditor}>
                         <c-cpq-step-line-editor
                             selected-products={selectedProducts}
-                            onlineupdate={handleLineUpdate}
+                            pricebook-id={opportunityPricebookId}
+                            offer-type={opportunityOfferType}
+                            onproductchange={handleLineProductChange}
                             onlineremove={handleLineRemove}
                             onnavigate={handleNavigate}
                         ></c-cpq-step-line-editor>
