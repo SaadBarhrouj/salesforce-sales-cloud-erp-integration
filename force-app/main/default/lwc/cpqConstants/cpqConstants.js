@@ -40,6 +40,7 @@ const CONFIGURE_GLOBAL_ACTIONS = [
 ];
 
 const LINE_EDITOR_GLOBAL_ACTIONS = [
+    { name: 'deleteSelected', label: 'Delete Selected', iconName: 'utility:delete', variant: 'destructive', dynamicProperty: 'disableIfNoSelection' },
     { name: 'refreshPricing', label: 'Refresh Pricing', iconName: 'utility:refresh', variant: 'border-filled' },
     { name: 'validateAll', label: 'Validate All', iconName: 'utility:check', variant: 'border-filled' }
 ];
@@ -77,7 +78,7 @@ export const STEPS = Object.freeze({
         header: { showSearch: false, searchPlaceholder: 'Search...', stepActions: CONFIGURE_STEP_ACTIONS, globalActions: CONFIGURE_GLOBAL_ACTIONS }
     },
     LINE_EDITOR: {
-        number: 3, key: 'lineEditor', label: 'Line Editor', icon: 'standard:order_item', subtitle: 'Review and adjust line items',
+        number: 3, key: 'lineEditor', label: 'Line Editor', icon: 'standard:bundles_pricing', subtitle: 'Review and adjust line items',
         header: { 
             showSearch: false, 
             searchPlaceholder: 'Search...', 

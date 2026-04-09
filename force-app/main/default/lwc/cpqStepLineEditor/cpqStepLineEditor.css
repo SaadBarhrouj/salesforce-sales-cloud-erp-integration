@@ -18,11 +18,22 @@
 .slds-tree__item {
     display: flex;
     align-items: center;
+    height: 100%;
 }
 
-/* Ensure the horizontal scroll works correctly with fixed layout */
+/* Fix height for the Product Column inner wrapper */
+.product-cell-inner {
+    min-height: 2rem;
+    height: 100%;
+}
 .slds-table_fixed-layout {
     min-width: 800px;
+}
+
+.input-right-align {
+    text-align: right;
+    width: 100%;
+    --sds-c-input-text-align: right;
 }
 
 .error-icon {

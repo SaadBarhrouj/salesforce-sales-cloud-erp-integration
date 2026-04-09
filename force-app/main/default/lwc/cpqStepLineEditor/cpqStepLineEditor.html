@@ -33,7 +33,7 @@
                                 <div class="slds-th__action slds-th__action_form">
                                     <div class="slds-checkbox">
                                         <input type="checkbox" name="options" id="checkbox-all" tabindex="-1"
-                                            aria-label="Select All" value="checkbox-all" />
+                                            aria-label="Select All" value="checkbox-all" onchange={handleSelectAll} />
                                         <label class="slds-checkbox__label" for="checkbox-all">
                                             <span class="slds-checkbox_faux"></span>
                                             <span class="slds-form-element__label slds-assistive-text">Select All</span>
@@ -44,7 +44,7 @@
 
                             <!-- Dynamic Columns -->
                             <template for:each={columns} for:item="col">
-                                <th key={col.fieldName} aria-sort="none" class="slds-is-resizable slds-cell_action-mode" scope="col">
+                                <th key={col.fieldName} aria-sort="none" class="slds-is-resizable slds-cell_action-mode" scope="col" style={col.style}>
                                     <div class="slds-th__action slds-text-link_reset">
                                         <div class="slds-grid slds-grid_vertical-align-center slds-has-flexi-truncate">
                                             <span class="slds-truncate" title={col.label}>{col.label}</span>
@@ -95,7 +95,7 @@
                                 <td class="slds-text-align_right slds-cell_action-mode" role="gridcell">
                                     <template lwc:if={row.showCheckbox}>
                                         <div class="slds-checkbox">
-                                            <input type="checkbox" name="options" id={row.rowId} aria-label={row.productName} />
+                                            <input type="checkbox" name="options" id={row.rowId} aria-label={row.productName} checked={row.isSelected} onchange={handleRowSelect} data-id={row.rowId} />
                                             <label class="slds-checkbox__label" for={row.rowId}>
                                                 <span class="slds-checkbox_faux"></span>
                                                 <span class="slds-form-element__label slds-assistive-text">Select item</span>
@@ -105,17 +105,15 @@
                                 </td>
 
                                 <!-- Product Column (Tree Column) -->
-                                <th class="slds-tree__item slds-cell-edit slds-cell_action-mode" scope="row" data-label="Product" style={row.paddingStyle}>
-                                    <button class="slds-button slds-button_icon slds-button_icon-x-small slds-m-right_x-small"
-                                        onclick={handleToggleExpand} data-id={row.rowId} tabindex="-1"
-                                        style={row.buttonStyle}>
-                                        <lightning-icon icon-name={row.chevronClass} size="xx-small"></lightning-icon>
-                                        <span class="slds-assistive-text">Toggle Expand</span>
-                                    </button>
-                                    <div class="slds-truncate" title={row.productName}>
-                                        <span class="slds-grid slds-grid_align-spread">
-                                            <span>{row.productName}</span>
-                                        </span>
+                                <th class="slds-tree__item slds-cell-edit slds-cell_action-mode" scope="row" data-label="Product" style={row.paddingStyle} title={row.productName}>
+                                    <div class="slds-grid slds-grid_vertical-align-center product-cell-inner">
+                                        <button class="slds-button slds-button_icon slds-button_icon-x-small slds-m-right_x-small"
+                                            onclick={handleToggleExpand} data-id={row.rowId} tabindex="-1"
+                                            style={row.buttonStyle}>
+                                            <lightning-icon icon-name={row.chevronClass} size="xx-small"></lightning-icon>
+                                            <span class="slds-assistive-text">Toggle Expand</span>
+                                        </button>
+                                        <span class="slds-truncate">{row.productName}</span>
                                     </div>
                                 </th>
 
@@ -126,14 +124,14 @@
                                     </template>
                                     <template lwc:else>
                                         <td key={col.fieldName} data-label={col.label} role="gridcell" class="slds-cell-edit slds-cell_action-mode">
-                                            <span class="slds-grid slds-grid_align-spread">
+                                            <span class="slds-grid slds-grid_align-end slds-grid_vertical-align-center slds-p-horizontal_x-small" style="height: 100%;">
                                                 <template lwc:if={col.editable}>
                                                     <!-- Quantity Field -->
                                                     <template lwc:if={col.isQty}>
                                                         <template lwc:if={row.isQtyEditable}>
                                                             <lightning-input type="number"
                                                                 variant="label-hidden"
-                                                                class="slds-text-align_right"
+                                                                class="input-right-align"
                                                                 value={row.quantity}
                                                                 data-id={row.rowId}
                                                                 data-field="quantity"
@@ -143,7 +141,7 @@
                                                         <template lwc:else>
                                                             <lightning-input type="number"
                                                                 variant="label-hidden"
-                                                                class="slds-text-align_right"
+                                                                class="input-right-align"
                                                                 value={row.quantity}
                                                                 disabled>
                                                             </lightning-input>
@@ -155,7 +153,7 @@
                                                         <template lwc:if={row.isDiscountEditable}>
                                                             <lightning-input type="number"
                                                                 variant="label-hidden"
-                                                                class="slds-text-align_right"
+                                                                class="input-right-align"
                                                                 value={row.additionalDiscount}
                                                                 data-id={row.rowId}
                                                                 data-field="additionalDiscount"
@@ -165,7 +163,7 @@
                                                         <template lwc:else>
                                                             <lightning-input type="number"
                                                                 variant="label-hidden"
-                                                                class="slds-text-align_right"
+                                                                class="input-right-align"
                                                                 value={row.additionalDiscount}
                                                                 formatter="percent-fixed"
                                                                 disabled>
@@ -174,12 +172,12 @@
                                                     </template>
                                                 </template>
                                                 <template lwc:else>
-                                                    <div class="slds-truncate slds-text-align_right slds-grow" title={row.formattedNetPrice} lwc:if={col.isCurrency}>
+                                                    <div class="slds-truncate" title={row.formattedNetPrice} lwc:if={col.isCurrency}>
                                                         <template lwc:if={col.isListPrice}>{row.formattedListPrice}</template>
                                                         <template lwc:if={col.isNetPrice}>{row.formattedNetPrice}</template>
                                                         <template lwc:if={col.isTotal}>{row.formattedNetTotal}</template>
                                                     </div>
-                                                    <div class="slds-truncate slds-grow" title={row.productCode} lwc:else>
+                                                    <div class="slds-truncate" title={row.productCode} lwc:else>
                                                         {row.productCode}
                                                     </div>
                                                 </template>

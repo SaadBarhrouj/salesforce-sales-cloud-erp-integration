@@ -273,6 +273,8 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
     });
   }
 
+  @track hasLineSelection = false;
+
     get headerGlobalActions() {
     const actions = deepClone(this.currentStep.header?.globalActions || []);
     let filtersOpen = false;
@@ -282,6 +284,10 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
     }
 
     return actions.map((action) => {
+      if (action.dynamicProperty === "disableIfNoSelection") {
+        action.disabled = !this.hasLineSelection;
+      }
+
       if (action.isGroup && action.items) {
         action.items = action.items.map((item) => {
           if (item.dynamicProperty === "highlightIfFiltersOpen") {
@@ -313,6 +319,7 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
     else if (action === "toggleFilters") this._handleToggleFilters();
     else if (action === "refreshPricing") this._getLineEditorStep()?.handleHeaderAction('refreshPricing');
     else if (action === "validateAll") this._getLineEditorStep()?.handleHeaderAction('validateAll');
+    else if (action === "deleteSelected") this._getLineEditorStep()?.handleHeaderAction('deleteSelected');
   }
 
   _handleToggleFilters() {
@@ -624,6 +631,10 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
     qs.additionalDiscountPercent = disc;
     this.quoteState = qs;
     this._recalcAllTotals();
+  }
+
+  handleLineSelectionChange(event) {
+    this.hasLineSelection = event.detail.hasSelection;
   }
 
   /* -- Step 5 events -- */

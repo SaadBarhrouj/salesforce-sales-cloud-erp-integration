@@ -190,6 +190,7 @@ export default class CpqStepLineEditor extends LightningElement {
                     showCheckbox: !item._isOption, // hide checkbox for bundle options
                     rowClass: `slds-hint-parent ${item._hasError ? 'slds-is-selected row-error' : ''}`,
                     paddingStyle: `padding-left: ${level > 1 ? level * 1.5 : 0}rem;`, // Ensure proper indentation for children
+                    isSelected: !!item.isSelected,
                     formattedListPrice: formatCurrency(item.listUnitPrice),
                     formattedNetPrice: formatCurrency(item.netUnitPrice),
                     formattedNetTotal: formatCurrency(item.netTotal),
@@ -292,6 +293,86 @@ export default class CpqStepLineEditor extends LightningElement {
         }
         // assigning a new set preserves reactivity in LWC
         this.expandedRows = new Set(this.expandedRows);
+    }
+
+    handleSelectAll(event) {
+        const isChecked = event.target.checked;
+        const updatedData = this.gridData.map(item => {
+            if (!item._isOption) {
+                return { ...item, isSelected: isChecked };
+            }
+            return item;
+        });
+        this.gridData = updatedData;
+        this._dispatchSelectionChange();
+    }
+
+    handleRowSelect(event) {
+        const rowId = event.currentTarget.dataset.id;
+        const isChecked = event.target.checked;
+        const updatedData = this.gridData.map(item => {
+            if (item._key === rowId) {
+                return { ...item, isSelected: isChecked };
+            }
+            return item;
+        });
+        this.gridData = updatedData;
+        this._dispatchSelectionChange();
+    }
+
+    _dispatchSelectionChange() {
+        const hasSelection = this.gridData.some(item => item.isSelected);
+        this.dispatchEvent(new CustomEvent('selectionchange', {
+            detail: { hasSelection }
+        }));
+    }
+
+    handleDeleteSelected() {
+        const selectedIds = new Set(this.gridData.filter(item => item.isSelected).map(item => item._key));
+
+        if (selectedIds.size === 0) {
+            this.dispatchEvent(new ShowToastEvent({
+                title: 'No Selection',
+                message: 'Please select at least one row to delete.',
+                variant: 'warning'
+            }));
+            return;
+        }
+
+        // Filter out selected parent rows
+        this.gridData = this.gridData.filter(item => !selectedIds.has(item._key));
+
+        // Clean up pending changes for deleted rows
+        selectedIds.forEach(id => {
+            this._pendingChanges.delete(id);
+            this.expandedRows.delete(id);
+        });
+
+        // Re-assign to trigger reactivity
+        this.expandedRows = new Set(this.expandedRows);
+
+        // Dispatch an event to parent to update header state (e.g. disable delete button)
+        this.dispatchEvent(new CustomEvent('selectionchange', {
+            detail: { hasSelection: false }
+        }));
+
+        this.dispatchEvent(new ShowToastEvent({
+            title: 'Rows Deleted',
+            message: `Successfully deleted ${selectedIds.size} row(s).`,
+            variant: 'success'
+        }));
+
+        // Dispatch lineremove event to inform parent component
+        selectedIds.forEach(id => {
+            this.dispatchEvent(new CustomEvent('lineremove', {
+                detail: { itemKey: id }
+            }));
+        });
+
+        // Trigger calculation if any changes remain
+        if (this._pendingChanges.size > 0) {
+            this._scheduleBatchCalculation();
+        }
     }
 
     // Removed standard datatable handleCellChange. Using manual custom input events.
@@ -413,42 +494,7 @@ export default class CpqStepLineEditor extends LightningElement {
         }
     }
 
-    handleApplyBulkDiscount() {
-        const discount = prompt('Enter discount percentage (0-100):');
-        if (discount === null) return;
-
-        const discValue = parseFloat(discount);
-        if (isNaN(discValue) || discValue < 0 || discValue > 100) {
-            this.dispatchEvent(new ShowToastEvent({
-                title: 'Invalid Discount',
-                message: 'Discount must be between 0 and 100',
-                variant: 'error'
-            }));
-            return;
-        }
-
-        const updatedData = this.gridData.map(row => {
-            this._pendingChanges.set(row._key, {
-                ...this._pendingChanges.get(row._key),
-                additionalDiscount: discValue
-            });
-            return {
-                ...row,
-                additionalDiscount: discValue,
-                netUnitPrice: (row.listUnitPrice || 0) * (1 - discValue / 100),
-                netTotal: (row.listUnitPrice || 0) * (1 - discValue / 100) * (row.quantity || 1)
-            };
-        });
-
-        this.gridData = updatedData;
-        this._executeBatchCalculation();
-
-        this.dispatchEvent(new ShowToastEvent({
-            title: 'Discount Applied',
-            message: `${discValue}% discount applied to all items`,
-            variant: 'success'
-        }));
-    }
+   
 
     async handleRefreshPricing() {
         this._pendingChanges.clear();
@@ -503,10 +549,11 @@ export default class CpqStepLineEditor extends LightningElement {
         }
     }
 
+    @api
     handleHeaderAction(actionName) {
         switch (actionName) {
-            case 'applyDiscount':
-                this.handleApplyBulkDiscount();
+            case 'deleteSelected':
+                this.handleDeleteSelected();
                 break;
             case 'refreshPricing':
                 this.handleRefreshPricing();
