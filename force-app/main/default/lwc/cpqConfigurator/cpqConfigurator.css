@@ -54,3 +54,9 @@ c-cpq-collapsible-sidebar {
     background-color: #fff;
     margin-left: 12px;
 }
+
+/* Full width when sidebar is hidden */
+.cpq-app-body[data-has-sidebar="false"] .cpq-app-main {
+    margin-left: 0;
+    max-width: 100%;
+}

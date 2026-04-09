@@ -72,3 +72,4 @@ target/
 *.iml
 # Ignore local custom skills
 .github/skills/
+opencode.json

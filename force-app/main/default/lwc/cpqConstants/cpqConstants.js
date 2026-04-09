@@ -73,7 +73,12 @@ export const STEPS = Object.freeze({
     },
     LINE_EDITOR: {
         number: 3, key: 'lineEditor', label: 'Line Editor', icon: 'standard:order_item', subtitle: 'Review and adjust line items',
-        header: { showSearch: false, searchPlaceholder: 'Search...', stepActions: DEFAULT_STEP_ACTIONS, globalActions: DEFAULT_GLOBAL_ACTIONS }
+        header: { 
+            showSearch: false, 
+            searchPlaceholder: 'Search...', 
+            stepActions: DEFAULT_STEP_ACTIONS, 
+            globalActions: []  // No sidebar in line editor
+        }
     },
     LOGISTICS: {
         number: 4, key: 'logistics', label: 'Logistics', icon: 'standard:shipment', subtitle: 'Delivery options',

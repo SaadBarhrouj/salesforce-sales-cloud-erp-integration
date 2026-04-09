@@ -1,100 +1,323 @@
 <template>
-    <div class="slds-card slds-p-around_medium">
-        <!-- Quote Info Bar -->
-        <div class="slds-grid slds-grid_align-spread slds-m-bottom_medium slds-p-around_small slds-box slds-box_x-small slds-theme_shade">
-            <div class="slds-col">
-                <lightning-layout>
-                    <lightning-layout-item padding="horizontal-small">
-                        <span class="slds-text-title_caps">Start Date</span>
-                        <lightning-input
-                            type="date"
-                            value={quoteState.startDate}
-                            variant="label-hidden"
-                            label="Start Date"
-                            class="inline-field"
-                        ></lightning-input>
-                    </lightning-layout-item>
-                    <lightning-layout-item padding="horizontal-small">
-                        <span class="slds-text-title_caps">Subscription Term</span>
-                        <lightning-input
-                            type="number"
-                            value={quoteState.subscriptionTerm}
-                            variant="label-hidden"
-                            label="Term"
-                            class="inline-field"
-                        ></lightning-input>
-                    </lightning-layout-item>
-                    <lightning-layout-item padding="horizontal-small">
-                        <span class="slds-text-title_caps">Additional Disc. (%)</span>
-                        <lightning-input
-                            type="number"
-                            value={quoteState.additionalDiscountPercent}
-                            variant="label-hidden"
-                            label="Discount"
-                            class="inline-field"
-                            onchange={handleGlobalDiscountChange}
-                        ></lightning-input>
-                    </lightning-layout-item>
-                </lightning-layout>
-            </div>
-        </div>
-
-        <!-- Line Items Table -->
-        <table class="slds-table slds-table_cell-buffer slds-table_bordered slds-table_striped slds-table_fixed-layout">
-            <thead>
-                <tr class="slds-line-height_reset">
-                    <th scope="col" style="width:40px;">#</th>
-                    <th scope="col" style="width:120px;">Product Code</th>
-                    <th scope="col">Product Name</th>
-                    <th scope="col" style="width:90px;">Quantity</th>
-                    <th scope="col" style="width:110px;" class="slds-text-align_right">List Unit Price</th>
-                    <th scope="col" style="width:110px;">Additional Disc.</th>
-                    <th scope="col" style="width:110px;" class="slds-text-align_right">Net Unit Price</th>
-                    <th scope="col" style="width:110px;" class="slds-text-align_right">Net Total</th>
-                    <th scope="col" style="width:50px;"></th>
-                </tr>
-            </thead>
-            <tbody>
-                <template for:each={selectedProducts} for:item="item" for:index="idx">
-                    <c-cpq-line-item
-                        key={item._key}
-                        item={item}
-                        line-number={item._lineNumber}
-                        onlineupdate={handleLineUpdate}
-                        onlineremove={handleLineRemove}
-                    ></c-cpq-line-item>
-                </template>
-            </tbody>
-            <tfoot>
-                <tr>
-                    <td colspan="7" class="slds-text-align_right slds-text-title_caps slds-p-right_small">Subtotal:</td>
-                    <td class="slds-text-align_right slds-text-title_bold">{formattedSubtotal}</td>
-                    <td></td>
-                </tr>
-            </tfoot>
-        </table>
-
+    <div class="step-line-editor slds-is-relative">
+        <!-- Empty State -->
         <div lwc:if={isEmpty} class="slds-align_absolute-center slds-p-around_large">
-            <p class="slds-text-body_regular slds-text-color_weak">No products in the quote. Go back to add products.</p>
+            <c-empty-state
+                illustration-name="cart:noitems"
+                title="No Selected Products"
+                description="Go back to the selection step to add products."
+                size="large">
+            </c-empty-state>
         </div>
+
+        <!-- Main Table -->
+        <template lwc:if={isNotEmpty}>
+            <table class="slds-table slds-table_cell-buffer slds-table_bordered slds-table_fixed-layout">
+                <thead>
+                    <tr class="slds-line-height_reset">
+                        <th scope="col" style="width: 40px;"></th>
+                        <th scope="col" style="width: 40px;">#</th>
+                        <th scope="col" style="width: 120px;">Product Code</th>
+                        <th scope="col">Product Name</th>
+                        <th scope="col" style="width: 90px;">Quantity</th>
+                        <th scope="col" style="width: 110px;" class="slds-text-align_right">List Unit Price</th>
+                        <th scope="col" style="width: 110px;">Additional Disc.</th>
+                        <th scope="col" style="width: 110px;" class="slds-text-align_right">Net Unit Price</th>
+                        <th scope="col" style="width: 110px;" class="slds-text-align_right">Net Total</th>
+                        <th scope="col" style="width: 50px;"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <template for:each={numberedItems} for:item="item" for:index="idx">
+                        <!-- Main Data Row -->
+                        <tr key={item._key} class="slds-hint-parent main-row">
+                            <td>
+                                <lightning-button-icon
+                                    icon-name="utility:chevronup"
+                                    variant="bare"
+                                    size="small"
+                                    alternative-text="Collapse"
+                                    data-item-key={item._key}
+                                    onclick={toggleItemExpand}
+                                    lwc:if={item._isExpanded}>
+                                </lightning-button-icon>
+                                <lightning-button-icon
+                                    icon-name="utility:chevrondown"
+                                    variant="bare"
+                                    size="small"
+                                    alternative-text="Expand"
+                                    data-item-key={item._key}
+                                    onclick={toggleItemExpand}
+                                    lwc:else>
+                                </lightning-button-icon>
+                            </td>
+                            <td data-label="#">{item._lineNumber}</td>
+                            <td data-label="Product Code">
+                                <span class="slds-text-body_regular slds-text-title_bold">{item.productCode}</span>
+                            </td>
+                            <td data-label="Product Name">
+                                <span class="slds-text-body_regular">{item.productName}</span>
+                                <lightning-icon lwc:if={item.isBundle} icon-name="utility:package" size="xx-small" class="slds-m-left_xx-small" alternative-text="Bundle"></lightning-icon>
+                            </td>
+                            <td data-label="Quantity">
+                                <lightning-input
+                                    type="number"
+                                    value={item.quantity}
+                                    min="1"
+                                    step="1"
+                                    label="Qty"
+                                    variant="label-hidden"
+                                    class="qty-field"
+                                    data-item-key={item._key}
+                                    data-field="quantity"
+                                    onchange={handleLineUpdate}>
+                                </lightning-input>
+                            </td>
+                            <td data-label="List Unit Price" class="slds-text-align_right">
+                                {item._formattedListPrice}
+                            </td>
+                            <td data-label="Additional Disc.">
+                                <lightning-input
+                                    type="number"
+                                    value={item.additionalDiscount}
+                                    min="0"
+                                    max="100"
+                                    step="0.5"
+                                    label="Discount"
+                                    variant="label-hidden"
+                                    formatter="percent-fixed"
+                                    class="disc-field"
+                                    data-item-key={item._key}
+                                    data-field="additionalDiscount"
+                                    onchange={handleLineUpdate}>
+                                </lightning-input>
+                            </td>
+                            <td data-label="Net Unit Price" class="slds-text-align_right">
+                                {item._formattedNetPrice}
+                            </td>
+                            <td data-label="Net Total" class="slds-text-align_right slds-text-title_bold">
+                                {item._formattedTotal}
+                            </td>
+                            <td class="slds-text-align_center">
+                                <lightning-button-icon
+                                    icon-name="utility:delete"
+                                    variant="bare"
+                                    size="small"
+                                    alternative-text="Remove product"
+                                    data-item-key={item._key}
+                                    onclick={handleLineRemove}>
+                                </lightning-button-icon>
+                            </td>
+                        </tr>
+
+                        <!-- Expanded Pricing Detail Row -->
+                        <tr key={item._pricingKey} lwc:if={item._isExpanded} class="expanded-row pricing-row">
+                            <td colspan="10">
+                                <div class="slds-p-around_medium">
+                                    <div class="slds-text-title_caps slds-m-bottom_small">Pricing Details</div>
+                                    <div class="slds-grid slds-wrap slds-gutters">
+                                        <!-- Column 1 -->
+                                        <div class="slds-col slds-size_1-of-3 slds-p-around_small">
+                                            <lightning-combobox
+                                                name="pricingMethod"
+                                                label="Pricing Method"
+                                                value={item.pricingMethod}
+                                                options={pricingMethodOptions}
+                                                data-item-key={item._key}
+                                                data-field="pricingMethod"
+                                                onchange={handleLineUpdate}
+                                                variant="label-stack">
+                                            </lightning-combobox>
+                                            <lightning-input
+                                                type="checkbox"
+                                                label="Optional"
+                                                checked={item.isOptional}
+                                                data-item-key={item._key}
+                                                data-field="isOptional"
+                                                onchange={handleLineUpdate}
+                                                class="slds-m-top_small">
+                                            </lightning-input>
+                                            <lightning-input
+                                                type="text"
+                                                label="Package Product Code"
+                                                value={item.packageProductCode}
+                                                data-item-key={item._key}
+                                                data-field="packageProductCode"
+                                                onchange={handleLineUpdate}
+                                                class="slds-m-top_small">
+                                            </lightning-input>
+                                        </div>
+                                        <!-- Column 2 -->
+                                        <div class="slds-col slds-size_1-of-3 slds-p-around_small">
+                                            <lightning-input
+                                                type="currency"
+                                                label="Original Price"
+                                                value={item.originalPrice}
+                                                data-item-key={item._key}
+                                                data-field="originalPrice"
+                                                onchange={handleLineUpdate}
+                                                variant="label-stack">
+                                            </lightning-input>
+                                            <lightning-input
+                                                type="currency"
+                                                label="Unit Cost"
+                                                value={item.unitCost}
+                                                data-item-key={item._key}
+                                                data-field="unitCost"
+                                                onchange={handleLineUpdate}
+                                                class="slds-m-top_small"
+                                                variant="label-stack">
+                                            </lightning-input>
+                                            <lightning-input
+                                                type="number"
+                                                label="Markup (%)"
+                                                value={item.markup}
+                                                step="0.1"
+                                                data-item-key={item._key}
+                                                data-field="markup"
+                                                onchange={handleLineUpdate}
+                                                class="slds-m-top_small"
+                                                variant="label-stack">
+                                            </lightning-input>
+                                        </div>
+                                        <!-- Column 3 -->
+                                        <div class="slds-col slds-size_1-of-3 slds-p-around_small">
+                                            <lightning-input
+                                                type="currency"
+                                                label="Special Price"
+                                                value={item.specialPrice}
+                                                data-item-key={item._key}
+                                                data-field="specialPrice"
+                                                onchange={handleLineUpdate}
+                                                variant="label-stack">
+                                            </lightning-input>
+                                            <lightning-input
+                                                type="currency"
+                                                label="Regular Unit Price"
+                                                value={item.regularUnitPrice}
+                                                data-item-key={item._key}
+                                                data-field="regularUnitPrice"
+                                                onchange={handleLineUpdate}
+                                                class="slds-m-top_small"
+                                                variant="label-stack">
+                                            </lightning-input>
+                                            <lightning-input
+                                                type="currency"
+                                                label="Customer Unit Price"
+                                                value={item.customerUnitPrice}
+                                                data-item-key={item._key}
+                                                data-field="customerUnitPrice"
+                                                onchange={handleLineUpdate}
+                                                class="slds-m-top_small"
+                                                variant="label-stack">
+                                            </lightning-input>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+
+                        <!-- Options Section Row -->
+                        <tr key={item._optionsHeaderKey} lwc:if={item._showBundleOptions} class="options-toggle-row slds-theme_shade">
+                            <td colspan="10">
+                                <div class="slds-grid slds-grid_align-spread slds-p-around_small">
+                                    <div class="slds-col">
+                                        <lightning-button-icon
+                                            icon-name="utility:chevronup"
+                                            variant="bare"
+                                            size="x-small"
+                                            alternative-text="Collapse options"
+                                            data-item-key={item._key}
+                                            onclick={toggleOptionsExpand}
+                                            lwc:if={item._isOptionsExpanded}>
+                                        </lightning-button-icon>
+                                        <lightning-button-icon
+                                            icon-name="utility:chevrondown"
+                                            variant="bare"
+                                            size="x-small"
+                                            alternative-text="Expand options"
+                                            data-item-key={item._key}
+                                            onclick={toggleOptionsExpand}
+                                            lwc:else>
+                                        </lightning-button-icon>
+                                        <span class="slds-m-left_small slds-text-title_caps">
+                                            Bundle Options ({item.options.length})
+                                        </span>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+
+                        <!-- Options Rows -->
+                        <template lwc:if={item._showOptions}>
+                            <template for:each={item.options} for:item="opt">
+                                <tr key={opt.Id} class="slds-hint-parent option-child-row">
+                                    <td></td>
+                                    <td></td>
+                                    <td data-label="Product Code" class="slds-text-color_weak">
+                                        <span class="slds-p-left_medium">{opt.productCode}</span>
+                                    </td>
+                                    <td data-label="Product Name" class="slds-text-color_weak">{opt.productName}</td>
+                                    <td data-label="Quantity">
+                                        <lightning-input
+                                            lwc:if={opt.quantityEditable}
+                                            type="number"
+                                            value={opt.quantity}
+                                            min="1"
+                                            step="1"
+                                            label="Qty"
+                                            variant="label-hidden"
+                                            class="qty-field"
+                                            data-item-key={item._key}
+                                            data-option-id={opt.Id}
+                                            data-field="optionQuantity"
+                                            onchange={handleLineUpdate}>
+                                        </lightning-input>
+                                        <span lwc:else>{opt.quantity}</span>
+                                    </td>
+                                    <td data-label="List Unit Price" class="slds-text-align_right slds-text-color_weak">
+                                        <lightning-formatted-number value={opt.listUnitPrice} format-style="currency" currency-code="USD"></lightning-formatted-number>
+                                    </td>
+                                    <td data-label="Disc."></td>
+                                    <td data-label="Net Unit Price" class="slds-text-align_right slds-text-color_weak">
+                                        <lightning-formatted-number value={opt.listUnitPrice} format-style="currency" currency-code="USD"></lightning-formatted-number>
+                                    </td>
+                                    <td data-label="Net Total" class="slds-text-align_right slds-text-color_weak">
+                                        <lightning-formatted-number value={opt.netTotal} format-style="currency" currency-code="USD"></lightning-formatted-number>
+                                    </td>
+                                    <td></td>
+                                </tr>
+                            </template>
+                        </template>
+                    </template>
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="8" class="slds-text-align_right slds-text-title_caps slds-p-right_small">Subtotal:</td>
+                        <td class="slds-text-align_right slds-text-title_bold">{formattedSubtotal}</td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </template>
 
         <!-- Navigation -->
         <div class="slds-m-top_large slds-clearfix">
             <lightning-button
-                label="Back: Configure"
+                label="Back"
                 icon-name="utility:back"
                 class="slds-float_left"
-                onclick={handleBack}
-            ></lightning-button>
+                onclick={handleBack}>
+            </lightning-button>
             <lightning-button
-                label="Next: Logistics"
+                label="Next"
                 variant="brand"
                 icon-name="utility:forward"
                 icon-position="right"
                 class="slds-float_right"
                 disabled={isEmpty}
-                onclick={handleNext}
-            ></lightning-button>
+                onclick={handleNext}>
+            </lightning-button>
         </div>
     </div>
 </template>

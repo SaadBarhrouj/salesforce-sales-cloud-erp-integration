@@ -1,4 +1,38 @@
-.inline-field {
-    max-width: 150px;
-    display: inline-block;
+.step-line-editor {
+    padding: 0;
+}
+
+.main-row td {
+    vertical-align: middle;
+}
+
+.expanded-row {
+    background-color: #f8f9fa;
+}
+
+.expanded-row td {
+    padding: 0;
+}
+
+.expanded-row .slds-p-around_medium {
+    background-color: #f8f9fa;
+    border-top: 1px solid #dddbda;
+}
+
+.options-toggle-row td {
+    padding: 0;
+    cursor: pointer;
+}
+
+.option-child-row td {
+    background-color: #fafafa;
+    border-top: 1px solid #dddbda;
+}
+
+.qty-field {
+    width: 80px;
+}
+
+.disc-field {
+    width: 90px;
 }

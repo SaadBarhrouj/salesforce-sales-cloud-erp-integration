@@ -127,6 +127,10 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
     return this.currentStep.key === STEPS.REVIEW.key;
   }
 
+  get showSidebar() {
+    return !this.isStepLineEditor;
+  }
+
   /* -- bundle config -- */
   get selectedBundleProductId() {
     if (!this.selectedItemId || !this.isStepConfigure) return "";
@@ -556,12 +560,19 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
     const idx = items.findIndex((i) => i._key === itemKey);
     if (idx !== -1) {
       if (field === "quantity") items[idx].quantity = value;
-      else if (field === "additionalDiscount")
-        items[idx].additionalDiscount = value;
+      else if (field === "additionalDiscount") items[idx].additionalDiscount = value;
       else if (field === "optionQuantity" && optionId) {
         const opt = (items[idx].options || []).find((o) => o.Id === optionId);
         if (opt) opt.quantity = value;
-      }
+      } else if (field === "pricingMethod") items[idx].pricingMethod = value;
+      else if (field === "isOptional") items[idx].isOptional = value;
+      else if (field === "packageProductCode") items[idx].packageProductCode = value;
+      else if (field === "originalPrice") items[idx].originalPrice = value;
+      else if (field === "unitCost") items[idx].unitCost = value;
+      else if (field === "markup") items[idx].markup = value;
+      else if (field === "specialPrice") items[idx].specialPrice = value;
+      else if (field === "regularUnitPrice") items[idx].regularUnitPrice = value;
+      else if (field === "customerUnitPrice") items[idx].customerUnitPrice = value;
       items[idx]._formattedTotal = formatCurrency(
         calculateSelectedProductTotal(items[idx], discount)
       );
