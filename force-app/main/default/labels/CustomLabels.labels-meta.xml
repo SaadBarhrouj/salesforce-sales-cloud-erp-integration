@@ -40,4 +40,11 @@
         <shortDescription>Generic_Controller_Request_Failed</shortDescription>
         <value>We could not complete the {0} request. Please contact your administrator.</value>
     </labels>
+    <labels>
+        <fullName>Bundle_Other_Feature_Description</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Description for the Other feature in bundle configuration</shortDescription>
+        <value>Options that are not assigned to a specific feature</value>
+    </labels>
 </CustomLabels>

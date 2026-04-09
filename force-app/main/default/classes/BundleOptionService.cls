@@ -59,8 +59,8 @@ public inherited sharing class BundleOptionService {
                 'Id' => String.valueOf(featureRecord.Id),
                 'Name' => featureRecord.Name,
                 'helpText' => featureRecord.Help_Text__c,
-                'minOptions' => featureRecord.Min_Options__c == null ? 0 : Integer.valueOf(featureRecord.Min_Options__c),
-                'maxOptions' => featureRecord.Max_Options__c == null ? 999 : Integer.valueOf(featureRecord.Max_Options__c),
+                'minOptions' => featureRecord.Min_Options__c,
+                'maxOptions' => featureRecord.Max_Options__c,
                 'options' => new List<Map<String, Object>>()
             };
             featurePayloads.add(featurePayload);
@@ -84,9 +84,9 @@ public inherited sharing class BundleOptionService {
             featurePayloads.add(new Map<String, Object>{
                 'Id' => OTHER_FEATURE_ID,
                 'Name' => OTHER_FEATURE_NAME,
-                'helpText' => null,
-                'minOptions' => 0,
-                'maxOptions' => 999,
+                'helpText' => System.Label.Bundle_Other_Feature_Description,
+                'minOptions' => null,
+                'maxOptions' => null,
                 'options' => otherOptions
             });
         }
@@ -102,7 +102,7 @@ public inherited sharing class BundleOptionService {
      * Uses only the data already loaded in the optionRecord (including relationships).
      * Handles null values with sensible defaults.
      * @param optionRecord The Bundle_Option__c record to transform
-     * @return Map with keys: Id, Name, productCode, productName, description, unitPrice,
+     * @return Map with keys: Id, Name, productCode, productName, description,
      *         defaultQuantity, minQuantity, maxQuantity, quantityEditable, isRequired, isSelected, optionType
      */
     private static Map<String, Object> buildOptionPayload(Bundle_Option__c optionRecord) {
@@ -114,10 +114,9 @@ public inherited sharing class BundleOptionService {
             'productCode' => product?.ProductCode ?? '',
             'productName' => product?.Name ?? '',
             'description' => product?.Description ?? '',
-            'unitPrice' => 0,
             'defaultQuantity' => optionRecord.Default_Quantity__c ?? 0,
-            'minQuantity' => optionRecord.Min_Quantity__c ?? 0,
-            'maxQuantity' => optionRecord.Max_Quantity__c ?? 999,
+            'minQuantity' => optionRecord.Min_Quantity__c,
+            'maxQuantity' => optionRecord.Max_Quantity__c,
             'quantityEditable' => optionRecord.Quantity_Editable__c ?? false,
             'isRequired' => optionRecord.Is_Required__c ?? false,
             'isSelected' => optionRecord.Is_Selected__c ?? false,

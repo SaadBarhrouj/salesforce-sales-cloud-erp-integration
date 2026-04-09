@@ -362,8 +362,24 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
     const bundleConfig = this._getBundleConfigStep();
     if (bundleConfig) {
       bundleConfig.saveCurrentConfig();
-      this._showToast("Configuration Saved", "Bundle configuration saved successfully", "success");
     }
+  }
+
+  handleBundleConfigSaved(event) {
+    const { bundleId, selectedOptions, featuresState } = event.detail;
+
+    let productsList = deepClone(this.selectedProducts);
+    let bundleIndex = productsList.findIndex(p => p.productId === bundleId);
+
+    if (bundleIndex !== -1) {
+        productsList[bundleIndex].configuredOptions = selectedOptions;
+        productsList[bundleIndex].featuresState = featuresState;
+    }
+
+    this.selectedProducts = productsList;
+
+    this._showToast("Configuration Saved", "Bundle configuration saved successfully", "success");
+    this._goNext();
   }
 
   _handleApplyRules() {
