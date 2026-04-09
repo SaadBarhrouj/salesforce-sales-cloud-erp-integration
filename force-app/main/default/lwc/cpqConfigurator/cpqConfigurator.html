@@ -55,7 +55,9 @@
                     <!-- Step 2: Bundle Configurator -->
                     <template lwc:if={isStepConfigure}>
                         <c-cpq-step-bundle-config
+                            item-key={selectedItemId}
                             bundle-id={selectedBundleProductId}
+                            cached-features={selectedBundleCachedFeatures}
                             onbundlesave={handleBundleConfigSaved}
                         ></c-cpq-step-bundle-config>
                     </template>

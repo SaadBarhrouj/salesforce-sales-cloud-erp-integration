@@ -48,6 +48,14 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
   }
 
   _goNext() {
+    if (this.isStepConfigure) {
+      const bundleConfig = this._getBundleConfigStep();
+      if (bundleConfig && this.selectedItemId) {
+        const isValid = bundleConfig.saveCurrentConfig();
+        if (!isValid) return; // Stop navigation if invalid
+      }
+    }
+
     const currentIndex = STEP_LIST.findIndex(
       (s) => s.key === this.currentStep.key
     );
@@ -58,11 +66,20 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
   }
 
   _goBack() {
+    if (this.isStepConfigure) {
+      const bundleConfig = this._getBundleConfigStep();
+      if (bundleConfig && this.selectedItemId) {
+        const isValid = bundleConfig.saveCurrentConfig();
+        if (!isValid) return;
+      }
+    }
+
     const currentIndex = STEP_LIST.findIndex(
       (s) => s.key === this.currentStep.key
     );
     if (currentIndex > 0) {
       this.currentStep = STEP_LIST[currentIndex - 1];
+      
       if (this.currentStep.key === STEPS.SELECTION.key) {
         this.selectedItemId = "";
         this.selectedItemLabel = "";
@@ -106,6 +123,8 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
     notes: ""
   };
 
+  @track bundleConfigCache = {};
+
   /* ═══════════════════════════════════════════════
        GETTERS
        ═══════════════════════════════════════════════ */
@@ -138,6 +157,14 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
       (item) => item._key === this.selectedItemId && item.isBundle
     );
     return selectedBundle?.productId || "";
+  }
+
+  get selectedBundleCachedFeatures() {
+    const itemKey = this.selectedItemId;
+    if (!itemKey || !this.bundleConfigCache[itemKey]) {
+      return null;
+    }
+    return this.bundleConfigCache[itemKey].features || null;
   }
 
   /* -- opportunity data -- */
@@ -361,15 +388,23 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
   _handleSaveConfig() {
     const bundleConfig = this._getBundleConfigStep();
     if (bundleConfig) {
-      bundleConfig.saveCurrentConfig();
+      if (bundleConfig.saveCurrentConfig()) {
+        this._showToast("Configuration Saved", "Bundle configuration saved successfully", "success");
+        this._goNext();
+      }
     }
   }
 
   handleBundleConfigSaved(event) {
-    const { bundleId, selectedOptions, featuresState } = event.detail;
+    const { itemKey, bundleId, selectedOptions, featuresState } = event.detail;
+
+    this.bundleConfigCache[itemKey] = {
+      features: deepClone(featuresState),
+      selectedOptions: deepClone(selectedOptions)
+    };
 
     let productsList = deepClone(this.selectedProducts);
-    let bundleIndex = productsList.findIndex(p => p.productId === bundleId);
+    let bundleIndex = productsList.findIndex(p => p._key === itemKey);
 
     if (bundleIndex !== -1) {
         productsList[bundleIndex].configuredOptions = selectedOptions;
@@ -377,9 +412,6 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
     }
 
     this.selectedProducts = productsList;
-
-    this._showToast("Configuration Saved", "Bundle configuration saved successfully", "success");
-    this._goNext();
   }
 
   _handleApplyRules() {
@@ -508,16 +540,29 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
   }
 
   handleItemSelect(event) {
+    if (this.isStepConfigure) {
+      const bundleConfig = this._getBundleConfigStep();
+      if (bundleConfig && this.selectedItemId) {
+        const isValid = bundleConfig.saveCurrentConfig();
+        if (!isValid) return; 
+      }
+    }
+
     const { selectedItemId } = event.detail;
     const selectedItem = this._findSidebarItemById(selectedItemId);
     this.selectedItemId = selectedItem ? selectedItem.id : "";
     this.selectedItemLabel = selectedItem ? selectedItem.label : "";
-
-    // For Step 2 (Bundle Configuration), this triggers reactive change in cpqStepBundleConfig
-    // via the selectedBundleId prop setter, which loads features for the selected bundle
   }
 
   handleItemDeselect() {
+    if (this.isStepConfigure) {
+      const bundleConfig = this._getBundleConfigStep();
+      if (bundleConfig && this.selectedItemId) {
+        const isValid = bundleConfig.saveCurrentConfig();
+        if (!isValid) return; 
+      }
+    }
+
     this.selectedItemId = "";
     this.selectedItemLabel = "";
   }
@@ -693,6 +738,18 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
       );
     });
     this.selectedProducts = items;
+  }
+
+  _restoreBundleConfigsToProducts() {
+    let productsList = deepClone(this.selectedProducts);
+    productsList.forEach(product => {
+      if (product.isBundle && product.productId && this.bundleConfigCache[product.productId]) {
+        const cachedConfig = this.bundleConfigCache[product.productId];
+        product.featuresState = cachedConfig.features;
+        product.configuredOptions = cachedConfig.selectedOptions;
+      }
+    });
+    this.selectedProducts = productsList;
   }
 
   _triggerSave() {
