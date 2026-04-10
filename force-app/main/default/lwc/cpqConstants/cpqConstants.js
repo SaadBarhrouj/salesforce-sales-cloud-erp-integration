@@ -101,7 +101,7 @@ export const STEPS = Object.freeze({
         }
     },
     LOGISTICS: {
-        number: 4, key: 'logistics', label: 'Logistics', icon: 'standard:shipment', subtitle: 'Delivery options',
+        number: 4, key: 'logistics', label: 'Logistics', icon: 'custom:custom98', subtitle: 'Delivery options',
         header: { 
             showSearch: false, 
             searchPlaceholder: 'Search...', 
