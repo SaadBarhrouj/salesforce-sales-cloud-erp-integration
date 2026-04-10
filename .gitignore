@@ -71,5 +71,5 @@ target/
 .idea/
 *.iml
 # Ignore local custom skills
-.github/skills/
+.github/
 opencode.json

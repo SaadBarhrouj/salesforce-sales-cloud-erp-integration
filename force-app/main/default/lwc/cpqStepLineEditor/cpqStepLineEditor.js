@@ -55,8 +55,27 @@ const COLUMNS = [
 ];
 
 export default class CpqStepLineEditor extends LightningElement {
-    @api pricebookId = '';
-    @api offerType = null;
+    _pricebookId = '';
+    _offerType = null;
+
+    @api
+    get pricebookId() {
+        return this._pricebookId;
+    }
+    set pricebookId(value) {
+        this._pricebookId = value;
+        if (!this._initialPricingRequested && this.lineItems.length > 0) {
+            this._scheduleInitialPricing();
+        }
+    }
+
+    @api
+    get offerType() {
+        return this._offerType;
+    }
+    set offerType(value) {
+        this._offerType = value;
+    }
 
     @track lineItems = [];
     @track isCalculating = false;
@@ -66,6 +85,7 @@ export default class CpqStepLineEditor extends LightningElement {
     _debounceTimer = null;
     _selectedProducts = [];
     _calculationSequence = 0;
+    _initialPricingRequested = false;
 
     @api
     get selectedProducts() {
@@ -73,10 +93,11 @@ export default class CpqStepLineEditor extends LightningElement {
     }
     set selectedProducts(value) {
         this._selectedProducts = value || [];
+        this._initialPricingRequested = false;
         this._prepareLineItems();
+        this._scheduleInitialPricing();
     }
-
-    // Use our custom flattened data property for the template's table loop
+    
     get flattenedData() {
         const flat = [];
         const processItems = (items, level = 1) => {
@@ -95,15 +116,15 @@ export default class CpqStepLineEditor extends LightningElement {
                     hasChildren,
                     chevronClass: (hasChildren && !isExpanded) ? 'utility:chevronright' : 'utility:chevrondown',
                     buttonStyle: hasChildren ? '' : 'visibility: hidden;',
-                    isQtyEditable: !item._isOption, // quantity is read-only for options
-                    isDiscountEditable: true, // discount is editable for both parents and options
-                    showCheckbox: !item._isOption, // hide checkbox for bundle options
+                    isQtyEditable: !item._isOption,
+                    isDiscountEditable: true,
+                    showCheckbox: !item._isOption,
                     rowClass: `slds-hint-parent ${item._hasError ? 'slds-is-selected row-error' : ''}`,
-                    paddingStyle: `padding-left: ${level > 1 ? level * 1.5 : 0}rem;`, // Ensure proper indentation for children
+                    paddingStyle: `padding-left: ${level > 1 ? level * 1.5 : 0}rem;`,
                     isSelected: !!item.isSelected,
-                    formattedListPrice: formatCurrency(item.listUnitPrice),
-                    formattedNetPrice: formatCurrency(item.netUnitPrice),
-                    formattedNetTotal: formatCurrency(item.netTotal),
+                    formattedListPrice: formatCurrency(Number.isFinite(item.listUnitPrice) ? item.listUnitPrice : 0),
+                    formattedNetPrice: formatCurrency(Number.isFinite(item.netUnitPrice) ? item.netUnitPrice : 0),
+                    formattedNetTotal: formatCurrency(Number.isFinite(item.netTotal) ? item.netTotal : 0),
                     actionTitle: `More actions for ${item.productName}`
                 });
 
@@ -119,6 +140,7 @@ export default class CpqStepLineEditor extends LightningElement {
 
     connectedCallback() {
         this._prepareLineItems();
+        this._scheduleInitialPricing();
     }
 
     get columns() {
@@ -210,6 +232,12 @@ export default class CpqStepLineEditor extends LightningElement {
         this.lineItems = this._selectedProducts.map(item => {
             const hasOptions = item.isBundle && item.configuredOptions && item.configuredOptions.length > 0;
 
+            const listUnitPrice = Number(item.listUnitPrice) || 0;
+            const additionalDiscount = Number(item.additionalDiscount) || 0;
+            const quantity = Number(item.quantity) || 1;
+            const netUnitPrice = Number(item.netUnitPrice) || listUnitPrice * (1 - additionalDiscount / 100);
+            const netTotal = Number(item.netTotal) || netUnitPrice * quantity;
+
             const row = {
                 _key: item._key,
                 _hasError: false,
@@ -217,29 +245,30 @@ export default class CpqStepLineEditor extends LightningElement {
                 productId: item.productId,
                 productCode: item.productCode,
                 productName: item.productName,
-                quantity: item.quantity,
-                listUnitPrice: item.listUnitPrice,
-                additionalDiscount: item.additionalDiscount,
-                netUnitPrice: item.netUnitPrice,
-                netTotal: item.netTotal,
+                quantity,
+                listUnitPrice,
+                additionalDiscount,
+                netUnitPrice,
+                netTotal,
                 isBundle: item.isBundle
             };
 
-            // Only add _children property for bundles to show expand/collapse icon
             if (hasOptions) {
                 row._children = [];
                 item.configuredOptions.forEach((opt) => {
+                    const optUnitPrice = Number(opt.unitPrice) || 0;
+                    const optQuantity = Number(opt.quantity) || 1;
                     row._children.push({
                         _key: opt.Id,
                         productId: opt.productId || opt.Id,
                         optionId: opt.Id,
                         productCode: opt.productCode,
                         productName: opt.productName,
-                        quantity: opt.quantity,
-                        listUnitPrice: opt.unitPrice,
+                        quantity: optQuantity,
+                        listUnitPrice: optUnitPrice,
                         additionalDiscount: 0,
-                        netUnitPrice: opt.unitPrice,
-                        netTotal: opt.unitPrice * opt.quantity,
+                        netUnitPrice: optUnitPrice,
+                        netTotal: optUnitPrice * optQuantity,
                         _isOption: true
                     });
                 });
@@ -247,9 +276,7 @@ export default class CpqStepLineEditor extends LightningElement {
 
             return row;
         });
-        // Force track array
         this.lineItems = [...this.lineItems];
-        // Ensure expandedRows is clear initially (collapsed by default)
         this.expandedRows = new Set();
     }
 
@@ -335,14 +362,15 @@ export default class CpqStepLineEditor extends LightningElement {
             this._scheduleBatchCalculation();
         }
     }
-
-    // Removed standard datatable handleCellChange. Using manual custom input events.
+    
     handleInlineEdit(event) {
         const itemKey = event.currentTarget.dataset.id;
         const fieldName = event.currentTarget.dataset.field;
         let value = event.target.value;
-        if (fieldName === 'quantity' || fieldName === 'additionalDiscount') {
-            value = parseFloat(value);
+        if (fieldName === 'quantity') {
+            value = Number.isFinite(parseFloat(value)) ? parseFloat(value) : 1;
+        } else if (fieldName === 'additionalDiscount') {
+            value = Number.isFinite(parseFloat(value)) ? parseFloat(value) : 0;
         }
 
         this._pendingChanges.set(itemKey, {
@@ -364,8 +392,11 @@ export default class CpqStepLineEditor extends LightningElement {
             rowWasUpdated = true;
             const updatedRow = { ...row, [field]: value };
             if (field === 'quantity' || field === 'additionalDiscount') {
-                updatedRow.netUnitPrice = (updatedRow.listUnitPrice || 0) * (1 - (updatedRow.additionalDiscount || 0) / 100);
-                updatedRow.netTotal = updatedRow.netUnitPrice * updatedRow.quantity;
+                const listPrice = Number(updatedRow.listUnitPrice) || 0;
+                const discount = Number(updatedRow.additionalDiscount) || 0;
+                const qty = Number(updatedRow.quantity) || 1;
+                updatedRow.netUnitPrice = listPrice * (1 - discount / 100);
+                updatedRow.netTotal = updatedRow.netUnitPrice * qty;
             }
             return updatedRow;
         });
@@ -409,25 +440,28 @@ export default class CpqStepLineEditor extends LightningElement {
 
             const hasServerProductId = row.productId && row.productId !== row.optionId;
 
-            if (row._isOption && !hasServerProductId) {
-                updatedData = this._mapRowsIn(updatedData, candidateRow => {
-                    if (candidateRow._key !== itemKey) {
-                        return candidateRow;
-                    }
+                if (row._isOption && !hasServerProductId) {
+                    updatedData = this._mapRowsIn(updatedData, candidateRow => {
+                        if (candidateRow._key !== itemKey) {
+                            return candidateRow;
+                        }
 
-                    const updatedChild = {
-                        ...candidateRow,
-                        quantity,
-                        additionalDiscount: discount
-                    };
-                    updatedChild.netUnitPrice = (updatedChild.listUnitPrice || 0) * (1 - (updatedChild.additionalDiscount || 0) / 100);
-                    updatedChild.netTotal = updatedChild.netUnitPrice * updatedChild.quantity;
-                    updatedChild._hasError = false;
-                    updatedChild._errorMessage = '';
-                    return updatedChild;
-                });
-                continue;
-            }
+                        const optListPrice = Number(candidateRow.listUnitPrice) || 0;
+                        const optQty = Number(quantity) || 1;
+                        const optDisc = Number(discount) || 0;
+                        const updatedChild = {
+                            ...candidateRow,
+                            quantity: optQty,
+                            additionalDiscount: optDisc
+                        };
+                        updatedChild.netUnitPrice = optListPrice * (1 - optDisc / 100);
+                        updatedChild.netTotal = updatedChild.netUnitPrice * optQty;
+                        updatedChild._hasError = false;
+                        updatedChild._errorMessage = '';
+                        return updatedChild;
+                    });
+                    continue;
+                }
 
             pricingRequestKeys.push(itemKey);
             pricingRequestItems.push({
@@ -510,8 +544,22 @@ export default class CpqStepLineEditor extends LightningElement {
             });
         });
         await this._executeBatchCalculation();
+    }
 
-        showToast(this, 'Pricing Refreshed', 'All prices have been recalculated', 'success');
+    _scheduleInitialPricing() {
+        if (this._initialPricingRequested) return;
+        if (this.lineItems.length === 0) return;
+        if (!this.pricebookId) return;
+
+        this._initialPricingRequested = true;
+        this._pendingChanges.clear();
+        this._forEachRow(row => {
+            this._pendingChanges.set(row._key, {
+                quantity: row.quantity,
+                additionalDiscount: row.additionalDiscount
+            });
+        });
+        this._scheduleBatchCalculation();
     }
 
     handleValidateAll() {
