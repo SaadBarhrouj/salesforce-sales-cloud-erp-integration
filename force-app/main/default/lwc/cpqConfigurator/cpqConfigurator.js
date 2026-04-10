@@ -448,7 +448,8 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
     } else if (stepKey === STEPS.CONFIGURE.key) {
       this._loadConfigureSidebar();
     } else if (stepKey === STEPS.LINE_EDITOR.key) {
-      this._loadLineEditorSidebar();
+      this.sidebarItems = [];
+      this.sidebarIsLoading = false;
     } else {
       this._loadReviewSidebar();
     }
@@ -511,17 +512,6 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
       });
       this.sidebarIsLoading = false;
     }, 300);
-  }
-
-  _loadLineEditorSidebar() {
-    this.sidebarTitle = "Lines";
-    this.sidebarIcon = "standard:list_item";
-    this.sidebarSortLabel = "Added Date";
-    this.sidebarItems = (this.selectedProducts || []).map((item) => ({
-      id: item._key,
-      label: item.productName,
-      value: item.quantity.toString()
-    }));
   }
 
   _loadReviewSidebar() {

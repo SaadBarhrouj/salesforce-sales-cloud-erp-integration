@@ -1,7 +1,6 @@
 import { LightningElement, api, track } from 'lwc';
-import { formatCurrency, deepClone } from 'c/cpqUtils';
+import { formatCurrency, showToast } from 'c/cpqUtils';
 import calculateLinePricesBatch from '@salesforce/apex/PricebookController.calculateLinePricesBatch';
-import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 
 const DEBOUNCE_DELAY = 500;
 
@@ -59,15 +58,14 @@ export default class CpqStepLineEditor extends LightningElement {
     @api pricebookId = '';
     @api offerType = null;
 
-    @track gridData = [];
+    @track lineItems = [];
     @track isCalculating = false;
-    @track hasErrors = false;
-    @track errorMessages = [];
     @track expandedRows = new Set();
 
     _pendingChanges = new Map();
     _debounceTimer = null;
     _selectedProducts = [];
+    _calculationSequence = 0;
 
     @api
     get selectedProducts() {
@@ -75,7 +73,7 @@ export default class CpqStepLineEditor extends LightningElement {
     }
     set selectedProducts(value) {
         this._selectedProducts = value || [];
-        this._prepareGridData();
+        this._prepareLineItems();
     }
 
     // Use our custom flattened data property for the template's table loop
@@ -115,25 +113,25 @@ export default class CpqStepLineEditor extends LightningElement {
             });
         };
 
-        processItems(this.gridData || []);
+        processItems(this.lineItems || []);
         return flat;
     }
 
     connectedCallback() {
-        this._prepareGridData();
+        this._prepareLineItems();
     }
 
     get columns() {
         return COLUMNS;
     }
 
-    get totalItemCount() {
-        return (this.gridData || []).length;
-    }
-
     get subtotal() {
-        if (this.gridData && this.gridData.length > 0) {
-            return this.gridData.reduce((sum, item) => Math.max(0, sum + (item.netTotal || 0)), 0);
+        if (this.lineItems && this.lineItems.length > 0) {
+            let total = 0;
+            this._forEachRow(row => {
+                total += Number(row.netTotal) || 0;
+            });
+            return Math.max(0, total);
         }
         return 0;
     }
@@ -143,17 +141,73 @@ export default class CpqStepLineEditor extends LightningElement {
     }
 
     get isEmpty() {
-        return !this.gridData || this.gridData.length === 0;
+        return !this.lineItems || this.lineItems.length === 0;
     }
 
     get isNotEmpty() {
         return !this.isEmpty;
     }
 
-    _prepareGridData() {
+    _forEachRow(callback) {
+        if (typeof callback !== 'function') {
+            return;
+        }
+
+        (this.lineItems || []).forEach(parentRow => {
+            callback(parentRow, { isChild: false, parentKey: parentRow._key });
+            (parentRow._children || []).forEach(childRow => {
+                callback(childRow, { isChild: true, parentKey: parentRow._key });
+            });
+        });
+    }
+
+    _findRowByKey(rowKey) {
+        if (!rowKey) {
+            return null;
+        }
+
+        let matchedRow = null;
+        this._forEachRow(row => {
+            if (!matchedRow && row._key === rowKey) {
+                matchedRow = row;
+            }
+        });
+        return matchedRow;
+    }
+
+    _mapRowsIn(rows, updater) {
+        if (typeof updater !== 'function') {
+            return [...(rows || [])];
+        }
+
+        return (rows || []).map(parentRow => {
+            const parentClone = { ...parentRow };
+            const updatedParent = updater(parentClone, { isChild: false, parentKey: parentRow._key }) || parentClone;
+
+            if (!updatedParent._children || updatedParent._children.length === 0) {
+                return updatedParent;
+            }
+
+            const updatedChildren = updatedParent._children.map(childRow => {
+                const childClone = { ...childRow };
+                return updater(childClone, { isChild: true, parentKey: updatedParent._key }) || childClone;
+            });
+
+            return {
+                ...updatedParent,
+                _children: updatedChildren
+            };
+        });
+    }
+
+    _mapRows(updater) {
+        return this._mapRowsIn(this.lineItems, updater);
+    }
+
+    _prepareLineItems() {
         if (!this._selectedProducts) return;
 
-        this.gridData = this._selectedProducts.map(item => {
+        this.lineItems = this._selectedProducts.map(item => {
             const hasOptions = item.isBundle && item.configuredOptions && item.configuredOptions.length > 0;
 
             const row = {
@@ -177,7 +231,8 @@ export default class CpqStepLineEditor extends LightningElement {
                 item.configuredOptions.forEach((opt) => {
                     row._children.push({
                         _key: opt.Id,
-                        productId: opt.Id,
+                        productId: opt.productId || opt.Id,
+                        optionId: opt.Id,
                         productCode: opt.productCode,
                         productName: opt.productName,
                         quantity: opt.quantity,
@@ -193,7 +248,7 @@ export default class CpqStepLineEditor extends LightningElement {
             return row;
         });
         // Force track array
-        this.gridData = [...this.gridData];
+        this.lineItems = [...this.lineItems];
         // Ensure expandedRows is clear initially (collapsed by default)
         this.expandedRows = new Set();
     }
@@ -211,50 +266,46 @@ export default class CpqStepLineEditor extends LightningElement {
 
     handleSelectAll(event) {
         const isChecked = event.target.checked;
-        const updatedData = this.gridData.map(item => {
+        const updatedData = this.lineItems.map(item => {
             if (!item._isOption) {
                 return { ...item, isSelected: isChecked };
             }
             return item;
         });
-        this.gridData = updatedData;
+        this.lineItems = updatedData;
         this._dispatchSelectionChange();
     }
 
     handleRowSelect(event) {
         const rowId = event.currentTarget.dataset.id;
         const isChecked = event.target.checked;
-        const updatedData = this.gridData.map(item => {
-            if (item._key === rowId) {
-                return { ...item, isSelected: isChecked };
+        const updatedData = this._mapRows(row => {
+            if (row._key !== rowId) {
+                return row;
             }
-            return item;
+            return { ...row, isSelected: isChecked };
         });
-        this.gridData = updatedData;
+        this.lineItems = updatedData;
         this._dispatchSelectionChange();
     }
 
     _dispatchSelectionChange() {
-        const hasSelection = this.gridData.some(item => item.isSelected);
+        const hasSelection = this.lineItems.some(item => item.isSelected);
         this.dispatchEvent(new CustomEvent('selectionchange', {
             detail: { hasSelection }
         }));
     }
 
     handleDeleteSelected() {
-        const selectedIds = new Set(this.gridData.filter(item => item.isSelected).map(item => item._key));
+        const selectedIds = new Set(this.lineItems.filter(item => item.isSelected).map(item => item._key));
 
         if (selectedIds.size === 0) {
-            this.dispatchEvent(new ShowToastEvent({
-                title: 'No Selection',
-                message: 'Please select at least one row to delete.',
-                variant: 'warning'
-            }));
+            showToast(this, 'No Selection', 'Please select at least one row to delete.', 'warning');
             return;
         }
 
         // Filter out selected parent rows
-        this.gridData = this.gridData.filter(item => !selectedIds.has(item._key));
+        this.lineItems = this.lineItems.filter(item => !selectedIds.has(item._key));
 
         // Clean up pending changes for deleted rows
         selectedIds.forEach(id => {
@@ -270,11 +321,7 @@ export default class CpqStepLineEditor extends LightningElement {
             detail: { hasSelection: false }
         }));
 
-        this.dispatchEvent(new ShowToastEvent({
-            title: 'Rows Deleted',
-            message: `Successfully deleted ${selectedIds.size} row(s).`,
-            variant: 'success'
-        }));
+        showToast(this, 'Rows Deleted', `Successfully deleted ${selectedIds.size} row(s).`, 'success');
 
         // Dispatch lineremove event to inform parent component
         selectedIds.forEach(id => {
@@ -294,8 +341,8 @@ export default class CpqStepLineEditor extends LightningElement {
         const itemKey = event.currentTarget.dataset.id;
         const fieldName = event.currentTarget.dataset.field;
         let value = event.target.value;
-        if(fieldName === 'quantity' || fieldName === 'additionalDiscount') {
-             value = parseFloat(value);
+        if (fieldName === 'quantity' || fieldName === 'additionalDiscount') {
+            value = parseFloat(value);
         }
 
         this._pendingChanges.set(itemKey, {
@@ -308,20 +355,23 @@ export default class CpqStepLineEditor extends LightningElement {
     }
 
     _updateLocalData(itemKey, field, value) {
-        const updatedData = [...this.gridData];
-        const rowIndex = updatedData.findIndex(row => row._key === itemKey);
-
-        if (rowIndex !== -1) {
-            const row = { ...updatedData[rowIndex] };
-            row[field] = value;
-
-            if (field === 'quantity' || field === 'additionalDiscount') {
-                row.netUnitPrice = (row.listUnitPrice || 0) * (1 - (row.additionalDiscount || 0) / 100);
-                row.netTotal = row.netUnitPrice * row.quantity;
+        let rowWasUpdated = false;
+        const updatedData = this._mapRows(row => {
+            if (row._key !== itemKey) {
+                return row;
             }
 
-            updatedData[rowIndex] = row;
-            this.gridData = updatedData;
+            rowWasUpdated = true;
+            const updatedRow = { ...row, [field]: value };
+            if (field === 'quantity' || field === 'additionalDiscount') {
+                updatedRow.netUnitPrice = (updatedRow.listUnitPrice || 0) * (1 - (updatedRow.additionalDiscount || 0) / 100);
+                updatedRow.netTotal = updatedRow.netUnitPrice * updatedRow.quantity;
+            }
+            return updatedRow;
+        });
+
+        if (rowWasUpdated) {
+            this.lineItems = updatedData;
         }
     }
 
@@ -337,82 +387,123 @@ export default class CpqStepLineEditor extends LightningElement {
     async _executeBatchCalculation() {
         if (this._pendingChanges.size === 0 || !this.pricebookId) return;
 
-        this.isCalculating = true;
-        const lineItems = [];
+        const pendingSnapshot = Array.from(this._pendingChanges.entries());
+        if (pendingSnapshot.length === 0) {
+            return;
+        }
 
-        for (const [itemKey, changes] of this._pendingChanges) {
-            const row = this.gridData.find(r => r._key === itemKey);
-            if (row) {
-                lineItems.push({
-                    productId: row.productId,
-                    quantity: changes.quantity ?? row.quantity,
-                    discount: changes.additionalDiscount ?? row.additionalDiscount
-                });
+        const calculationSequence = ++this._calculationSequence;
+        this.isCalculating = true;
+        const pricingRequestItems = [];
+        const pricingRequestKeys = [];
+        let updatedData = [...this.lineItems];
+
+        for (const [itemKey, changes] of pendingSnapshot) {
+            const row = this._findRowByKey(itemKey);
+            if (!row) {
+                continue;
             }
+
+            const quantity = changes.quantity ?? row.quantity;
+            const discount = changes.additionalDiscount ?? row.additionalDiscount;
+
+            const hasServerProductId = row.productId && row.productId !== row.optionId;
+
+            if (row._isOption && !hasServerProductId) {
+                updatedData = this._mapRowsIn(updatedData, candidateRow => {
+                    if (candidateRow._key !== itemKey) {
+                        return candidateRow;
+                    }
+
+                    const updatedChild = {
+                        ...candidateRow,
+                        quantity,
+                        additionalDiscount: discount
+                    };
+                    updatedChild.netUnitPrice = (updatedChild.listUnitPrice || 0) * (1 - (updatedChild.additionalDiscount || 0) / 100);
+                    updatedChild.netTotal = updatedChild.netUnitPrice * updatedChild.quantity;
+                    updatedChild._hasError = false;
+                    updatedChild._errorMessage = '';
+                    return updatedChild;
+                });
+                continue;
+            }
+
+            pricingRequestKeys.push(itemKey);
+            pricingRequestItems.push({
+                productId: row.productId,
+                quantity,
+                discount
+            });
         }
 
         try {
+            if (pricingRequestItems.length === 0) {
+                this.lineItems = updatedData;
+                pendingSnapshot.forEach(([itemKey]) => {
+                    this._pendingChanges.delete(itemKey);
+                });
+                return;
+            }
+
             const results = await calculateLinePricesBatch({
-                lineItems: lineItems,
+                lineItems: pricingRequestItems,
                 offerType: this.offerType,
                 pricebookId: this.pricebookId
             });
 
-            const updatedData = [...this.gridData];
-            let hasErrors = false;
-
-            for (let i = 0; i < results.length; i++) {
-                const result = results[i];
-                const itemKey = Array.from(this._pendingChanges.keys())[i];
-                const rowIndex = updatedData.findIndex(r => r._key === itemKey);
-
-                if (rowIndex !== -1) {
-                    const row = { ...updatedData[rowIndex] };
-
-                    if (result.success) {
-                        row.listUnitPrice = result.listPrice;
-                        row.netUnitPrice = result.netPrice;
-                        row.netTotal = result.totalPrice;
-                        row._hasError = false;
-                        row._errorMessage = '';
-                    } else {
-                        row._hasError = true;
-                        row._errorMessage = result.errorMessage;
-                        hasErrors = true;
-                    }
-
-                    updatedData[rowIndex] = row;
-                }
+            if (calculationSequence !== this._calculationSequence) {
+                return;
             }
 
-            this.gridData = updatedData;
-            this._pendingChanges.clear();
+            let hasErrors = false;
+
+            for (let i = 0; i < results.length && i < pricingRequestKeys.length; i++) {
+                const result = results[i];
+                const itemKey = pricingRequestKeys[i];
+                updatedData = this._mapRowsIn(updatedData, row => {
+                    if (row._key !== itemKey) {
+                        return row;
+                    }
+
+                    const updatedRow = { ...row };
+                    if (result.success) {
+                        updatedRow.listUnitPrice = result.listPrice;
+                        updatedRow.netUnitPrice = result.netPrice;
+                        updatedRow.netTotal = result.totalPrice;
+                        updatedRow._hasError = false;
+                        updatedRow._errorMessage = '';
+                    } else {
+                        updatedRow._hasError = true;
+                        updatedRow._errorMessage = result.errorMessage;
+                        hasErrors = true;
+                    }
+                    return updatedRow;
+                });
+            }
+
+            this.lineItems = updatedData;
+            pendingSnapshot.forEach(([itemKey]) => {
+                this._pendingChanges.delete(itemKey);
+            });
 
             if (hasErrors) {
-                this.dispatchEvent(new ShowToastEvent({
-                    title: 'Pricing Warning',
-                    message: 'Some items could not be priced. Check the line editor for details.',
-                    variant: 'warning'
-                }));
+                showToast(this, 'Pricing Warning', 'Some items could not be priced. Check the line editor for details.', 'warning');
             }
 
         } catch (error) {
             console.error('Pricing calculation error:', error);
-            this.dispatchEvent(new ShowToastEvent({
-                title: 'Pricing Error',
-                message: error.message || 'Pricing calculation failed',
-                variant: 'error'
-            }));
+            showToast(this, 'Pricing Error', error.message || 'Pricing calculation failed', 'error');
         } finally {
-            this.isCalculating = false;
+            if (calculationSequence === this._calculationSequence) {
+                this.isCalculating = false;
+            }
         }
     }
 
-   
-
     async handleRefreshPricing() {
         this._pendingChanges.clear();
-        this.gridData.forEach(row => {
+        this._forEachRow(row => {
             this._pendingChanges.set(row._key, {
                 quantity: row.quantity,
                 additionalDiscount: row.additionalDiscount
@@ -420,46 +511,38 @@ export default class CpqStepLineEditor extends LightningElement {
         });
         await this._executeBatchCalculation();
 
-        this.dispatchEvent(new ShowToastEvent({
-            title: 'Pricing Refreshed',
-            message: 'All prices have been recalculated',
-            variant: 'success'
-        }));
+        showToast(this, 'Pricing Refreshed', 'All prices have been recalculated', 'success');
     }
 
     handleValidateAll() {
         const errors = [];
-        const updatedData = [...this.gridData];
+        const updatedData = this._mapRows(row => {
+            const updatedRow = { ...row };
+            const discount = Number(updatedRow.additionalDiscount);
+            const quantity = Number(updatedRow.quantity);
 
-        updatedData.forEach(row => {
-            if (row.additionalDiscount < 0 || row.additionalDiscount > 100) {
-                row._hasError = true;
-                row._errorMessage = 'Discount must be between 0 and 100';
-                errors.push(`${row.productName}: Invalid discount`);
-            } else if (row.quantity < 1) {
-                row._hasError = true;
-                row._errorMessage = 'Quantity must be at least 1';
-                errors.push(`${row.productName}: Invalid quantity`);
+            if (!Number.isFinite(discount) || discount < 0 || discount > 100) {
+                updatedRow._hasError = true;
+                updatedRow._errorMessage = 'Discount must be between 0 and 100';
+                errors.push(`${updatedRow.productName}: Invalid discount`);
+            } else if (!Number.isFinite(quantity) || quantity < 1) {
+                updatedRow._hasError = true;
+                updatedRow._errorMessage = 'Quantity must be at least 1';
+                errors.push(`${updatedRow.productName}: Invalid quantity`);
             } else {
-                row._hasError = false;
-                row._errorMessage = '';
+                updatedRow._hasError = false;
+                updatedRow._errorMessage = '';
             }
+
+            return updatedRow;
         });
 
-        this.gridData = updatedData;
+        this.lineItems = updatedData;
 
         if (errors.length > 0) {
-            this.dispatchEvent(new ShowToastEvent({
-                title: 'Validation Failed',
-                message: `${errors.size} item(s) have validation errors: ${errors.join(', ')}`,
-                variant: 'error'
-            }));
+            showToast(this, 'Validation Failed', `${errors.length} item(s) have validation errors: ${errors.join(', ')}`, 'error');
         } else {
-            this.dispatchEvent(new ShowToastEvent({
-                title: 'Validation Passed',
-                message: 'All line items are valid',
-                variant: 'success'
-            }));
+            showToast(this, 'Validation Passed', 'All line items are valid', 'success');
         }
     }
 

@@ -200,25 +200,6 @@
                 </table>
             </div>
 
-            <!-- Error Summary -->
-            <template lwc:if={hasErrors}>
-                <div class="slds-box slds-theme_error slds-m-bottom_medium">
-                    <div class="slds-media slds-media_center">
-                        <div class="slds-media__figure">
-                            <lightning-icon icon-name="utility:error" size="small" variant="inverse"></lightning-icon>
-                        </div>
-                        <div class="slds-media__body">
-                            <h3 class="slds-text-heading_small slds-text-color_inverse">Validation Errors</h3>
-                            <ul class="slds-list_dotted slds-text-color_inverse">
-                                <template for:each={errorMessages} for:item="msg">
-                                    <li key={msg}>{msg}</li>
-                                </template>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </template>
-
             <!-- Subtotal Footer -->
             <div class="slds-box slds-theme_shade">
                 <div class="slds-grid slds-grid_align-end">

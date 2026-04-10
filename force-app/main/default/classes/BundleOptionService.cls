@@ -107,10 +107,14 @@ public inherited sharing class BundleOptionService {
      */
     private static Map<String, Object> buildOptionPayload(Bundle_Option__c optionRecord) {
         Product2 product = optionRecord.Option_Product__r;
+        String optionProductId = optionRecord.Option_Product__c == null
+            ? null
+            : String.valueOf(optionRecord.Option_Product__c);
         
         return new Map<String, Object>{
             'Id' => String.valueOf(optionRecord.Id),
             'Name' => optionRecord.Name,
+            'productId' => optionProductId,
             'productCode' => product?.ProductCode ?? '',
             'productName' => product?.Name ?? '',
             'description' => product?.Description ?? '',
