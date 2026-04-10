@@ -202,7 +202,7 @@ export default class cpqStepBundleConfig extends LightningElement {
     processOptions(options) {
         return (options || []).map((option) => ({
             Id: option.Id,
-            quantity: option.defaultQuantity,
+            quantity: option.quantity !== undefined ? option.quantity : option.defaultQuantity,
             minQuantity: option.minQuantity,
             maxQuantity: option.maxQuantity,
             productCode: option.productCode,
@@ -262,7 +262,6 @@ export default class cpqStepBundleConfig extends LightningElement {
                 drafts.forEach(draft => {
                     let optionIndex = options.findIndex(opt => opt.Id === draft.Id);
                     if (optionIndex !== -1) {
-                        // Update quantity which drives the UI quantity
                         options[optionIndex] = { ...options[optionIndex], quantity: Number(draft.quantity) };
                     }
                 });
