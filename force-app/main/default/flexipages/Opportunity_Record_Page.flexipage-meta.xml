@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8" ?>
+<?xml version="1.0" encoding="UTF-8"?>
 <FlexiPage xmlns="http://soap.sforce.com/2006/04/metadata">
     <flexiPageRegions>
         <itemInstances>
@@ -62,10 +62,8 @@
                     <name>variant</name>
                     <value>linear</value>
                 </componentInstanceProperties>
-                <componentName
-        >runtime_sales_pathassistant:pathAssistant</componentName>
-                <identifier
-        >runtime_sales_pathassistant_pathAssistant</identifier>
+                <componentName>runtime_sales_pathassistant:pathAssistant</componentName>
+                <identifier>runtime_sales_pathassistant_pathAssistant</identifier>
             </componentInstance>
         </itemInstances>
         <mode>Replace</mode>
@@ -201,16 +199,6 @@
                     <name>uiBehavior</name>
                     <value>none</value>
                 </fieldInstanceProperties>
-                <fieldItem>Record.Default_Agency__c</fieldItem>
-                <identifier>RecordDefault_Agency_cField</identifier>
-            </fieldInstance>
-        </itemInstances>
-        <itemInstances>
-            <fieldInstance>
-                <fieldInstanceProperties>
-                    <name>uiBehavior</name>
-                    <value>none</value>
-                </fieldInstanceProperties>
                 <fieldItem>Record.Is_Transport_Required__c</fieldItem>
                 <identifier>RecordIs_Transport_Required_cField</identifier>
             </fieldInstance>
@@ -221,24 +209,38 @@
                     <name>uiBehavior</name>
                     <value>none</value>
                 </fieldInstanceProperties>
-                <fieldItem>Record.Transport_Urgency__c</fieldItem>
-                <identifier>RecordTransport_Urgency_cField</identifier>
+                <fieldItem>Record.Default_Agency__c</fieldItem>
+                <identifier>RecordDefault_Agency_cField</identifier>
+                <visibilityRule>
+                    <criteria>
+                        <leftValue>{!Record.Is_Transport_Required__c}</leftValue>
+                        <operator>EQUAL</operator>
+                        <rightValue>true</rightValue>
+                    </criteria>
+                </visibilityRule>
             </fieldInstance>
         </itemInstances>
-        <name>Facet-10f45e84-f760-4d5f-83fc-3829fa5381f7</name>
-        <type>Facet</type>
-    </flexiPageRegions>
-    <flexiPageRegions>
         <itemInstances>
             <fieldInstance>
                 <fieldInstanceProperties>
                     <name>uiBehavior</name>
                     <value>none</value>
                 </fieldInstanceProperties>
-                <fieldItem>Record.Delivery_Site__c</fieldItem>
-                <identifier>RecordDelivery_Site_cField</identifier>
+                <fieldItem>Record.Transport_Urgency__c</fieldItem>
+                <identifier>RecordTransport_Urgency_cField</identifier>
+                <visibilityRule>
+                    <criteria>
+                        <leftValue>{!Record.Is_Transport_Required__c}</leftValue>
+                        <operator>EQUAL</operator>
+                        <rightValue>true</rightValue>
+                    </criteria>
+                </visibilityRule>
             </fieldInstance>
         </itemInstances>
+        <name>Facet-10f45e84-f760-4d5f-83fc-3829fa5381f7</name>
+        <type>Facet</type>
+    </flexiPageRegions>
+    <flexiPageRegions>
         <itemInstances>
             <componentInstance>
                 <componentName>flexipage:blankSpace</componentName>
@@ -251,8 +253,32 @@
                     <name>uiBehavior</name>
                     <value>none</value>
                 </fieldInstanceProperties>
+                <fieldItem>Record.Delivery_Site__c</fieldItem>
+                <identifier>RecordDelivery_Site_cField</identifier>
+                <visibilityRule>
+                    <criteria>
+                        <leftValue>{!Record.Is_Transport_Required__c}</leftValue>
+                        <operator>EQUAL</operator>
+                        <rightValue>true</rightValue>
+                    </criteria>
+                </visibilityRule>
+            </fieldInstance>
+        </itemInstances>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>none</value>
+                </fieldInstanceProperties>
                 <fieldItem>Record.Total_Transport_Cost__c</fieldItem>
                 <identifier>RecordTotal_Transport_Cost_cField</identifier>
+                <visibilityRule>
+                    <criteria>
+                        <leftValue>{!Record.Is_Transport_Required__c}</leftValue>
+                        <operator>EQUAL</operator>
+                        <rightValue>true</rightValue>
+                    </criteria>
+                </visibilityRule>
             </fieldInstance>
         </itemInstances>
         <name>Facet-e8fbab31-5997-4c46-a79b-8b042d743fcf</name>
@@ -379,7 +405,7 @@
                 </componentInstanceProperties>
                 <componentInstanceProperties>
                     <name>horizontalAlignment</name>
-                    <value>false</value>
+                    <value>true</value>
                 </componentInstanceProperties>
                 <componentInstanceProperties>
                     <name>label</name>
@@ -387,6 +413,12 @@
                 </componentInstanceProperties>
                 <componentName>flexipage:fieldSection</componentName>
                 <identifier>flexipage_fieldSection4</identifier>
+                <visibilityRule>
+                    <criteria>
+                        <leftValue>{!Record.Name}</leftValue>
+                        <operator>NE</operator>
+                    </criteria>
+                </visibilityRule>
             </componentInstance>
         </itemInstances>
         <mode>Replace</mode>
@@ -400,8 +432,7 @@
                     <name>showLegacyActivityComposer</name>
                     <value>false</value>
                 </componentInstanceProperties>
-                <componentName
-        >runtime_sales_activities:activityPanel</componentName>
+                <componentName>runtime_sales_activities:activityPanel</componentName>
                 <identifier>runtime_sales_activities_activityPanel</identifier>
             </componentInstance>
         </itemInstances>
