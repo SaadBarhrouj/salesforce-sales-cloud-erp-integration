@@ -7,7 +7,7 @@ import PRODUCT_NAME_FIELD from '@salesforce/schema/Product2.Name';
 
 const DATATABLE_COLUMNS = [
     {
-        label: 'Qty',
+        label: 'Quantity',
         fieldName: 'quantity',
         type: 'number',
         editable: { fieldName: 'isQtyEditable' },
@@ -54,7 +54,6 @@ export default class cpqStepBundleConfig extends LightningElement {
 
     _loadTimer;
     scheduleLoad() {
-        // Prevents loading twice sequentially if properties set together
         if (!this._bundleId || !this._itemKey) return;
         clearTimeout(this._loadTimer);
         this._loadTimer = setTimeout(() => {
@@ -91,7 +90,6 @@ export default class cpqStepBundleConfig extends LightningElement {
                 this.localFeatures = deepClone((result && result.features) || []);
             }
             
-            // Fetch bundle name from LDS wire (automatic via @wire decorator)
             if (this.bundleRecord?.data) {
                 this.bundleName = getFieldValue(this.bundleRecord.data, PRODUCT_NAME_FIELD) || 'Bundle Configuration';
             } else {
@@ -284,6 +282,43 @@ export default class cpqStepBundleConfig extends LightningElement {
     handleSaveTable(event) {
         const featureId = event.target.dataset.featureId;
         const drafts = event.detail.draftValues;
+        const featureIndex = this.localFeatures.findIndex(f => f.Id === featureId);
+        if (featureIndex === -1) return;
+        
+        const feature = this.localFeatures[featureIndex];
+        let hasValidationError = false;
+        
+        drafts.forEach(draft => {
+            const optionIndex = feature.options.findIndex(opt => opt.Id === draft.Id);
+            if (optionIndex !== -1) {
+                const option = feature.options[optionIndex];
+                const quantity = Number(draft.quantity);
+                
+                if (option.minQuantity != null && quantity < option.minQuantity) {
+                    showToast(
+                        this,
+                        'Quantity Error',
+                        `Minimum quantity for "${option.productName}" is ${option.minQuantity}`,
+                        'warning'
+                    );
+                    hasValidationError = true;
+                }
+                
+                if (option.maxQuantity != null && quantity > option.maxQuantity) {
+                    showToast(
+                        this,
+                        'Quantity Error',
+                        `Maximum quantity for "${option.productName}" is ${option.maxQuantity}`,
+                        'warning'
+                    );
+                    hasValidationError = true;
+                }
+            }
+        });
+        
+        if (hasValidationError) {
+            return;
+        }
         
         this.applyDraftValues(featureId, drafts);
         
@@ -292,6 +327,51 @@ export default class cpqStepBundleConfig extends LightningElement {
 
     @api
     saveCurrentConfig() {
+        // Validate all draft values before applying
+        let hasValidationError = false;
+        
+        Object.keys(this.featureDraftValues).forEach(featureId => {
+            const drafts = this.featureDraftValues[featureId];
+            if (drafts && drafts.length > 0) {
+                const featureIndex = this.localFeatures.findIndex(f => f.Id === featureId);
+                if (featureIndex !== -1) {
+                    const feature = this.localFeatures[featureIndex];
+                    
+                    drafts.forEach(draft => {
+                        const optionIndex = feature.options.findIndex(opt => opt.Id === draft.Id);
+                        if (optionIndex !== -1) {
+                            const option = feature.options[optionIndex];
+                            const quantity = Number(draft.quantity);
+                            
+                            if (option.minQuantity != null && quantity < option.minQuantity) {
+                                showToast(
+                                    this,
+                                    'Quantity Error',
+                                    `Minimum quantity for "${option.productName}" is ${option.minQuantity}`,
+                                    'warning'
+                                );
+                                hasValidationError = true;
+                            }
+                            
+                            if (option.maxQuantity != null && quantity > option.maxQuantity) {
+                                showToast(
+                                    this,
+                                    'Quantity Error',
+                                    `Maximum quantity for "${option.productName}" is ${option.maxQuantity}`,
+                                    'warning'
+                                );
+                                hasValidationError = true;
+                            }
+                        }
+                    });
+                }
+            }
+        });
+        
+        if (hasValidationError) {
+            return false;
+        }
+        
         Object.keys(this.featureDraftValues).forEach(featureId => {
             const drafts = this.featureDraftValues[featureId];
             if (drafts && drafts.length > 0) {
@@ -301,7 +381,6 @@ export default class cpqStepBundleConfig extends LightningElement {
 
         this.featureDraftValues = {}; 
         
-        // Validation Min/Max rules
         let isValid = true;
         let selectedOptions = [];
 
@@ -323,7 +402,6 @@ export default class cpqStepBundleConfig extends LightningElement {
 
         if (!isValid) return false;
 
-        // Deep clone to remove LWC reactive proxies and ensure serializability
         try {
             this.dispatchEvent(new CustomEvent('bundlesave', {
                 detail: {

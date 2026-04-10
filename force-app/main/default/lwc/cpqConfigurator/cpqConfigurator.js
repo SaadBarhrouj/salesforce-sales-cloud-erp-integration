@@ -52,7 +52,7 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
       const bundleConfig = this._getBundleConfigStep();
       if (bundleConfig && this.selectedItemId) {
         const isValid = bundleConfig.saveCurrentConfig();
-        if (!isValid) return; // Stop navigation if invalid
+        if (!isValid) return; 
       }
     }
 
@@ -738,18 +738,6 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
       );
     });
     this.selectedProducts = items;
-  }
-
-  _restoreBundleConfigsToProducts() {
-    let productsList = deepClone(this.selectedProducts);
-    productsList.forEach(product => {
-      if (product.isBundle && product.productId && this.bundleConfigCache[product.productId]) {
-        const cachedConfig = this.bundleConfigCache[product.productId];
-        product.featuresState = cachedConfig.features;
-        product.configuredOptions = cachedConfig.selectedOptions;
-      }
-    });
-    this.selectedProducts = productsList;
   }
 
   _triggerSave() {
