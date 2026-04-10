@@ -117,11 +117,22 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
   @track selectedProducts = [];
   @track logisticsState = {
     isTransportRequired: false,
-    deliverySite: "",
-    transportAgency: "",
-    transportUrgency: "",
+    deliverySiteId: "",
+    agencyId: "",
+    urgency: "",
     notes: ""
   };
+
+  @track mockAccountLocations = [
+    { label: 'Paris HQ', value: 'loc_paris', Latitude: 48.8566, Longitude: 2.3522, Name: 'Paris HQ' },
+    { label: 'Lyon Branch', value: 'loc_lyon', Latitude: 45.7640, Longitude: 4.8357, Name: 'Lyon Branch' },
+    { label: 'Marseille Hub', value: 'loc_marseille', Latitude: 43.2965, Longitude: 5.3698, Name: 'Marseille Hub' }
+  ];
+
+  @track mockAgencies = [
+    { label: 'Bordeaux Agency', value: 'ag_bordeaux', Latitude: 44.8378, Longitude: -0.5792, Name: 'Bordeaux Agency' },
+    { label: 'Lille Logistics', value: 'ag_lille', Latitude: 50.6292, Longitude: 3.0573, Name: 'Lille Logistics' }
+  ];
 
   @track bundleConfigCache = {};
 
@@ -147,7 +158,7 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
   }
 
   get showSidebar() {
-    return !this.isStepLineEditor;
+    return !this.isStepLineEditor && !this.isStepLogistics;
   }
 
   /* -- bundle config -- */
@@ -296,6 +307,14 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
       if (action.dynamicProperty === "disableIfCartEmpty") {
         action.disabled = (this.selectedProducts || []).length === 0;
       }
+      
+      if (action.dynamicProperty === "disableIfInvalidLogistics") {
+        const step = this._getLogisticsStep();
+        if (step) {
+            action.disabled = step.isCalculateDisabled;
+        }
+      }
+      
       return action;
     });
   }
@@ -347,6 +366,7 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
     else if (action === "refreshPricing") this._getLineEditorStep()?.handleHeaderAction('refreshPricing');
     else if (action === "validateAll") this._getLineEditorStep()?.handleHeaderAction('validateAll');
     else if (action === "deleteSelected") this._getLineEditorStep()?.handleHeaderAction('deleteSelected');
+    else if (action === "calculateTransport") this._getLogisticsStep()?.handleCalculateTrips();
   }
 
   _handleToggleFilters() {
@@ -434,6 +454,10 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
 
   _getLineEditorStep() {
     return this.template.querySelector("c-cpq-step-line-editor");
+  }
+
+  _getLogisticsStep() {
+    return this.template.querySelector("c-cpq-step-logistics");
   }
 
   _handleClearSelection() {

@@ -1,125 +1,165 @@
-<template>
-    <div class="slds-card slds-p-around_medium">
-        <h2 class="slds-text-heading_medium slds-m-bottom_medium">Transport & Logistics</h2>
+﻿<template>
+    <div class="slds-card slds-p-around_medium core-container">
+        <div class="slds-grid slds-grid_vertical-align-center slds-m-bottom_medium">
+            <h2 class="slds-text-heading_medium slds-m-right_medium">Logistics & Transportation</h2>
+            <lightning-input 
+                type="toggle" 
+                label="Transport Required" 
+                message-toggle-active="Yes" 
+                message-toggle-inactive="No" 
+                checked={transportRequired}
+                onchange={handleTransportToggle}>
+            </lightning-input>
+        </div>
 
-        <lightning-layout multiple-rows>
-            <!-- Transport Required -->
-            <lightning-layout-item size="12" padding="around-small">
-                <lightning-input
-                    type="toggle"
-                    label="Transport Required"
-                    checked={transportRequired}
-                    message-toggle-active="Yes"
-                    message-toggle-inactive="No"
-                    onchange={handleTransportToggle}
-                ></lightning-input>
-            </lightning-layout-item>
+        <template lwc:if={transportRequired}>
+            <lightning-layout multiple-rows>
+                <!-- LEFT COLUMN : Configuration & Trips -->
+                <lightning-layout-item size="12" large-device-size="7" padding="around-small">
+                    
+                    <!-- SECTION 1: ROUTE SETTINGS -->
+                    <div class="slds-box slds-theme_default slds-m-bottom_medium">
+                        <h3 class="slds-text-heading_small slds-m-bottom_medium">Route Settings</h3>
+                        
+                        <lightning-layout>
+                            <lightning-layout-item size="6" class="slds-p-right_x-small">
+                                <lightning-combobox
+                                    label="Departure Agency"
+                                    value={config.agencyId}
+                                    options={agencies}
+                                    placeholder="Select departure..."
+                                    required
+                                    onchange={handleConfigChange}
+                                    data-field="agencyId"
+                                ></lightning-combobox>
+                            </lightning-layout-item>
 
-            <template lwc:if={transportRequired}>
-                <!-- Delivery Site -->
-                <lightning-layout-item size="12" medium-device-size="6" padding="around-small">
-                    <lightning-combobox
-                        label="Delivery Site"
-                        value={deliverySiteId}
-                        options={locationOptions}
-                        placeholder="Select delivery location"
-                        required
-                        onchange={handleDeliverySiteChange}
-                    ></lightning-combobox>
-                </lightning-layout-item>
+                            <lightning-layout-item size="6" class="slds-p-left_x-small">
+                                <lightning-combobox
+                                    label="Delivery Site"
+                                    value={config.deliverySiteId}
+                                    options={accountLocations}
+                                    placeholder="Select destination..."
+                                    required
+                                    onchange={handleConfigChange}
+                                    data-field="deliverySiteId"
+                                ></lightning-combobox>
+                            </lightning-layout-item>
+                        </lightning-layout>
 
-                <!-- Departure Agency -->
-                <lightning-layout-item size="12" medium-device-size="6" padding="around-small">
-                    <lightning-combobox
-                        label="Departure Agency"
-                        value={agencyId}
-                        options={agencyOptions}
-                        placeholder="Select departure agency"
-                        required
-                        onchange={handleAgencyChange}
-                    ></lightning-combobox>
-                </lightning-layout-item>
+                        <lightning-layout class="slds-m-top_smal">
+                            <lightning-layout-item size="6" class="slds-p-right_x-small">
+                                <lightning-combobox
+                                    label="Urgency"
+                                    value={config.urgency}
+                                    options={urgencyOptions}
+                                    onchange={handleConfigChange}
+                                    data-field="urgency"
+                                    class="slds-m-top_small"
+                                ></lightning-combobox>
+                            </lightning-layout-item>
+                        </lightning-layout>
+                    </div>
 
-                <!-- Urgency -->
-                <lightning-layout-item size="12" medium-device-size="6" padding="around-small">
-                    <lightning-combobox
-                        label="Transport Urgency"
-                        value={urgency}
-                        options={urgencyOptions}
-                        onchange={handleUrgencyChange}
-                    ></lightning-combobox>
-                </lightning-layout-item>
+                    <!-- SECTION 2: CALCULATED TRIPS -->
+                    <template lwc:if={hasTrips}>
+                        <div class="slds-box slds-theme_shade">
+                            <h3 class="slds-text-heading_small slds-m-bottom_small">Generated Trips</h3>
+                            
+                            <template for:each={trips} for:item="trip">
+                                <div key={trip.id} class="slds-card slds-p-around_medium slds-m-bottom_small trip-card">
+                                    <!-- Trip Read-Only Details -->
+                                    <div class="slds-grid slds-wrap slds-m-bottom_small">
+                                        <div class="slds-col slds-size_1-of-2">
+                                            <p class="slds-text-title_caps">Transport Type</p>
+                                            <p class="slds-text-body_regular slds-m-bottom_x-small">{trip.type}</p>
+                                            
+                                            <p class="slds-text-title_caps">Est. Distance / Duration</p>
+                                            <p class="slds-text-body_regular">125 km (approx. 1h45)</p>
+                                        </div>
+                                        <div class="slds-col slds-size_1-of-2">
+                                            <p class="slds-text-title_caps">Vehicle Size Range</p>
+                                            <p class="slds-text-body_regular slds-m-bottom_x-small">Heavy Truck (> 1000kg)</p>
+                                            
+                                            <p class="slds-text-title_caps">Calculated Base Cost</p>
+                                            <p class="slds-text-heading_small">{trip.formattedCalculatedCost}</p>
+                                        </div>
+                                    </div>
 
-                <!-- Estimated Weight -->
-                <lightning-layout-item size="12" medium-device-size="6" padding="around-small">
-                    <div class="slds-form-element">
-                        <label class="slds-form-element__label">Estimated Total Weight</label>
-                        <div class="slds-form-element__control">
-                            <span class="slds-text-heading_small">{formattedWeight} kg</span>
+                                    <!-- Editable Overrides -->
+                                    <div class="slds-grid slds-wrap slds-border_top slds-p-top_small">
+                                        <div class="slds-col slds-size_1-of-2 slds-p-right_x-small">
+                                            <lightning-input 
+                                                type="number" 
+                                                formatter="currency" 
+                                                step="0.01" 
+                                                label="Override Cost" 
+                                                value={trip.overridePrice}
+                                                data-tripid={trip.id}
+                                                onchange={handleOverrideChange}>
+                                            </lightning-input>
+                                        </div>
+                                        <div class="slds-col slds-size_1-of-2 slds-p-left_x-small">
+                                            <lightning-input 
+                                                type="text" 
+                                                label="Override Reason" 
+                                                value={trip.overrideReason}
+                                                data-tripid={trip.id}
+                                                required={trip.overridePrice}
+                                                onchange={handleOverrideReasonChange}>
+                                            </lightning-input>
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
                         </div>
+                    </template>
+                    
+                    <!-- EMPTY STATE FOR TRIPS -->
+                    <template lwc:elseif={showEmptyState}>
+                        <c-empty-state
+                            illustration-name={emptyStateIllustration}
+                            title="No Routes Calculated"
+                            description="Select your locations and click Calculate Transport Cost."
+                            size="small">
+                        </c-empty-state>
+                    </template>
+
+                </lightning-layout-item>
+
+                <!-- RIGHT COLUMN : Map -->
+                <lightning-layout-item size="12" large-device-size="5" padding="around-small">
+                    <div class="slds-box slds-theme_default" style="position: relative; min-height: 400px; height: 100%;">
+                        
+                        <template lwc:if={isCalculating}>
+                            <lightning-spinner alternative-text="Calculating..." size="medium"></lightning-spinner>
+                        </template>
+
+                        <!-- MAP EN TEMPS RÉEL -->
+                        <template lwc:if={hasValidRoute}>
+                            <div class="slds-p-around_none overflow-hidden" style="height: 100%;">
+                                <c-trip-route-map
+                                    manual-departure-lat={selectedAgency.Latitude}
+                                    manual-departure-lng={selectedAgency.Longitude}
+                                    manual-departure-name={selectedAgency.Name}
+                                    manual-destination-lat={selectedDelivery.Latitude}
+                                    manual-destination-lng={selectedDelivery.Longitude}
+                                    manual-destination-name={selectedDelivery.Name}
+                                    hide-directions-link>
+                                </c-trip-route-map>
+                            </div>
+                        </template>
+                        <template lwc:else>
+                            <c-empty-state
+                                illustration-name={emptyStateIllustration}
+                                title="Map Unavailable"
+                                description="Select both locations to view the route."
+                                size="small">
+                            </c-empty-state>
+                        </template>
                     </div>
                 </lightning-layout-item>
-            </template>
-
-            <!-- Notes -->
-            <lightning-layout-item size="12" padding="around-small">
-                <lightning-textarea
-                    label="Logistics Notes"
-                    value={notes}
-                    max-length="2000"
-                    placeholder="Special delivery instructions, contact info, access codes..."
-                    onchange={handleNotesChange}
-                ></lightning-textarea>
-            </lightning-layout-item>
-        </lightning-layout>
-
-        <!-- Quote Summary -->
-        <div class="slds-m-top_large slds-box slds-theme_shade slds-p-around_medium">
-            <h3 class="slds-text-heading_small slds-m-bottom_small">Quote Summary</h3>
-            <lightning-layout>
-                <lightning-layout-item size="3">
-                    <dl>
-                        <dt class="slds-text-title_caps">Account</dt>
-                        <dd class="slds-text-body_regular">{quoteState.accountName}</dd>
-                    </dl>
-                </lightning-layout-item>
-                <lightning-layout-item size="3">
-                    <dl>
-                        <dt class="slds-text-title_caps">Catalog</dt>
-                        <dd class="slds-text-body_regular">{quoteState.catalogName}</dd>
-                    </dl>
-                </lightning-layout-item>
-                <lightning-layout-item size="3">
-                    <dl>
-                        <dt class="slds-text-title_caps">Products</dt>
-                        <dd class="slds-text-body_regular">{itemCount} items</dd>
-                    </dl>
-                </lightning-layout-item>
-                <lightning-layout-item size="3">
-                    <dl>
-                        <dt class="slds-text-title_caps">Subtotal</dt>
-                        <dd class="slds-text-heading_small">{formattedSubtotal}</dd>
-                    </dl>
-                </lightning-layout-item>
             </lightning-layout>
-        </div>
-
-        <!-- Navigation -->
-        <div class="slds-m-top_large slds-clearfix">
-            <lightning-button
-                label="Back: Lines"
-                icon-name="utility:back"
-                class="slds-float_left"
-                onclick={handleBack}
-            ></lightning-button>
-            <lightning-button
-                label="Next: Review"
-                variant="brand"
-                icon-name="utility:forward"
-                icon-position="right"
-                class="slds-float_right"
-                onclick={handleNext}
-            ></lightning-button>
-        </div>
+        </template>
     </div>
 </template>

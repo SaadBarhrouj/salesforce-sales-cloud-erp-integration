@@ -45,6 +45,11 @@ const LINE_EDITOR_GLOBAL_ACTIONS = [
     { name: 'validateAll', label: 'Validate All', iconName: 'utility:check', variant: 'border-filled' }
 ];
 
+const LOGISTICS_GLOBAL_ACTIONS = [
+    { name: 'settings', label: 'List View Controls', variant: 'border-filled', iconName: 'utility:settings', isMenu: true },
+    { name: 'refresh', label: 'Refresh Options', variant: 'border-filled', iconName: 'utility:refresh' }
+];
+
 export const STEPS = Object.freeze({
     SELECTION: {
         number: 1, key: 'selection', label: 'Product Selection', icon: 'standard:product', subtitle: 'Select and configure products',
@@ -97,7 +102,16 @@ export const STEPS = Object.freeze({
     },
     LOGISTICS: {
         number: 4, key: 'logistics', label: 'Logistics', icon: 'standard:shipment', subtitle: 'Delivery options',
-        header: { showSearch: false, searchPlaceholder: 'Search...', stepActions: DEFAULT_STEP_ACTIONS, globalActions: DEFAULT_GLOBAL_ACTIONS }
+        header: { 
+            showSearch: false, 
+            searchPlaceholder: 'Search...', 
+            stepActions: [
+                { name: 'back', label: 'Back', variant: 'neutral' },
+                { name: 'calculateTransport', label: 'Calculate Transport Cost', variant: 'neutral', isStandalone: true, dynamicProperty: 'disableIfInvalidLogistics' },
+                { name: 'next', label: 'Next', variant: 'brand' }
+            ], 
+            globalActions: LOGISTICS_GLOBAL_ACTIONS 
+        }
     },
     REVIEW: {
         number: 5, key: 'review', label: 'Review & Save', icon: 'standard:task', subtitle: 'Verify everything before saving',
