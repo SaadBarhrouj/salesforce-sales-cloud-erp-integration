@@ -1,6 +1,4 @@
 public inherited sharing class PricebookService {
-    public class PricingException extends Exception {}
-
     private static final String PRICEBOOK_METHOD = 'Pricebook';
     private static final String VOLUME_PRICING_METHOD = 'VolumePricing';
 
@@ -127,13 +125,13 @@ public inherited sharing class PricebookService {
 
     private static void validateDiscount(Decimal discount) {
         if (discount == null || discount < 0 || discount > 100) {
-            throw new PricingException('Discount must be between 0 and 100');
+            throw new PricebookException('Discount must be between 0 and 100');
         }
     }
 
     private static void validateQuantity(Integer quantity) {
         if (quantity == null || quantity < 1) {
-            throw new PricingException('Quantity must be at least 1');
+            throw new PricebookException('Quantity must be at least 1');
         }
     }
 }
