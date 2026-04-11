@@ -157,6 +157,9 @@ export default class CpqStepLineEditor extends LightningElement {
     _buildOptionLineItem(parentKey, opt) {
         const optListPrice = Number(opt.unitPrice) || 0;
         const optQty = Number(opt.quantity) || 1;
+        const optDiscount = Number(opt.additionalDiscount) || 0;
+        const optNetPrice = optListPrice * (1 - optDiscount / 100);
+        const optNetTotal = optNetPrice * optQty;
 
         return {
             _key: opt.Id,
@@ -170,9 +173,9 @@ export default class CpqStepLineEditor extends LightningElement {
             productName: opt.productName,
             quantity: optQty,
             listUnitPrice: optListPrice,
-            additionalDiscount: 0,
-            netUnitPrice: optListPrice,
-            netTotal: optListPrice * optQty
+            additionalDiscount: optDiscount,
+            netUnitPrice: optNetPrice,
+            netTotal: optNetTotal
         };
     }
 
@@ -193,7 +196,13 @@ export default class CpqStepLineEditor extends LightningElement {
         });
 
         this.lineItems = flatItems;
-        this.expandedRows = new Set();
+
+        const currentKeys = new Set(flatItems.map(row => row._key));
+        const preservedExpand = new Set();
+        for (const key of this.expandedRows) {
+            if (currentKeys.has(key)) preservedExpand.add(key);
+        }
+        this.expandedRows = preservedExpand;
     }
 
     // ─── EVENTS / DOM ACTIONS ───────────────────────────────────────────────
@@ -447,6 +456,94 @@ export default class CpqStepLineEditor extends LightningElement {
 
     _hasPricingErrors() {
         return this.lineItems.some(row => row._hasError);
+    }
+
+    @api
+    saveLines() {
+        const updatedProducts = this._mapLineItemsToProducts();
+        this.dispatchEvent(new CustomEvent('linesave', {
+            detail: { lineItems: updatedProducts }
+        }));
+    }
+
+    _mapLineItemsToProducts() {
+        const products = [];
+        const optionsMap = {};
+
+        for (const row of this.lineItems) {
+            if (row._isOption) {
+                if (!optionsMap[row._parentId]) {
+                    optionsMap[row._parentId] = [];
+                }
+                optionsMap[row._parentId].push({
+                    Id: row.optionId,
+                    productId: row.productId,
+                    productCode: row.productCode,
+                    productName: row.productName,
+                    quantity: row.quantity,
+                    unitPrice: row.listUnitPrice,
+                    netUnitPrice: row.netUnitPrice,
+                    netTotal: row.netTotal,
+                    additionalDiscount: row.additionalDiscount
+                });
+            }
+        }
+
+        for (const row of this.lineItems) {
+            if (!row._isOption) {
+                products.push({
+                    _key: row._key,
+                    productId: row.productId,
+                    productCode: row.productCode,
+                    productName: row.productName,
+                    quantity: row.quantity,
+                    listUnitPrice: row.listUnitPrice,
+                    additionalDiscount: row.additionalDiscount,
+                    netUnitPrice: row.netUnitPrice,
+                    netTotal: row.netTotal,
+                    isBundle: row.isBundle,
+                    configuredOptions: optionsMap[row._key] || []
+                });
+            }
+        }
+
+        return products;
+    }
+
+    @api
+    resetLineItems() {
+        this.lineItems = this.lineItems.map(row => {
+            if (row._isOption) {
+                const listPrice = Number(row.listUnitPrice) || 0;
+                const qty = Number(row.quantity) || 1;
+                return {
+                    ...row,
+                    additionalDiscount: 0,
+                    netUnitPrice: listPrice,
+                    netTotal: listPrice * qty,
+                    _hasError: false,
+                    _errorMessage: ''
+                };
+            }
+
+            const listPrice = Number(row.listUnitPrice) || 0;
+            const netPrice = listPrice;
+            return {
+                ...row,
+                quantity: 1,
+                additionalDiscount: 0,
+                netUnitPrice: netPrice,
+                netTotal: netPrice * 1,
+                _hasError: false,
+                _errorMessage: ''
+            };
+        });
+
+        this._schedulePricingCalculation();
+
+        this.dispatchEvent(new CustomEvent('linesave', {
+            detail: { lineItems: this._mapLineItemsToProducts() }
+        }));
     }
 
     @api

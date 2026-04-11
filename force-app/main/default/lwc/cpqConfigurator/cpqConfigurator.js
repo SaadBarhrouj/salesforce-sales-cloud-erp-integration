@@ -68,6 +68,7 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
           showToast(this, 'Validation Failed', 'Please fix all line editor errors before proceeding.', 'error');
           return;
         }
+        lineEditor.saveLines();
       }
     }
 
@@ -86,6 +87,13 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
       if (bundleConfig && this.selectedItemId) {
         const isValid = bundleConfig.saveCurrentConfig();
         if (!isValid) return;
+      }
+    }
+
+    if (this.isStepLineEditor) {
+      const lineEditor = this._getLineEditorStep();
+      if (lineEditor) {
+        lineEditor.saveLines();
       }
     }
 
@@ -349,6 +357,7 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
     else if (action === "next") this._goNext();
     else if (action === "select") this._goNext();
     else if (action === "save") this._triggerSave();
+    else if (action === "saveLines") this._triggerSaveLines();
     else if (action === "cancel") this._navigateToOpportunity();
     else if (action === "refresh") this._handleRefresh();
     else if (action === "clearSelection") this._handleClearSelection();
@@ -361,6 +370,7 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
     else if (action === "toggleFilters") this._handleToggleFilters();
     else if (action === "refreshPricing") this._getLineEditorStep()?.handleHeaderAction('refreshPricing');
     else if (action === "deleteSelected") this._getLineEditorStep()?.handleHeaderAction('deleteSelected');
+    else if (action === "resetEditing") this._handleResetEditing();
   }
 
   _handleToggleFilters() {
@@ -397,6 +407,10 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
       bundleConfig.resetCurrentBundle();
       this._showToast("Configuration Reset", "Bundle configuration has been reset", "info");
     }
+  }
+
+  _handleResetEditing() {
+    this._getLineEditorStep()?.resetLineItems();
   }
 
   _handleSaveConfig() {
@@ -700,6 +714,28 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
     this.hasLineSelection = event.detail.hasSelection;
   }
 
+  handleLineSave(event) {
+    const updatedLineItems = event.detail.lineItems;
+    const products = deepClone(this.selectedProducts);
+
+    for (const lineItem of updatedLineItems) {
+      const idx = products.findIndex(p => p._key === lineItem._key);
+      if (idx !== -1) {
+        products[idx].quantity = lineItem.quantity;
+        products[idx].listUnitPrice = lineItem.listUnitPrice;
+        products[idx].additionalDiscount = lineItem.additionalDiscount;
+        products[idx].netUnitPrice = lineItem.netUnitPrice;
+        products[idx].netTotal = lineItem.netTotal;
+        products[idx]._formattedTotal = formatCurrency(lineItem.netTotal);
+        if (lineItem.configuredOptions && lineItem.configuredOptions.length > 0) {
+          products[idx].configuredOptions = lineItem.configuredOptions;
+        }
+      }
+    }
+
+    this.selectedProducts = products;
+  }
+
   /* -- Step 5 events -- */
   handleLogisticsChange(event) {
     this.logisticsState = deepClone(event.detail.logistics);
@@ -744,6 +780,14 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
 
   _triggerSave() {
     this._showToast("Success", MESSAGES.SAVE_SUCCESS, "success");
+  }
+
+  _triggerSaveLines() {
+    const lineEditor = this._getLineEditorStep();
+    if (lineEditor) {
+      lineEditor.saveLines();
+      this._showToast("Success", MESSAGES.LINE_SAVE, "success");
+    }
   }
 
   _showToast(title, message, variant = "success") {

@@ -39,7 +39,13 @@ const CONFIGURE_GLOBAL_ACTIONS = [
     }
 ];
 
+const LINE_EDITOR_STEP_ACTIONS = [
+    { name: 'back', label: 'Back', variant: 'neutral' },
+    { name: 'next', label: 'Next', variant: 'brand' }
+];
+
 const LINE_EDITOR_GLOBAL_ACTIONS = [
+    { name: 'resetEditing', label: 'Reset Editing', iconName: 'utility:undo', variant: 'border-filled' },
     { name: 'refreshPricing', label: 'Refresh Pricing', iconName: 'utility:refresh', variant: 'border-filled' },
     { name: 'deleteSelected', label: 'Delete Selected', iconName: 'utility:delete', variant: 'destructive', dynamicProperty: 'disableIfNoSelection' }
 ];
@@ -85,12 +91,12 @@ export const STEPS = Object.freeze({
          }
     },
 
-    LINE_EDITOR: {
+LINE_EDITOR: {
         number: 3, key: 'lineEditor', label: 'Line Editor', icon: 'standard:bundles_pricing', subtitle: 'Review and adjust line items',
         header: { 
             showSearch: false, 
             searchPlaceholder: 'Search...', 
-            stepActions: DEFAULT_STEP_ACTIONS, 
+            stepActions: LINE_EDITOR_STEP_ACTIONS,
             globalActions: LINE_EDITOR_GLOBAL_ACTIONS
         }
     },
@@ -166,6 +172,7 @@ export const MESSAGES = Object.freeze({
     NO_PRODUCTS:      'Add at least one product before proceeding.',
     CONFIRM_REMOVE:   'Remove "{0}" from the quote?',
     NOT_CONFIGURED:   'One or more bundles have not been configured.',
+    LINE_SAVE:        'Line items saved successfully.',
     LOGISTICS_INCOMPLETE: 'Please complete all required logistics fields.'
 });
 
