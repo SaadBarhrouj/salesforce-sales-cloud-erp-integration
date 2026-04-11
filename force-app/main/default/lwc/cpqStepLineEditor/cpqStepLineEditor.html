@@ -194,7 +194,12 @@
             <!-- Subtotal Footer -->
             <div class="slds-grid slds-grid_align-end slds-m-top_xx-small slds-p-right_small">
                 <span class="slds-text-title_caps">Subtotal:</span>
-                <span class="slds-text-title_bold slds-m-left_xx-small">{formattedSubtotal}</span>
+                <template lwc:if={subtotalLoading}>
+                    <span class="slds-text-title_bold slds-m-left_xx-small slds-text-color_weak">Calculating...</span>
+                </template>
+                <template lwc:else>
+                    <span class="slds-text-title_bold slds-m-left_xx-small">{formattedSubtotal}</span>
+                </template>
             </div>
         </template>
     </div>

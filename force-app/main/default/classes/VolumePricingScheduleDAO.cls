@@ -1,14 +1,4 @@
 public inherited sharing class VolumePricingScheduleDAO {
-    @TestVisible
-    private static Map<String, Volume_Pricing_Schedule__c> scheduleCache = new Map<String, Volume_Pricing_Schedule__c>();
-    @TestVisible
-    private static Map<String, List<Volume_Pricing_Tier__c>> tierCache = new Map<String, List<Volume_Pricing_Tier__c>>();
-
-    public static void clearCache() {
-        scheduleCache.clear();
-        tierCache.clear();
-    }
-
     public static Volume_Pricing_Schedule__c getActiveByProduct(Id productId) {
         List<Volume_Pricing_Schedule__c> schedules = [
             SELECT Id, Product__c, Pricing_Type__c, Pricebook__c

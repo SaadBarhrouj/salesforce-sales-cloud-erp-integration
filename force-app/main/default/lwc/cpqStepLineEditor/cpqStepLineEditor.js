@@ -77,6 +77,10 @@ export default class CpqStepLineEditor extends LightningElement {
         return Math.max(0, total);
     }
 
+    get subtotalLoading() {
+        return this.isLoading;
+    }
+
     get formattedSubtotal() {
         return formatCurrency(this.subtotal);
     }

@@ -47,4 +47,11 @@
         <shortDescription>Description for the Other feature in bundle configuration</shortDescription>
         <value>Options that are not assigned to a specific feature</value>
     </labels>
+    <labels>
+        <fullName>Volume_Pricing_Catalog_Names</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Comma-separated catalogs that use the volume pricing</shortDescription>
+        <value>Rental and Services,Rental,Services</value>
+    </labels>
 </CustomLabels>

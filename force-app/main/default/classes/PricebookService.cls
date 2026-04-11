@@ -1,14 +1,19 @@
 public inherited sharing class PricebookService {
+    public enum PricingMethod {
+        Pricebook,
+        VolumePricing
+    }
+
     public class PricingException extends Exception {}
 
-    public static PricingResponse calculateSalePrice(Id productId, Id pricebookId, Integer quantity, Decimal discount) {
+    public static PricingResponse calculateByPricebook(Id productId, Id pricebookId, Integer quantity, Decimal discount) {
         try {
             validateDiscount(discount);
             validateQuantity(quantity);
 
             PricebookEntry entry = PricebookEntryDAO.getByProductAndPricebook(productId, pricebookId);
             if (entry == null) {
-                return PricingResponse.error('Pricebook entry not found for product in sale pricebook');
+                return PricingResponse.error('Pricebook entry not found for product');
             }
 
             Decimal listPrice = entry.UnitPrice;
@@ -22,14 +27,14 @@ public inherited sharing class PricebookService {
             response.totalPrice = totalPrice;
             response.discount = discount;
             response.quantity = quantity;
-            response.pricingMethod = 'Standard';
+            response.pricingMethod = PricingMethod.Pricebook.name();
             return response;
         } catch (Exception e) {
             return PricingResponse.error(e.getMessage());
         }
     }
 
-    public static PricingResponse calculateRentalServicesPrice(Id productId, Id pricebookId, Integer quantity, Decimal discount) {
+    public static PricingResponse calculateByVolumePricing(Id productId, Id pricebookId, Integer quantity, Decimal discount) {
         try {
             validateDiscount(discount);
             validateQuantity(quantity);
@@ -45,94 +50,79 @@ public inherited sharing class PricebookService {
                 return PricingResponse.error('No volume pricing tiers defined');
             }
 
-            Volume_Pricing_Tier__c matchedTier = null;
-
-            for (Volume_Pricing_Tier__c tier : tiers) {
-                Decimal qty = Decimal.valueOf(quantity);
-                if (qty >= tier.Lower_Bound__c && qty <= tier.Upper_Bound__c) {
-                    matchedTier = tier;
-                    break;
-                }
-            }
+            Volume_Pricing_Tier__c matchedTier = findMatchedTier(tiers, quantity);
 
             if (matchedTier == null) {
                 return PricingResponse.error('No matching tier for quantity: ' + quantity);
             }
 
-            Decimal listPrice;
-            Decimal netPrice;
+            Decimal listPrice = matchedTier.Price__c.setScale(2);
+            Decimal netPrice = listPrice * (1 - discount / 100);
             Decimal totalPrice;
-            String pricingMethod;
+            String method;
 
-            String pricingType = schedule.Pricing_Type__c;
-            
-            if (pricingType == 'Block') {
-                pricingMethod = 'Block';
-                listPrice = matchedTier.Price__c.setScale(2);
-                netPrice = listPrice * (1 - discount / 100);
+            if (schedule.Pricing_Type__c == 'Block') {
+                method = 'Block';
                 totalPrice = netPrice.setScale(2);
-                netPrice = netPrice.setScale(2);
             } else {
-                pricingMethod = 'Tiered';
-                listPrice = matchedTier.Price__c.setScale(2);
-                netPrice = listPrice * (1 - discount / 100);
+                method = 'Tiered';
                 totalPrice = (netPrice * quantity).setScale(2);
-                netPrice = netPrice.setScale(2);
             }
 
             PricingResponse response = new PricingResponse();
             response.productId = productId;
             response.listPrice = listPrice;
-            response.netPrice = netPrice;
+            response.netPrice = netPrice.setScale(2);
             response.totalPrice = totalPrice;
             response.discount = discount;
             response.quantity = quantity;
-            response.pricingMethod = pricingMethod;
+            response.pricingMethod = method;
             return response;
         } catch (Exception e) {
             return PricingResponse.error(e.getMessage());
         }
     }
 
-    public static List<PricingResponse> calculatePrices(List<Map<String, Object>> lineItems, String pricingType, Id pricebookId) {
+    private static Volume_Pricing_Tier__c findMatchedTier(List<Volume_Pricing_Tier__c> tiers, Integer quantity) {
+        Decimal qty = Decimal.valueOf(quantity);
+        for (Volume_Pricing_Tier__c tier : tiers) {
+            if (tier.Lower_Bound__c != null && tier.Upper_Bound__c != null &&
+                qty >= tier.Lower_Bound__c && qty < tier.Upper_Bound__c) {
+                return tier;
+            }
+        }
+        return null;
+    }
+
+    public static List<PricingResponse> calculatePrices(List<Map<String, Object>> lineItems, PricingMethod pricingMethod, Id pricebookId) {
         List<PricingResponse> responses = new List<PricingResponse>();
 
         for (Map<String, Object> item : lineItems) {
             Id productId = (Id) item.get('productId');
-            Object qtyObj = item.get('quantity');
-            Integer quantity;
+            Integer quantity = toInteger(item.get('quantity'));
+            Decimal discount = toDecimal(item.get('discount'));
 
-            if (qtyObj instanceof Integer) {
-                quantity = (Integer) qtyObj;
-            } else if (qtyObj instanceof Decimal) {
-                quantity = ((Decimal) qtyObj).intValue();
-            } else if (qtyObj != null) {
-                quantity = Integer.valueOf(qtyObj);
-            } else {
-                quantity = 1;
-            }
-
-            Object discObj = item.get('discount');
-            Decimal discount;
-
-            if (discObj instanceof Decimal) {
-                discount = (Decimal) discObj;
-            } else if (discObj != null) {
-                discount = Decimal.valueOf(String.valueOf(discObj));
-            } else {
-                discount = 0;
-            }
-
-            PricingResponse response;
-            if (pricingType == 'Sale') {
-                response = calculateSalePrice(productId, pricebookId, quantity, discount);
-            } else {
-                response = calculateRentalServicesPrice(productId, pricebookId, quantity, discount);
-            }
+            PricingResponse response = pricingMethod == PricingMethod.Pricebook
+                ? calculateByPricebook(productId, pricebookId, quantity, discount)
+                : calculateByVolumePricing(productId, pricebookId, quantity, discount);
             responses.add(response);
         }
 
         return responses;
+    }
+
+    private static Integer toInteger(Object value) {
+        if (value == null) return 1;
+        if (value instanceof Integer) return (Integer) value;
+        if (value instanceof Decimal) return ((Decimal) value).intValue();
+        return Integer.valueOf(String.valueOf(value));
+    }
+
+    private static Decimal toDecimal(Object value) {
+        if (value == null) return 0;
+        if (value instanceof Decimal) return (Decimal) value;
+        if (value instanceof Integer) return Decimal.valueOf((Integer) value);
+        return Decimal.valueOf(String.valueOf(value));
     }
 
     private static void validateDiscount(Decimal discount) {

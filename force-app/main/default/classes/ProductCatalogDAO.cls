@@ -4,7 +4,6 @@
  * Uses inherited sharing to respect record-level security.
  */
 public inherited sharing class ProductCatalogDAO {
-    /*
     public static ProductCatalog getById(Id recordId) {
         if (recordId == null) {
             return null;
@@ -13,9 +12,7 @@ public inherited sharing class ProductCatalogDAO {
         List<ProductCatalog> records = [
             SELECT
                 Id,
-                Name,
-                OwnerId,
-                Owner.Name
+                Name
             FROM ProductCatalog
             WHERE Id = :recordId
             LIMIT 1
@@ -32,14 +29,12 @@ public inherited sharing class ProductCatalogDAO {
         return new Map<Id, ProductCatalog>([
             SELECT
                 Id,
-                Name,
-                OwnerId,
-                Owner.Name
+                Name
             FROM ProductCatalog
             WHERE Id IN :recordIds
         ]);
     }
-    */
+
 
     /**
      * Retrieves ProductCatalog records by catalog name.

@@ -2,11 +2,11 @@ public inherited sharing class PricebookController {
     @AuraEnabled(cacheable=false)
     public static PricingResponse calculateLinePrice(Id productId, Id pricebookId, Integer quantity, Decimal discount, Object offerType) {
         try {
-            String pricingType = getPricingType(offerType);
-            if (pricingType == 'Sale') {
-                return PricebookService.calculateSalePrice(productId, pricebookId, quantity, discount);
+            PricebookService.PricingMethod pricingMethod = getPricingMethod(offerType);
+            if (pricingMethod == PricebookService.PricingMethod.Pricebook) {
+                return PricebookService.calculateByPricebook(productId, pricebookId, quantity, discount);
             } else {
-                return PricebookService.calculateRentalServicesPrice(productId, pricebookId, quantity, discount);
+                return PricebookService.calculateByVolumePricing(productId, pricebookId, quantity, discount);
             }
         } catch (Exception e) {
             return PricingResponse.error(e.getMessage());
@@ -19,8 +19,8 @@ public inherited sharing class PricebookController {
             if (lineItems == null || lineItems.isEmpty()) {
                 return new List<PricingResponse>();
             }
-            String pricingType = getPricingType(offerType);
-            return PricebookService.calculatePrices(lineItems, pricingType, pricebookId);
+            PricebookService.PricingMethod pricingMethod = getPricingMethod(offerType);
+            return PricebookService.calculatePrices(lineItems, pricingMethod, pricebookId);
         } catch (Exception e) {
             List<PricingResponse> errors = new List<PricingResponse>();
             for (Integer i = 0; i < lineItems.size(); i++) {
@@ -30,40 +30,33 @@ public inherited sharing class PricebookController {
         }
     }
 
-    private static String getPricingType(Object offerType) {
+    private static PricebookService.PricingMethod getPricingMethod(Object offerType) {
         if (offerType == null) {
-            return 'Sale';
+            return PricebookService.PricingMethod.Pricebook;
         }
-        
+
         String offerTypeStr = String.valueOf(offerType);
-        
-        if (offerTypeStr.length() >= 15 && offerTypeStr.length() <= 18) {
-            try {
-                Id offerTypeId = offerTypeStr;
-                if (offerTypeId != null) {
-                    List<ProductCatalog> catalogs = [
-                        SELECT Name 
-                        FROM ProductCatalog 
-                        WHERE Id = :offerTypeId 
-                        LIMIT 1
-                    ];
-                    
-                    if (!catalogs.isEmpty() && catalogs[0].Name != null && catalogs[0].Name.containsIgnoreCase('Sale')) {
-                        return 'Sale';
-                    }
-                }
-            } catch (Exception e) {
-                if (offerTypeStr.equalsIgnoreCase('Sale')) {
-                    return 'Sale';
-                }
-                return 'Rental';
-            }
+        if (String.isBlank(offerTypeStr)) {
+            return PricebookService.PricingMethod.Pricebook;
         }
-        
-        if (offerTypeStr.equalsIgnoreCase('Sale')) {
-            return 'Sale';
+
+        List<String> volumeCatalogs = Label.Volume_Pricing_Catalog_Names.split(',');
+
+        ProductCatalog catalog = ProductCatalogDAO.getById(offerTypeStr);
+        if (catalog == null || String.isBlank(catalog.Name)) {
+            return PricebookService.PricingMethod.Pricebook;
         }
-        
-        return 'Rental';
+
+        if (matchesCatalog(catalog.Name, volumeCatalogs)) return PricebookService.PricingMethod.VolumePricing;
+        return PricebookService.PricingMethod.Pricebook;
+    }
+
+    private static Boolean matchesCatalog(String value, List<String> catalogs) {
+        if (String.isBlank(value) || catalogs == null || catalogs.isEmpty()) return false;
+        String normalized = value.trim();
+        for (String catalog : catalogs) {
+            if (normalized.containsIgnoreCase(catalog.trim())) return true;
+        }
+        return false;
     }
 }
