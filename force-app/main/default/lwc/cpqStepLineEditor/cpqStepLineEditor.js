@@ -5,58 +5,27 @@ import calculateLinePricesBatch from '@salesforce/apex/PricebookController.calcu
 const DEBOUNCE_DELAY = 500;
 
 const COLUMNS = [
-    {
-        type: 'text',
-        fieldName: 'productName',
-        label: 'Product',
-        isProduct: true
-    },
-    {
-        type: 'text',
-        fieldName: 'productCode',
-        label: 'Code',
-        isCode: true
-    },
-    {
-        type: 'number',
-        fieldName: 'quantity',
-        label: 'Qty',
-        editable: true,
-        isQty: true
-    },
-    {
-        type: 'currency',
-        fieldName: 'listUnitPrice',
-        label: 'List Price',
-        isCurrency: true,
-        isListPrice: true
-    },
-    {
-        type: 'number',
-        fieldName: 'additionalDiscount',
-        label: 'Disc. %',
-        editable: true,
-        isDiscount: true
-    },
-    {
-        type: 'currency',
-        fieldName: 'netUnitPrice',
-        label: 'Net Price',
-        isCurrency: true,
-        isNetPrice: true
-    },
-    {
-        type: 'currency',
-        fieldName: 'netTotal',
-        label: 'Total',
-        isCurrency: true,
-        isTotal: true
-    }
+    { type: 'text', fieldName: 'productName', label: 'Product', isProduct: true },
+    { type: 'text', fieldName: 'productCode', label: 'Code', isCode: true },
+    { type: 'number', fieldName: 'quantity', label: 'Qty', editable: true, isQty: true },
+    { type: 'currency', fieldName: 'listUnitPrice', label: 'List Price', isCurrency: true, isListPrice: true },
+    { type: 'number', fieldName: 'additionalDiscount', label: 'Disc. %', editable: true, isDiscount: true },
+    { type: 'currency', fieldName: 'netUnitPrice', label: 'Net Price', isCurrency: true, isNetPrice: true },
+    { type: 'currency', fieldName: 'netTotal', label: 'Total', isCurrency: true, isTotal: true }
 ];
 
 export default class CpqStepLineEditor extends LightningElement {
     _pricebookId = '';
     _offerType = null;
+    _selectedProducts = [];
+
+    @track lineItems = []; // FLATTENED state
+    @track isCalculating = false;
+    @track expandedRows = new Set();
+
+    _debounceTimer = null;
+    _calculationSequence = 0;
+    _initialPricingRequested = false;
 
     @api
     get pricebookId() {
@@ -77,16 +46,6 @@ export default class CpqStepLineEditor extends LightningElement {
         this._offerType = value;
     }
 
-    @track lineItems = [];
-    @track isCalculating = false;
-    @track expandedRows = new Set();
-
-    _pendingChanges = new Map();
-    _debounceTimer = null;
-    _selectedProducts = [];
-    _calculationSequence = 0;
-    _initialPricingRequested = false;
-
     @api
     get selectedProducts() {
         return this._selectedProducts;
@@ -97,69 +56,11 @@ export default class CpqStepLineEditor extends LightningElement {
         this._prepareLineItems();
         this._scheduleInitialPricing();
     }
-    
-    get flattenedData() {
-        const flat = [];
-        const processItems = (items, level = 1) => {
-            items.forEach((item, index) => {
-                const isExpanded = this.expandedRows.has(item._key);
-                const hasChildren = item._children && item._children.length > 0;
 
-                flat.push({
-                    ...item,
-                    rowId: item._key,
-                    level,
-                    ariaLevel: level,
-                    posInSet: index + 1,
-                    setSize: items.length,
-                    isExpanded,
-                    hasChildren,
-                    chevronClass: (hasChildren && !isExpanded) ? 'utility:chevronright' : 'utility:chevrondown',
-                    buttonStyle: hasChildren ? '' : 'visibility: hidden;',
-                    isQtyEditable: !item._isOption,
-                    isDiscountEditable: true,
-                    showCheckbox: !item._isOption,
-                    rowClass: `slds-hint-parent ${item._hasError ? 'slds-is-selected row-error' : ''}`,
-                    paddingStyle: `padding-left: ${level > 1 ? level * 1.5 : 0}rem;`,
-                    isSelected: !!item.isSelected,
-                    formattedListPrice: formatCurrency(Number.isFinite(item.listUnitPrice) ? item.listUnitPrice : 0),
-                    formattedNetPrice: formatCurrency(Number.isFinite(item.netUnitPrice) ? item.netUnitPrice : 0),
-                    formattedNetTotal: formatCurrency(Number.isFinite(item.netTotal) ? item.netTotal : 0),
-                    actionTitle: `More actions for ${item.productName}`
-                });
-
-                if (isExpanded && hasChildren) {
-                    processItems(item._children, level + 1);
-                }
-            });
-        };
-
-        processItems(this.lineItems || []);
-        return flat;
-    }
-
-    connectedCallback() {
-        this._prepareLineItems();
-        this._scheduleInitialPricing();
-    }
+    // ─── GETTERS ────────────────────────────────────────────────────────────
 
     get columns() {
         return COLUMNS;
-    }
-
-    get subtotal() {
-        if (this.lineItems && this.lineItems.length > 0) {
-            let total = 0;
-            this._forEachRow(row => {
-                total += Number(row.netTotal) || 0;
-            });
-            return Math.max(0, total);
-        }
-        return 0;
-    }
-
-    get formattedSubtotal() {
-        return formatCurrency(this.subtotal);
     }
 
     get isEmpty() {
@@ -170,115 +71,177 @@ export default class CpqStepLineEditor extends LightningElement {
         return !this.isEmpty;
     }
 
-    _forEachRow(callback) {
-        if (typeof callback !== 'function') {
-            return;
-        }
-
-        (this.lineItems || []).forEach(parentRow => {
-            callback(parentRow, { isChild: false, parentKey: parentRow._key });
-            (parentRow._children || []).forEach(childRow => {
-                callback(childRow, { isChild: true, parentKey: parentRow._key });
-            });
-        });
+    get subtotal() {
+        if (!this.lineItems || this.lineItems.length === 0) return 0;
+        const total = this.lineItems.reduce((sum, row) => sum + (Number(row.netTotal) || 0), 0);
+        return Math.max(0, total);
     }
 
-    _findRowByKey(rowKey) {
-        if (!rowKey) {
-            return null;
-        }
-
-        let matchedRow = null;
-        this._forEachRow(row => {
-            if (!matchedRow && row._key === rowKey) {
-                matchedRow = row;
-            }
-        });
-        return matchedRow;
+    get formattedSubtotal() {
+        return formatCurrency(this.subtotal);
     }
 
-    _mapRowsIn(rows, updater) {
-        if (typeof updater !== 'function') {
-            return [...(rows || [])];
-        }
+    get flattenedData() {
+        // Build view models sequentially directly from the flat array,
+        // skipping children if their parent is not expanded.
+        const viewData = [];
+        let indexInSet = 1;
 
-        return (rows || []).map(parentRow => {
-            const parentClone = { ...parentRow };
-            const updatedParent = updater(parentClone, { isChild: false, parentKey: parentRow._key }) || parentClone;
-
-            if (!updatedParent._children || updatedParent._children.length === 0) {
-                return updatedParent;
+        for (const row of this.lineItems) {
+            // Skip children of collapsed parents
+            if (row._isOption && row._parentId && !this.expandedRows.has(row._parentId)) {
+                continue;
             }
 
-            const updatedChildren = updatedParent._children.map(childRow => {
-                const childClone = { ...childRow };
-                return updater(childClone, { isChild: true, parentKey: updatedParent._key }) || childClone;
-            });
+            const isExpanded = this.expandedRows.has(row._key);
+            const level = row._isOption ? 2 : 1;
 
-            return {
-                ...updatedParent,
-                _children: updatedChildren
-            };
-        });
+            viewData.push({
+                ...row,
+                rowId: row._key,
+                level,
+                ariaLevel: level,
+                posInSet: indexInSet++,
+                setSize: this.lineItems.length, // approximation
+                isExpanded,
+                chevronClass: (row._hasChildren && !isExpanded) ? 'utility:chevronright' : 'utility:chevrondown',
+                buttonStyle: row._hasChildren ? '' : 'visibility: hidden;',
+                isQtyEditable: !row._isOption,
+                isDiscountEditable: true,
+                showCheckbox: !row._isOption,
+                rowClass: `slds-hint-parent ${row._hasError ? 'slds-is-selected row-error' : ''}`,
+                paddingStyle: `padding-left: ${level > 1 ? level * 1.5 : 0}rem;`,
+                isSelected: !!row.isSelected,
+                formattedListPrice: formatCurrency(Number.isFinite(row.listUnitPrice) ? row.listUnitPrice : 0),
+                formattedNetPrice: formatCurrency(Number.isFinite(row.netUnitPrice) ? row.netUnitPrice : 0),
+                formattedNetTotal: formatCurrency(Number.isFinite(row.netTotal) ? row.netTotal : 0),
+                actionTitle: `More actions for ${row.productName}`
+            });
+        }
+        return viewData;
     }
 
-    _mapRows(updater) {
-        return this._mapRowsIn(this.lineItems, updater);
+    // ─── LIFECYCLE ──────────────────────────────────────────────────────────
+
+    connectedCallback() {
+        this._prepareLineItems();
+        this._scheduleInitialPricing();
+    }
+
+    // ─── INITIALIZATION / FLATTENING ──────────────────────────────────────────
+
+    _buildParentLineItem(item, hasOptions) {
+        const listPrice = Number(item.listUnitPrice) || 0;
+        const discount = Number(item.additionalDiscount) || 0;
+        const qty = Number(item.quantity) || 1;
+        const netPrice = Number(item.netUnitPrice) || listPrice * (1 - discount / 100);
+        const total = Number(item.netTotal) || netPrice * qty;
+
+        return {
+            _key: item._key,
+            _hasError: false,
+            _errorMessage: '',
+            _hasChildren: hasOptions,
+            productId: item.productId,
+            productCode: item.productCode,
+            productName: item.productName,
+            quantity: qty,
+            listUnitPrice: listPrice,
+            additionalDiscount: discount,
+            netUnitPrice: netPrice,
+            netTotal: total,
+            isBundle: item.isBundle
+        };
+    }
+
+    _buildOptionLineItem(parentKey, opt) {
+        const optListPrice = Number(opt.unitPrice) || 0;
+        const optQty = Number(opt.quantity) || 1;
+
+        return {
+            _key: opt.Id,
+            _parentId: parentKey,
+            _isOption: true,
+            _hasError: false,
+            _errorMessage: '',
+            productId: opt.productId || opt.Id,
+            optionId: opt.Id,
+            productCode: opt.productCode,
+            productName: opt.productName,
+            quantity: optQty,
+            listUnitPrice: optListPrice,
+            additionalDiscount: 0,
+            netUnitPrice: optListPrice,
+            netTotal: optListPrice * optQty
+        };
+    }
+
+    _normalizeInlineEditValue(fieldName, value) {
+        if (fieldName === 'quantity') {
+            return Number.isFinite(parseFloat(value)) ? parseFloat(value) : 1;
+        }
+
+        if (fieldName === 'additionalDiscount') {
+            return Number.isFinite(parseFloat(value)) ? parseFloat(value) : 0;
+        }
+
+        return value;
+    }
+
+    _applyLocalOptionPricing(row, quantity, discount) {
+        const optListPrice = Number(row.listUnitPrice) || 0;
+        const optQty = Number(quantity) || 1;
+        const optDisc = Number(discount) || 0;
+        const netPrice = optListPrice * (1 - optDisc / 100);
+
+        return {
+            ...row,
+            quantity: optQty,
+            additionalDiscount: optDisc,
+            netUnitPrice: netPrice,
+            netTotal: netPrice * optQty,
+            _hasError: false,
+            _errorMessage: ''
+        };
+    }
+
+    _applyServerPricingResult(row, result) {
+        const updatedRow = { ...row };
+        if (result.success) {
+            updatedRow.listUnitPrice = result.listPrice;
+            updatedRow.netUnitPrice = result.netPrice;
+            updatedRow.netTotal = result.totalPrice;
+            updatedRow._hasError = false;
+            updatedRow._errorMessage = '';
+        } else {
+            updatedRow._hasError = true;
+            updatedRow._errorMessage = result.errorMessage;
+        }
+
+        return updatedRow;
     }
 
     _prepareLineItems() {
         if (!this._selectedProducts) return;
 
-        this.lineItems = this._selectedProducts.map(item => {
+        const flatItems = [];
+
+        this._selectedProducts.forEach(item => {
             const hasOptions = item.isBundle && item.configuredOptions && item.configuredOptions.length > 0;
-
-            const listUnitPrice = Number(item.listUnitPrice) || 0;
-            const additionalDiscount = Number(item.additionalDiscount) || 0;
-            const quantity = Number(item.quantity) || 1;
-            const netUnitPrice = Number(item.netUnitPrice) || listUnitPrice * (1 - additionalDiscount / 100);
-            const netTotal = Number(item.netTotal) || netUnitPrice * quantity;
-
-            const row = {
-                _key: item._key,
-                _hasError: false,
-                _errorMessage: '',
-                productId: item.productId,
-                productCode: item.productCode,
-                productName: item.productName,
-                quantity,
-                listUnitPrice,
-                additionalDiscount,
-                netUnitPrice,
-                netTotal,
-                isBundle: item.isBundle
-            };
+            flatItems.push(this._buildParentLineItem(item, hasOptions));
 
             if (hasOptions) {
-                row._children = [];
                 item.configuredOptions.forEach((opt) => {
-                    const optUnitPrice = Number(opt.unitPrice) || 0;
-                    const optQuantity = Number(opt.quantity) || 1;
-                    row._children.push({
-                        _key: opt.Id,
-                        productId: opt.productId || opt.Id,
-                        optionId: opt.Id,
-                        productCode: opt.productCode,
-                        productName: opt.productName,
-                        quantity: optQuantity,
-                        listUnitPrice: optUnitPrice,
-                        additionalDiscount: 0,
-                        netUnitPrice: optUnitPrice,
-                        netTotal: optUnitPrice * optQuantity,
-                        _isOption: true
-                    });
+                    flatItems.push(this._buildOptionLineItem(item._key, opt));
                 });
             }
-
-            return row;
         });
-        this.lineItems = [...this.lineItems];
+
+        this.lineItems = flatItems;
         this.expandedRows = new Set();
     }
+
+    // ─── EVENTS / DOM ACTIONS ───────────────────────────────────────────────
 
     handleToggleExpand(event) {
         const rowId = event.currentTarget.dataset.id;
@@ -287,40 +250,32 @@ export default class CpqStepLineEditor extends LightningElement {
         } else {
             this.expandedRows.add(rowId);
         }
-        // assigning a new set preserves reactivity in LWC
-        this.expandedRows = new Set(this.expandedRows);
+        this.expandedRows = new Set(this.expandedRows); // maintain reactivity
     }
 
     handleSelectAll(event) {
         const isChecked = event.target.checked;
-        const updatedData = this.lineItems.map(item => {
+        this.lineItems = this.lineItems.map(item => {
             if (!item._isOption) {
                 return { ...item, isSelected: isChecked };
             }
             return item;
         });
-        this.lineItems = updatedData;
         this._dispatchSelectionChange();
     }
 
     handleRowSelect(event) {
         const rowId = event.currentTarget.dataset.id;
         const isChecked = event.target.checked;
-        const updatedData = this._mapRows(row => {
-            if (row._key !== rowId) {
-                return row;
-            }
-            return { ...row, isSelected: isChecked };
-        });
-        this.lineItems = updatedData;
+        this.lineItems = this.lineItems.map(row => 
+            row._key === rowId ? { ...row, isSelected: isChecked } : row
+        );
         this._dispatchSelectionChange();
     }
 
     _dispatchSelectionChange() {
         const hasSelection = this.lineItems.some(item => item.isSelected);
-        this.dispatchEvent(new CustomEvent('selectionchange', {
-            detail: { hasSelection }
-        }));
+        this.dispatchEvent(new CustomEvent('selectionchange', { detail: { hasSelection } }));
     }
 
     handleDeleteSelected() {
@@ -331,65 +286,45 @@ export default class CpqStepLineEditor extends LightningElement {
             return;
         }
 
-        // Filter out selected parent rows
-        this.lineItems = this.lineItems.filter(item => !selectedIds.has(item._key));
-
-        // Clean up pending changes for deleted rows
-        selectedIds.forEach(id => {
-            this._pendingChanges.delete(id);
-            this.expandedRows.delete(id);
+        // Keep rows that are NOT selected AND whose parents are NOT selected
+        this.lineItems = this.lineItems.filter(row => {
+            const isSelfSelected = selectedIds.has(row._key);
+            const isParentSelected = row._isOption && selectedIds.has(row._parentId);
+            
+            // Clean up state tracking for removed items
+            if (isSelfSelected || isParentSelected) {
+                this.expandedRows.delete(row._key);
+            }
+            
+            return !isSelfSelected && !isParentSelected;
         });
 
-        // Re-assign to trigger reactivity
         this.expandedRows = new Set(this.expandedRows);
 
-        // Dispatch an event to parent to update header state (e.g. disable delete button)
-        this.dispatchEvent(new CustomEvent('selectionchange', {
-            detail: { hasSelection: false }
-        }));
+        this._dispatchSelectionChange();
+        showToast(this, 'Rows Deleted', `Successfully deleted selected rows.`, 'success');
 
-        showToast(this, 'Rows Deleted', `Successfully deleted ${selectedIds.size} row(s).`, 'success');
-
-        // Dispatch lineremove event to inform parent component
         selectedIds.forEach(id => {
-            this.dispatchEvent(new CustomEvent('lineremove', {
-                detail: { itemKey: id }
-            }));
+            this.dispatchEvent(new CustomEvent('lineremove', { detail: { itemKey: id } }));
         });
 
-        // Trigger calculation if any changes remain
-        if (this._pendingChanges.size > 0) {
-            this._scheduleBatchCalculation();
-        }
+        this._schedulePricingCalculation();
     }
     
     handleInlineEdit(event) {
         const itemKey = event.currentTarget.dataset.id;
         const fieldName = event.currentTarget.dataset.field;
-        let value = event.target.value;
-        if (fieldName === 'quantity') {
-            value = Number.isFinite(parseFloat(value)) ? parseFloat(value) : 1;
-        } else if (fieldName === 'additionalDiscount') {
-            value = Number.isFinite(parseFloat(value)) ? parseFloat(value) : 0;
-        }
-
-        this._pendingChanges.set(itemKey, {
-            ...this._pendingChanges.get(itemKey),
-            [fieldName]: value
-        });
+        const value = this._normalizeInlineEditValue(fieldName, event.target.value);
 
         this._updateLocalData(itemKey, fieldName, value);
-        this._scheduleBatchCalculation();
+
+        this._schedulePricingCalculation();
     }
 
     _updateLocalData(itemKey, field, value) {
-        let rowWasUpdated = false;
-        const updatedData = this._mapRows(row => {
-            if (row._key !== itemKey) {
-                return row;
-            }
+        this.lineItems = this.lineItems.map(row => {
+            if (row._key !== itemKey) return row;
 
-            rowWasUpdated = true;
             const updatedRow = { ...row, [field]: value };
             if (field === 'quantity' || field === 'additionalDiscount') {
                 const listPrice = Number(updatedRow.listUnitPrice) || 0;
@@ -400,83 +335,50 @@ export default class CpqStepLineEditor extends LightningElement {
             }
             return updatedRow;
         });
-
-        if (rowWasUpdated) {
-            this.lineItems = updatedData;
-        }
     }
 
-    _scheduleBatchCalculation() {
+    // ─── PRICING CALCULATIONS ────────────────────────────────────────────────
+
+    _schedulePricingCalculation() {
         if (this._debounceTimer) {
             clearTimeout(this._debounceTimer);
         }
         this._debounceTimer = setTimeout(() => {
-            this._executeBatchCalculation();
+            this._executePricingCalculation();
         }, DEBOUNCE_DELAY);
     }
 
-    async _executeBatchCalculation() {
-        if (this._pendingChanges.size === 0 || !this.pricebookId) return;
-
-        const pendingSnapshot = Array.from(this._pendingChanges.entries());
-        if (pendingSnapshot.length === 0) {
-            return;
-        }
+    async _executePricingCalculation() {
+        if (!this.pricebookId || this.lineItems.length === 0) return;
 
         const calculationSequence = ++this._calculationSequence;
         this.isCalculating = true;
+
         const pricingRequestItems = [];
         const pricingRequestKeys = [];
         let updatedData = [...this.lineItems];
 
-        for (const [itemKey, changes] of pendingSnapshot) {
-            const row = this._findRowByKey(itemKey);
-            if (!row) {
+        for (let i = 0; i < updatedData.length; i++) {
+            const row = updatedData[i];
+            const hasServerProductId = row.productId && row.productId !== row.optionId;
+
+            // Local-only options don't need server pricing
+            if (row._isOption && !hasServerProductId) {
+                updatedData[i] = this._applyLocalOptionPricing(row, row.quantity, row.additionalDiscount);
                 continue;
             }
 
-            const quantity = changes.quantity ?? row.quantity;
-            const discount = changes.additionalDiscount ?? row.additionalDiscount;
-
-            const hasServerProductId = row.productId && row.productId !== row.optionId;
-
-                if (row._isOption && !hasServerProductId) {
-                    updatedData = this._mapRowsIn(updatedData, candidateRow => {
-                        if (candidateRow._key !== itemKey) {
-                            return candidateRow;
-                        }
-
-                        const optListPrice = Number(candidateRow.listUnitPrice) || 0;
-                        const optQty = Number(quantity) || 1;
-                        const optDisc = Number(discount) || 0;
-                        const updatedChild = {
-                            ...candidateRow,
-                            quantity: optQty,
-                            additionalDiscount: optDisc
-                        };
-                        updatedChild.netUnitPrice = optListPrice * (1 - optDisc / 100);
-                        updatedChild.netTotal = updatedChild.netUnitPrice * optQty;
-                        updatedChild._hasError = false;
-                        updatedChild._errorMessage = '';
-                        return updatedChild;
-                    });
-                    continue;
-                }
-
-            pricingRequestKeys.push(itemKey);
+            pricingRequestKeys.push(row._key);
             pricingRequestItems.push({
                 productId: row.productId,
-                quantity,
-                discount
+                quantity: row.quantity,
+                discount: row.additionalDiscount
             });
         }
 
         try {
             if (pricingRequestItems.length === 0) {
                 this.lineItems = updatedData;
-                pendingSnapshot.forEach(([itemKey]) => {
-                    this._pendingChanges.delete(itemKey);
-                });
                 return;
             }
 
@@ -486,40 +388,20 @@ export default class CpqStepLineEditor extends LightningElement {
                 pricebookId: this.pricebookId
             });
 
-            if (calculationSequence !== this._calculationSequence) {
-                return;
-            }
+            if (calculationSequence !== this._calculationSequence) return;
 
-            let hasErrors = false;
-
+            // Map server results back to line items
             for (let i = 0; i < results.length && i < pricingRequestKeys.length; i++) {
                 const result = results[i];
                 const itemKey = pricingRequestKeys[i];
-                updatedData = this._mapRowsIn(updatedData, row => {
-                    if (row._key !== itemKey) {
-                        return row;
-                    }
 
-                    const updatedRow = { ...row };
-                    if (result.success) {
-                        updatedRow.listUnitPrice = result.listPrice;
-                        updatedRow.netUnitPrice = result.netPrice;
-                        updatedRow.netTotal = result.totalPrice;
-                        updatedRow._hasError = false;
-                        updatedRow._errorMessage = '';
-                    } else {
-                        updatedRow._hasError = true;
-                        updatedRow._errorMessage = result.errorMessage;
-                        hasErrors = true;
-                    }
-                    return updatedRow;
-                });
+                const rowIndex = updatedData.findIndex(r => r._key === itemKey);
+                if (rowIndex !== -1) {
+                    updatedData[rowIndex] = this._applyServerPricingResult(updatedData[rowIndex], result);
+                }
             }
 
             this.lineItems = updatedData;
-            pendingSnapshot.forEach(([itemKey]) => {
-                this._pendingChanges.delete(itemKey);
-            });
 
         } catch (error) {
             console.error('Pricing calculation error:', error);
@@ -532,14 +414,7 @@ export default class CpqStepLineEditor extends LightningElement {
     }
 
     async handleRefreshPricing() {
-        this._pendingChanges.clear();
-        this._forEachRow(row => {
-            this._pendingChanges.set(row._key, {
-                quantity: row.quantity,
-                additionalDiscount: row.additionalDiscount
-            });
-        });
-        await this._executeBatchCalculation();
+        await this._executePricingCalculation();
     }
 
     _scheduleInitialPricing() {
@@ -548,23 +423,19 @@ export default class CpqStepLineEditor extends LightningElement {
         if (!this.pricebookId) return;
 
         this._initialPricingRequested = true;
-        this._pendingChanges.clear();
-        this._forEachRow(row => {
-            this._pendingChanges.set(row._key, {
-                quantity: row.quantity,
-                additionalDiscount: row.additionalDiscount
-            });
-        });
-        this._scheduleBatchCalculation();
+        this._schedulePricingCalculation();
     }
+
+
+    // ─── VALIDATION ─────────────────────────────────────────────────────────
 
     @api
     validate() {
-        if (this.isCalculating) return false;
-        if (this.lineItems.length === 0) return false;
+        if (this.isCalculating || this.lineItems.length === 0) return false;
 
         let hasValidationErrors = false;
-        const updatedData = this._mapRows(row => {
+        
+        this.lineItems = this.lineItems.map(row => {
             const updatedRow = { ...row };
             const discount = Number(updatedRow.additionalDiscount);
             const quantity = Number(updatedRow.quantity);
@@ -586,34 +457,28 @@ export default class CpqStepLineEditor extends LightningElement {
             return updatedRow;
         });
 
-        this.lineItems = updatedData;
         return !hasValidationErrors && !this._hasPricingErrors();
     }
 
     _hasPricingErrors() {
-        let found = false;
-        this._forEachRow(row => {
-            if (row._hasError) found = true;
-        });
-        return found;
+        return this.lineItems.some(row => row._hasError);
     }
 
-    handleValidateAll() {
+    @api
+    validateAll() {
         if (this.lineItems.length === 0) {
             showToast(this, 'Validation Failed', 'No line items to validate.', 'error');
-            return;
+            return false;
         }
 
         const isValid = this.validate();
         if (!isValid) {
-            let errorCount = 0;
-            this._forEachRow(row => {
-                if (row._hasError) errorCount++;
-            });
+            const errorCount = this.lineItems.filter(row => row._hasError).length;
             showToast(this, 'Validation Failed', `${errorCount} line item(s) have errors.`, 'error');
         } else {
             showToast(this, 'Validation Passed', 'All line items are valid', 'success');
         }
+        return isValid;
     }
 
     @api
@@ -626,7 +491,7 @@ export default class CpqStepLineEditor extends LightningElement {
                 this.handleRefreshPricing();
                 break;
             case 'validateAll':
-                this.handleValidateAll();
+                this.validateAll();
                 break;
             default:
                 break;
