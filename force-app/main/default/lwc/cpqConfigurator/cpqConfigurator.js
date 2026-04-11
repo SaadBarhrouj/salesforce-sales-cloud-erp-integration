@@ -9,6 +9,7 @@ import OPP_PRICEBOOK_NAME from "@salesforce/schema/Opportunity.Pricebook2.Name";
 import OPP_OFFER_TYPE from "@salesforce/schema/Opportunity.Offer_Type__c";
 import OPP_OFFER_TYPE_NAME from "@salesforce/schema/Opportunity.Offer_Type__r.Name";
 import getSidebarCategoriesByOfferType from "@salesforce/apex/ProductCategoryController.getSidebarCategoriesByOfferType";
+import getBundleData from "@salesforce/apex/BundleOptionController.getBundleData";
 import { STEPS, MESSAGES, STEP_LIST } from "c/cpqConstants";
 import {
   deepClone,
@@ -47,13 +48,10 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
     this.initSidebarData(this.currentStep.key);
   }
 
-  _goNext() {
+  async _goNext() {
     if (this.isStepConfigure) {
-      const bundleConfig = this._getBundleConfigStep();
-      if (bundleConfig && this.selectedItemId) {
-        const isValid = bundleConfig.saveCurrentConfig();
-        if (!isValid) return; 
-      }
+      const saved = await this._ensureAllBundlesConfigured();
+      if (!saved) return;
     }
 
     if (this.isStepLineEditor) {
@@ -81,7 +79,7 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
     }
   }
 
-  _goBack() {
+  async _goBack() {
     if (this.isStepConfigure) {
       const bundleConfig = this._getBundleConfigStep();
       if (bundleConfig && this.selectedItemId) {
@@ -411,6 +409,76 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
 
   _handleResetEditing() {
     this._getLineEditorStep()?.resetLineItems();
+  }
+
+  async _ensureAllBundlesConfigured() {
+    const bundleConfig = this._getBundleConfigStep();
+    if (bundleConfig && this.selectedItemId) {
+      const isValid = bundleConfig.saveCurrentConfig();
+      if (!isValid) return false;
+    }
+
+    const unconfiguredBundles = this.selectedProducts.filter(
+      p => p.isBundle && (!p.configuredOptions || p.configuredOptions.length === 0)
+    );
+
+    if (unconfiguredBundles.length === 0) return true;
+
+    for (const bundle of unconfiguredBundles) {
+      if (this.bundleConfigCache[bundle._key]) {
+        const cached = this.bundleConfigCache[bundle._key];
+        const productsList = deepClone(this.selectedProducts);
+        const idx = productsList.findIndex(p => p._key === bundle._key);
+        if (idx !== -1) {
+          productsList[idx].configuredOptions = deepClone(cached.selectedOptions);
+          productsList[idx].featuresState = deepClone(cached.features);
+        }
+        this.selectedProducts = productsList;
+      } else {
+        try {
+          const result = await getBundleData({ bundleId: bundle.productId });
+          const selectedOptions = this._extractDefaultSelectedOptions(result.features || []);
+          const productsList = deepClone(this.selectedProducts);
+          const idx = productsList.findIndex(p => p._key === bundle._key);
+          if (idx !== -1) {
+            productsList[idx].configuredOptions = selectedOptions;
+            productsList[idx].featuresState = result.features;
+          }
+          this.selectedProducts = productsList;
+          this.bundleConfigCache[bundle._key] = {
+            features: deepClone(result.features),
+            selectedOptions: deepClone(selectedOptions)
+          };
+        } catch (error) {
+          console.error('Error loading bundle data for unconfigured bundle:', error);
+          showToast(this, 'Configuration Error', `Failed to load configuration for "${bundle.productName}".`, 'error');
+          return false;
+        }
+      }
+    }
+
+    return true;
+  }
+
+  _extractDefaultSelectedOptions(features) {
+    const selected = [];
+    for (const feature of features) {
+      for (const option of (feature.options || [])) {
+        if (option.isSelected || option.isRequired) {
+          selected.push({
+            Id: option.Id,
+            productId: option.productId,
+            productCode: option.productCode,
+            productName: option.productName,
+            quantity: option.defaultQuantity || option.quantity || 1,
+            unitPrice: option.unitPrice || 0,
+            isRequired: option.isRequired,
+            isSelected: true
+          });
+        }
+      }
+    }
+    return selected;
   }
 
   _handleSaveConfig() {

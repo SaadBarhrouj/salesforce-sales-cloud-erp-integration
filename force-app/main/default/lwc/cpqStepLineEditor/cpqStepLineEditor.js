@@ -20,7 +20,7 @@ export default class CpqStepLineEditor extends LightningElement {
     _selectedProducts = [];
 
     @track lineItems = []; // FLATTENED state
-    @track isLoading = false;
+    @track isLoading = true;
     @track expandedRows = new Set();
 
     _debounceTimer = null;
@@ -203,6 +203,7 @@ export default class CpqStepLineEditor extends LightningElement {
             if (currentKeys.has(key)) preservedExpand.add(key);
         }
         this.expandedRows = preservedExpand;
+        this.isLoading = false;
     }
 
     // ─── EVENTS / DOM ACTIONS ───────────────────────────────────────────────
