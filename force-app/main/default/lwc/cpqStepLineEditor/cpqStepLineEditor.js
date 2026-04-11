@@ -521,10 +521,6 @@ export default class CpqStepLineEditor extends LightningElement {
                 this._pendingChanges.delete(itemKey);
             });
 
-            if (hasErrors) {
-                showToast(this, 'Pricing Warning', 'Some items could not be priced. Check the line editor for details.', 'warning');
-            }
-
         } catch (error) {
             console.error('Pricing calculation error:', error);
             showToast(this, 'Pricing Error', error.message || 'Pricing calculation failed', 'error');
@@ -562,8 +558,12 @@ export default class CpqStepLineEditor extends LightningElement {
         this._scheduleBatchCalculation();
     }
 
-    handleValidateAll() {
-        const errors = [];
+    @api
+    validate() {
+        if (this.isCalculating) return false;
+        if (this.lineItems.length === 0) return false;
+
+        let hasValidationErrors = false;
         const updatedData = this._mapRows(row => {
             const updatedRow = { ...row };
             const discount = Number(updatedRow.additionalDiscount);
@@ -572,12 +572,13 @@ export default class CpqStepLineEditor extends LightningElement {
             if (!Number.isFinite(discount) || discount < 0 || discount > 100) {
                 updatedRow._hasError = true;
                 updatedRow._errorMessage = 'Discount must be between 0 and 100';
-                errors.push(`${updatedRow.productName}: Invalid discount`);
+                hasValidationErrors = true;
             } else if (!Number.isFinite(quantity) || quantity < 1) {
                 updatedRow._hasError = true;
                 updatedRow._errorMessage = 'Quantity must be at least 1';
-                errors.push(`${updatedRow.productName}: Invalid quantity`);
-            } else {
+                hasValidationErrors = true;
+            } else if (updatedRow._errorMessage === 'Discount must be between 0 and 100'
+                    || updatedRow._errorMessage === 'Quantity must be at least 1') {
                 updatedRow._hasError = false;
                 updatedRow._errorMessage = '';
             }
@@ -586,9 +587,30 @@ export default class CpqStepLineEditor extends LightningElement {
         });
 
         this.lineItems = updatedData;
+        return !hasValidationErrors && !this._hasPricingErrors();
+    }
 
-        if (errors.length > 0) {
-            showToast(this, 'Validation Failed', `${errors.length} item(s) have validation errors: ${errors.join(', ')}`, 'error');
+    _hasPricingErrors() {
+        let found = false;
+        this._forEachRow(row => {
+            if (row._hasError) found = true;
+        });
+        return found;
+    }
+
+    handleValidateAll() {
+        if (this.lineItems.length === 0) {
+            showToast(this, 'Validation Failed', 'No line items to validate.', 'error');
+            return;
+        }
+
+        const isValid = this.validate();
+        if (!isValid) {
+            let errorCount = 0;
+            this._forEachRow(row => {
+                if (row._hasError) errorCount++;
+            });
+            showToast(this, 'Validation Failed', `${errorCount} line item(s) have errors.`, 'error');
         } else {
             showToast(this, 'Validation Passed', 'All line items are valid', 'success');
         }

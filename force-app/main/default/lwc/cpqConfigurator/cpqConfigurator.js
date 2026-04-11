@@ -56,6 +56,21 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
       }
     }
 
+    if (this.isStepLineEditor) {
+      const lineEditor = this._getLineEditorStep();
+      if (lineEditor) {
+        if (lineEditor.isCalculating) {
+          showToast(this, 'Validation Blocked', 'Pricing is still being calculated. Please wait.', 'warning');
+          return;
+        }
+        const isValid = lineEditor.validate();
+        if (!isValid) {
+          showToast(this, 'Validation Failed', 'Please fix all line editor errors before proceeding.', 'error');
+          return;
+        }
+      }
+    }
+
     const currentIndex = STEP_LIST.findIndex(
       (s) => s.key === this.currentStep.key
     );
@@ -389,7 +404,6 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
     const bundleConfig = this._getBundleConfigStep();
     if (bundleConfig) {
       if (bundleConfig.saveCurrentConfig()) {
-        this._showToast("Configuration Saved", "Bundle configuration saved successfully", "success");
         this._goNext();
       }
     }
@@ -593,7 +607,6 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
     items.push(cartItem);
     this.selectedProducts = items;
 
-    // If now in Step 2 (Configure), refresh sidebar to show updated bundle list
     if (this.isStepConfigure) {
       this._loadConfigureSidebar();
     }
