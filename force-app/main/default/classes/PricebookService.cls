@@ -1,7 +1,18 @@
+/**
+ * @description Service class for calculating product and bundle pricing.
+ * It supports standard Pricebook pricing and Volume-based pricing logic.
+ */
 public inherited sharing class PricebookService {
     private static final String PRICEBOOK_METHOD = 'Pricebook';
-    private static final String VOLUME_PRICING_METHOD = 'VolumePricing';
-
+    private static final String VOLUME_PRICING_METHOD = 'VolumePricing';  
+      
+    /**
+     * @description Calculates pricing for multiple line items based on a pricing method.
+     * @param lineItems List of line items with productId, quantity, and discount.
+     * @param pricingMethod Either 'Pricebook' or 'VolumePricing'.
+     * @param pricebookId The Pricebook to use for lookups.
+     * @return List of PricingResponse objects with calculated values.
+     */
     public static List<PricingResponse> calculatePrices(List<Map<String, Object>> lineItems, String pricingMethod, Id pricebookId) {
         List<PricingResponse> responses = new List<PricingResponse>();
 
@@ -21,6 +32,14 @@ public inherited sharing class PricebookService {
     }
 
 
+    /**
+     * @description Calculates price using standard Pricebook Entry.
+     * @param productId Product Id to look up.
+     * @param pricebookId Pricebook Id to look up.
+     * @param quantity Quantity to multiply.
+     * @param discount Discount percentage to apply.
+     * @return PricingResponse with calculated prices.
+     */
     public static PricingResponse calculateByPricebook(Id productId, Id pricebookId, Integer quantity, Decimal discount) {
         try {
             validateDiscount(discount);
@@ -49,6 +68,14 @@ public inherited sharing class PricebookService {
         }
     }
 
+    /**
+     * @description Calculates price using Volume Pricing Schedules and Tiers.
+     * @param productId Product Id with an active schedule.
+     * @param pricebookId Pricebook Id for lookup.
+     * @param quantity Quantity to determine the tier.
+     * @param discount Discount percentage to apply.
+     * @return PricingResponse with tiered or block pricing result.
+     */
     public static PricingResponse calculateByVolumePricing(Id productId, Id pricebookId, Integer quantity, Decimal discount) {
         try {
             validateDiscount(discount);
@@ -72,15 +99,13 @@ public inherited sharing class PricebookService {
 
             if (matchedTier != null) {
                 listPrice = matchedTier.Price__c.setScale(2);
-            /* 
             } else if (schedule.Overage_Rate__c != null) {
                 listPrice = schedule.Overage_Rate__c.setScale(2);
-            */
             } else {
                 return PricingResponse.error('No matching tier for quantity: ' + quantity);
             }
 
-            Decimal netPrice = listPrice * (1 - discount / 100);
+            Decimal netPrice = listPrice * (1 - discount / 100).setScale(2);
             Decimal totalPrice;
 
             if (schedule.Pricing_Type__c == 'Block') {
@@ -94,7 +119,7 @@ public inherited sharing class PricebookService {
             PricingResponse response = new PricingResponse();
             response.productId = productId;
             response.listPrice = listPrice;
-            response.netPrice = netPrice.setScale(2);
+            response.netPrice = netPrice;
             response.totalPrice = totalPrice;
             response.discount = discount;
             response.quantity = quantity;
@@ -118,16 +143,28 @@ public inherited sharing class PricebookService {
     }
     
     private static Integer toInteger(Object value) {
-        if (value == null) return 1;
-        if (value instanceof Integer) return (Integer) value;
-        if (value instanceof Decimal) return ((Decimal) value).intValue();
+        if (value == null) {
+            return 1;
+        }
+        if (value instanceof Integer) {
+            return (Integer) value;
+        }
+        if (value instanceof Decimal) {
+            return ((Decimal) value).intValue();
+        }
         return Integer.valueOf(String.valueOf(value));
     }
 
     private static Decimal toDecimal(Object value) {
-        if (value == null) return 0;
-        if (value instanceof Decimal) return (Decimal) value;
-        if (value instanceof Integer) return Decimal.valueOf((Integer) value);
+        if (value == null) {
+            return 0;
+        }
+        if (value instanceof Decimal) {
+            return (Decimal) value;
+        }
+        if (value instanceof Integer) {
+            return Decimal.valueOf((Integer) value);
+        }
         return Decimal.valueOf(String.valueOf(value));
     }
 
