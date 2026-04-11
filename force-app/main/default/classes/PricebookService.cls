@@ -1,10 +1,27 @@
 public inherited sharing class PricebookService {
-    public enum PricingMethod {
-        Pricebook,
-        VolumePricing
+    public class PricingException extends Exception {}
+
+    private static final String PRICEBOOK_METHOD = 'Pricebook';
+    private static final String VOLUME_PRICING_METHOD = 'VolumePricing';
+
+    public static List<PricingResponse> calculatePrices(List<Map<String, Object>> lineItems, String pricingMethod, Id pricebookId) {
+        List<PricingResponse> responses = new List<PricingResponse>();
+
+        for (Map<String, Object> item : lineItems) {
+            Id productId = (Id) item.get('productId');
+            Integer quantity = toInteger(item.get('quantity'));
+            Decimal discount = toDecimal(item.get('discount'));
+
+            PricingResponse response = pricingMethod == VOLUME_PRICING_METHOD
+                ? calculateByVolumePricing(productId, pricebookId, quantity, discount)
+                : calculateByPricebook(productId, pricebookId, quantity, discount);
+
+            responses.add(response);
+        }
+
+        return responses;
     }
 
-    public class PricingException extends Exception {}
 
     public static PricingResponse calculateByPricebook(Id productId, Id pricebookId, Integer quantity, Decimal discount) {
         try {
@@ -27,7 +44,7 @@ public inherited sharing class PricebookService {
             response.totalPrice = totalPrice;
             response.discount = discount;
             response.quantity = quantity;
-            response.pricingMethod = PricingMethod.Pricebook.name();
+            response.pricingMethod = PRICEBOOK_METHOD;
             return response;
         } catch (Exception e) {
             return PricingResponse.error(e.getMessage());
@@ -87,30 +104,13 @@ public inherited sharing class PricebookService {
         Decimal qty = Decimal.valueOf(quantity);
         for (Volume_Pricing_Tier__c tier : tiers) {
             if (tier.Lower_Bound__c != null && tier.Upper_Bound__c != null &&
-                qty >= tier.Lower_Bound__c && qty < tier.Upper_Bound__c) {
+                qty >= tier.Lower_Bound__c && qty <= tier.Upper_Bound__c) {
                 return tier;
             }
         }
         return null;
     }
-
-    public static List<PricingResponse> calculatePrices(List<Map<String, Object>> lineItems, PricingMethod pricingMethod, Id pricebookId) {
-        List<PricingResponse> responses = new List<PricingResponse>();
-
-        for (Map<String, Object> item : lineItems) {
-            Id productId = (Id) item.get('productId');
-            Integer quantity = toInteger(item.get('quantity'));
-            Decimal discount = toDecimal(item.get('discount'));
-
-            PricingResponse response = pricingMethod == PricingMethod.Pricebook
-                ? calculateByPricebook(productId, pricebookId, quantity, discount)
-                : calculateByVolumePricing(productId, pricebookId, quantity, discount);
-            responses.add(response);
-        }
-
-        return responses;
-    }
-
+    
     private static Integer toInteger(Object value) {
         if (value == null) return 1;
         if (value instanceof Integer) return (Integer) value;
