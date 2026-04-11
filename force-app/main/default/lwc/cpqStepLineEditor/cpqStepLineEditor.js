@@ -1,6 +1,6 @@
 import { LightningElement, api, track } from 'lwc';
 import { formatCurrency, showToast } from 'c/cpqUtils';
-import calculateLinePricesBatch from '@salesforce/apex/PricebookController.calculateLinePricesBatch';
+import calculateLinePrices from '@salesforce/apex/PricebookController.calculateLinePrices';
 
 const DEBOUNCE_DELAY = 500;
 
@@ -20,7 +20,7 @@ export default class CpqStepLineEditor extends LightningElement {
     _selectedProducts = [];
 
     @track lineItems = []; // FLATTENED state
-    @track isCalculating = false;
+    @track isLoading = false;
     @track expandedRows = new Set();
 
     _debounceTimer = null;
@@ -176,51 +176,6 @@ export default class CpqStepLineEditor extends LightningElement {
         };
     }
 
-    _normalizeInlineEditValue(fieldName, value) {
-        if (fieldName === 'quantity') {
-            return Number.isFinite(parseFloat(value)) ? parseFloat(value) : 1;
-        }
-
-        if (fieldName === 'additionalDiscount') {
-            return Number.isFinite(parseFloat(value)) ? parseFloat(value) : 0;
-        }
-
-        return value;
-    }
-
-    _applyLocalOptionPricing(row, quantity, discount) {
-        const optListPrice = Number(row.listUnitPrice) || 0;
-        const optQty = Number(quantity) || 1;
-        const optDisc = Number(discount) || 0;
-        const netPrice = optListPrice * (1 - optDisc / 100);
-
-        return {
-            ...row,
-            quantity: optQty,
-            additionalDiscount: optDisc,
-            netUnitPrice: netPrice,
-            netTotal: netPrice * optQty,
-            _hasError: false,
-            _errorMessage: ''
-        };
-    }
-
-    _applyServerPricingResult(row, result) {
-        const updatedRow = { ...row };
-        if (result.success) {
-            updatedRow.listUnitPrice = result.listPrice;
-            updatedRow.netUnitPrice = result.netPrice;
-            updatedRow.netTotal = result.totalPrice;
-            updatedRow._hasError = false;
-            updatedRow._errorMessage = '';
-        } else {
-            updatedRow._hasError = true;
-            updatedRow._errorMessage = result.errorMessage;
-        }
-
-        return updatedRow;
-    }
-
     _prepareLineItems() {
         if (!this._selectedProducts) return;
 
@@ -314,19 +269,19 @@ export default class CpqStepLineEditor extends LightningElement {
     handleInlineEdit(event) {
         const itemKey = event.currentTarget.dataset.id;
         const fieldName = event.currentTarget.dataset.field;
-        const value = this._normalizeInlineEditValue(fieldName, event.target.value);
+        let value = event.target.value;
 
-        this._updateLocalData(itemKey, fieldName, value);
+        if (fieldName === 'quantity') {
+            value = Number.isFinite(parseFloat(value)) ? parseFloat(value) : 1;
+        } else if (fieldName === 'additionalDiscount') {
+            value = Number.isFinite(parseFloat(value)) ? parseFloat(value) : 0;
+        }
 
-        this._schedulePricingCalculation();
-    }
-
-    _updateLocalData(itemKey, field, value) {
         this.lineItems = this.lineItems.map(row => {
             if (row._key !== itemKey) return row;
 
-            const updatedRow = { ...row, [field]: value };
-            if (field === 'quantity' || field === 'additionalDiscount') {
+            const updatedRow = { ...row, [fieldName]: value };
+            if (fieldName === 'quantity' || fieldName === 'additionalDiscount') {
                 const listPrice = Number(updatedRow.listUnitPrice) || 0;
                 const discount = Number(updatedRow.additionalDiscount) || 0;
                 const qty = Number(updatedRow.quantity) || 1;
@@ -335,6 +290,8 @@ export default class CpqStepLineEditor extends LightningElement {
             }
             return updatedRow;
         });
+
+        this._schedulePricingCalculation();
     }
 
     // ─── PRICING CALCULATIONS ────────────────────────────────────────────────
@@ -349,10 +306,13 @@ export default class CpqStepLineEditor extends LightningElement {
     }
 
     async _executePricingCalculation() {
-        if (!this.pricebookId || this.lineItems.length === 0) return;
+        if (!this.pricebookId || this.lineItems.length === 0) {
+            this.isLoading = false;
+            return;
+        }
 
         const calculationSequence = ++this._calculationSequence;
-        this.isCalculating = true;
+        this.isLoading = true;
 
         const pricingRequestItems = [];
         const pricingRequestKeys = [];
@@ -364,7 +324,20 @@ export default class CpqStepLineEditor extends LightningElement {
 
             // Local-only options don't need server pricing
             if (row._isOption && !hasServerProductId) {
-                updatedData[i] = this._applyLocalOptionPricing(row, row.quantity, row.additionalDiscount);
+                const optListPrice = Number(row.listUnitPrice) || 0;
+                const optQty = Number(row.quantity) || 1;
+                const optDisc = Number(row.additionalDiscount) || 0;
+                const netPrice = optListPrice * (1 - optDisc / 100);
+
+                updatedData[i] = {
+                    ...row,
+                    quantity: optQty,
+                    additionalDiscount: optDisc,
+                    netUnitPrice: netPrice,
+                    netTotal: netPrice * optQty,
+                    _hasError: false,
+                    _errorMessage: ''
+                };
                 continue;
             }
 
@@ -382,7 +355,7 @@ export default class CpqStepLineEditor extends LightningElement {
                 return;
             }
 
-            const results = await calculateLinePricesBatch({
+            const results = await calculateLinePrices({
                 lineItems: pricingRequestItems,
                 offerType: this.offerType,
                 pricebookId: this.pricebookId
@@ -397,7 +370,18 @@ export default class CpqStepLineEditor extends LightningElement {
 
                 const rowIndex = updatedData.findIndex(r => r._key === itemKey);
                 if (rowIndex !== -1) {
-                    updatedData[rowIndex] = this._applyServerPricingResult(updatedData[rowIndex], result);
+                    const rowToUpdate = { ...updatedData[rowIndex] };
+                    if (result.success) {
+                        rowToUpdate.listUnitPrice = result.listPrice;
+                        rowToUpdate.netUnitPrice = result.netPrice;
+                        rowToUpdate.netTotal = result.totalPrice;
+                        rowToUpdate._hasError = false;
+                        rowToUpdate._errorMessage = '';
+                    } else {
+                        rowToUpdate._hasError = true;
+                        rowToUpdate._errorMessage = result.errorMessage;
+                    }
+                    updatedData[rowIndex] = rowToUpdate;
                 }
             }
 
@@ -408,12 +392,13 @@ export default class CpqStepLineEditor extends LightningElement {
             showToast(this, 'Pricing Error', error.message || 'Pricing calculation failed', 'error');
         } finally {
             if (calculationSequence === this._calculationSequence) {
-                this.isCalculating = false;
+                this.isLoading = false;
             }
         }
     }
 
     async handleRefreshPricing() {
+        this.isLoading = true;
         await this._executePricingCalculation();
     }
 
@@ -431,7 +416,7 @@ export default class CpqStepLineEditor extends LightningElement {
 
     @api
     validate() {
-        if (this.isCalculating || this.lineItems.length === 0) return false;
+        if (this.isLoading || this.lineItems.length === 0) return false;
 
         let hasValidationErrors = false;
         
@@ -465,23 +450,6 @@ export default class CpqStepLineEditor extends LightningElement {
     }
 
     @api
-    validateAll() {
-        if (this.lineItems.length === 0) {
-            showToast(this, 'Validation Failed', 'No line items to validate.', 'error');
-            return false;
-        }
-
-        const isValid = this.validate();
-        if (!isValid) {
-            const errorCount = this.lineItems.filter(row => row._hasError).length;
-            showToast(this, 'Validation Failed', `${errorCount} line item(s) have errors.`, 'error');
-        } else {
-            showToast(this, 'Validation Passed', 'All line items are valid', 'success');
-        }
-        return isValid;
-    }
-
-    @api
     handleHeaderAction(actionName) {
         switch (actionName) {
             case 'deleteSelected':
@@ -489,9 +457,6 @@ export default class CpqStepLineEditor extends LightningElement {
                 break;
             case 'refreshPricing':
                 this.handleRefreshPricing();
-                break;
-            case 'validateAll':
-                this.validateAll();
                 break;
             default:
                 break;

@@ -1,7 +1,7 @@
 <template>
     <div class="step-line-editor slds-is-relative slds-p-around_medium">
         <!-- Loading Spinner -->
-        <template lwc:if={isCalculating}>
+        <template lwc:if={isLoading}>
             <lightning-spinner alternative-text="Calculating pricing..." size="medium" variant="brand"></lightning-spinner>
         </template>
 

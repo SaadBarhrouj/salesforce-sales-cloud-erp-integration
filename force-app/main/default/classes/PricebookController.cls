@@ -14,13 +14,13 @@ public inherited sharing class PricebookController {
     }
 
     @AuraEnabled(cacheable=false)
-    public static List<PricingResponse> calculateLinePricesBatch(List<Map<String, Object>> lineItems, Object offerType, Id pricebookId) {
+    public static List<PricingResponse> calculateLinePrices(List<Map<String, Object>> lineItems, Object offerType, Id pricebookId) {
         try {
             if (lineItems == null || lineItems.isEmpty()) {
                 return new List<PricingResponse>();
             }
             String pricingType = getPricingType(offerType);
-            return PricebookService.calculatePricesBatch(lineItems, pricingType, pricebookId);
+            return PricebookService.calculatePrices(lineItems, pricingType, pricebookId);
         } catch (Exception e) {
             List<PricingResponse> errors = new List<PricingResponse>();
             for (Integer i = 0; i < lineItems.size(); i++) {

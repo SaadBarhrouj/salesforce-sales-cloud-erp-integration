@@ -94,7 +94,7 @@ public inherited sharing class PricebookService {
         }
     }
 
-    public static List<PricingResponse> calculatePricesBatch(List<Map<String, Object>> lineItems, String pricingType, Id pricebookId) {
+    public static List<PricingResponse> calculatePrices(List<Map<String, Object>> lineItems, String pricingType, Id pricebookId) {
         List<PricingResponse> responses = new List<PricingResponse>();
 
         for (Map<String, Object> item : lineItems) {

@@ -59,7 +59,7 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
     if (this.isStepLineEditor) {
       const lineEditor = this._getLineEditorStep();
       if (lineEditor) {
-        if (lineEditor.isCalculating) {
+        if (lineEditor.isLoading) {
           showToast(this, 'Validation Blocked', 'Pricing is still being calculated. Please wait.', 'warning');
           return;
         }
@@ -360,7 +360,6 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
     else if (action === "applyRules") this._handleApplyRules();
     else if (action === "toggleFilters") this._handleToggleFilters();
     else if (action === "refreshPricing") this._getLineEditorStep()?.handleHeaderAction('refreshPricing');
-    else if (action === "validateAll") this._getLineEditorStep()?.handleHeaderAction('validateAll');
     else if (action === "deleteSelected") this._getLineEditorStep()?.handleHeaderAction('deleteSelected');
   }
 
