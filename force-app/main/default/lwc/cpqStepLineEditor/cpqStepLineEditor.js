@@ -115,7 +115,7 @@ export default class CpqStepLineEditor extends LightningElement {
                 formattedListPrice: formatCurrency(Number.isFinite(row.listUnitPrice) ? row.listUnitPrice : 0),
                 formattedNetPrice: formatCurrency(Number.isFinite(row.netUnitPrice) ? row.netUnitPrice : 0),
                 formattedNetTotal: formatCurrency(Number.isFinite(row.netTotal) ? row.netTotal : 0),
-                actionTitle: `More actions for ${row.productName}`
+                
             });
         }
         return viewData;
