@@ -20,9 +20,11 @@ const OPTIONAL_FIELDS = [
 export default class TripRouteMap extends LightningElement {
 
     @api recordId;
-    @api mapHeight          = 380;
+    @api mapHeight          = 400;
     @api hideRoutePanel     = false;
     @api hideDirectionsLink = false;
+    @api mapTitle           = 'Trip Route';
+    @api hideIcon           = false;
 
     // Manual Data Ingestion for Configurator
     @api manualDepartureLat;
@@ -32,6 +34,10 @@ export default class TripRouteMap extends LightningElement {
     @api manualDestinationLng;
     @api manualDestinationName;
     @api manualDistance;
+
+    get computedIconName() {
+        return this.hideIcon ? undefined : 'action:map';
+    }
 
     @wire(getRecord, {
         recordId       : '$recordId',

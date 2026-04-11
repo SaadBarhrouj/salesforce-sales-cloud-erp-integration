@@ -80,12 +80,11 @@
                     
                     <!-- EMPTY STATE FOR TRIPS -->
                     <template lwc:elseif={showEmptyState}>
-                        <div class="slds-align_absolute-center slds-m-top_xx-large slds-p-around_large">
+                        <div class="slds-align_absolute-center slds-m-top_xx-large slds-p-around_large text-center-width">
                             <c-empty-state
                                 illustration-name={emptyStateIllustration}
                                 title="No Routes Calculated"
-                                description="Select your locations and click Calculate Transport Cost."
-                                size="small">
+                                description="Select your locations and click Calculate Transport Cost.">
                             </c-empty-state>
                         </div>
                     </template>
@@ -111,6 +110,8 @@
                                     manual-destination-lat={selectedDelivery.Latitude}
                                     manual-destination-lng={selectedDelivery.Longitude}
                                     manual-destination-name={selectedDelivery.Name}
+                                    map-title="Route Settings"
+                                    hide-icon
                                     hide-directions-link>
                                 </c-trip-route-map>
                             </div>
@@ -118,12 +119,11 @@
 
                         <!-- Empty state when route is invalid -->
                         <template lwc:else>
-                            <div class="slds-align_absolute-center slds-m-top_xx-large slds-p-around_large" style="height: 100%;">
+                            <div class="slds-align_absolute-center slds-m-top_xx-large slds-p-around_large text-center-width" style="height: 100%;">
                                 <c-empty-state
                                     illustration-name={emptyStateIllustration}
                                     title="Map Unavailable"
-                                    description="Select both locations to view the route."
-                                    size="small">
+                                    description="Select both locations to view the route.">
                                 </c-empty-state>
                             </div>
                         </template>
