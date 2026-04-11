@@ -1,154 +1,403 @@
-﻿import { LightningElement, api, track } from 'lwc';
-import { formatCurrency, deepClone } from 'c/cpqUtils';
+﻿import { LightningElement, api, track, wire } from 'lwc';
+import { getRecord, getFieldValue } from 'lightning/uiRecordApi';
+import { deepClone, showToast } from 'c/cpqUtils';
 import { URGENCY_OPTIONS, ILLUSTRATIONS } from 'c/cpqConstants';
+import getLocationsByAccount from '@salesforce/apex/LocationController.getLocationsByAccount';
+import getAllAgencies from '@salesforce/apex/LocationController.getAllAgencies';
+import LOCATION_NAME from '@salesforce/schema/Location.Name';
+import LOCATION_TYPE from '@salesforce/schema/Location.LocationType';
+import LOCATION_LAT from '@salesforce/schema/Location.Latitude';
+import LOCATION_LNG from '@salesforce/schema/Location.Longitude';
+
+const LOCATION_FIELDS = [LOCATION_NAME, LOCATION_TYPE, LOCATION_LAT, LOCATION_LNG];
+
+const TRIP_COLUMNS = [
+    { label: 'Truck Type', fieldName: 'Truck_Type__c', type: 'text', sortable: true },
+    { label: 'Distance (km)', fieldName: 'Distance_Km__c', type: 'number', sortable: true },
+    { label: 'System Price', fieldName: 'System_Price__c', type: 'currency', sortable: true },
+    { label: 'Final Price', fieldName: 'Final_Price__c', type: 'currency', editable: true, typeAttributes: { step: '0.01' } },
+    { label: 'Override Reason', fieldName: 'Override_Reason__c', type: 'text', editable: true },
+];
+
+const MOCK_TRIPS = [
+    {
+        Id: 'trip-001',
+        Truck_Type__c: 'Standard Van1',
+        Distance_Km__c: 125,
+        System_Price__c: 1500,
+        Final_Price__c: 1500,
+        Override_Reason__c: null,
+        Is_Price_Overridden__c: false,
+        Direction__c: 'Outbound'
+    },
+    {
+        Id: 'trip-002',
+        Truck_Type__c: 'Standard Van2',
+        Distance_Km__c: 126,
+        System_Price__c: 1600,
+        Final_Price__c: 1600,
+        Override_Reason__c: null,
+        Is_Price_Overridden__c: false,
+        Direction__c: 'Outbound'
+    }
+];
+
 
 export default class CpqStepLogistics extends LightningElement {
-    // ---- PROPRIÉTÉS FOURNIES PAR LE PARENT ----
+    // ==================== API PROPERTIES ====================
+    
     @api opportunityId;
-    @api accountLocations = []; // Format attendu: [{label, value, Latitude, Longitude, Name}]
-    @api agencies = [];         // Format attendu: [{label, value, Latitude, Longitude, Name}]
-    @api totalWeight = 0;       // Poids fourni et précalculé par le CPQ général
-
+    @api accountId;
+    @api totalWeight = 0;
+    @api defaultAgencyId = '';
+    @api defaultDeliverySiteId = '';
+    @api defaultUrgency = 'Standard';
+    
+    // ==================== WIRED DATA ====================
+    
+    @wire(getLocationsByAccount, { accountId: '$accountId' })
+    wiredAccountLocations({ data, error }) {
+        if (data) {
+            // Merge with potentially existing default site
+            let merged = [...data];
+            const existingDefault = this.accountLocations.find(l => l.value === this.defaultDeliverySiteId);
+            if (existingDefault && !merged.find(l => l.value === this.defaultDeliverySiteId)) {
+                merged.push(existingDefault);
+            }
+            this.accountLocations = merged;
+            
+            // Re-apply default config if needed
+            if (this.defaultDeliverySiteId && !this.config.deliverySiteId) {
+                this.config = { ...this.config, deliverySiteId: this.defaultDeliverySiteId };
+            }
+        } else if (error) {
+            console.error('Error loading account locations:', error);
+            this.accountLocations = [];
+        }
+    }
+    
+    // Load all agencies
+    @wire(getAllAgencies)
+    wiredAgencies({ data, error }) {
+        if (data) {
+            let merged = [...data];
+            const existingDefault = this.agencies.find(a => a.value === this.defaultAgencyId);
+            if (existingDefault && !merged.find(a => a.value === this.defaultAgencyId)) {
+                merged.push(existingDefault);
+            }
+            this.agencies = merged;
+            
+            // Re-apply default config if needed
+            if (this.defaultAgencyId && !this.config.agencyId) {
+                this.config = { ...this.config, agencyId: this.defaultAgencyId };
+            }
+        } else if (error) {
+            console.error('Error loading agencies:', error);
+            this.agencies = [];
+        }
+    }
+    
+    // Load default agency name by ID using standard LDS
+    @wire(getRecord, { recordId: '$defaultAgencyId', fields: LOCATION_FIELDS })
+    wiredDefaultAgency({ data, error }) {
+        if (data && this.defaultAgencyId) {
+            const agencyName = getFieldValue(data, LOCATION_NAME);
+            const agencyType = getFieldValue(data, LOCATION_TYPE);
+            const agencyLat = getFieldValue(data, LOCATION_LAT);
+            const agencyLng = getFieldValue(data, LOCATION_LNG);
+            
+            // Ensure agency is in the list with full details
+            if (!this.agencies.find(a => a.value === this.defaultAgencyId)) {
+                this.agencies = [...this.agencies, {
+                    value: this.defaultAgencyId,
+                    label: agencyName,
+                    Name: agencyName,
+                    LocationType: agencyType,
+                    Latitude: agencyLat,
+                    Longitude: agencyLng
+                }];
+            }
+            // Pre-select agency properly using spread
+            this.config = { ...this.config, agencyId: this.defaultAgencyId };
+        } else if (error) {
+            console.warn('Error loading default agency:', error);
+        }
+    }
+    
+    // Load default delivery site name by ID using standard LDS
+    @wire(getRecord, { recordId: '$defaultDeliverySiteId', fields: LOCATION_FIELDS })
+    wiredDefaultDeliveryLocation({ data, error }) {
+        if (data && this.defaultDeliverySiteId) {
+            const siteName = getFieldValue(data, LOCATION_NAME);
+            const siteType = getFieldValue(data, LOCATION_TYPE);
+            const siteLat = getFieldValue(data, LOCATION_LAT);
+            const siteLng = getFieldValue(data, LOCATION_LNG);
+            
+            // Ensure location is in the list with full details
+            if (!this.accountLocations.find(l => l.value === this.defaultDeliverySiteId)) {
+                this.accountLocations = [...this.accountLocations, {
+                    value: this.defaultDeliverySiteId,
+                    label: siteName,
+                    Name: siteName,
+                    LocationType: siteType,
+                    Latitude: siteLat,
+                    Longitude: siteLng
+                }];
+            }
+            // Pre-select delivery site properly using spread
+            this.config = { ...this.config, deliverySiteId: this.defaultDeliverySiteId };
+        } else if (error) {
+            console.warn('Error loading default delivery site:', error);
+        }
+    }
+    
+    // ==================== INTERNAL STATE ====================
+    
     urgencyOptions = URGENCY_OPTIONS;
-
-    // ---- STATE INTERNE ----
-    @track transportRequired = false;
+    
+    @track accountLocations = [];
+    @track agencies = [];
+    
     @track config = {
         agencyId: '',
         deliverySiteId: '',
         urgency: 'Standard'
     };
     
-    @track trips = []; // Trips générés après calcul
+    @track trips = [];
     @track isCalculating = false;
+    @track previousConfig = {
+        agencyId: '',
+        deliverySiteId: ''
+    };
+    
+    tripColumns = TRIP_COLUMNS;
 
-    // ---- GETTERS REACTIFS (UI & MAP) ----
+    // ==================== LIFECYCLE ====================
+
+    connectedCallback() {
+        // Initialize config with defaults
+        this.config = {
+            agencyId: this.defaultAgencyId || '',
+            deliverySiteId: this.defaultDeliverySiteId || '',
+            urgency: this.defaultUrgency || 'Standard'
+        };
+        
+        this.previousConfig = deepClone(this.config);
+    }
+
+    // ==================== COMPUTED PROPERTIES ====================
+    
     get emptyStateIllustration() {
         return ILLUSTRATIONS.NORESULTS_UNKNOWN.name;
     }
 
+    /**
+     * Get currently selected agency from options
+     */
     get selectedAgency() {
         return this.agencies.find(loc => loc.value === this.config.agencyId);
     }
 
+    /**
+     * Get currently selected delivery site from options
+     */
     get selectedDelivery() {
         return this.accountLocations.find(loc => loc.value === this.config.deliverySiteId);
     }
 
+    /**
+     * Validate that both agency and delivery site are selected
+     */
     get hasValidRoute() {
         return !!(this.selectedAgency && this.selectedDelivery);
     }
 
+    /**
+     * Disable calculate button if route is invalid or already calculating
+     */
     get isCalculateDisabled() {
         return !this.hasValidRoute || this.isCalculating;
     }
 
+    /**
+     * Check if trips are available
+     */
     get hasTrips() {
         return this.trips.length > 0;
     }
 
+    /**
+     * Show empty state when no trips and not calculating
+     */
     get showEmptyState() {
         return !this.hasTrips && !this.isCalculating;
     }
 
-    // ---- HANDLERS ----
+    // ==================== EVENT HANDLERS ====================
 
-    handleTransportToggle(event) {
-        this.transportRequired = event.target.checked;
-        if (!this.transportRequired) {
-            // Reset state if transport is unchecked
-            this.config = { agencyId: '', deliverySiteId: '', urgency: 'Standard' };
-            this.trips = [];
-        }
-        this.emitState();
-    }
-
+    /**
+     * Handle route settings changes (Agency, Delivery Site, Urgency)
+     * When departure or delivery location changes:
+     *   1. Clear existing trips
+     *   2. Emit updated state
+     *   3. Trigger auto-recalculation via parent
+     */
     handleConfigChange(event) {
         const field = event.target.dataset.field;
-        this.config[field] = event.detail.value;
-
-        // On reset les trips car la configuration a changé
-        this.trips = [];
-        this.emitState();
-    }
-
-    handleOverrideChange(event) {
-        const tripId = event.target.dataset.tripid;
-        const newOverride = event.detail.value ? parseFloat(event.detail.value) : null;
+        const newValue = event.detail.value;
         
-        const tripIndex = this.trips.findIndex(t => t.id === tripId);
-        if (tripIndex !== -1) {
-            this.trips[tripIndex].overridePrice = newOverride;
-        }
+        // Update config
+        this.config[field] = newValue;
         
-        this.emitState();
-    }
-
-    handleOverrideReasonChange(event) {
-        const tripId = event.target.dataset.tripid;
-        const newReason = event.detail.value;
-        const tripIndex = this.trips.findIndex(t => t.id === tripId);
-        if (tripIndex !== -1) {
-            this.trips[tripIndex].overrideReason = newReason;
-        }
-        this.emitState();
-    }
-
-    // ---- BUSINESS LOGIC : CALCUL LOURD ----
-    @api
-    async handleCalculateTrips() {
-        if (!this.hasValidRoute) return;
-        this.isCalculating = true;
-        this.trips = []; // Reset des trips avant nouveau calcul
-
-        try {
-            // --- MOCK DU CALCUL EXTERNE LENT ---
-            await new Promise(resolve => setTimeout(resolve, 1500));
-
-            // Génération de Trips factices basés sur la configuration
-            const baseCost = (this.totalWeight || 100) * (this.config.urgency === 'Express' ? 2.5 : 1.2);
+        // Check if location-related fields changed
+        const isLocationChange = field === 'agencyId' || field === 'deliverySiteId';
+        
+        if (isLocationChange && this.didLocationChange()) {
+            // Clear trips when location changes
+            this.trips = [];
             
-            this.trips = [
-                {
-                    id: 'trip-001',
-                    type: 'Outbound',
-                    calculatedCost: baseCost,
-                    formattedCalculatedCost: formatCurrency(baseCost),
-                    overridePrice: null
-                }
-            ];
+            // Update previous config to avoid redundant clears
+            this.previousConfig = deepClone(this.config);
             
-            // Si forte urgence et poids élevé, on simule un 2ème trip (ex: escorte ou véhicule spécifique)
-            if (this.config.urgency === 'Express' && (this.totalWeight || 100) > 500) {
-                const expressSurcharge = baseCost * 0.3;
-                this.trips.push({
-                    id: 'trip-002',
-                    type: 'Express Surcharge Logistics',
-                    calculatedCost: expressSurcharge,
-                    formattedCalculatedCost: formatCurrency(expressSurcharge),
-                    overridePrice: null
-                });
-            }
-
-        } catch (error) {
-            console.error('Erreur lors du calcul des trips:', error);
-        } finally {
-            this.isCalculating = false;
+            // Emit state change to trigger parent auto-recalculation
+            this.emitState();
+        } else {
+            // For non-location changes (like urgency), just emit state
             this.emitState();
         }
     }
 
-    // ---- COMMUNICATION AVEC LE PARENT ----
+    /**
+     * Check if location has changed since last update
+     */
+    didLocationChange() {
+        return (
+            this.previousConfig.agencyId !== this.config.agencyId ||
+            this.previousConfig.deliverySiteId !== this.config.deliverySiteId
+        );
+    }
+
+    /**
+     * Handle datatable save event
+     * Process price overrides and validate Override Reason
+     */
+    handleSave(event) {
+        const { draftValues } = event.detail;
+        
+        try {
+            // Process each modified trip
+            draftValues.forEach(draft => {
+                const tripIndex = this.trips.findIndex(t => t.Id === draft.Id);
+                
+                if (tripIndex !== -1) {
+                    const trip = this.trips[tripIndex];
+                    
+                    // Update Final Price if changed
+                    if (draft.Final_Price__c !== undefined) {
+                        const newPrice = draft.Final_Price__c;
+                        const isOverridden = newPrice !== trip.System_Price__c;
+                        
+                        trip.Final_Price__c = newPrice;
+                        trip.Is_Price_Overridden__c = isOverridden;
+                    }
+                    
+                    // Update Override Reason if provided
+                    if (draft.Override_Reason__c !== undefined) {
+                        trip.Override_Reason__c = draft.Override_Reason__c;
+                    }
+                }
+            });
+            
+            // Validate that overridden prices have reasons
+            const isValid = this.validateOverrideReasons();
+            
+            if (isValid) {
+                this.emitState();
+                // Clear draft values in datatable
+                this.clearDraftValues();
+            }
+        } catch (error) {
+            console.error('Erreur lors du traitement des modifications:', error);
+            showToast(this, 'Erreur', 'Une erreur est survenue lors de la sauvegarde', 'error');
+        }
+    }
+
+    /**
+     * Validate that all overridden prices have an Override Reason
+     * @returns {boolean} true if all validations pass
+     */
+    validateOverrideReasons() {
+        const invalidTrips = this.trips.filter(
+            trip => trip.Is_Price_Overridden__c && !trip.Override_Reason__c
+        );
+        
+        if (invalidTrips.length > 0) {
+            const tripIds = invalidTrips.map(t => t.Truck_Type__c).join(', ');
+            showToast(
+                this,
+                'Validation Error',
+                `Override Reason is required for: ${tripIds}`,
+                'error'
+            );
+            return false;
+        }
+        
+        return true;
+    }
+
+    /**
+     * Clear draft values in datatable
+     */
+    clearDraftValues() {
+        const datatable = this.template.querySelector('lightning-datatable');
+        if (datatable) {
+            datatable.draftValues = [];
+        }
+    }
+
+    /**
+     * Public method to calculate trips
+     * Called from parent when auto-calculation is triggered
+     */
+    @api
+    async handleCalculateTrips() {
+        if (!this.hasValidRoute) return;
+        
+        this.isCalculating = true;
+
+        try {
+            // Simulate API call
+            await new Promise(resolve => setTimeout(resolve, 800));
+            
+            // Reset trips with fresh data
+            this.trips = deepClone(MOCK_TRIPS);
+            
+            this.emitState();
+        } catch (error) {
+            console.error('Erreur lors du calcul des trips:', error);
+            showToast(this, 'Erreur', 'Impossible de calculer les trajets', 'error');
+        } finally {
+            this.isCalculating = false;
+        }
+    }
+
+    // ==================== COMMUNICATION ====================
+
+    /**
+     * Emit current state to parent component
+     */
     emitState() {
-        // Renvoie un état propre au parent pour la sauvegarde du devis (Quote)
         const logisticsState = {
             config: deepClone(this.config),
-            trips: deepClone(this.trips)
+            trips: deepClone(this.trips),
+            isValid: this.validateOverrideReasons()
         };
 
         this.dispatchEvent(new CustomEvent('logisticschange', {
-            detail: { logistics: logisticsState }
+            detail: { logistics: logisticsState },
+            bubbles: true,
+            composed: true
         }));
     }
 }
-

@@ -1,19 +1,6 @@
 ﻿<template>
     <div class="slds-card slds-p-around_medium core-container">
-        <div class="slds-grid slds-grid_vertical-align-center slds-m-bottom_medium">
-            <h2 class="slds-text-heading_medium slds-m-right_medium">Logistics & Transportation</h2>
-            <lightning-input 
-                type="toggle" 
-                label="Transport Required" 
-                message-toggle-active="Yes" 
-                message-toggle-inactive="No" 
-                checked={transportRequired}
-                onchange={handleTransportToggle}>
-            </lightning-input>
-        </div>
-
-        <template lwc:if={transportRequired}>
-            <lightning-layout multiple-rows>
+        <lightning-layout multiple-rows>
                 <!-- LEFT COLUMN : Configuration & Trips -->
                 <lightning-layout-item size="12" large-device-size="7" padding="around-small">
                     
@@ -47,7 +34,7 @@
                             </lightning-layout-item>
                         </lightning-layout>
 
-                        <lightning-layout class="slds-m-top_smal">
+                        <lightning-layout class="slds-m-top_small">
                             <lightning-layout-item size="6" class="slds-p-right_x-small">
                                 <lightning-combobox
                                     label="Urgency"
@@ -61,81 +48,60 @@
                         </lightning-layout>
                     </div>
 
-                    <!-- SECTION 2: CALCULATED TRIPS -->
+                    <!-- SECTION 2: CALCULATED TRIPS WITH CONDITIONAL OVERRIDE REASON -->
                     <template lwc:if={hasTrips}>
-                        <div class="slds-box slds-theme_shade">
-                            <h3 class="slds-text-heading_small slds-m-bottom_small">Generated Trips</h3>
+                        <div class="slds-box slds-theme_shade slds-m-bottom_medium">
+                            <h3 class="slds-text-heading_small slds-m-bottom_medium">
+                                Generated Trips
+                                <span class="slds-badge slds-m-left_small">{trips.length}</span>
+                            </h3>
                             
-                            <template for:each={trips} for:item="trip">
-                                <div key={trip.id} class="slds-card slds-p-around_medium slds-m-bottom_small trip-card">
-                                    <!-- Trip Read-Only Details -->
-                                    <div class="slds-grid slds-wrap slds-m-bottom_small">
-                                        <div class="slds-col slds-size_1-of-2">
-                                            <p class="slds-text-title_caps">Transport Type</p>
-                                            <p class="slds-text-body_regular slds-m-bottom_x-small">{trip.type}</p>
-                                            
-                                            <p class="slds-text-title_caps">Est. Distance / Duration</p>
-                                            <p class="slds-text-body_regular">125 km (approx. 1h45)</p>
-                                        </div>
-                                        <div class="slds-col slds-size_1-of-2">
-                                            <p class="slds-text-title_caps">Vehicle Size Range</p>
-                                            <p class="slds-text-body_regular slds-m-bottom_x-small">Heavy Truck (> 1000kg)</p>
-                                            
-                                            <p class="slds-text-title_caps">Calculated Base Cost</p>
-                                            <p class="slds-text-heading_small">{trip.formattedCalculatedCost}</p>
-                                        </div>
-                                    </div>
-
-                                    <!-- Editable Overrides -->
-                                    <div class="slds-grid slds-wrap slds-border_top slds-p-top_small">
-                                        <div class="slds-col slds-size_1-of-2 slds-p-right_x-small">
-                                            <lightning-input 
-                                                type="number" 
-                                                formatter="currency" 
-                                                step="0.01" 
-                                                label="Override Cost" 
-                                                value={trip.overridePrice}
-                                                data-tripid={trip.id}
-                                                onchange={handleOverrideChange}>
-                                            </lightning-input>
-                                        </div>
-                                        <div class="slds-col slds-size_1-of-2 slds-p-left_x-small">
-                                            <lightning-input 
-                                                type="text" 
-                                                label="Override Reason" 
-                                                value={trip.overrideReason}
-                                                data-tripid={trip.id}
-                                                required={trip.overridePrice}
-                                                onchange={handleOverrideReasonChange}>
-                                            </lightning-input>
-                                        </div>
-                                    </div>
-                                </div>
-                            </template>
+                            <!-- Help Text for Override Reason -->
+                            <div class="slds-p-bottom_small slds-text-color_weak slds-text-body_small">
+                                <lightning-icon
+                                    icon-name="utility:info"
+                                    size="xx-small"
+                                    alternative-text="Info"
+                                    style="vertical-align: middle; margin-right: 0.25rem;"
+                                ></lightning-icon>
+                                Override Reason is required when you modify the Final Price
+                            </div>
+                            
+                            <lightning-datatable
+                                key-field="Id"
+                                data={trips}
+                                columns={tripColumns}
+                                max-row-selection="1"
+                                hide-checkbox-column
+                                onsave={handleSave}>
+                            </lightning-datatable>
                         </div>
                     </template>
                     
                     <!-- EMPTY STATE FOR TRIPS -->
                     <template lwc:elseif={showEmptyState}>
-                        <c-empty-state
-                            illustration-name={emptyStateIllustration}
-                            title="No Routes Calculated"
-                            description="Select your locations and click Calculate Transport Cost."
-                            size="small">
-                        </c-empty-state>
+                        <div class="slds-align_absolute-center slds-m-top_xx-large slds-p-around_large">
+                            <c-empty-state
+                                illustration-name={emptyStateIllustration}
+                                title="No Routes Calculated"
+                                description="Select your locations and click Calculate Transport Cost."
+                                size="small">
+                            </c-empty-state>
+                        </div>
                     </template>
 
                 </lightning-layout-item>
 
-                <!-- RIGHT COLUMN : Map -->
+                <!-- RIGHT COLUMN: MAP -->
                 <lightning-layout-item size="12" large-device-size="5" padding="around-small">
                     <div class="slds-box slds-theme_default" style="position: relative; min-height: 400px; height: 100%;">
                         
+                        <!-- Loading Spinner -->
                         <template lwc:if={isCalculating}>
                             <lightning-spinner alternative-text="Calculating..." size="medium"></lightning-spinner>
                         </template>
 
-                        <!-- MAP EN TEMPS RÉEL -->
+                        <!-- Map Display when route is valid -->
                         <template lwc:if={hasValidRoute}>
                             <div class="slds-p-around_none overflow-hidden" style="height: 100%;">
                                 <c-trip-route-map
@@ -149,17 +115,20 @@
                                 </c-trip-route-map>
                             </div>
                         </template>
+
+                        <!-- Empty state when route is invalid -->
                         <template lwc:else>
-                            <c-empty-state
-                                illustration-name={emptyStateIllustration}
-                                title="Map Unavailable"
-                                description="Select both locations to view the route."
-                                size="small">
-                            </c-empty-state>
+                            <div class="slds-align_absolute-center slds-m-top_xx-large slds-p-around_large" style="height: 100%;">
+                                <c-empty-state
+                                    illustration-name={emptyStateIllustration}
+                                    title="Map Unavailable"
+                                    description="Select both locations to view the route."
+                                    size="small">
+                                </c-empty-state>
+                            </div>
                         </template>
                     </div>
                 </lightning-layout-item>
             </lightning-layout>
-        </template>
     </div>
 </template>
