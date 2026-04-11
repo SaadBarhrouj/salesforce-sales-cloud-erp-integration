@@ -67,14 +67,21 @@ public inherited sharing class PricebookService {
 
             Volume_Pricing_Tier__c matchedTier = findMatchedTier(tiers, quantity);
 
-            if (matchedTier == null) {
+            Decimal listPrice;
+            String method;
+
+            if (matchedTier != null) {
+                listPrice = matchedTier.Price__c.setScale(2);
+            /* 
+            } else if (schedule.Overage_Rate__c != null) {
+                listPrice = schedule.Overage_Rate__c.setScale(2);
+            */
+            } else {
                 return PricingResponse.error('No matching tier for quantity: ' + quantity);
             }
 
-            Decimal listPrice = matchedTier.Price__c.setScale(2);
             Decimal netPrice = listPrice * (1 - discount / 100);
             Decimal totalPrice;
-            String method;
 
             if (schedule.Pricing_Type__c == 'Block') {
                 method = 'Block';
@@ -101,9 +108,10 @@ public inherited sharing class PricebookService {
     private static Volume_Pricing_Tier__c findMatchedTier(List<Volume_Pricing_Tier__c> tiers, Integer quantity) {
         Decimal qty = Decimal.valueOf(quantity);
         for (Volume_Pricing_Tier__c tier : tiers) {
-            if (tier.Lower_Bound__c != null && tier.Upper_Bound__c != null &&
-                qty >= tier.Lower_Bound__c && qty <= tier.Upper_Bound__c) {
-                return tier;
+            if (tier.Lower_Bound__c != null && qty >= tier.Lower_Bound__c) {
+                if (tier.Upper_Bound__c == null || qty <= tier.Upper_Bound__c) {
+                    return tier;
+                }
             }
         }
         return null;
