@@ -1,8 +1,7 @@
-﻿<template>
+<template>
     <div class="slds-card slds-p-around_medium core-container">
         <lightning-layout multiple-rows>
-                <!-- LEFT COLUMN : Configuration & Trips -->
-                <lightning-layout-item size="12" large-device-size="7" padding="around-small">
+                <lightning-layout-item size="12" padding="around-small">
                     
                     <!-- SECTION 1: ROUTE SETTINGS -->
                     <div class="slds-box slds-theme_default slds-m-bottom_medium">
@@ -11,46 +10,24 @@
                         <lightning-layout>
                             <lightning-layout-item size="6" class="slds-p-right_x-small">
                                 <lightning-combobox
-                                    label="Departure Agency"
-                                    value={config.agencyId}
-                                    options={agencies}
-                                    placeholder="Select departure..."
-                                    required
-                                    onchange={handleConfigChange}
-                                    data-field="agencyId"
-                                ></lightning-combobox>
-                            </lightning-layout-item>
-
-                            <lightning-layout-item size="6" class="slds-p-left_x-small">
-                                <lightning-combobox
-                                    label="Delivery Site"
-                                    value={config.deliverySiteId}
-                                    options={accountLocations}
-                                    placeholder="Select destination..."
-                                    required
-                                    onchange={handleConfigChange}
-                                    data-field="deliverySiteId"
-                                ></lightning-combobox>
-                            </lightning-layout-item>
-                        </lightning-layout>
-
-                        <lightning-layout class="slds-m-top_small">
-                            <lightning-layout-item size="6" class="slds-p-right_x-small">
-                                <lightning-combobox
                                     label="Urgency"
                                     value={config.urgency}
                                     options={urgencyOptions}
                                     onchange={handleConfigChange}
                                     data-field="urgency"
-                                    class="slds-m-top_small"
+                                    class="slds-m-bottom_small"
                                 ></lightning-combobox>
                             </lightning-layout-item>
                         </lightning-layout>
                     </div>
 
-                    <!-- SECTION 2: CALCULATED TRIPS WITH CONDITIONAL OVERRIDE REASON -->
+                    <!-- SECTION 2: CALCULATED TRIPS -->
                     <template lwc:if={hasTrips}>
-                        <div class="slds-box slds-theme_shade slds-m-bottom_medium">
+                        <div class="slds-box slds-theme_shade slds-m-bottom_medium" style="position: relative;">
+                            <template lwc:if={isCalculating}>
+                                <lightning-spinner alternative-text="Calculating..." size="medium"></lightning-spinner>
+                            </template>
+                            
                             <h3 class="slds-text-heading_small slds-m-bottom_medium">
                                 Generated Trips
                                 <span class="slds-badge slds-m-left_small">{trips.length}</span>
@@ -84,50 +61,11 @@
                             <c-empty-state
                                 illustration-name={emptyStateIllustration}
                                 title="No Routes Calculated"
-                                description="Select your locations and click Calculate Transport Cost.">
+                                description="Loading transport costs...">
                             </c-empty-state>
                         </div>
                     </template>
 
-                </lightning-layout-item>
-
-                <!-- RIGHT COLUMN: MAP -->
-                <lightning-layout-item size="12" large-device-size="5" padding="around-small">
-                    <div class="slds-box slds-theme_default" style="position: relative; min-height: 400px; height: 100%;">
-                        
-                        <!-- Loading Spinner -->
-                        <template lwc:if={isCalculating}>
-                            <lightning-spinner alternative-text="Calculating..." size="medium"></lightning-spinner>
-                        </template>
-
-                        <!-- Map Display when route is valid -->
-                        <template lwc:if={hasValidRoute}>
-                            <div class="slds-p-around_none overflow-hidden" style="height: 100%;">
-                                <c-trip-route-map
-                                    manual-departure-lat={selectedAgency.Latitude}
-                                    manual-departure-lng={selectedAgency.Longitude}
-                                    manual-departure-name={selectedAgency.Name}
-                                    manual-destination-lat={selectedDelivery.Latitude}
-                                    manual-destination-lng={selectedDelivery.Longitude}
-                                    manual-destination-name={selectedDelivery.Name}
-                                    map-title="Route Settings"
-                                    hide-icon
-                                    hide-directions-link>
-                                </c-trip-route-map>
-                            </div>
-                        </template>
-
-                        <!-- Empty state when route is invalid -->
-                        <template lwc:else>
-                            <div class="slds-align_absolute-center slds-m-top_xx-large slds-p-around_large text-center-width" style="height: 100%;">
-                                <c-empty-state
-                                    illustration-name={emptyStateIllustration}
-                                    title="Map Unavailable"
-                                    description="Select both locations to view the route.">
-                                </c-empty-state>
-                            </div>
-                        </template>
-                    </div>
                 </lightning-layout-item>
             </lightning-layout>
     </div>

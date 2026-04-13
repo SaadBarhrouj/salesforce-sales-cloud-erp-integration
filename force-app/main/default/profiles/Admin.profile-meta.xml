@@ -698,7 +698,7 @@
     </tabVisibilities>
     <tabVisibilities>
         <tab>Trip__c</tab>
-        <visibility>Hidden</visibility>
+        <visibility>DefaultOn</visibility>
     </tabVisibilities>
     <tabVisibilities>
         <tab>Volume_Pricing_Schedule__c</tab>

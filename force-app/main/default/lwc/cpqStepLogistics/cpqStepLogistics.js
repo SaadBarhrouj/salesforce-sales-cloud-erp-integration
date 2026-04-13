@@ -4,6 +4,8 @@ import { deepClone, showToast } from 'c/cpqUtils';
 import { URGENCY_OPTIONS, ILLUSTRATIONS } from 'c/cpqConstants';
 import getLocationsByAccount from '@salesforce/apex/LocationController.getLocationsByAccount';
 import getAllAgencies from '@salesforce/apex/LocationController.getAllAgencies';
+import getTripsByOpportunity from '@salesforce/apex/TripController.getTripsByOpportunity';
+import calculateTrips from '@salesforce/apex/TripController.calculateTrips';
 import LOCATION_NAME from '@salesforce/schema/Location.Name';
 import LOCATION_TYPE from '@salesforce/schema/Location.LocationType';
 import LOCATION_LAT from '@salesforce/schema/Location.Latitude';
@@ -18,30 +20,6 @@ const TRIP_COLUMNS = [
     { label: 'Final Price', fieldName: 'Final_Price__c', type: 'currency', editable: true, typeAttributes: { step: '0.01' } },
     { label: 'Override Reason', fieldName: 'Override_Reason__c', type: 'text', editable: true },
 ];
-
-const MOCK_TRIPS = [
-    {
-        Id: 'trip-001',
-        Truck_Type__c: 'Standard Van1',
-        Distance_Km__c: 125,
-        System_Price__c: 1500,
-        Final_Price__c: 1500,
-        Override_Reason__c: null,
-        Is_Price_Overridden__c: false,
-        Direction__c: 'Outbound'
-    },
-    {
-        Id: 'trip-002',
-        Truck_Type__c: 'Standard Van2',
-        Distance_Km__c: 126,
-        System_Price__c: 1600,
-        Final_Price__c: 1600,
-        Override_Reason__c: null,
-        Is_Price_Overridden__c: false,
-        Direction__c: 'Outbound'
-    }
-];
-
 
 export default class CpqStepLogistics extends LightningElement {
     // ==================== API PROPERTIES ====================
@@ -194,6 +172,28 @@ export default class CpqStepLogistics extends LightningElement {
         };
         
         this.previousConfig = deepClone(this.config);
+        this.loadExistingTrips();
+    }
+
+    async loadExistingTrips() {
+        if (!this.opportunityId) return;
+        
+        this.isCalculating = true;
+        try {
+            const result = await getTripsByOpportunity({ opportunityId: this.opportunityId });
+            if (result && result.length > 0) {
+                this.trips = result.map(t => ({
+                    ...t,
+                    Final_Price__c: t.Final_Price__c || t.System_Price__c
+                }));
+            }
+        } catch (error) {
+            console.error('Error loading existing trips:', error);
+        } finally {
+            this.isCalculating = false;
+            // Always emit state after load regardless of outcome to sync parent
+            this.emitState();
+        }
     }
 
     // ==================== COMPUTED PROPERTIES ====================
@@ -386,11 +386,18 @@ export default class CpqStepLogistics extends LightningElement {
         this.isCalculating = true;
 
         try {
-            // Simulate API call
-            await new Promise(resolve => setTimeout(resolve, 800));
+            const result = await calculateTrips({
+                opportunityId: this.opportunityId,
+                agencyId: this.config.agencyId,
+                deliverySiteId: this.config.deliverySiteId,
+                urgency: this.config.urgency,
+                totalWeight: this.totalWeight
+            });
             
-            // Reset trips with fresh data
-            this.trips = deepClone(MOCK_TRIPS);
+            this.trips = result.map(t => ({
+                ...t,
+                Final_Price__c: t.Final_Price__c || t.System_Price__c
+            }));
             
             this.emitState();
         } catch (error) {
