@@ -340,9 +340,13 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
       }
       
       if (action.dynamicProperty === "disableIfInvalidLogistics") {
+        // Reference logisticsState to trigger reactivity
+        const stateTracker = this.logisticsState;
         const step = this._getLogisticsStep();
         if (step) {
             action.disabled = step.isCalculateDisabled;
+        } else {
+            action.disabled = true;
         }
       }
       
@@ -367,6 +371,8 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
 
       if (action.dynamicProperty === "disableIfNoRoute") {
         // Query logistics step directly for real-time route validity
+        // Reference logisticsState to trigger reactivity
+        const stateTracker = this.logisticsState;
         const logisticsStep = this._getLogisticsStep();
         action.disabled = !logisticsStep?.hasValidRoute;
       }

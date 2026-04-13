@@ -70,6 +70,9 @@ export default class CpqStepLogistics extends LightningElement {
             if (this.defaultDeliverySiteId && !this.config.deliverySiteId) {
                 this.config = { ...this.config, deliverySiteId: this.defaultDeliverySiteId };
             }
+            
+            // Emit state to update valid route status in parent
+            this.emitState();
         } else if (error) {
             console.error('Error loading account locations:', error);
             this.accountLocations = [];
@@ -91,6 +94,9 @@ export default class CpqStepLogistics extends LightningElement {
             if (this.defaultAgencyId && !this.config.agencyId) {
                 this.config = { ...this.config, agencyId: this.defaultAgencyId };
             }
+            
+            // Emit state to update valid route status in parent
+            this.emitState();
         } else if (error) {
             console.error('Error loading agencies:', error);
             this.agencies = [];
@@ -119,6 +125,8 @@ export default class CpqStepLogistics extends LightningElement {
             }
             // Pre-select agency properly using spread
             this.config = { ...this.config, agencyId: this.defaultAgencyId };
+            // Emit state since valid route might be ready after agency loads
+            this.emitState();
         } else if (error) {
             console.warn('Error loading default agency:', error);
         }
@@ -146,6 +154,8 @@ export default class CpqStepLogistics extends LightningElement {
             }
             // Pre-select delivery site properly using spread
             this.config = { ...this.config, deliverySiteId: this.defaultDeliverySiteId };
+            // Emit state since valid route might be ready after delivery site loads
+            this.emitState();
         } else if (error) {
             console.warn('Error loading default delivery site:', error);
         }
@@ -209,6 +219,7 @@ export default class CpqStepLogistics extends LightningElement {
     /**
      * Validate that both agency and delivery site are selected
      */
+    @api
     get hasValidRoute() {
         return !!(this.selectedAgency && this.selectedDelivery);
     }
@@ -216,6 +227,7 @@ export default class CpqStepLogistics extends LightningElement {
     /**
      * Disable calculate button if route is invalid or already calculating
      */
+    @api
     get isCalculateDisabled() {
         return !this.hasValidRoute || this.isCalculating;
     }
@@ -395,6 +407,7 @@ export default class CpqStepLogistics extends LightningElement {
      * Open the current route in Google Maps
      * Uses coordinates from selected agency and delivery site
      */
+    @api
     openRouteInGoogleMaps() {
         if (!this.hasValidRoute) {
             showToast(this, 'Invalid Route', 'Please select both departure agency and delivery site', 'warning');
@@ -407,7 +420,7 @@ export default class CpqStepLogistics extends LightningElement {
         // Google Maps Directions URL
         const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}`;
         
-        window.open(googleMapsUrl, '_blank');
+        window.open(googleMapsUrl, '_blank', 'noopener,noreferrer');
     }
 
     /**
