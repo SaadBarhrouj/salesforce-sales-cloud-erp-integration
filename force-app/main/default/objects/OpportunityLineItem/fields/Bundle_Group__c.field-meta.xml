@@ -7,7 +7,6 @@
     <label>Bundle Group</label>
     <length>18</length>
     <required>false</required>
-    <trackHistory>false</trackHistory>
     <type>Text</type>
     <unique>false</unique>
 </CustomField>

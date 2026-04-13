@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Target_Product__c</fullName>
+    <deleteConstraint>SetNull</deleteConstraint>
     <inlineHelpText>Specific product to target. If blank, use Filter fields instead. If set, filters are ignored.</inlineHelpText>
     <label>Target Product</label>
     <referenceTo>Product2</referenceTo>
