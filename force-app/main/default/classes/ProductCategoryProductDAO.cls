@@ -60,6 +60,12 @@ public inherited sharing class ProductCategoryProductDAO {
     */
 
 
+    /**
+     * @description Counts active products per category for a given pricebook.
+     * @param categoryIds Category Ids to aggregate.
+     * @param pricebookId Pricebook Id used to filter active products.
+     * @return Map of category Id to product count.
+     */
     public static Map<Id, Integer> getProductCountForCategoriesByPricebook(Set<Id> categoryIds, Id pricebookId) {
         Map<Id, Integer> countMap = new Map<Id, Integer>();
         if (categoryIds == null || categoryIds.isEmpty() || pricebookId == null) {
