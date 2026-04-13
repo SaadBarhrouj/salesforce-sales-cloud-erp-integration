@@ -112,7 +112,7 @@ private class BundleOptionServiceTest {
             bundleProduct.Id,
             optionProduct1.Id,
             null,
-            'Service',
+            'Related Product',
             4,
             0,
             0,
