@@ -147,12 +147,14 @@ private class BundleOptionServiceTest {
      */
     @IsTest
     static void testGetBundleDataBundleNotFoundThrowsException() {
-        // Use a valid but non-existent Product2 ID format (18 chars)
-        Id fakeId = '01t000000000000AAA';
+        // Create a product, get its ID, then delete it to ensure the ID doesn't exist
+        Product2 tempProduct = TestDataFactory.createProduct2(true);
+        Id nonExistentId = tempProduct.Id;
+        delete tempProduct;
 
         Test.startTest();
         try {
-            BundleOptionService.getBundleData(fakeId);
+            BundleOptionService.getBundleData(nonExistentId);
             System.assert(false, 'Expected BundleOptionException when bundle not found');
         } catch (BundleOptionException ex) {
             System.assertEquals('Bundle not found for the provided ID.', ex.getMessage(),
