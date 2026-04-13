@@ -1,18 +1,15 @@
+/**
+ * @description Data access helper for PricebookEntry records.
+ */
 public inherited sharing class PricebookEntryDAO {
-    @TestVisible
-    private static Map<String, PricebookEntry> cache = new Map<String, PricebookEntry>();
-
-    public static void clearCache() {
-        cache.clear();
-    }
-
+    /**
+     * @description Returns the active PricebookEntry for a single product and pricebook.
+     * @param productId Product to search for.
+     * @param pricebookId Pricebook to search in.
+     * @return Matching PricebookEntry or null.
+     */
     @AuraEnabled(cacheable=true)
     public static PricebookEntry getByProductAndPricebook(Id productId, Id pricebookId) {
-        String cacheKey = productId + ':' + pricebookId;
-        if (cache.containsKey(cacheKey)) {
-            return cache.get(cacheKey);
-        }
-
         List<PricebookEntry> entries = [
             SELECT Id, Product2Id, UnitPrice, Pricebook2Id
             FROM PricebookEntry
@@ -22,14 +19,15 @@ public inherited sharing class PricebookEntryDAO {
             LIMIT 1
         ];
 
-        if (entries.isEmpty()) {
-            return null;
-        }
-
-        cache.put(cacheKey, entries[0]);
-        return entries[0];
+        return entries.isEmpty() ? null : entries[0];
     }
 
+    /**
+     * @description Returns active PricebookEntry records keyed by product Id.
+     * @param productIds Product Ids to search for.
+     * @param pricebookId Pricebook to search in.
+     * @return Map of Product2Id to PricebookEntry.
+     */
     public static Map<Id, PricebookEntry> getByProductsAndPricebook(Set<Id> productIds, Id pricebookId) {
         if (productIds == null || productIds.isEmpty() || pricebookId == null) {
             return new Map<Id, PricebookEntry>();
