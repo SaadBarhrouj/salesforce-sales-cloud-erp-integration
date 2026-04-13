@@ -504,8 +504,12 @@ private class BundleOptionServiceTest {
     static void testGetBundleDataOptionProductRelationshipData() {
         // Arrange
         Product2 bundleProduct = [SELECT Id FROM Product2 LIMIT 1];
+
+        // Get the option product and set its ProductCode
         Product2 optionProduct = [SELECT Id, Name, ProductCode FROM Product2
                                   WHERE Id != :bundleProduct.Id LIMIT 1];
+        optionProduct.ProductCode = 'TEST-CODE-123';
+        update optionProduct;
 
         // Act
         Test.startTest();
@@ -518,9 +522,11 @@ private class BundleOptionServiceTest {
         List<Map<String, Object>> options = (List<Map<String, Object>>) feature1.get('options');
         Map<String, Object> option = options[0];
 
-        // Verify product data is populated (even if empty string)
-        System.assert(option.containsKey('productCode'), 'Option should have productCode');
-        System.assert(option.containsKey('productName'), 'Option should have productName');
+        // Verify product data is populated with the related product's values
+        System.assertEquals('TEST-CODE-123', option.get('productCode'),
+            'Option should use the related product code');
+        System.assertEquals(optionProduct.Name, option.get('productName'),
+            'Option should use the related product name');
         System.assert(option.containsKey('description'), 'Option should have description');
     }
 }
