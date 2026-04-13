@@ -365,6 +365,12 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
         action.disabled = !this.hasLineSelection;
       }
 
+      if (action.dynamicProperty === "disableIfNoRoute") {
+        // Query logistics step directly for real-time route validity
+        const logisticsStep = this._getLogisticsStep();
+        action.disabled = !logisticsStep?.hasValidRoute;
+      }
+
       if (action.isGroup && action.items) {
         action.items = action.items.map((item) => {
           if (item.dynamicProperty === "highlightIfFiltersOpen") {
@@ -398,6 +404,7 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
     else if (action === "validateAll") this._getLineEditorStep()?.handleHeaderAction('validateAll');
     else if (action === "deleteSelected") this._getLineEditorStep()?.handleHeaderAction('deleteSelected');
     else if (action === "calculateTransport") this._getLogisticsStep()?.handleCalculateTrips();
+    else if (action === "openGoogleMaps") this._getLogisticsStep()?.openRouteInGoogleMaps();
   }
 
   _handleToggleFilters() {

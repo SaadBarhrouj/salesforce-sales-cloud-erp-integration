@@ -155,4 +155,3 @@ export default class TripRouteMap extends LightningElement {
         return getFieldValue(this.record?.data, field);
     }
 }
-

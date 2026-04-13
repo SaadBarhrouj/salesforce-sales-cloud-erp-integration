@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Valid_Delivery_Site_Type</fullName>
+    <active>true</active>
+    <description>The Delivery Site must have a Location Type of &quot;Site&quot;.</description>
+    <errorConditionFormula>AND(
+    NOT(ISBLANK(Delivery_Site__c)),
+    TEXT(Delivery_Site__r.LocationType) &lt;&gt; &quot;Site&quot;
+)</errorConditionFormula>
+    <errorDisplayField>Delivery_Site__c</errorDisplayField>
+    <errorMessage>The Delivery Site must be a location of type &quot;Site&quot;.</errorMessage>
+</ValidationRule>

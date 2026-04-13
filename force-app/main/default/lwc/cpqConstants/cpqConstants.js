@@ -47,7 +47,8 @@ const LINE_EDITOR_GLOBAL_ACTIONS = [
 
 const LOGISTICS_GLOBAL_ACTIONS = [
     { name: 'settings', label: 'List View Controls', variant: 'border-filled', iconName: 'utility:settings', isMenu: true },
-    { name: 'refresh', label: 'Refresh Options', variant: 'border-filled', iconName: 'utility:refresh' }
+    { name: 'refresh', label: 'Refresh Options', variant: 'border-filled', iconName: 'utility:refresh' },
+    { name: 'openGoogleMaps', label: 'Open Route in Google Maps', variant: 'border-filled', iconName: 'utility:open', dynamicProperty: 'disableIfNoRoute' }
 ];
 
 export const STEPS = Object.freeze({

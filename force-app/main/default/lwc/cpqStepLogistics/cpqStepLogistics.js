@@ -234,6 +234,13 @@ export default class CpqStepLogistics extends LightningElement {
         return !this.hasTrips && !this.isCalculating;
     }
 
+    /**
+     * Disable Google Maps button if route is invalid
+     */
+    get disableIfNoRoute() {
+        return !this.hasValidRoute;
+    }
+
     // ==================== EVENT HANDLERS ====================
 
     /**
@@ -383,6 +390,25 @@ export default class CpqStepLogistics extends LightningElement {
     }
 
     // ==================== COMMUNICATION ====================
+
+    /**
+     * Open the current route in Google Maps
+     * Uses coordinates from selected agency and delivery site
+     */
+    openRouteInGoogleMaps() {
+        if (!this.hasValidRoute) {
+            showToast(this, 'Invalid Route', 'Please select both departure agency and delivery site', 'warning');
+            return;
+        }
+
+        const origin = `${this.selectedAgency.Latitude},${this.selectedAgency.Longitude}`;
+        const destination = `${this.selectedDelivery.Latitude},${this.selectedDelivery.Longitude}`;
+        
+        // Google Maps Directions URL
+        const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}`;
+        
+        window.open(googleMapsUrl, '_blank');
+    }
 
     /**
      * Emit current state to parent component
