@@ -1,4 +1,5 @@
 /**
+ * @description Data Access Object for ProductCategoryProduct records.
  * Data Access Object for ProductCategoryProduct records.
  * Provides query methods to retrieve ProductCategoryProduct data from the database.
  * Uses inherited sharing to respect record-level security.
