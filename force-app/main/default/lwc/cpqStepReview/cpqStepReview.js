@@ -3,22 +3,31 @@ import { formatCurrency, formatNumber, calculateSelectedProductsSubtotal, calcul
 
 export default class CpqStepReview extends LightningElement {
     @api selectedProducts = [];
-    @api quoteState = {};
+    @api opportunityState = {};
+    @api opportunityRecord;
     @api logisticsState = {};
 
-    /* ═══ Quote Info ═══ */
+    expandedRows = new Set();
 
-    get contactDisplay() {
-        return this.quoteState.contactName || '—';
+    /* ═══ Opportunity Details ═══ */
+
+    get opportunityName() {
+        return this.opportunityRecord?.data?.fields?.Name?.value || '—';
     }
 
-    get termDisplay() {
-        return this.quoteState.subscriptionTerm ? `${this.quoteState.subscriptionTerm} months` : '—';
+    get accountName() {
+        return this.opportunityState?.accountName || 
+               this.opportunityRecord?.data?.fields?.Account?.displayValue || '—';
     }
 
-    get discountDisplay() {
-        const d = this.quoteState.additionalDiscountPercent;
-        return d ? `${d}%` : '0%';
+    get pricebookName() {
+        return this.opportunityState?.pricebookName || 
+               this.opportunityRecord?.data?.fields?.Pricebook2?.displayValue || 'Standard Pricebook';
+    }
+
+    get offerTypeName() {
+        return this.opportunityState?.offerTypeName || 
+               this.opportunityRecord?.data?.fields?.Offer_Type__r?.displayValue || '—';
     }
 
     /* ═══ Line Items ═══ */
@@ -27,55 +36,75 @@ export default class CpqStepReview extends LightningElement {
         return (this.selectedProducts || []).length;
     }
 
-    get numberedItems() {
-        const discount = this.quoteState.additionalDiscountPercent || 0;
-        return (this.selectedProducts || []).map((item, idx) => {
-            const selectedOpts = (item.options || []).filter(o => o.isSelected);
-            return {
-                ...item,
-                _lineNumber: idx + 1,
-                _formattedUnitPrice: formatCurrency(item.listUnitPrice || 0),
-                _formattedDiscount: item.additionalDiscount ? `${item.additionalDiscount}%` : '0%',
-                _formattedTotal: formatCurrency(calculateSelectedProductTotal(item, discount)),
-                hasOptions: selectedOpts.length > 0,
-                options: selectedOpts.map(o => ({
-                    ...o,
-                    _optKey: `${item._key}-${o.Id}`,
-                    _formattedPrice: formatCurrency(o.UnitPrice || 0),
-                    _formattedOptionTotal: formatCurrency((o.UnitPrice || 0) * (o.quantity || 1))
-                }))
-            };
+    get totalLineItems() {
+        let count = 0;
+        (this.selectedProducts || []).forEach(item => {
+            count += 1;
+            if (item.configuredOptions) {
+                count += item.configuredOptions.length;
+            }
         });
+        return count;
+    }
+
+    get flattenedLineItems() {
+        const items = [];
+        let lineNum = 1;
+        
+        (this.selectedProducts || []).forEach((product) => {
+            const hasOptions = product.configuredOptions && product.configuredOptions.length > 0;
+            const isExpanded = this.expandedRows.has(product._key);
+            
+            items.push({
+                _key: `parent-${product._key}`,
+                parentKey: product._key,
+                lineNumber: lineNum++,
+                productName: product.productName,
+                productCode: product.productCode,
+                quantity: product.quantity,
+                formattedListPrice: formatCurrency(product.listUnitPrice || 0),
+                formattedDiscount: product.additionalDiscount ? `${product.additionalDiscount}%` : '0%',
+                formattedNetPrice: formatCurrency(product.netUnitPrice || 0),
+                formattedTotal: formatCurrency(product.netTotal || 0),
+                hasOptions: hasOptions,
+                isOption: false,
+                ariaLevel: 1,
+                chevronIcon: isExpanded ? 'utility:chevrondown' : 'utility:chevronright',
+                buttonVisibility: hasOptions ? '' : 'visibility: hidden;',
+                paddingStyle: 'padding-left: 0;',
+                rowClass: 'slds-hint-parent'
+            });
+            
+            if (hasOptions && isExpanded) {
+                product.configuredOptions.forEach((opt, optIndex) => {
+                    items.push({
+                        _key: `opt-${product._key}-${optIndex}`,
+                        parentKey: product._key,
+                        lineNumber: '',
+                        productName: opt.productName,
+                        productCode: opt.productCode,
+                        quantity: opt.quantity,
+                        formattedListPrice: formatCurrency(opt.unitPrice || opt.listUnitPrice || 0),
+                        formattedDiscount: opt.additionalDiscount ? `${opt.additionalDiscount}%` : '0%',
+                        formattedNetPrice: formatCurrency(opt.netUnitPrice || 0),
+                        formattedTotal: formatCurrency(opt.netTotal || 0),
+                        hasOptions: false,
+                        isOption: true,
+                        ariaLevel: 2,
+                        chevronIcon: '',
+                        buttonVisibility: 'display: none;',
+                        paddingStyle: 'padding-left: 2rem;',
+                        rowClass: 'slds-hint-parent option-sub-row'
+                    });
+                });
+            }
+        });
+        
+        return items;
     }
 
     get formattedSubtotal() {
-        const discount = this.quoteState.additionalDiscountPercent || 0;
-        return formatCurrency(calculateSelectedProductsSubtotal(this.selectedProducts || [], discount));
-    }
-
-    /* ═══ Bundles ═══ */
-
-    get hasBundles() {
-        return (this.selectedProducts || []).some(i => i.isBundle);
-    }
-
-    get bundleItems() {
-        return (this.selectedProducts || [])
-            .filter(i => i.isBundle)
-            .map(b => {
-                const selected = (b.options || []).filter(o => o.isSelected);
-                return {
-                    ...b,
-                    _configLabel: b.configured ? 'Configured' : 'Incomplete',
-                    _configBadgeClass: b.configured ? 'badge-success' : 'badge-warning',
-                    _selectedOptions: selected.map(o => ({
-                        ...o,
-                        _optKey: `rev-${b._key}-${o.Id}`,
-                        _formattedPrice: formatCurrency(o.UnitPrice || 0)
-                    })),
-                    _noOptionsSelected: selected.length === 0
-                };
-            });
+        return formatCurrency(calculateSelectedProductsSubtotal(this.selectedProducts || []));
     }
 
     /* ═══ Logistics ═══ */
@@ -106,8 +135,8 @@ export default class CpqStepReview extends LightningElement {
         let weight = 0;
         (this.selectedProducts || []).forEach(item => {
             weight += (item.weight || 0) * (item.quantity || 1);
-            (item.options || []).filter(o => o.isSelected).forEach(o => {
-                weight += (o.Unit_Weight_Kg__c || 0) * (o.quantity || 1);
+            (item.configuredOptions || []).forEach(opt => {
+                weight += (opt.Unit_Weight_Kg__c || opt.weight || 0) * (opt.quantity || 1);
             });
         });
         return formatNumber(weight, 1);
@@ -115,12 +144,22 @@ export default class CpqStepReview extends LightningElement {
 
     /* ═══ Actions ═══ */
 
+    handleToggleExpand(event) {
+        const parentKey = event.currentTarget.dataset.id;
+        if (this.expandedRows.has(parentKey)) {
+            this.expandedRows.delete(parentKey);
+        } else {
+            this.expandedRows.add(parentKey);
+        }
+        this.expandedRows = new Set(this.expandedRows);
+    }
+
     handleBack() {
         this.dispatchEvent(new CustomEvent('navigate', { detail: { direction: 'back' } }));
     }
 
     handleSave() {
-        this.dispatchEvent(new CustomEvent('savequote', {
+        this.dispatchEvent(new CustomEvent('save', {
             detail: { confirmed: true }
         }));
     }

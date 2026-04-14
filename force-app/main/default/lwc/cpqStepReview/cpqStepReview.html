@@ -1,15 +1,15 @@
 <template>
     <div class="review-container">
 
-        <!-- ═══ Section 1: Quote Information ═══ -->
+        <!-- ═══ Section 1: Opportunity Details ═══ -->
         <div class="slds-card slds-m-bottom_medium">
             <div class="slds-card__header slds-grid">
                 <header class="slds-media slds-media_center slds-has-flexi-truncate">
                     <div class="slds-media__figure">
-                        <lightning-icon icon-name="standard:contract" size="small"></lightning-icon>
+                        <lightning-icon icon-name="standard:opportunity" size="small"></lightning-icon>
                     </div>
                     <div class="slds-media__body">
-                        <h2 class="slds-card__header-title slds-text-heading_small">Quote Information</h2>
+                        <h2 class="slds-card__header-title slds-text-heading_small">Opportunity Details</h2>
                     </div>
                 </header>
             </div>
@@ -17,22 +17,20 @@
                 <lightning-layout multiple-rows>
                     <lightning-layout-item size="6" small-device-size="12" padding="horizontal-small">
                         <dl class="slds-dl_horizontal slds-dl_horizontal_small">
+                            <dt class="slds-dl_horizontal__label slds-text-color_weak">Opportunity</dt>
+                            <dd class="slds-dl_horizontal__detail slds-text-title_bold">{opportunityName}</dd>
+                            
                             <dt class="slds-dl_horizontal__label slds-text-color_weak">Account</dt>
-                            <dd class="slds-dl_horizontal__detail">{quoteState.accountName}</dd>
-                            <dt class="slds-dl_horizontal__label slds-text-color_weak">Contact</dt>
-                            <dd class="slds-dl_horizontal__detail">{contactDisplay}</dd>
-                            <dt class="slds-dl_horizontal__label slds-text-color_weak">Catalog</dt>
-                            <dd class="slds-dl_horizontal__detail">{quoteState.catalogName}</dd>
+                            <dd class="slds-dl_horizontal__detail">{accountName}</dd>
                         </dl>
                     </lightning-layout-item>
                     <lightning-layout-item size="6" small-device-size="12" padding="horizontal-small">
                         <dl class="slds-dl_horizontal slds-dl_horizontal_small">
-                            <dt class="slds-dl_horizontal__label slds-text-color_weak">Start Date</dt>
-                            <dd class="slds-dl_horizontal__detail">{quoteState.startDate}</dd>
-                            <dt class="slds-dl_horizontal__label slds-text-color_weak">Subscription Term</dt>
-                            <dd class="slds-dl_horizontal__detail">{termDisplay}</dd>
-                            <dt class="slds-dl_horizontal__label slds-text-color_weak">Global Discount</dt>
-                            <dd class="slds-dl_horizontal__detail">{discountDisplay}</dd>
+                            <dt class="slds-dl_horizontal__label slds-text-color_weak">Pricebook</dt>
+                            <dd class="slds-dl_horizontal__detail">{pricebookName}</dd>
+                            
+                            <dt class="slds-dl_horizontal__label slds-text-color_weak">Offer Type</dt>
+                            <dd class="slds-dl_horizontal__detail">{offerTypeName}</dd>
                         </dl>
                     </lightning-layout-item>
                 </lightning-layout>
@@ -54,54 +52,49 @@
                 </header>
             </div>
             <div class="slds-card__body">
-                <table class="slds-table slds-table_cell-buffer slds-table_bordered slds-table_striped">
+                <table class="slds-table slds-table_cell-buffer slds-table_bordered slds-table_striped slds-tree slds-table_tree"
+                       role="treegrid" aria-label="Opportunity Line Items">
                     <thead>
                         <tr class="slds-line-height_reset">
                             <th scope="col" style="width:40px;">#</th>
                             <th scope="col">Product</th>
                             <th scope="col" style="width:100px;">Code</th>
-                            <th scope="col" style="width:60px;" class="slds-text-align_center">Qty</th>
-                            <th scope="col" style="width:110px;" class="slds-text-align_right">Unit Price</th>
-                            <th scope="col" style="width:90px;" class="slds-text-align_right">Disc. %</th>
-                            <th scope="col" style="width:120px;" class="slds-text-align_right">Line Total</th>
+                            <th scope="col" style="width:70px;" class="slds-text-align_center">Qty</th>
+                            <th scope="col" style="width:110px;" class="slds-text-align_right">List Price</th>
+                            <th scope="col" style="width:80px;" class="slds-text-align_right">Disc.%</th>
+                            <th scope="col" style="width:110px;" class="slds-text-align_right">Net Price</th>
+                            <th scope="col" style="width:120px;" class="slds-text-align_right">Total</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <template for:each={numberedItems} for:item="item">
-                            <tr key={item._key} class="slds-hint-parent">
-                                <td>{item._lineNumber}</td>
-                                <td>
+                        <template for:each={flattenedLineItems} for:item="row">
+                            <tr key={row._key} class={row.rowClass} aria-level={row.ariaLevel}>
+                                <td>{row.lineNumber}</td>
+                                <th scope="row" class="slds-tree__item" style={row.paddingStyle}>
                                     <div class="slds-grid slds-grid_vertical-align-center">
-                                        <lightning-icon lwc:if={item.isBundle} icon-name="utility:package" size="xx-small" class="slds-m-right_xx-small" title="Bundle"></lightning-icon>
-                                        <span>{item.productName}</span>
+                                        <button lwc:if={row.hasOptions}
+                                                class="slds-button slds-button_icon slds-button_icon-x-small slds-m-right_x-small"
+                                                onclick={handleToggleExpand}
+                                                data-id={row.parentKey}
+                                                style={row.buttonVisibility}
+                                                tabindex="-1">
+                                            <lightning-icon icon-name={row.chevronIcon} size="xx-small"></lightning-icon>
+                                        </button>
+                                        <span class="slds-truncate" title={row.productName}>{row.productName}</span>
                                     </div>
-                                </td>
-                                <td><span class="slds-text-body_small">{item.productCode}</span></td>
-                                <td class="slds-text-align_center">{item.quantity}</td>
-                                <td class="slds-text-align_right">{item._formattedUnitPrice}</td>
-                                <td class="slds-text-align_right">{item._formattedDiscount}</td>
-                                <td class="slds-text-align_right slds-text-title_bold">{item._formattedTotal}</td>
+                                </th>
+                                <td><span class="slds-text-body_small">{row.productCode}</span></td>
+                                <td class="slds-text-align_center">{row.quantity}</td>
+                                <td class="slds-text-align_right">{row.formattedListPrice}</td>
+                                <td class="slds-text-align_right">{row.formattedDiscount}</td>
+                                <td class="slds-text-align_right">{row.formattedNetPrice}</td>
+                                <td class="slds-text-align_right slds-text-title_bold">{row.formattedTotal}</td>
                             </tr>
-                            <!-- Bundle options sub-rows -->
-                            <template lwc:if={item.hasOptions} for:each={item.options} for:item="opt">
-                                <tr key={opt._optKey} class="option-sub-row">
-                                    <td></td>
-                                    <td colspan="2">
-                                        <span class="slds-p-left_large slds-text-body_small slds-text-color_weak">
-                                            ↳ {opt.productName}
-                                        </span>
-                                    </td>
-                                    <td class="slds-text-align_center slds-text-body_small">{opt.quantity}</td>
-                                    <td class="slds-text-align_right slds-text-body_small">{opt._formattedPrice}</td>
-                                    <td></td>
-                                    <td class="slds-text-align_right slds-text-body_small">{opt._formattedOptionTotal}</td>
-                                </tr>
-                            </template>
                         </template>
                     </tbody>
                     <tfoot>
                         <tr>
-                            <td colspan="6" class="slds-text-align_right slds-text-title_caps slds-p-right_small">Subtotal</td>
+                            <td colspan="7" class="slds-text-align_right slds-text-title_caps slds-p-right_small">Subtotal</td>
                             <td class="slds-text-align_right slds-text-heading_small">{formattedSubtotal}</td>
                         </tr>
                     </tfoot>
@@ -109,43 +102,7 @@
             </div>
         </div>
 
-        <!-- ═══ Section 3: Bundle Configurations ═══ -->
-        <template lwc:if={hasBundles}>
-            <div class="slds-card slds-m-bottom_medium">
-                <div class="slds-card__header slds-grid">
-                    <header class="slds-media slds-media_center slds-has-flexi-truncate">
-                        <div class="slds-media__figure">
-                            <lightning-icon icon-name="standard:bundle_policy" size="small"></lightning-icon>
-                        </div>
-                        <div class="slds-media__body">
-                            <h2 class="slds-card__header-title slds-text-heading_small">Bundle Configurations</h2>
-                        </div>
-                    </header>
-                </div>
-                <div class="slds-card__body slds-card__body_inner">
-                    <template for:each={bundleItems} for:item="bundle">
-                        <div key={bundle._key} class="slds-box slds-box_x-small slds-m-bottom_small bundle-summary">
-                            <div class="slds-grid slds-grid_align-spread slds-p-bottom_xx-small slds-border_bottom slds-m-bottom_x-small">
-                                <span class="slds-text-title_bold">{bundle.productName}</span>
-                                <lightning-badge label={bundle._configLabel} class={bundle._configBadgeClass}></lightning-badge>
-                            </div>
-                            <ul class="slds-list_dotted slds-text-body_small">
-                                <template for:each={bundle._selectedOptions} for:item="opt">
-                                    <li key={opt._optKey}>
-                                        {opt.productName} — Qty: {opt.quantity} — {opt._formattedPrice}
-                                    </li>
-                                </template>
-                            </ul>
-                            <template lwc:if={bundle._noOptionsSelected}>
-                                <p class="slds-text-body_small slds-text-color_weak slds-p-top_xx-small">No options selected.</p>
-                            </template>
-                        </div>
-                    </template>
-                </div>
-            </div>
-        </template>
-
-        <!-- ═══ Section 4: Logistics ═══ -->
+        <!-- ═══ Section 3: Logistics ═══ -->
         <div class="slds-card slds-m-bottom_medium">
             <div class="slds-card__header slds-grid">
                 <header class="slds-media slds-media_center slds-has-flexi-truncate">
@@ -185,46 +142,36 @@
             </div>
         </div>
 
-        <!-- ═══ Section 5: Grand Total Card ═══ -->
+        <!-- ═══ Section 4: Opportunity Summary ═══ -->
         <div class="slds-card total-card slds-m-bottom_medium">
             <div class="slds-card__body slds-card__body_inner">
-                <lightning-layout vertical-align="center">
-                    <lightning-layout-item flexibility="grow">
+                <lightning-layout vertical-align="center" multiple-rows>
+                    <lightning-layout-item flexibility="grow" size="6" medium-device-size="3" class="slds-text-align_center slds-m-bottom_small">
                         <div class="slds-grid slds-grid_vertical">
-                            <span class="slds-text-title_caps slds-text-color_weak">Estimated Weight</span>
-                            <span class="slds-text-body_regular">{formattedWeight} kg</span>
+                            <span class="slds-text-title_caps slds-text-color_weak">Total Products</span>
+                            <span class="slds-text-heading_small">{itemCount}</span>
                         </div>
                     </lightning-layout-item>
-                    <lightning-layout-item flexibility="grow">
-                        <div class="slds-grid slds-grid_vertical slds-text-align_center">
-                            <span class="slds-text-title_caps slds-text-color_weak">Products</span>
-                            <span class="slds-text-body_regular">{itemCount}</span>
+                    <lightning-layout-item flexibility="grow" size="6" medium-device-size="3" class="slds-text-align_center slds-m-bottom_small">
+                        <div class="slds-grid slds-grid_vertical">
+                            <span class="slds-text-title_caps slds-text-color_weak">Total Items</span>
+                            <span class="slds-text-heading_small">{totalLineItems}</span>
                         </div>
                     </lightning-layout-item>
-                    <lightning-layout-item flexibility="grow">
-                        <div class="slds-grid slds-grid_vertical slds-text-align_right">
+                    <lightning-layout-item flexibility="grow" size="6" medium-device-size="3" class="slds-text-align_center slds-m-bottom_small">
+                        <div class="slds-grid slds-grid_vertical">
+                            <span class="slds-text-title_caps slds-text-color_weak">Est. Weight</span>
+                            <span class="slds-text-heading_small">{formattedWeight} kg</span>
+                        </div>
+                    </lightning-layout-item>
+                    <lightning-layout-item flexibility="grow" size="6" medium-device-size="3" class="slds-text-align_right">
+                        <div class="slds-grid slds-grid_vertical">
                             <span class="slds-text-title_caps slds-text-color_weak">Grand Total</span>
                             <span class="slds-text-heading_medium grand-total">{formattedSubtotal}</span>
                         </div>
                     </lightning-layout-item>
                 </lightning-layout>
             </div>
-        </div>
-
-        <!-- ═══ Action Buttons ═══ -->
-        <div class="slds-grid slds-grid_align-spread slds-p-top_small">
-            <lightning-button
-                label="Back"
-                icon-name="utility:back"
-                variant="neutral"
-                onclick={handleBack}
-            ></lightning-button>
-            <lightning-button
-                label="Confirm & Save Quote"
-                icon-name="utility:save"
-                variant="brand"
-                onclick={handleSave}
-            ></lightning-button>
         </div>
     </div>
 </template>

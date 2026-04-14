@@ -91,9 +91,10 @@
                     <template lwc:if={isStepReview}>
                         <c-cpq-step-review
                             selected-products={selectedProducts}
-                            quote-state={quoteState}
+                            opportunity-state={opportunityState}
+                            opportunity-record={opportunityRecord}
                             logistics-state={logisticsState}
-                            onsavequote={handleSaveQuote}
+                            onsave={handleSaveOpportunity}
                             onnavigate={handleNavigate}
                         ></c-cpq-step-review>
                     </template>

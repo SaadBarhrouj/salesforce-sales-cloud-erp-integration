@@ -124,16 +124,13 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
   @track selectedItemLabel = "";
 
   /* ── domain state ─────────────────────────────── */
-  @track quoteState = {
+  @track opportunityState = {
     accountId: "",
     accountName: "",
-    contactId: "",
-    contactName: "",
-    catalogId: "",
-    catalogName: "",
-    startDate: new Date().toISOString().split("T")[0],
-    subscriptionTerm: 12,
-    additionalDiscountPercent: 0
+    pricebookId: "",
+    pricebookName: "",
+    offerTypeId: "",
+    offerTypeName: ""
   };
   @track selectedProducts = [];
   @track logisticsState = {
@@ -168,7 +165,7 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
   }
 
   get showSidebar() {
-    return !this.isStepLineEditor;
+    return !this.isStepLineEditor && !this.isStepReview;
   }
 
   /* -- bundle config -- */
@@ -545,8 +542,10 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
     } else if (stepKey === STEPS.LINE_EDITOR.key) {
       this.sidebarItems = [];
       this.sidebarIsLoading = false;
-    } else {
-      this._loadReviewSidebar();
+    } else if (stepKey === STEPS.REVIEW.key) {
+      // No sidebar for review step
+      this.sidebarItems = [];
+      this.sidebarIsLoading = false;
     }
   }
 
@@ -609,21 +608,6 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
     }, 300);
   }
 
-  _loadReviewSidebar() {
-    this.sidebarTitle = "Details";
-    this.sidebarIcon = "standard:info";
-    this.sidebarSortLabel = "Field";
-    this.sidebarItems = [
-      { id: "det-001", label: "Account", value: this.quoteState.accountName },
-      { id: "det-002", label: "Start Date", value: this.quoteState.startDate },
-      {
-        id: "det-003",
-        label: "Term",
-        value: `${this.quoteState.subscriptionTerm}m`
-      }
-    ];
-  }
-
   handleItemSelect(event) {
     if (this.isStepConfigure) {
       const bundleConfig = this._getBundleConfigStep();
@@ -680,9 +664,8 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
   /* ── Step 1 events ── */
   handleProductAdd(event) {
     const cartItem = deepClone(event.detail.cartItem);
-    const discount = this.quoteState.additionalDiscountPercent || 0;
     cartItem._formattedTotal = formatCurrency(
-      calculateSelectedProductTotal(cartItem, discount)
+      calculateSelectedProductTotal(cartItem)
     );
     const items = deepClone(this.selectedProducts);
     items.push(cartItem);
@@ -705,13 +688,12 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
   handleConfigUpdate(event) {
     const { itemKey, options, configured } = event.detail;
     const items = deepClone(this.selectedProducts);
-    const discount = this.quoteState.additionalDiscountPercent || 0;
     const idx = items.findIndex((i) => i._key === itemKey);
     if (idx !== -1) {
       items[idx].configuredOptions = deepClone(options);
       items[idx].configured = configured;
       items[idx]._formattedTotal = formatCurrency(
-        calculateSelectedProductTotal(items[idx], discount)
+        calculateSelectedProductTotal(items[idx])
       );
     }
     this.selectedProducts = items;
@@ -721,7 +703,6 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
   handleLineUpdate(event) {
     const { itemKey, field, value, optionId } = event.detail;
     const items = deepClone(this.selectedProducts);
-    const discount = this.quoteState.additionalDiscountPercent || 0;
     const idx = items.findIndex((i) => i._key === itemKey);
     if (idx !== -1) {
       if (field === "quantity") items[idx].quantity = value;
@@ -770,14 +751,6 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
     }
   }
 
-  handleGlobalDiscount(event) {
-    const disc = event.detail.value;
-    const qs = deepClone(this.quoteState);
-    qs.additionalDiscountPercent = disc;
-    this.quoteState = qs;
-    this._recalcAllTotals();
-  }
-
   handleLineSelectionChange(event) {
     this.hasLineSelection = event.detail.hasSelection;
   }
@@ -809,7 +782,7 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
     this.logisticsState = deepClone(event.detail.logistics);
   }
 
-  handleSaveQuote() {
+  handleSaveOpportunity() {
     this._triggerSave();
   }
 
@@ -836,11 +809,10 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
   }
 
   _recalcAllTotals() {
-    const discount = this.quoteState.additionalDiscountPercent || 0;
     const items = deepClone(this.selectedProducts);
     items.forEach((item) => {
       item._formattedTotal = formatCurrency(
-        calculateSelectedProductTotal(item, discount)
+        calculateSelectedProductTotal(item)
       );
     });
     this.selectedProducts = items;
