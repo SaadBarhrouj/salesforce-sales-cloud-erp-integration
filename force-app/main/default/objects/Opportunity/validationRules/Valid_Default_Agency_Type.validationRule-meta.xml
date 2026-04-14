@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Valid_Default_Agency_Type</fullName>
+    <active>true</active>
+    <description>The Default Agency must have a Location Type of &quot;Warehouse&quot;.</description>
+    <errorConditionFormula>AND(
+    NOT(ISBLANK(Default_Agency__c)),
+    TEXT(Default_Agency__r.LocationType) &lt;&gt; &quot;Warehouse&quot;
+)</errorConditionFormula>
+    <errorDisplayField>Default_Agency__c</errorDisplayField>
+    <errorMessage>The Default Agency must be a location of type &quot;Warehouse&quot;.</errorMessage>
+</ValidationRule>

@@ -1,7 +1,7 @@
 <template>
     <!-- LOADING                                    -->
     <template lwc:if={isLoading}>
-        <lightning-card title="Trip Route" icon-name="action:map">
+        <lightning-card title={mapTitle} icon-name={computedIconName}>
             <div class="state-container">
                 <lightning-spinner
                     alternative-text="Loading route…"
@@ -13,7 +13,7 @@
 
     <!-- ERROR                                      -->
     <template lwc:elseif={hasError}>
-        <lightning-card title="Trip Route" icon-name="action:map">
+        <lightning-card title={mapTitle} icon-name={computedIconName}>
             <div class="state-container">
                 <lightning-icon
                     icon-name="utility:error"
@@ -32,11 +32,11 @@
 
     <!-- INCOMPLETE COORDINATES                     -->
     <template lwc:elseif={isIncomplete}>
-        <lightning-card title="Trip Route" icon-name="action:map">
+        <lightning-card title={mapTitle} icon-name={computedIconName}>
             <div class="state-container">
                 <div class="empty-icon-ring">
                     <lightning-icon
-                        icon-name="utility:routing"
+                        icon-name="utility:route"
                         size="large">
                     </lightning-icon>
                 </div>
@@ -51,7 +51,7 @@
 
     <!-- MAP + ROUTE                                -->
     <template lwc:else>
-        <lightning-card title="Trip Route" icon-name="action:map">
+        <lightning-card title={mapTitle} icon-name={computedIconName}>
 
             <!-- Interactive Map — auto-fit, no zoom-level -->
             <div class="map-frame" >
@@ -65,7 +65,7 @@
             <template lwc:if={showRoutePanel}>
                 <div class="route-panel">
 
-                    <!-- Directional visual: ●───►● -->
+                    <!-- Directional visual -->
                     <div class="route-visual">
                         <div class={departureDotClass}></div>
                         <div class="line-track">

@@ -420,6 +420,16 @@
                 <identifier>RecordCountry_Code_cField</identifier>
             </fieldInstance>
         </itemInstances>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>required</value>
+                </fieldInstanceProperties>
+                <fieldItem>Record.Location</fieldItem>
+                <identifier>RecordLocationField</identifier>
+            </fieldInstance>
+        </itemInstances>
         <name>Facet-ecc7b83a-4d02-444b-9b29-4a124b260450</name>
         <type>Facet</type>
     </flexiPageRegions>
@@ -443,6 +453,12 @@
                 <fieldItem>Record.Description</fieldItem>
                 <identifier>RecordDescriptionField</identifier>
             </fieldInstance>
+        </itemInstances>
+        <itemInstances>
+            <componentInstance>
+                <componentName>flexipage:blankSpace</componentName>
+                <identifier>flexipage_blankSpace</identifier>
+            </componentInstance>
         </itemInstances>
         <name>Facet-61527988-0c48-49f5-9541-2ba7dbc4c14a</name>
         <type>Facet</type>

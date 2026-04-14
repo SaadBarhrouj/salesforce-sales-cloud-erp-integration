@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Required_Bundle_Option_Must_Be_Selected</fullName>
+    <active>true</active>
+    <description>Ensures that if a bundle option is marked as required, it must also be selected. Prevents saving a configuration where required options are not chosen.</description>
+    <errorConditionFormula>AND(
+    Is_Required__c,
+    NOT(Is_Selected__c)
+ )</errorConditionFormula>
+    <errorDisplayField>Is_Selected__c</errorDisplayField>
+    <errorMessage>This option is required and must be selected.</errorMessage>
+</ValidationRule>
