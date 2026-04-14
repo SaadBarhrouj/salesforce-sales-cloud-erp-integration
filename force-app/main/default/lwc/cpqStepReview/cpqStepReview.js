@@ -33,7 +33,14 @@ export default class CpqStepReview extends LightningElement {
     /* ═══ Line Items ═══ */
 
     get itemCount() {
-        return (this.selectedProducts || []).length;
+        let count = 0;
+        (this.selectedProducts || []).forEach(item => {
+            count += 1;
+            if (item.configuredOptions) {
+                count += item.configuredOptions.length;
+            }
+        });
+        return count;
     }
 
     get totalLineItems() {
@@ -107,18 +114,52 @@ export default class CpqStepReview extends LightningElement {
         return formatCurrency(calculateSelectedProductsSubtotal(this.selectedProducts || []));
     }
 
+    get formattedProductsSubtotal() {
+        return formatCurrency(calculateSelectedProductsSubtotal(this.selectedProducts || []));
+    }
+
+    get transportTotal() {
+        if (!this.logisticsState || !this.logisticsState.trips || this.logisticsState.trips.length === 0) {
+            return 0;
+        }
+        return this.logisticsState.trips.reduce((total, trip) => {
+            return total + (trip.Final_Price__c || trip.System_Price__c || 0);
+        }, 0);
+    }
+
+    get formattedTransportTotal() {
+        return formatCurrency(this.transportTotal);
+    }
+
+    get grandTotal() {
+        // Grand Total = Products Net Total (with discount) + Transport Cost
+        const productsNetTotal = calculateSelectedProductsSubtotal(this.selectedProducts || []);
+        return productsNetTotal + this.transportTotal;
+    }
+
+    get formattedGrandTotal() {
+        return formatCurrency(this.grandTotal);
+    }
+
     /* ═══ Logistics ═══ */
 
+    get isTransportRequired() {
+        if (this.logisticsState && this.logisticsState.isTransportRequired !== undefined) {
+            return this.logisticsState.isTransportRequired;
+        }
+        return this.opportunityRecord?.data?.fields?.Is_Transport_Required__c?.value || false;
+    }
+
     get transportDisplay() {
-        return this.logisticsState.transportRequired ? 'Yes' : 'No';
+        return this.isTransportRequired ? 'Yes' : 'No';
     }
 
     get deliverySiteDisplay() {
-        return this.logisticsState.deliverySiteId || '—';
+        return this.logisticsState.deliverySiteName || '—';
     }
 
     get agencyDisplay() {
-        return this.logisticsState.agencyId || '—';
+        return this.logisticsState.agencyName || '—';
     }
 
     get urgencyDisplay() {

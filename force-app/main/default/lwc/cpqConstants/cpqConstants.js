@@ -120,7 +120,7 @@ LINE_EDITOR: {
         }
     },
     REVIEW: {
-        number: 5, key: 'review', label: 'Review & Save', icon: 'standard:task', subtitle: 'Verify everything before saving',
+        number: 5, key: 'review', label: 'Review', icon: 'standard:task', subtitle: 'Verify everything before saving',
         header: { showSearch: false, searchPlaceholder: 'Search...', stepActions: DEFAULT_STEP_ACTIONS, globalActions: DEFAULT_GLOBAL_ACTIONS }
     }
 });

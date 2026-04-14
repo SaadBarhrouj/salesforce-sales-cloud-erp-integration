@@ -844,18 +844,20 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
     this.selectedProducts = products;
   }
 
-  /* -- Step 5 events -- */
-  handleLogisticsChange(event) {
-    const updatedLogistics = event.detail.logistics;
-    this.logisticsState = {
-      ...this.logisticsState,
-      agencyId: updatedLogistics.config ? updatedLogistics.config.agencyId : this.logisticsState.agencyId,
-      deliverySiteId: updatedLogistics.config ? updatedLogistics.config.deliverySiteId : this.logisticsState.deliverySiteId,
-      urgency: updatedLogistics.config ? updatedLogistics.config.urgency : this.logisticsState.urgency,
-      trips: updatedLogistics.trips,
-      isValid: updatedLogistics.isValid
-    };
-  }
+    /* -- Step 5 events -- */
+    handleLogisticsChange(event) {
+        const updatedLogistics = event.detail.logistics;
+        this.logisticsState = {
+          ...this.logisticsState,
+          agencyId: updatedLogistics.config ? updatedLogistics.config.agencyId : this.logisticsState.agencyId,
+          deliverySiteId: updatedLogistics.config ? updatedLogistics.config.deliverySiteId : this.logisticsState.deliverySiteId,
+          urgency: updatedLogistics.config ? updatedLogistics.config.urgency : this.logisticsState.urgency,
+          trips: updatedLogistics.trips,
+          isValid: updatedLogistics.isValid,
+          agencyName: updatedLogistics.agencyName || this.logisticsState.agencyName,
+          deliverySiteName: updatedLogistics.deliverySiteName || this.logisticsState.deliverySiteName
+        };
+    }
 
   handleSaveOpportunity() {
     this._triggerSave();
