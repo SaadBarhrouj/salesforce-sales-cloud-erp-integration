@@ -170,6 +170,58 @@ export default class CpqStepReview extends LightningElement {
         return !!(this.logisticsState.notes);
     }
 
+    get hasTrips() {
+        // Use real trips data only
+        return this.logisticsState.trips && this.logisticsState.trips.length > 0;
+    }
+
+    get formattedTrips() {
+        /*
+        // MOCK TRIPS DATA - Uncomment for testing only
+        const mockTrips = [
+            {
+                Id: 'trip-1',
+                Truck_Type__c: 'Flatbed 20T',
+                Distance_Km__c: 125,
+                System_Price__c: 2500,
+                Final_Price__c: 2500,
+                Is_Price_Overridden__c: false,
+                Override_Reason__c: null
+            },
+            {
+                Id: 'trip-2',
+                Truck_Type__c: 'Refrigerated 15T',
+                Distance_Km__c: 340,
+                System_Price__c: 4800,
+                Final_Price__c: 5500,
+                Is_Price_Overridden__c: true,
+                Override_Reason__c: 'Express delivery'
+            },
+            {
+                Id: 'trip-3',
+                Truck_Type__c: 'Standard 10T',
+                Distance_Km__c: 85,
+                System_Price__c: 1200,
+                Final_Price__c: 1200,
+                Is_Price_Overridden__c: false,
+                Override_Reason__c: null
+            }
+        ];
+        // To use mock data, uncomment: const tripsToUse = mockTrips;
+        */
+
+        if (!this.logisticsState.trips) return [];
+        
+        return this.logisticsState.trips.map((trip, index) => ({
+            ...trip,
+            rowNumber: index + 1,
+            formattedSystemPrice: formatCurrency(trip.System_Price__c || 0),
+            formattedFinalPrice: formatCurrency(trip.Final_Price__c || trip.System_Price__c || 0),
+            formattedDistance: formatNumber(trip.Distance_Km__c || 0, 0),
+            isOverridden: trip.Is_Price_Overridden__c
+        }));
+    }
+
     /* ═══ Totals ═══ */
 
     get formattedWeight() {

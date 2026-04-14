@@ -103,3 +103,11 @@
 .slds-table_tree th {
     vertical-align: middle;
 }
+
+/* ── Badge Styling ── */
+.slds-badge_warning {
+    background-color: var(--slds-g-color-warning-base-90, #fedcb8);
+    color: var(--slds-g-color-warning-base-20, #7c4a0b);
+    font-size: 0.75rem;
+    padding: 0.125rem 0.5rem;
+}

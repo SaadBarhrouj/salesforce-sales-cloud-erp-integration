@@ -138,6 +138,62 @@
                             </div>
                         </template>
                     </div>
+
+                    <!-- Trips Table -->
+                    <template lwc:if={hasTrips}>
+                        <h3 class="slds-text-title_bold slds-m-bottom_small">Trips</h3>
+                        <table class="slds-table slds-table_cell-buffer slds-table_bordered slds-table_striped"
+                                aria-label="Transport Trips">
+                            <thead>
+                                <tr class="slds-line-height_reset">
+                                    <th scope="col" style="width:50px;">#</th>
+                                    <th scope="col">Truck Type</th>
+                                    <th scope="col" style="width:120px;" class="slds-text-align_right">Distance</th>
+                                    <th scope="col" style="width:120px;" class="slds-text-align_right">System Price</th>
+                                    <th scope="col" style="width:120px;" class="slds-text-align_right">Final Price</th>
+                                    <th scope="col" style="width:150px;">Override Reason</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <template for:each={formattedTrips} for:item="trip">
+                                    <tr key={trip.Id}>
+                                        <td>{trip.rowNumber}</td>
+                                        <td>
+                                            <div class="slds-grid slds-grid_vertical-align-center">
+                                                <lightning-icon icon-name="standard:shipment" size="xx-small" class="slds-m-right_x-small"></lightning-icon>
+                                                <span>{trip.Truck_Type__c}</span>
+                                            </div>
+                                        </td>
+                                        <td class="slds-text-align_right">{trip.formattedDistance} km</td>
+                                        <td class="slds-text-align_right slds-text-color_weak">{trip.formattedSystemPrice}</td>
+                                        <td class="slds-text-align_right slds-text-title_bold">
+                                            <template lwc:if={trip.isOverridden}>
+                                                <span class="slds-text-color_error">{trip.formattedFinalPrice}</span>
+                                            </template>
+                                            <template lwc:else>
+                                                {trip.formattedFinalPrice}
+                                            </template>
+                                        </td>
+                                        <td>
+                                            <template lwc:if={trip.Override_Reason__c}>
+                                                <span class="slds-badge slds-badge_warning">{trip.Override_Reason__c}</span>
+                                            </template>
+                                            <template lwc:else>
+                                                <span class="slds-text-color_weak">—</span>
+                                            </template>
+                                        </td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td colspan="4" class="slds-text-align_right slds-text-title_caps slds-p-right_small">Transport Total</td>
+                                    <td class="slds-text-align_right slds-text-heading_small slds-text-title_bold">{formattedTransportTotal}</td>
+                                    <td></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </template>
                 </div>
             </div>
         </template>
