@@ -90,10 +90,23 @@ public with sharing class CloneService {
         }
     }
 
+    /**
+     * @description Determines whether a child relationship should be included in clone operations.
+     * @param rel The child relationship to evaluate.
+     * @param childDescribe The describe result for the child object.
+     * @return True if the relationship should be included.
+     */
     private static Boolean shouldIncludeRelationship(ChildRelationship rel, DescribeSObjectResult childDescribe) {
         return (rel.isCascadeDelete() || childDescribe.isCustom()) && childDescribe.isQueryable();
     }
 
+    /**
+     * @description Queries child records for a given parent ID and relationship.
+     * @param recordId The parent record ID.
+     * @param rel The child relationship to query.
+     * @param childDescribe The describe result for the child object.
+     * @return List of child SObject records.
+     */
     private static List<SObject> queryChildRecords(Id recordId, ChildRelationship rel, DescribeSObjectResult childDescribe) {
         String childName = childDescribe.getName();
         String lookupField = rel.getField().getDescribe().getName();
@@ -106,6 +119,11 @@ public with sharing class CloneService {
         return Database.query(query);
     }
 
+    /**
+     * @description Returns the name field API name for a given SObject type.
+     * @param childDescribe The describe result for the SObject.
+     * @return The name field API name, or 'Id' if no name field found.
+     */
     private static String getNameField(DescribeSObjectResult childDescribe) {
         for (SObjectField f : childDescribe.fields.getMap().values()) {
             DescribeFieldResult dfr = f.getDescribe();
@@ -146,6 +164,12 @@ public with sharing class CloneService {
         }
     }
 
+    /**
+     * @description Clones selected child records and attaches them to a new parent.
+     * @param newParentId The ID of the new parent record.
+     * @param parentType The SObjectType of the parent record.
+     * @param selectedIdsMap Map of relationship name to selected child record IDs.
+     */
     private static void cloneChildren(Id newParentId, SObjectType parentType, Map<String, Object> selectedIdsMap) {
         List<SObject> childrenToInsert = new List<SObject>();
         DescribeSObjectResult parentDescribe = parentType.getDescribe();
@@ -162,6 +186,13 @@ public with sharing class CloneService {
         }
     }
 
+    /**
+     * @description Clones child records and re-parents them to the new parent ID.
+     * @param newParentId The ID of the new parent record.
+     * @param rel The child relationship describing the lookup field.
+     * @param selectedIdsObj The object containing selected child record IDs.
+     * @return List of cloned SObject records ready for insert.
+     */
     private static List<SObject> prepareClonedChildren(Id newParentId, ChildRelationship rel, Object selectedIdsObj) {
         List<SObject> clonedChildren = new List<SObject>();
         List<Id> childIds = convertToIdList(selectedIdsObj);
@@ -183,6 +214,11 @@ public with sharing class CloneService {
         return clonedChildren;
     }
 
+    /**
+     * @description Converts an Object to a List of Id values.
+     * @param obj The object to convert, expected to be a List<Object> containing Id values.
+     * @return List of Id values extracted from the input object.
+     */
     private static List<Id> convertToIdList(Object obj) {
         List<Id> ids = new List<Id>();
         if (obj instanceof List<Object>) {
@@ -193,6 +229,12 @@ public with sharing class CloneService {
         return ids;
     }
 
+    /**
+     * @description Generates a SOQL query string selecting all accessible and createable fields for a given SObject type.
+     * @param sObjName The API name of the SObject type.
+     * @return A SOQL query string starting with SELECT and FROM clauses (no WHERE clause).
+     * @throws AuraHandledException if the SObject type is not found.
+     */
     private static String generateAllFieldsQuery(String sObjName) {
         SObjectType sObjType = Schema.getGlobalDescribe().get(sObjName);
         if (sObjType == null) {

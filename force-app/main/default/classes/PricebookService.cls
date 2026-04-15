@@ -130,6 +130,12 @@ public inherited sharing class PricebookService {
         }
     }
 
+    /**
+     * @description Finds the matching volume pricing tier for a given quantity.
+     * @param tiers List of Volume_Pricing_Tier__c records to search.
+     * @param quantity The quantity to match against tier bounds.
+     * @return The matched tier, or null if no tier matches.
+     */
     private static Volume_Pricing_Tier__c findMatchedTier(List<Volume_Pricing_Tier__c> tiers, Integer quantity) {
         Decimal qty = Decimal.valueOf(quantity);
         for (Volume_Pricing_Tier__c tier : tiers) {
@@ -142,6 +148,11 @@ public inherited sharing class PricebookService {
         return null;
     }
     
+    /**
+     * @description Converts an Object value to an Integer, defaulting to 1.
+     * @param value The object to convert to an Integer.
+     * @return The Integer value, or 1 if conversion fails.
+     */
     private static Integer toInteger(Object value) {
         if (value == null) {
             return 1;
@@ -155,6 +166,11 @@ public inherited sharing class PricebookService {
         return Integer.valueOf(String.valueOf(value));
     }
 
+    /**
+     * @description Converts an Object value to a Decimal, defaulting to 0.
+     * @param value The object to convert to a Decimal.
+     * @return The Decimal value, or 0 if conversion fails.
+     */
     private static Decimal toDecimal(Object value) {
         if (value == null) {
             return 0;
@@ -168,12 +184,22 @@ public inherited sharing class PricebookService {
         return Decimal.valueOf(String.valueOf(value));
     }
 
+    /**
+     * @description Validates that the discount is between 0 and 100.
+     * @param discount The discount percentage to validate.
+     * @throws PricebookException if discount is null, negative, or exceeds 100.
+     */
     private static void validateDiscount(Decimal discount) {
         if (discount == null || discount < 0 || discount > 100) {
             throw new PricebookException('Discount must be between 0 and 100');
         }
     }
 
+    /**
+     * @description Validates that the quantity is at least 1.
+     * @param quantity The quantity to validate.
+     * @throws PricebookException if quantity is null or less than 1.
+     */
     private static void validateQuantity(Integer quantity) {
         if (quantity == null || quantity < 1) {
             throw new PricebookException('Quantity must be at least 1');

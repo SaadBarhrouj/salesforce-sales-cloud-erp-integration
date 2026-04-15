@@ -139,7 +139,9 @@ public inherited sharing class OpportunityService {
             if (options != null) {
                 for (Object optObj : options) {
                     Map<String, Object> optData = toStringKeyMap(optObj);
-                    if (optData == null) continue;
+                    if (optData == null) {
+                        continue;
+                    }
                     Id optProduct2Id = toId(optData.get('product2Id'));
                     String optProductName = (String) optData.get('productName');
                     if (optProduct2Id != null) {
@@ -215,7 +217,9 @@ public inherited sharing class OpportunityService {
             if (options != null) {
                 for (Object optObj : options) {
                     Map<String, Object> optData = toStringKeyMap(optObj);
-                    if (optData == null) continue;
+                    if (optData == null) {
+                        continue;
+                    }
                     Id optProduct2Id = toId(optData.get('product2Id'));
 
                     OpportunityLineItem childItem = buildSingleLineItem(
@@ -312,7 +316,9 @@ public inherited sharing class OpportunityService {
 
         for (Object tripObj : tripMaps) {
             Map<String, Object> tripData = toStringKeyMap(tripObj);
-            if (tripData == null) continue;
+            if (tripData == null) {
+                continue;
+            }
 
             Trip__c trip = new Trip__c();
             trip.Opportunity__c = opportunityId;
@@ -352,6 +358,8 @@ public inherited sharing class OpportunityService {
     /**
      * @description Converts an Object value to an Id.
      * Returns null if the value is null or not a valid Id string.
+     * @param value The object to convert to an Id.
+     * @return The Id value, or null if conversion fails.
      */
     private static Id toId(Object value) {
         if (value == null) {
@@ -373,6 +381,8 @@ public inherited sharing class OpportunityService {
 
     /**
      * @description Converts an Object value to an Integer, defaulting to 1.
+     * @param value The object to convert to an Integer.
+     * @return The Integer value, or 1 if conversion fails.
      */
     private static Integer toInteger(Object value) {
         if (value == null) {
@@ -396,6 +406,8 @@ public inherited sharing class OpportunityService {
 
     /**
      * @description Converts an Object value to a Decimal, defaulting to 0.
+     * @param value The object to convert to a Decimal.
+     * @return The Decimal value, or 0 if conversion fails.
      */
     private static Decimal toDecimal(Object value) {
         if (value == null) {
