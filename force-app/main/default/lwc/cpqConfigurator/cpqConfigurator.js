@@ -946,7 +946,7 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
       product2Id: product.productId,
       productName: product.productName,
       quantity: product.quantity || 1,
-      unitPrice: product.netUnitPrice || product.unitPrice || 0,
+      unitPrice: product.listUnitPrice || product.unitPrice || 0,
       discountPercent: product.additionalDiscount || 0,
       isBundle: product.isBundle || false,
       bundleGroup: product.isBundle ? product.productId : null,
@@ -954,8 +954,8 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
         product2Id: opt.productId || opt.Id,
         productName: opt.productName,
         quantity: opt.quantity || 1,
-        unitPrice: opt.unitPrice || 0,
-        discountPercent: opt.discountPercent || 0
+        unitPrice: opt.listUnitPrice || opt.unitPrice || 0,
+        discountPercent: opt.additionalDiscount || opt.discountPercent || 0
       }))
     }));
   }
