@@ -68,23 +68,18 @@ export function round(value, decimals = 2) {
     return Math.round(value * factor) / factor;
 }
 
-/* ─── Selected Product Total (bundle + options) ─── */
+/* ─── Selected Product Total (bundle + options) ───
+   Uses pre-calculated netTotal from line editor (includes complex pricing: tiered, blocks, etc.)
+*/
 export function calculateSelectedProductTotal(selectedProduct) {
-    let total = calculateLineTotal(
-        selectedProduct.quantity,
-        selectedProduct.listUnitPrice,
-        selectedProduct.additionalDiscount || 0
-    );
+    // Use pre-calculated netTotal from line editor (includes complex pricing rules)
+    let total = selectedProduct.netTotal || 0;
 
-    if (selectedProduct.options) {
-        for (const opt of selectedProduct.options) {
-            if (opt.isSelected) {
-                total += calculateLineTotal(
-                    opt.quantity * selectedProduct.quantity,
-                    opt.listUnitPrice,
-                    opt.additionalDiscount || 0
-                );
-            }
+    // Add totals from configured options (they also have pre-calculated netTotal)
+    const options = selectedProduct.configuredOptions || selectedProduct.options;
+    if (options) {
+        for (const opt of options) {
+            total += opt.netTotal || 0;
         }
     }
     return round(total, 2);

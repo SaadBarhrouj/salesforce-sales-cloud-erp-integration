@@ -95,6 +95,15 @@
     height: 100%;
 }
 
+.product-cell-inner a {
+    color: var(--slds-g-color-brand-base-50, #0176d3);
+    text-decoration: none;
+}
+
+.product-cell-inner a:hover {
+    text-decoration: underline;
+}
+
 .slds-table_tree tbody tr {
     height: 2rem;
 }

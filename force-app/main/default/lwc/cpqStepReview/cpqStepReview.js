@@ -1,7 +1,8 @@
 import { LightningElement, api } from 'lwc';
+import { NavigationMixin } from 'lightning/navigation';
 import { formatCurrency, formatNumber, calculateSelectedProductsSubtotal, calculateSelectedProductTotal } from 'c/cpqUtils';
 
-export default class CpqStepReview extends LightningElement {
+export default class CpqStepReview extends NavigationMixin(LightningElement) {
     @api selectedProducts = [];
     @api opportunityState = {};
     @api opportunityRecord;
@@ -67,6 +68,7 @@ export default class CpqStepReview extends LightningElement {
                 parentKey: product._key,
                 lineNumber: lineNum++,
                 productName: product.productName,
+                productId: product.productId,
                 productCode: product.productCode,
                 quantity: product.quantity,
                 formattedListPrice: formatCurrency(product.listUnitPrice || 0),
@@ -89,6 +91,7 @@ export default class CpqStepReview extends LightningElement {
                         parentKey: product._key,
                         lineNumber: '',
                         productName: opt.productName,
+                        productId: opt.productId || opt.Id,
                         productCode: opt.productCode,
                         quantity: opt.quantity,
                         formattedListPrice: formatCurrency(opt.unitPrice || opt.listUnitPrice || 0),
@@ -236,6 +239,21 @@ export default class CpqStepReview extends LightningElement {
     }
 
     /* ═══ Actions ═══ */
+
+    handleProductLinkClick(event) {
+        event.preventDefault();
+        event.stopPropagation();
+        const productId = event.currentTarget.dataset.id;
+        if (!productId) return;
+        this[NavigationMixin.GenerateUrl]({
+            type: 'standard__recordPage',
+            attributes: {
+                recordId: productId,
+                objectApiName: 'Product2',
+                actionName: 'view'
+            }
+        }).then(url => window.open(url, '_blank'));
+    }
 
     handleToggleExpand(event) {
         const parentKey = event.currentTarget.dataset.id;

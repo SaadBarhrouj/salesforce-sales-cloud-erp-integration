@@ -1,5 +1,12 @@
 <template>
     <div class="cpq-app-wrapper">
+        <!-- Loading overlay for save operation -->
+        <template lwc:if={isSaving}>
+            <div class="save-overlay" role="alert" aria-live="assertive">
+                <lightning-spinner alternative-text="Saving..." size="large"></lightning-spinner>
+            </div>
+        </template>
+
         <!-- Page Header -->
         <c-cpq-sticky-header
             top-label={headerTopLabel}

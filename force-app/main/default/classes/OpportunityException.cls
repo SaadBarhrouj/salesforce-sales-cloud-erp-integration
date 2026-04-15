@@ -1,0 +1,1 @@
+public inherited sharing class OpportunityException extends Exception {}

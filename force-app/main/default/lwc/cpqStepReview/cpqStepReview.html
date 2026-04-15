@@ -78,7 +78,7 @@
                                                 tabindex="-1">
                                             <lightning-icon icon-name={row.chevronIcon} size="xx-small"></lightning-icon>
                                         </button>
-                                        <span class="slds-truncate">{row.productName}</span>
+                                        <span class="slds-truncate"><a href="javascript:void(0)" onclick={handleProductLinkClick} data-id={row.productId}>{row.productName}</a></span>
                                     </div>
                                 </th>
                                 <td class="slds-cell-edit slds-cell_action-mode"><span class="slds-text-body_small slds-truncate">{row.productCode}</span></td>

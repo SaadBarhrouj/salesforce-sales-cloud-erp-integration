@@ -14,12 +14,14 @@ import OPP_TRANSPORT_URGENCY from "@salesforce/schema/Opportunity.Transport_Urge
 import OPP_DELIVERY_SITE from "@salesforce/schema/Opportunity.Delivery_Site__c";
 import getSidebarCategoriesByOfferType from "@salesforce/apex/ProductCategoryController.getSidebarCategoriesByOfferType";
 import getBundleData from "@salesforce/apex/BundleOptionController.getBundleData";
+import saveOpportunity from "@salesforce/apex/OpportunityController.saveOpportunity";
 import { STEPS, MESSAGES, STEP_LIST } from "c/cpqConstants";
 import {
-  deepClone,
-  calculateSelectedProductTotal,
-  formatCurrency,
-  showToast
+    deepClone,
+    calculateSelectedProductTotal,
+    calculateSelectedProductsSubtotal,
+    formatCurrency,
+    showToast
 } from "c/cpqUtils";
 
 const OPP_FIELDS = [
@@ -183,6 +185,8 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
   };
 
   @track bundleConfigCache = {};
+
+  @track isSaving = false;
 
   /* ═══════════════════════════════════════════════
        GETTERS
@@ -896,14 +900,99 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
   }
 
   _triggerSave() {
-    this._showToast("Success", MESSAGES.SAVE_SUCCESS, "success");
+    if (this.isSaving) return;
+
+    if (!this.selectedProducts || this.selectedProducts.length === 0) {
+      showToast(this, "Validation Error", MESSAGES.VALIDATION_NO_PRODUCTS, "error");
+      return;
+    }
+
+    if (this.logisticsState.isTransportRequired && this.logisticsState.isValid === false) {
+      showToast(this, "Validation Error", MESSAGES.LOGISTICS_INCOMPLETE, "error");
+      return;
+    }
+
+    this.isSaving = true;
+
+    const lineItems = this._buildLineItemPayload();
+    const logistics = this._buildLogisticsPayload();
+
+    saveOpportunity({
+      opportunityId: this.recordId,
+      lineItems: lineItems,
+      logistics: logistics
+    })
+      .then((result) => {
+        this.isSaving = false;
+        showToast(this, "Success", MESSAGES.SAVE_SUCCESS, "success");
+        this[NavigationMixin.Navigate]({
+          type: "standard__recordPage",
+          attributes: {
+            recordId: result,
+            objectApiName: "Opportunity",
+            actionName: "view"
+          }
+        });
+      })
+      .catch((error) => {
+        this.isSaving = false;
+        const message = error.body?.message || error.message || MESSAGES.SAVE_ERROR;
+        showToast(this, "Save Error", message, "error");
+      });
+  }
+
+  _buildLineItemPayload() {
+    return this.selectedProducts.map((product) => ({
+      product2Id: product.productId,
+      productName: product.productName,
+      quantity: product.quantity || 1,
+      unitPrice: product.netUnitPrice || product.unitPrice || 0,
+      discountPercent: product.additionalDiscount || 0,
+      isBundle: product.isBundle || false,
+      bundleGroup: product.isBundle ? product.productId : null,
+      options: (product.configuredOptions || []).map((opt) => ({
+        product2Id: opt.productId || opt.Id,
+        productName: opt.productName,
+        quantity: opt.quantity || 1,
+        unitPrice: opt.unitPrice || 0,
+        discountPercent: opt.discountPercent || 0
+      }))
+    }));
+  }
+
+  _buildLogisticsPayload() {
+    const trips = (this.logisticsState.trips || []).map((trip) => ({
+      id: trip.Id || null,
+      truckType: trip.Truck_Type__c || null,
+      distanceKm: trip.Distance_Km__c || 0,
+      systemPrice: trip.System_Price__c || 0,
+      finalPrice: trip.Final_Price__c || trip.System_Price__c || 0,
+      isPriceOverridden: trip.Is_Price_Overridden__c || false,
+      overrideReason: trip.Override_Reason__c || null,
+      direction: trip.Direction__c || null
+    }));
+
+    return {
+      isTransportRequired: this.logisticsState.isTransportRequired || false,
+      defaultAgencyId: this.logisticsState.agencyId || null,
+      deliverySiteId: this.logisticsState.deliverySiteId || null,
+      transportUrgency: this.logisticsState.urgency || "Standard",
+      totalTransportCost: this._calculateTransportTotal(),
+      trips: trips
+    };
+  }
+
+  _calculateTransportTotal() {
+    if (!this.logisticsState.trips || this.logisticsState.trips.length === 0) return 0;
+    return this.logisticsState.trips.reduce((total, trip) => {
+      return total + (trip.Final_Price__c || trip.System_Price__c || 0);
+    }, 0);
   }
 
   _triggerSaveLines() {
     const lineEditor = this._getLineEditorStep();
     if (lineEditor) {
       lineEditor.saveLines();
-      this._showToast("Success", MESSAGES.LINE_SAVE, "success");
     }
   }
 
