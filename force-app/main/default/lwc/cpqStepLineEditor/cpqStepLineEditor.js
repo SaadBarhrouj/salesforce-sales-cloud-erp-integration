@@ -1,73 +1,50 @@
 import { LightningElement, api, track } from 'lwc';
-import { formatCurrency, deepClone } from 'c/cpqUtils';
-import calculateLinePricesBatch from '@salesforce/apex/PricebookController.calculateLinePricesBatch';
-import { ShowToastEvent } from 'lightning/platformShowToastEvent';
+import { formatCurrency, showToast } from 'c/cpqUtils';
+import calculateLinePrices from '@salesforce/apex/PricebookController.calculateLinePrices';
 
 const DEBOUNCE_DELAY = 500;
 
 const COLUMNS = [
-    {
-        type: 'text',
-        fieldName: 'productName',
-        label: 'Product',
-        isProduct: true
-    },
-    {
-        type: 'text',
-        fieldName: 'productCode',
-        label: 'Code',
-        isCode: true
-    },
-    {
-        type: 'number',
-        fieldName: 'quantity',
-        label: 'Qty',
-        editable: true,
-        isQty: true
-    },
-    {
-        type: 'currency',
-        fieldName: 'listUnitPrice',
-        label: 'List Price',
-        isCurrency: true,
-        isListPrice: true
-    },
-    {
-        type: 'number',
-        fieldName: 'additionalDiscount',
-        label: 'Disc. %',
-        editable: true,
-        isDiscount: true
-    },
-    {
-        type: 'currency',
-        fieldName: 'netUnitPrice',
-        label: 'Net Price',
-        isCurrency: true,
-        isNetPrice: true
-    },
-    {
-        type: 'currency',
-        fieldName: 'netTotal',
-        label: 'Total',
-        isCurrency: true,
-        isTotal: true
-    }
+    { type: 'text', fieldName: 'productName', label: 'Product', isProduct: true },
+    { type: 'text', fieldName: 'productCode', label: 'Code', isCode: true },
+    { type: 'number', fieldName: 'quantity', label: 'Qty', editable: true, isQty: true },
+    { type: 'currency', fieldName: 'listUnitPrice', label: 'List Price', isCurrency: true, isListPrice: true },
+    { type: 'number', fieldName: 'additionalDiscount', label: 'Disc. %', editable: true, isDiscount: true },
+    { type: 'currency', fieldName: 'netUnitPrice', label: 'Net Price', isCurrency: true, isNetPrice: true },
+    { type: 'currency', fieldName: 'netTotal', label: 'Total', isCurrency: true, isTotal: true }
 ];
 
 export default class CpqStepLineEditor extends LightningElement {
-    @api pricebookId = '';
-    @api offerType = null;
+    _pricebookId = '';
+    _offerType = null;
+    _selectedProducts = [];
 
-    @track gridData = [];
-    @track isCalculating = false;
-    @track hasErrors = false;
-    @track errorMessages = [];
+    @track lineItems = []; // FLATTENED state
+    @track isLoading = true;
     @track expandedRows = new Set();
 
-    _pendingChanges = new Map();
     _debounceTimer = null;
-    _selectedProducts = [];
+    _calculationSequence = 0;
+    _initialPricingRequested = false;
+
+    @api
+    get pricebookId() {
+        return this._pricebookId;
+    }
+    set pricebookId(value) {
+        this._pricebookId = value;
+        if (!this._initialPricingRequested && this.lineItems.length > 0) {
+            this._scheduleInitialPricing();
+        }
+    }
+
+    @api
+    get offerType() {
+        return this._offerType;
+    }
+    set offerType(value) {
+        this._offerType = value;
+    }
 
     @api
     get selectedProducts() {
@@ -75,128 +52,165 @@ export default class CpqStepLineEditor extends LightningElement {
     }
     set selectedProducts(value) {
         this._selectedProducts = value || [];
-        this._prepareGridData();
+        this._initialPricingRequested = false;
+        this._prepareLineItems();
+        this._scheduleInitialPricing();
     }
 
-    // Use our custom flattened data property for the template's table loop
-    get flattenedData() {
-        const flat = [];
-        const processItems = (items, level = 1) => {
-            items.forEach((item, index) => {
-                const isExpanded = this.expandedRows.has(item._key);
-                const hasChildren = item._children && item._children.length > 0;
-
-                flat.push({
-                    ...item,
-                    rowId: item._key,
-                    level,
-                    ariaLevel: level,
-                    posInSet: index + 1,
-                    setSize: items.length,
-                    isExpanded,
-                    hasChildren,
-                    chevronClass: (hasChildren && !isExpanded) ? 'utility:chevronright' : 'utility:chevrondown',
-                    buttonStyle: hasChildren ? '' : 'visibility: hidden;',
-                    isQtyEditable: !item._isOption, // quantity is read-only for options
-                    isDiscountEditable: true, // discount is editable for both parents and options
-                    showCheckbox: !item._isOption, // hide checkbox for bundle options
-                    rowClass: `slds-hint-parent ${item._hasError ? 'slds-is-selected row-error' : ''}`,
-                    paddingStyle: `padding-left: ${level > 1 ? level * 1.5 : 0}rem;`, // Ensure proper indentation for children
-                    isSelected: !!item.isSelected,
-                    formattedListPrice: formatCurrency(item.listUnitPrice),
-                    formattedNetPrice: formatCurrency(item.netUnitPrice),
-                    formattedNetTotal: formatCurrency(item.netTotal),
-                    actionTitle: `More actions for ${item.productName}`
-                });
-
-                if (isExpanded && hasChildren) {
-                    processItems(item._children, level + 1);
-                }
-            });
-        };
-
-        processItems(this.gridData || []);
-        return flat;
-    }
-
-    connectedCallback() {
-        this._prepareGridData();
-    }
+    // ─── GETTERS ────────────────────────────────────────────────────────────
 
     get columns() {
         return COLUMNS;
     }
 
-    get totalItemCount() {
-        return (this.gridData || []).length;
-    }
-
-    get subtotal() {
-        if (this.gridData && this.gridData.length > 0) {
-            return this.gridData.reduce((sum, item) => Math.max(0, sum + (item.netTotal || 0)), 0);
-        }
-        return 0;
-    }
-
-    get formattedSubtotal() {
-        return formatCurrency(this.subtotal);
-    }
-
     get isEmpty() {
-        return !this.gridData || this.gridData.length === 0;
+        return !this.lineItems || this.lineItems.length === 0;
     }
 
     get isNotEmpty() {
         return !this.isEmpty;
     }
 
-    _prepareGridData() {
-        if (!this._selectedProducts) return;
+    get subtotal() {
+        if (!this.lineItems || this.lineItems.length === 0) return 0;
+        const total = this.lineItems.reduce((sum, row) => sum + (Number(row.netTotal) || 0), 0);
+        return Math.max(0, total);
+    }
 
-        this.gridData = this._selectedProducts.map(item => {
-            const hasOptions = item.isBundle && item.configuredOptions && item.configuredOptions.length > 0;
+    get subtotalLoading() {
+        return this.isLoading;
+    }
 
-            const row = {
-                _key: item._key,
-                _hasError: false,
-                _errorMessage: '',
-                productId: item.productId,
-                productCode: item.productCode,
-                productName: item.productName,
-                quantity: item.quantity,
-                listUnitPrice: item.listUnitPrice,
-                additionalDiscount: item.additionalDiscount,
-                netUnitPrice: item.netUnitPrice,
-                netTotal: item.netTotal,
-                isBundle: item.isBundle
-            };
+    get formattedSubtotal() {
+        return formatCurrency(this.subtotal);
+    }
 
-            // Only add _children property for bundles to show expand/collapse icon
-            if (hasOptions) {
-                row._children = [];
-                item.configuredOptions.forEach((opt) => {
-                    row._children.push({
-                        _key: opt.Id,
-                        productId: opt.Id,
-                        productCode: opt.productCode,
-                        productName: opt.productName,
-                        quantity: opt.quantity,
-                        listUnitPrice: opt.unitPrice,
-                        additionalDiscount: 0,
-                        netUnitPrice: opt.unitPrice,
-                        netTotal: opt.unitPrice * opt.quantity,
-                        _isOption: true
-                    });
-                });
+    get flattenedData() {
+        // Build view models sequentially directly from the flat array,
+        // skipping children if their parent is not expanded.
+        const viewData = [];
+        let indexInSet = 1;
+
+        for (const row of this.lineItems) {
+            // Skip children of collapsed parents
+            if (row._isOption && row._parentId && !this.expandedRows.has(row._parentId)) {
+                continue;
             }
 
-            return row;
-        });
-        // Force track array
-        this.gridData = [...this.gridData];
-        // Ensure expandedRows is clear initially (collapsed by default)
-        this.expandedRows = new Set();
+            const isExpanded = this.expandedRows.has(row._key);
+            const level = row._isOption ? 2 : 1;
+
+            viewData.push({
+                ...row,
+                rowId: row._key,
+                level,
+                ariaLevel: level,
+                posInSet: indexInSet++,
+                setSize: this.lineItems.length, // approximation
+                isExpanded,
+                chevronClass: (row._hasChildren && !isExpanded) ? 'utility:chevronright' : 'utility:chevrondown',
+                buttonStyle: row._hasChildren ? '' : 'visibility: hidden;',
+                isQtyEditable: !row._isOption,
+                isDiscountEditable: true,
+                showCheckbox: !row._isOption,
+                rowClass: `slds-hint-parent ${row._hasError ? 'slds-is-selected row-error' : ''}`,
+                paddingStyle: `padding-left: ${level > 1 ? level * 1.5 : 0}rem;`,
+                isSelected: !!row.isSelected,
+                formattedListPrice: formatCurrency(Number.isFinite(row.listUnitPrice) ? row.listUnitPrice : 0),
+                formattedNetPrice: formatCurrency(Number.isFinite(row.netUnitPrice) ? row.netUnitPrice : 0),
+                formattedNetTotal: formatCurrency(Number.isFinite(row.netTotal) ? row.netTotal : 0),
+                
+            });
+        }
+        return viewData;
     }
+
+    // ─── LIFECYCLE ──────────────────────────────────────────────────────────
+
+    connectedCallback() {
+        this._prepareLineItems();
+        this._scheduleInitialPricing();
+    }
+
+    // ─── INITIALIZATION / FLATTENING ──────────────────────────────────────────
+
+    _buildParentLineItem(item, hasOptions) {
+        const listPrice = Number(item.listUnitPrice) || 0;
+        const discount = Number(item.additionalDiscount) || 0;
+        const qty = Number(item.quantity) || 1;
+        const netPrice = Number(item.netUnitPrice) || listPrice * (1 - discount / 100);
+        const total = Number(item.netTotal) || netPrice * qty;
+
+        return {
+            _key: item._key,
+            _hasError: false,
+            _errorMessage: '',
+            _hasChildren: hasOptions,
+            productId: item.productId,
+            productCode: item.productCode,
+            productName: item.productName,
+            quantity: qty,
+            listUnitPrice: listPrice,
+            additionalDiscount: discount,
+            netUnitPrice: netPrice,
+            netTotal: total,
+            isBundle: item.isBundle
+        };
+    }
+
+    _buildOptionLineItem(parentKey, opt) {
+        const optListPrice = Number(opt.unitPrice) || 0;
+        const optQty = Number(opt.quantity) || 1;
+        const optDiscount = Number(opt.additionalDiscount) || 0;
+        const optNetPrice = optListPrice * (1 - optDiscount / 100);
+        const optNetTotal = optNetPrice * optQty;
+
+        return {
+            _key: opt.Id,
+            _parentId: parentKey,
+            _isOption: true,
+            _hasError: false,
+            _errorMessage: '',
+            productId: opt.productId || opt.Id,
+            optionId: opt.Id,
+            productCode: opt.productCode,
+            productName: opt.productName,
+            quantity: optQty,
+            listUnitPrice: optListPrice,
+            additionalDiscount: optDiscount,
+            netUnitPrice: optNetPrice,
+            netTotal: optNetTotal
+        };
+    }
+
+    _prepareLineItems() {
+        if (!this._selectedProducts) return;
+
+        const flatItems = [];
+
+        this._selectedProducts.forEach(item => {
+            const hasOptions = item.isBundle && item.configuredOptions && item.configuredOptions.length > 0;
+            flatItems.push(this._buildParentLineItem(item, hasOptions));
+
+            if (hasOptions) {
+                item.configuredOptions.forEach((opt) => {
+                    flatItems.push(this._buildOptionLineItem(item._key, opt));
+                });
+            }
+        });
+
+        this.lineItems = flatItems;
+
+        const currentKeys = new Set(flatItems.map(row => row._key));
+        const preservedExpand = new Set();
+        for (const key of this.expandedRows) {
+            if (currentKeys.has(key)) preservedExpand.add(key);
+        }
+        this.expandedRows = preservedExpand;
+        this.isLoading = false;
+    }
+
+    // ─── EVENTS / DOM ACTIONS ───────────────────────────────────────────────
 
     handleToggleExpand(event) {
         const rowId = event.currentTarget.dataset.id;
@@ -205,262 +219,336 @@ export default class CpqStepLineEditor extends LightningElement {
         } else {
             this.expandedRows.add(rowId);
         }
-        // assigning a new set preserves reactivity in LWC
-        this.expandedRows = new Set(this.expandedRows);
+        this.expandedRows = new Set(this.expandedRows); // maintain reactivity
     }
 
     handleSelectAll(event) {
         const isChecked = event.target.checked;
-        const updatedData = this.gridData.map(item => {
+        this.lineItems = this.lineItems.map(item => {
             if (!item._isOption) {
                 return { ...item, isSelected: isChecked };
             }
             return item;
         });
-        this.gridData = updatedData;
         this._dispatchSelectionChange();
     }
 
     handleRowSelect(event) {
         const rowId = event.currentTarget.dataset.id;
         const isChecked = event.target.checked;
-        const updatedData = this.gridData.map(item => {
-            if (item._key === rowId) {
-                return { ...item, isSelected: isChecked };
-            }
-            return item;
-        });
-        this.gridData = updatedData;
+        this.lineItems = this.lineItems.map(row => 
+            row._key === rowId ? { ...row, isSelected: isChecked } : row
+        );
         this._dispatchSelectionChange();
     }
 
     _dispatchSelectionChange() {
-        const hasSelection = this.gridData.some(item => item.isSelected);
-        this.dispatchEvent(new CustomEvent('selectionchange', {
-            detail: { hasSelection }
-        }));
+        const hasSelection = this.lineItems.some(item => item.isSelected);
+        this.dispatchEvent(new CustomEvent('selectionchange', { detail: { hasSelection } }));
     }
 
     handleDeleteSelected() {
-        const selectedIds = new Set(this.gridData.filter(item => item.isSelected).map(item => item._key));
+        const selectedIds = new Set(this.lineItems.filter(item => item.isSelected).map(item => item._key));
 
         if (selectedIds.size === 0) {
-            this.dispatchEvent(new ShowToastEvent({
-                title: 'No Selection',
-                message: 'Please select at least one row to delete.',
-                variant: 'warning'
-            }));
+            showToast(this, 'No Selection', 'Please select at least one row to delete.', 'warning');
             return;
         }
 
-        // Filter out selected parent rows
-        this.gridData = this.gridData.filter(item => !selectedIds.has(item._key));
-
-        // Clean up pending changes for deleted rows
-        selectedIds.forEach(id => {
-            this._pendingChanges.delete(id);
-            this.expandedRows.delete(id);
+        // Keep rows that are NOT selected AND whose parents are NOT selected
+        this.lineItems = this.lineItems.filter(row => {
+            const isSelfSelected = selectedIds.has(row._key);
+            const isParentSelected = row._isOption && selectedIds.has(row._parentId);
+            
+            // Clean up state tracking for removed items
+            if (isSelfSelected || isParentSelected) {
+                this.expandedRows.delete(row._key);
+            }
+            
+            return !isSelfSelected && !isParentSelected;
         });
 
-        // Re-assign to trigger reactivity
         this.expandedRows = new Set(this.expandedRows);
 
-        // Dispatch an event to parent to update header state (e.g. disable delete button)
-        this.dispatchEvent(new CustomEvent('selectionchange', {
-            detail: { hasSelection: false }
-        }));
+        this._dispatchSelectionChange();
+        showToast(this, 'Rows Deleted', `Successfully deleted selected rows.`, 'success');
 
-        this.dispatchEvent(new ShowToastEvent({
-            title: 'Rows Deleted',
-            message: `Successfully deleted ${selectedIds.size} row(s).`,
-            variant: 'success'
-        }));
-
-        // Dispatch lineremove event to inform parent component
         selectedIds.forEach(id => {
-            this.dispatchEvent(new CustomEvent('lineremove', {
-                detail: { itemKey: id }
-            }));
+            this.dispatchEvent(new CustomEvent('lineremove', { detail: { itemKey: id } }));
         });
 
-        // Trigger calculation if any changes remain
-        if (this._pendingChanges.size > 0) {
-            this._scheduleBatchCalculation();
-        }
+        this._schedulePricingCalculation();
     }
-
-    // Removed standard datatable handleCellChange. Using manual custom input events.
+    
     handleInlineEdit(event) {
         const itemKey = event.currentTarget.dataset.id;
         const fieldName = event.currentTarget.dataset.field;
         let value = event.target.value;
-        if(fieldName === 'quantity' || fieldName === 'additionalDiscount') {
-             value = parseFloat(value);
+
+        if (fieldName === 'quantity') {
+            value = Number.isFinite(parseFloat(value)) ? parseFloat(value) : 1;
+        } else if (fieldName === 'additionalDiscount') {
+            value = Number.isFinite(parseFloat(value)) ? parseFloat(value) : 0;
         }
 
-        this._pendingChanges.set(itemKey, {
-            ...this._pendingChanges.get(itemKey),
-            [fieldName]: value
+        this.lineItems = this.lineItems.map(row => {
+            if (row._key !== itemKey) return row;
+
+            const updatedRow = { ...row, [fieldName]: value };
+            if (fieldName === 'quantity' || fieldName === 'additionalDiscount') {
+                const listPrice = Number(updatedRow.listUnitPrice) || 0;
+                const discount = Number(updatedRow.additionalDiscount) || 0;
+                const qty = Number(updatedRow.quantity) || 1;
+                updatedRow.netUnitPrice = listPrice * (1 - discount / 100);
+                updatedRow.netTotal = updatedRow.netUnitPrice * qty;
+            }
+            return updatedRow;
         });
 
-        this._updateLocalData(itemKey, fieldName, value);
-        this._scheduleBatchCalculation();
+        this._schedulePricingCalculation();
     }
 
-    _updateLocalData(itemKey, field, value) {
-        const updatedData = [...this.gridData];
-        const rowIndex = updatedData.findIndex(row => row._key === itemKey);
+    // ─── PRICING CALCULATIONS ────────────────────────────────────────────────
 
-        if (rowIndex !== -1) {
-            const row = { ...updatedData[rowIndex] };
-            row[field] = value;
-
-            if (field === 'quantity' || field === 'additionalDiscount') {
-                row.netUnitPrice = (row.listUnitPrice || 0) * (1 - (row.additionalDiscount || 0) / 100);
-                row.netTotal = row.netUnitPrice * row.quantity;
-            }
-
-            updatedData[rowIndex] = row;
-            this.gridData = updatedData;
-        }
-    }
-
-    _scheduleBatchCalculation() {
+    _schedulePricingCalculation() {
         if (this._debounceTimer) {
             clearTimeout(this._debounceTimer);
         }
         this._debounceTimer = setTimeout(() => {
-            this._executeBatchCalculation();
+            this._executePricingCalculation();
         }, DEBOUNCE_DELAY);
     }
 
-    async _executeBatchCalculation() {
-        if (this._pendingChanges.size === 0 || !this.pricebookId) return;
+    async _executePricingCalculation() {
+        if (!this.pricebookId || this.lineItems.length === 0) {
+            this.isLoading = false;
+            return;
+        }
 
-        this.isCalculating = true;
-        const lineItems = [];
+        const calculationSequence = ++this._calculationSequence;
+        this.isLoading = true;
 
-        for (const [itemKey, changes] of this._pendingChanges) {
-            const row = this.gridData.find(r => r._key === itemKey);
-            if (row) {
-                lineItems.push({
-                    productId: row.productId,
-                    quantity: changes.quantity ?? row.quantity,
-                    discount: changes.additionalDiscount ?? row.additionalDiscount
-                });
+        const pricingRequestItems = [];
+        const pricingRequestKeys = [];
+        let updatedData = [...this.lineItems];
+
+        for (let i = 0; i < updatedData.length; i++) {
+            const row = updatedData[i];
+            const hasServerProductId = row.productId && row.productId !== row.optionId;
+
+            // Local-only options don't need server pricing
+            if (row._isOption && !hasServerProductId) {
+                const optListPrice = Number(row.listUnitPrice) || 0;
+                const optQty = Number(row.quantity) || 1;
+                const optDisc = Number(row.additionalDiscount) || 0;
+                const netPrice = optListPrice * (1 - optDisc / 100);
+
+                updatedData[i] = {
+                    ...row,
+                    quantity: optQty,
+                    additionalDiscount: optDisc,
+                    netUnitPrice: netPrice,
+                    netTotal: netPrice * optQty,
+                    _hasError: false,
+                    _errorMessage: ''
+                };
+                continue;
             }
+
+            pricingRequestKeys.push(row._key);
+            pricingRequestItems.push({
+                productId: row.productId,
+                quantity: row.quantity,
+                discount: row.additionalDiscount
+            });
         }
 
         try {
-            const results = await calculateLinePricesBatch({
-                lineItems: lineItems,
+            if (pricingRequestItems.length === 0) {
+                this.lineItems = updatedData;
+                return;
+            }
+
+            const results = await calculateLinePrices({
+                lineItems: pricingRequestItems,
                 offerType: this.offerType,
                 pricebookId: this.pricebookId
             });
 
-            const updatedData = [...this.gridData];
-            let hasErrors = false;
+            if (calculationSequence !== this._calculationSequence) return;
 
-            for (let i = 0; i < results.length; i++) {
+            // Map server results back to line items
+            for (let i = 0; i < results.length && i < pricingRequestKeys.length; i++) {
                 const result = results[i];
-                const itemKey = Array.from(this._pendingChanges.keys())[i];
+                const itemKey = pricingRequestKeys[i];
+
                 const rowIndex = updatedData.findIndex(r => r._key === itemKey);
-
                 if (rowIndex !== -1) {
-                    const row = { ...updatedData[rowIndex] };
-
+                    const rowToUpdate = { ...updatedData[rowIndex] };
                     if (result.success) {
-                        row.listUnitPrice = result.listPrice;
-                        row.netUnitPrice = result.netPrice;
-                        row.netTotal = result.totalPrice;
-                        row._hasError = false;
-                        row._errorMessage = '';
+                        rowToUpdate.listUnitPrice = result.listPrice;
+                        rowToUpdate.netUnitPrice = result.netPrice;
+                        rowToUpdate.netTotal = result.totalPrice;
+                        rowToUpdate._hasError = false;
+                        rowToUpdate._errorMessage = '';
                     } else {
-                        row._hasError = true;
-                        row._errorMessage = result.errorMessage;
-                        hasErrors = true;
+                        rowToUpdate._hasError = true;
+                        rowToUpdate._errorMessage = result.errorMessage;
                     }
-
-                    updatedData[rowIndex] = row;
+                    updatedData[rowIndex] = rowToUpdate;
                 }
             }
 
-            this.gridData = updatedData;
-            this._pendingChanges.clear();
-
-            if (hasErrors) {
-                this.dispatchEvent(new ShowToastEvent({
-                    title: 'Pricing Warning',
-                    message: 'Some items could not be priced. Check the line editor for details.',
-                    variant: 'warning'
-                }));
-            }
+            this.lineItems = updatedData;
 
         } catch (error) {
             console.error('Pricing calculation error:', error);
-            this.dispatchEvent(new ShowToastEvent({
-                title: 'Pricing Error',
-                message: error.message || 'Pricing calculation failed',
-                variant: 'error'
-            }));
+            showToast(this, 'Pricing Error', error.message || 'Pricing calculation failed', 'error');
         } finally {
-            this.isCalculating = false;
+            if (calculationSequence === this._calculationSequence) {
+                this.isLoading = false;
+            }
         }
     }
 
-   
-
     async handleRefreshPricing() {
-        this._pendingChanges.clear();
-        this.gridData.forEach(row => {
-            this._pendingChanges.set(row._key, {
-                quantity: row.quantity,
-                additionalDiscount: row.additionalDiscount
-            });
-        });
-        await this._executeBatchCalculation();
+        this.isLoading = true;
+        await this._executePricingCalculation();
+    }
 
-        this.dispatchEvent(new ShowToastEvent({
-            title: 'Pricing Refreshed',
-            message: 'All prices have been recalculated',
-            variant: 'success'
+    _scheduleInitialPricing() {
+        if (this._initialPricingRequested) return;
+        if (this.lineItems.length === 0) return;
+        if (!this.pricebookId) return;
+
+        this._initialPricingRequested = true;
+        this._schedulePricingCalculation();
+    }
+
+
+    // ─── VALIDATION ─────────────────────────────────────────────────────────
+
+    @api
+    validate() {
+        if (this.isLoading || this.lineItems.length === 0) return false;
+
+        let hasValidationErrors = false;
+        
+        this.lineItems = this.lineItems.map(row => {
+            const updatedRow = { ...row };
+            const discount = Number(updatedRow.additionalDiscount);
+            const quantity = Number(updatedRow.quantity);
+
+            if (!Number.isFinite(discount) || discount < 0 || discount > 100) {
+                updatedRow._hasError = true;
+                updatedRow._errorMessage = 'Discount must be between 0 and 100';
+                hasValidationErrors = true;
+            } else if (!Number.isFinite(quantity) || quantity < 1) {
+                updatedRow._hasError = true;
+                updatedRow._errorMessage = 'Quantity must be at least 1';
+                hasValidationErrors = true;
+            } else if (updatedRow._errorMessage === 'Discount must be between 0 and 100'
+                    || updatedRow._errorMessage === 'Quantity must be at least 1') {
+                updatedRow._hasError = false;
+                updatedRow._errorMessage = '';
+            }
+
+            return updatedRow;
+        });
+
+        return !hasValidationErrors && !this._hasPricingErrors();
+    }
+
+    _hasPricingErrors() {
+        return this.lineItems.some(row => row._hasError);
+    }
+
+    @api
+    saveLines() {
+        const updatedProducts = this._mapLineItemsToProducts();
+        this.dispatchEvent(new CustomEvent('linesave', {
+            detail: { lineItems: updatedProducts }
         }));
     }
 
-    handleValidateAll() {
-        const errors = [];
-        const updatedData = [...this.gridData];
+    _mapLineItemsToProducts() {
+        const products = [];
+        const optionsMap = {};
 
-        updatedData.forEach(row => {
-            if (row.additionalDiscount < 0 || row.additionalDiscount > 100) {
-                row._hasError = true;
-                row._errorMessage = 'Discount must be between 0 and 100';
-                errors.push(`${row.productName}: Invalid discount`);
-            } else if (row.quantity < 1) {
-                row._hasError = true;
-                row._errorMessage = 'Quantity must be at least 1';
-                errors.push(`${row.productName}: Invalid quantity`);
-            } else {
-                row._hasError = false;
-                row._errorMessage = '';
+        for (const row of this.lineItems) {
+            if (row._isOption) {
+                if (!optionsMap[row._parentId]) {
+                    optionsMap[row._parentId] = [];
+                }
+                optionsMap[row._parentId].push({
+                    Id: row.optionId,
+                    productId: row.productId,
+                    productCode: row.productCode,
+                    productName: row.productName,
+                    quantity: row.quantity,
+                    unitPrice: row.listUnitPrice,
+                    netUnitPrice: row.netUnitPrice,
+                    netTotal: row.netTotal,
+                    additionalDiscount: row.additionalDiscount
+                });
             }
+        }
+
+        for (const row of this.lineItems) {
+            if (!row._isOption) {
+                products.push({
+                    _key: row._key,
+                    productId: row.productId,
+                    productCode: row.productCode,
+                    productName: row.productName,
+                    quantity: row.quantity,
+                    listUnitPrice: row.listUnitPrice,
+                    additionalDiscount: row.additionalDiscount,
+                    netUnitPrice: row.netUnitPrice,
+                    netTotal: row.netTotal,
+                    isBundle: row.isBundle,
+                    configuredOptions: optionsMap[row._key] || []
+                });
+            }
+        }
+
+        return products;
+    }
+
+    @api
+    resetLineItems() {
+        this.lineItems = this.lineItems.map(row => {
+            if (row._isOption) {
+                const listPrice = Number(row.listUnitPrice) || 0;
+                const qty = Number(row.quantity) || 1;
+                return {
+                    ...row,
+                    additionalDiscount: 0,
+                    netUnitPrice: listPrice,
+                    netTotal: listPrice * qty,
+                    _hasError: false,
+                    _errorMessage: ''
+                };
+            }
+
+            const listPrice = Number(row.listUnitPrice) || 0;
+            const netPrice = listPrice;
+            return {
+                ...row,
+                quantity: 1,
+                additionalDiscount: 0,
+                netUnitPrice: netPrice,
+                netTotal: netPrice * 1,
+                _hasError: false,
+                _errorMessage: ''
+            };
         });
 
-        this.gridData = updatedData;
+        this._schedulePricingCalculation();
 
-        if (errors.length > 0) {
-            this.dispatchEvent(new ShowToastEvent({
-                title: 'Validation Failed',
-                message: `${errors.size} item(s) have validation errors: ${errors.join(', ')}`,
-                variant: 'error'
-            }));
-        } else {
-            this.dispatchEvent(new ShowToastEvent({
-                title: 'Validation Passed',
-                message: 'All line items are valid',
-                variant: 'success'
-            }));
-        }
+        this.dispatchEvent(new CustomEvent('linesave', {
+            detail: { lineItems: this._mapLineItemsToProducts() }
+        }));
     }
 
     @api
@@ -471,9 +559,6 @@ export default class CpqStepLineEditor extends LightningElement {
                 break;
             case 'refreshPricing':
                 this.handleRefreshPricing();
-                break;
-            case 'validateAll':
-                this.handleValidateAll();
                 break;
             default:
                 break;

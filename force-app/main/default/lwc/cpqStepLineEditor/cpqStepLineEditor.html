@@ -1,7 +1,7 @@
 <template>
     <div class="step-line-editor slds-is-relative slds-p-around_medium">
         <!-- Loading Spinner -->
-        <template lwc:if={isCalculating}>
+        <template lwc:if={isLoading}>
             <lightning-spinner alternative-text="Calculating pricing..." size="medium" variant="brand"></lightning-spinner>
         </template>
 
@@ -60,9 +60,7 @@
                                 </th>
                             </template>
 
-                            <th class="slds-cell_action-mode" scope="col" style="width:3.25rem">
-                                <div class="slds-truncate slds-assistive-text" title="Actions">Actions</div>
-                            </th>
+                            
                         </tr>
                     </thead>
                     <tbody>
@@ -186,49 +184,22 @@
                                     </template>
                                 </template>
 
-                                <!-- Action Cell -->
-                                <td role="gridcell" class="slds-cell_action-mode">
-                                    <button class="slds-button slds-button_icon slds-button_icon-border-filled slds-button_icon-x-small"
-                                        title={row.actionTitle}>
-                                        <lightning-icon icon-name="utility:down" size="xx-small"></lightning-icon>
-                                        <span class="slds-assistive-text">{row.actionTitle}</span>
-                                    </button>
-                                </td>
+
                             </tr>
                         </template>
                     </tbody>
                 </table>
             </div>
 
-            <!-- Error Summary -->
-            <template lwc:if={hasErrors}>
-                <div class="slds-box slds-theme_error slds-m-bottom_medium">
-                    <div class="slds-media slds-media_center">
-                        <div class="slds-media__figure">
-                            <lightning-icon icon-name="utility:error" size="small" variant="inverse"></lightning-icon>
-                        </div>
-                        <div class="slds-media__body">
-                            <h3 class="slds-text-heading_small slds-text-color_inverse">Validation Errors</h3>
-                            <ul class="slds-list_dotted slds-text-color_inverse">
-                                <template for:each={errorMessages} for:item="msg">
-                                    <li key={msg}>{msg}</li>
-                                </template>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </template>
-
             <!-- Subtotal Footer -->
-            <div class="slds-box slds-theme_shade">
-                <div class="slds-grid slds-grid_align-end">
-                    <div class="slds-col slds-text-align_right slds-text-title_caps slds-p-right_small">
-                        Subtotal:
-                        <span class="slds-text-align_right slds-text-title_bold">
-                            {formattedSubtotal}
-                        </span>
-                    </div>
-                </div>
+            <div class="slds-grid slds-grid_align-end slds-m-top_xx-small slds-p-right_small">
+                <span class="slds-text-title_caps">Subtotal:</span>
+                <template lwc:if={subtotalLoading}>
+                    <span class="slds-text-title_bold slds-m-left_xx-small slds-text-color_weak">Calculating...</span>
+                </template>
+                <template lwc:else>
+                    <span class="slds-text-title_bold slds-m-left_xx-small">{formattedSubtotal}</span>
+                </template>
             </div>
         </template>
     </div>

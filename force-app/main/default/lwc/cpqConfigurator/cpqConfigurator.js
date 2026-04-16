@@ -13,7 +13,7 @@ import OPP_DEFAULT_AGENCY from "@salesforce/schema/Opportunity.Default_Agency__c
 import OPP_TRANSPORT_URGENCY from "@salesforce/schema/Opportunity.Transport_Urgency__c";
 import OPP_DELIVERY_SITE from "@salesforce/schema/Opportunity.Delivery_Site__c";
 import getSidebarCategoriesByOfferType from "@salesforce/apex/ProductCategoryController.getSidebarCategoriesByOfferType";
-
+import getBundleData from "@salesforce/apex/BundleOptionController.getBundleData";
 import { STEPS, MESSAGES, STEP_LIST } from "c/cpqConstants";
 import {
   deepClone,
@@ -70,12 +70,25 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
     this.initSidebarData(this.currentStep.key);
   }
 
-  _goNext() {
+  async _goNext() {
     if (this.isStepConfigure) {
-      const bundleConfig = this._getBundleConfigStep();
-      if (bundleConfig && this.selectedItemId) {
-        const isValid = bundleConfig.saveCurrentConfig();
-        if (!isValid) return; 
+      const saved = await this._ensureAllBundlesConfigured();
+      if (!saved) return;
+    }
+
+    if (this.isStepLineEditor) {
+      const lineEditor = this._getLineEditorStep();
+      if (lineEditor) {
+        if (lineEditor.isLoading) {
+          showToast(this, 'Validation Blocked', 'Pricing is still being calculated. Please wait.', 'warning');
+          return;
+        }
+        const isValid = lineEditor.validate();
+        if (!isValid) {
+          showToast(this, 'Validation Failed', 'Please fix all line editor errors before proceeding.', 'error');
+          return;
+        }
+        lineEditor.saveLines();
       }
     }
 
@@ -97,12 +110,19 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
     }
   }
 
-  _goBack() {
+  async _goBack() {
     if (this.isStepConfigure) {
       const bundleConfig = this._getBundleConfigStep();
       if (bundleConfig && this.selectedItemId) {
         const isValid = bundleConfig.saveCurrentConfig();
         if (!isValid) return;
+      }
+    }
+
+    if (this.isStepLineEditor) {
+      const lineEditor = this._getLineEditorStep();
+      if (lineEditor) {
+        lineEditor.saveLines();
       }
     }
 
@@ -396,6 +416,7 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
     else if (action === "next") this._goNext();
     else if (action === "select") this._goNext();
     else if (action === "save") this._triggerSave();
+    else if (action === "saveLines") this._triggerSaveLines();
     else if (action === "cancel") this._navigateToOpportunity();
     else if (action === "refresh") this._handleRefresh();
     else if (action === "clearSelection") this._handleClearSelection();
@@ -407,8 +428,8 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
     else if (action === "applyRules") this._handleApplyRules();
     else if (action === "toggleFilters") this._handleToggleFilters();
     else if (action === "refreshPricing") this._getLineEditorStep()?.handleHeaderAction('refreshPricing');
-    else if (action === "validateAll") this._getLineEditorStep()?.handleHeaderAction('validateAll');
     else if (action === "deleteSelected") this._getLineEditorStep()?.handleHeaderAction('deleteSelected');
+    else if (action === "resetEditing") this._handleResetEditing();
     else if (action === "calculateTransport") this._getLogisticsStep()?.handleCalculateTrips();
     else if (action === "openGoogleMaps") this._getLogisticsStep()?.openRouteInGoogleMaps();
   }
@@ -449,11 +470,84 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
     }
   }
 
+  _handleResetEditing() {
+    this._getLineEditorStep()?.resetLineItems();
+  }
+
+  async _ensureAllBundlesConfigured() {
+    const bundleConfig = this._getBundleConfigStep();
+    if (bundleConfig && this.selectedItemId) {
+      const isValid = bundleConfig.saveCurrentConfig();
+      if (!isValid) return false;
+    }
+
+    const unconfiguredBundles = this.selectedProducts.filter(
+      p => p.isBundle && (!p.configuredOptions || p.configuredOptions.length === 0)
+    );
+
+    if (unconfiguredBundles.length === 0) return true;
+
+    for (const bundle of unconfiguredBundles) {
+      if (this.bundleConfigCache[bundle._key]) {
+        const cached = this.bundleConfigCache[bundle._key];
+        const productsList = deepClone(this.selectedProducts);
+        const idx = productsList.findIndex(p => p._key === bundle._key);
+        if (idx !== -1) {
+          productsList[idx].configuredOptions = deepClone(cached.selectedOptions);
+          productsList[idx].featuresState = deepClone(cached.features);
+        }
+        this.selectedProducts = productsList;
+      } else {
+        try {
+          const result = await getBundleData({ bundleId: bundle.productId });
+          const selectedOptions = this._extractDefaultSelectedOptions(result.features || []);
+          const productsList = deepClone(this.selectedProducts);
+          const idx = productsList.findIndex(p => p._key === bundle._key);
+          if (idx !== -1) {
+            productsList[idx].configuredOptions = selectedOptions;
+            productsList[idx].featuresState = result.features;
+          }
+          this.selectedProducts = productsList;
+          this.bundleConfigCache[bundle._key] = {
+            features: deepClone(result.features),
+            selectedOptions: deepClone(selectedOptions)
+          };
+        } catch (error) {
+          console.error('Error loading bundle data for unconfigured bundle:', error);
+          showToast(this, 'Configuration Error', `Failed to load configuration for "${bundle.productName}".`, 'error');
+          return false;
+        }
+      }
+    }
+
+    return true;
+  }
+
+  _extractDefaultSelectedOptions(features) {
+    const selected = [];
+    for (const feature of features) {
+      for (const option of (feature.options || [])) {
+        if (option.isSelected || option.isRequired) {
+          selected.push({
+            Id: option.Id,
+            productId: option.productId,
+            productCode: option.productCode,
+            productName: option.productName,
+            quantity: option.defaultQuantity || option.quantity || 1,
+            unitPrice: option.unitPrice || 0,
+            isRequired: option.isRequired,
+            isSelected: true
+          });
+        }
+      }
+    }
+    return selected;
+  }
+
   _handleSaveConfig() {
     const bundleConfig = this._getBundleConfigStep();
     if (bundleConfig) {
       if (bundleConfig.saveCurrentConfig()) {
-        this._showToast("Configuration Saved", "Bundle configuration saved successfully", "success");
         this._goNext();
       }
     }
@@ -516,7 +610,8 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
     } else if (stepKey === STEPS.CONFIGURE.key) {
       this._loadConfigureSidebar();
     } else if (stepKey === STEPS.LINE_EDITOR.key) {
-      this._loadLineEditorSidebar();
+      this.sidebarItems = [];
+      this.sidebarIsLoading = false;
     } else {
       this._loadReviewSidebar();
     }
@@ -579,17 +674,6 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
       });
       this.sidebarIsLoading = false;
     }, 300);
-  }
-
-  _loadLineEditorSidebar() {
-    this.sidebarTitle = "Lines";
-    this.sidebarIcon = "standard:list_item";
-    this.sidebarSortLabel = "Added Date";
-    this.sidebarItems = (this.selectedProducts || []).map((item) => ({
-      id: item._key,
-      label: item.productName,
-      value: item.quantity.toString()
-    }));
   }
 
   _loadReviewSidebar() {
@@ -671,7 +755,6 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
     items.push(cartItem);
     this.selectedProducts = items;
 
-    // If now in Step 2 (Configure), refresh sidebar to show updated bundle list
     if (this.isStepConfigure) {
       this._loadConfigureSidebar();
     }
@@ -766,6 +849,28 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
     this.hasLineSelection = event.detail.hasSelection;
   }
 
+  handleLineSave(event) {
+    const updatedLineItems = event.detail.lineItems;
+    const products = deepClone(this.selectedProducts);
+
+    for (const lineItem of updatedLineItems) {
+      const idx = products.findIndex(p => p._key === lineItem._key);
+      if (idx !== -1) {
+        products[idx].quantity = lineItem.quantity;
+        products[idx].listUnitPrice = lineItem.listUnitPrice;
+        products[idx].additionalDiscount = lineItem.additionalDiscount;
+        products[idx].netUnitPrice = lineItem.netUnitPrice;
+        products[idx].netTotal = lineItem.netTotal;
+        products[idx]._formattedTotal = formatCurrency(lineItem.netTotal);
+        if (lineItem.configuredOptions && lineItem.configuredOptions.length > 0) {
+          products[idx].configuredOptions = lineItem.configuredOptions;
+        }
+      }
+    }
+
+    this.selectedProducts = products;
+  }
+
   /* -- Step 5 events -- */
   handleLogisticsChange(event) {
     const updatedLogistics = event.detail.logistics;
@@ -818,6 +923,14 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
 
   _triggerSave() {
     this._showToast("Success", MESSAGES.SAVE_SUCCESS, "success");
+  }
+
+  _triggerSaveLines() {
+    const lineEditor = this._getLineEditorStep();
+    if (lineEditor) {
+      lineEditor.saveLines();
+      this._showToast("Success", MESSAGES.LINE_SAVE, "success");
+    }
   }
 
   _showToast(title, message, variant = "success") {

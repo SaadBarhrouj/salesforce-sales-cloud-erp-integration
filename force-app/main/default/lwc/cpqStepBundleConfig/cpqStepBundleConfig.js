@@ -202,6 +202,7 @@ export default class cpqStepBundleConfig extends LightningElement {
     processOptions(options) {
         return (options || []).map((option) => ({
             Id: option.Id,
+            productId: option.productId,
             quantity: option.quantity !== undefined ? option.quantity : option.defaultQuantity,
             minQuantity: option.minQuantity,
             maxQuantity: option.maxQuantity,
