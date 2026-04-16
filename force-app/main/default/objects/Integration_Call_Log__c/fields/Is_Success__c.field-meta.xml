@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Is_Success__c</fullName>
+    <description>Returns true if the status is successfully set to Success.</description>
+    <formula>ISPICKVAL(Status__c, &quot;Success&quot;)</formula>
+    <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+    <inlineHelpText>Returns true if the status is successfully set to Success.</inlineHelpText>
+    <label>Is Success</label>
+    <trackTrending>false</trackTrending>
+    <type>Checkbox</type>
+</CustomField>
