@@ -79,11 +79,13 @@
                     <!-- Step 4: Logistics -->
                     <template lwc:if={isStepLogistics}>
                         <c-cpq-step-logistics
-                            selected-products={selectedProducts}
-                            quote-state={quoteState}
-                            logistics-state={logisticsState}
+                            opportunity-id={recordId}
+                            account-id={logisticsState.accountId}
+                            default-agency-id={logisticsState.agencyId}
+                            default-delivery-site-id={logisticsState.deliverySiteId}
+                            default-urgency={logisticsState.urgency}
+                            total-weight="250"
                             onlogisticschange={handleLogisticsChange}
-                            onnavigate={handleNavigate}
                         ></c-cpq-step-logistics>
                     </template>
 

@@ -1,9 +1,8 @@
-import { LightningElement, api, wire } from 'lwc';
+﻿import { LightningElement, api, wire } from 'lwc';
 import { getRecord, getFieldValue }    from 'lightning/uiRecordApi';
 import TRIP_DISTANCE_KM  from '@salesforce/schema/Trip__c.Distance_Km__c';
 import TRIP_DIRECTION    from '@salesforce/schema/Trip__c.Direction__c';
 
-// Trip own fields
 const TRIP_FIELDS = [
     TRIP_DISTANCE_KM,
     TRIP_DIRECTION
@@ -20,13 +19,26 @@ const OPTIONAL_FIELDS = [
 
 export default class TripRouteMap extends LightningElement {
 
-    // App Builder properties
     @api recordId;
-    @api mapHeight          = 380;
+    @api mapHeight          = 400;
     @api hideRoutePanel     = false;
     @api hideDirectionsLink = false;
+    @api mapTitle           = 'Trip Route';
+    @api hideIcon           = false;
 
-    // LDS wire
+    // Manual Data Ingestion for Configurator
+    @api manualDepartureLat;
+    @api manualDepartureLng;
+    @api manualDepartureName;
+    @api manualDestinationLat;
+    @api manualDestinationLng;
+    @api manualDestinationName;
+    @api manualDistance;
+
+    get computedIconName() {
+        return this.hideIcon ? undefined : 'action:map';
+    }
+
     @wire(getRecord, {
         recordId       : '$recordId',
         fields         : TRIP_FIELDS,
@@ -34,42 +46,58 @@ export default class TripRouteMap extends LightningElement {
     })
     record;
 
-    // Inverted booleans
+    // Mode detection
+    get isManualMode()      { return !this.recordId; }
+    get isRecordMode()      { return !!this.recordId; }
+
     get showRoutePanel()    { return !this.hideRoutePanel;     }
     get showDirectionsLink(){ return !this.hideDirectionsLink; }
 
-    // State machine
-    get isLoading()    { return !this.record?.data && !this.record?.error; }
-    get hasError()     { return !!this.record?.error;                       }
-    get isIncomplete() { return !!this.record?.data && !this._hasAllCoords; }
+    get isLoading()    { return this.isRecordMode && (!this.record?.data && !this.record?.error); }
+    get hasError()     { return !!this.record?.error; }
+    get isIncomplete() { return !this._hasAllCoords; }
 
-    // Trip field accessors 
-    get distance()    { return getFieldValue(this.record?.data, TRIP_DISTANCE_KM);  }
-    get direction()   { return getFieldValue(this.record?.data, TRIP_DIRECTION);    }
+    get distance() {
+        if (this.isManualMode) return this.manualDistance;
+        return this._val(TRIP_DISTANCE_KM);
+    }
 
-    // Departure Location accessors
+    get direction() {
+        if (this.isManualMode) return 'Delivery';
+        return this._val(TRIP_DIRECTION) || 'Delivery';
+    }
+
     get departureName() {
+        if (this.isManualMode) return this.manualDepartureName || 'Departure';
         return this._val('Trip__c.Departure_Location__r.Name') || 'Departure';
     }
+
     get departureLat() {
+        if (this.isManualMode) return this.manualDepartureLat;
         return this._val('Trip__c.Departure_Location__r.Latitude');
     }
+
     get departureLng() {
+        if (this.isManualMode) return this.manualDepartureLng;
         return this._val('Trip__c.Departure_Location__r.Longitude');
     }
 
-    // Destination Location accessors
+    // Destination
     get destinationName() {
+        if (this.isManualMode) return this.manualDestinationName || 'Destination';
         return this._val('Trip__c.Destination_Location__r.Name') || 'Destination';
     }
+
     get destinationLat() {
+        if (this.isManualMode) return this.manualDestinationLat;
         return this._val('Trip__c.Destination_Location__r.Latitude');
     }
+
     get destinationLng() {
+        if (this.isManualMode) return this.manualDestinationLng;
         return this._val('Trip__c.Destination_Location__r.Longitude');
     }
 
-    // Computed
     get _hasAllCoords() {
         return this.departureLat  != null
             && this.departureLng  != null
@@ -116,7 +144,6 @@ export default class TripRouteMap extends LightningElement {
         ];
     }
 
-    // Google Maps driving directions URL
     get googleMapsDirectionsUrl() {
         return 'https://www.google.com/maps/dir/?api=1'
             + `&origin=${this.departureLat},${this.departureLng}`
@@ -124,7 +151,6 @@ export default class TripRouteMap extends LightningElement {
             + '&travelmode=driving';
     }
 
-    // Helper
     _val(field) {
         return getFieldValue(this.record?.data, field);
     }

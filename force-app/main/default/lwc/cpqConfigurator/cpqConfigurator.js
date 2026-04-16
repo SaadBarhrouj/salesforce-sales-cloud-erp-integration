@@ -8,6 +8,10 @@ import OPP_PRICEBOOK_ID from "@salesforce/schema/Opportunity.Pricebook2Id";
 import OPP_PRICEBOOK_NAME from "@salesforce/schema/Opportunity.Pricebook2.Name";
 import OPP_OFFER_TYPE from "@salesforce/schema/Opportunity.Offer_Type__c";
 import OPP_OFFER_TYPE_NAME from "@salesforce/schema/Opportunity.Offer_Type__r.Name";
+import OPP_TRANSPORT_REQUIRED from "@salesforce/schema/Opportunity.Is_Transport_Required__c";
+import OPP_DEFAULT_AGENCY from "@salesforce/schema/Opportunity.Default_Agency__c";
+import OPP_TRANSPORT_URGENCY from "@salesforce/schema/Opportunity.Transport_Urgency__c";
+import OPP_DELIVERY_SITE from "@salesforce/schema/Opportunity.Delivery_Site__c";
 import getSidebarCategoriesByOfferType from "@salesforce/apex/ProductCategoryController.getSidebarCategoriesByOfferType";
 import getBundleData from "@salesforce/apex/BundleOptionController.getBundleData";
 import { STEPS, MESSAGES, STEP_LIST } from "c/cpqConstants";
@@ -25,7 +29,11 @@ const OPP_FIELDS = [
   OPP_PRICEBOOK_ID,
   OPP_PRICEBOOK_NAME,
   OPP_OFFER_TYPE,
-  OPP_OFFER_TYPE_NAME
+  OPP_OFFER_TYPE_NAME,
+  OPP_TRANSPORT_REQUIRED,
+  OPP_DEFAULT_AGENCY,
+  OPP_DELIVERY_SITE,
+  OPP_TRANSPORT_URGENCY
 ];
 
 export default class CpqConfigurator extends NavigationMixin(LightningElement) {
@@ -39,6 +47,20 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
   @wire(getRecord, { recordId: "$recordId", fields: OPP_FIELDS })
   wiredOpportunityRecord(result) {
     this.opportunityRecord = result;
+    if (result.data) {
+      const accountId = getFieldValue(result.data, OPP_ACCOUNT_ID);
+      const defaultAgencyId = getFieldValue(result.data, OPP_DEFAULT_AGENCY) || "";
+      const deliverySiteId = getFieldValue(result.data, OPP_DELIVERY_SITE) || "";
+      
+      this.logisticsState = {
+        ...this.logisticsState,
+        accountId: accountId,
+        isTransportRequired: getFieldValue(result.data, OPP_TRANSPORT_REQUIRED) || false,
+        agencyId: defaultAgencyId,
+        deliverySiteId: deliverySiteId,
+        urgency: getFieldValue(result.data, OPP_TRANSPORT_URGENCY) || "Standard"
+      };
+    }
     this.initSidebarData(this.currentStep.key);
   }
 
@@ -74,8 +96,17 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
       (s) => s.key === this.currentStep.key
     );
     if (currentIndex < STEP_LIST.length - 1) {
-      this.currentStep = STEP_LIST[currentIndex + 1];
-      this.initSidebarData(this.currentStep.key);
+      let nextIndex = currentIndex + 1;
+      
+      // Skip logistics step if transport not required
+      if (STEP_LIST[nextIndex].key === STEPS.LOGISTICS.key && !this.logisticsState.isTransportRequired) {
+        nextIndex++;
+      }
+      
+      if (nextIndex < STEP_LIST.length) {
+        this.currentStep = STEP_LIST[nextIndex];
+        this.initSidebarData(this.currentStep.key);
+      }
     }
   }
 
@@ -99,13 +130,22 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
       (s) => s.key === this.currentStep.key
     );
     if (currentIndex > 0) {
-      this.currentStep = STEP_LIST[currentIndex - 1];
+      let prevIndex = currentIndex - 1;
       
-      if (this.currentStep.key === STEPS.SELECTION.key) {
-        this.selectedItemId = "";
-        this.selectedItemLabel = "";
+      // Skip logistics step if transport not required
+      if (STEP_LIST[prevIndex].key === STEPS.LOGISTICS.key && !this.logisticsState.isTransportRequired) {
+        prevIndex--;
       }
-      this.initSidebarData(this.currentStep.key);
+      
+      if (prevIndex >= 0) {
+        this.currentStep = STEP_LIST[prevIndex];
+        
+        if (this.currentStep.key === STEPS.SELECTION.key) {
+          this.selectedItemId = "";
+          this.selectedItemLabel = "";
+        }
+        this.initSidebarData(this.currentStep.key);
+      }
     }
   }
 
@@ -137,10 +177,11 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
   };
   @track selectedProducts = [];
   @track logisticsState = {
+    accountId: "",
     isTransportRequired: false,
-    deliverySite: "",
-    transportAgency: "",
-    transportUrgency: "",
+    deliverySiteId: "",
+    agencyId: "",
+    urgency: "",
     notes: ""
   };
 
@@ -161,14 +202,14 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
     return this.currentStep.key === STEPS.LINE_EDITOR.key;
   }
   get isStepLogistics() {
-    return this.currentStep.key === STEPS.LOGISTICS.key;
+    return this.currentStep.key === STEPS.LOGISTICS.key && this.logisticsState.isTransportRequired;
   }
   get isStepReview() {
     return this.currentStep.key === STEPS.REVIEW.key;
   }
 
   get showSidebar() {
-    return !this.isStepLineEditor;
+    return !this.isStepLineEditor && !this.isStepLogistics;
   }
 
   /* -- bundle config -- */
@@ -317,6 +358,18 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
       if (action.dynamicProperty === "disableIfCartEmpty") {
         action.disabled = (this.selectedProducts || []).length === 0;
       }
+      
+      if (action.dynamicProperty === "disableIfInvalidLogistics") {
+        // Reference logisticsState to trigger reactivity
+        const stateTracker = this.logisticsState;
+        const step = this._getLogisticsStep();
+        if (step) {
+            action.disabled = step.isCalculateDisabled;
+        } else {
+            action.disabled = true;
+        }
+      }
+      
       return action;
     });
   }
@@ -334,6 +387,14 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
     return actions.map((action) => {
       if (action.dynamicProperty === "disableIfNoSelection") {
         action.disabled = !this.hasLineSelection;
+      }
+
+      if (action.dynamicProperty === "disableIfNoRoute") {
+        // Query logistics step directly for real-time route validity
+        // Reference logisticsState to trigger reactivity
+        const stateTracker = this.logisticsState;
+        const logisticsStep = this._getLogisticsStep();
+        action.disabled = !logisticsStep?.hasValidRoute;
       }
 
       if (action.isGroup && action.items) {
@@ -369,6 +430,8 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
     else if (action === "refreshPricing") this._getLineEditorStep()?.handleHeaderAction('refreshPricing');
     else if (action === "deleteSelected") this._getLineEditorStep()?.handleHeaderAction('deleteSelected');
     else if (action === "resetEditing") this._handleResetEditing();
+    else if (action === "calculateTransport") this._getLogisticsStep()?.handleCalculateTrips();
+    else if (action === "openGoogleMaps") this._getLogisticsStep()?.openRouteInGoogleMaps();
   }
 
   _handleToggleFilters() {
@@ -529,6 +592,10 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
 
   _getLineEditorStep() {
     return this.template.querySelector("c-cpq-step-line-editor");
+  }
+
+  _getLogisticsStep() {
+    return this.template.querySelector("c-cpq-step-logistics");
   }
 
   _handleClearSelection() {
@@ -806,7 +873,15 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
 
   /* -- Step 5 events -- */
   handleLogisticsChange(event) {
-    this.logisticsState = deepClone(event.detail.logistics);
+    const updatedLogistics = event.detail.logistics;
+    this.logisticsState = {
+      ...this.logisticsState,
+      agencyId: updatedLogistics.config ? updatedLogistics.config.agencyId : this.logisticsState.agencyId,
+      deliverySiteId: updatedLogistics.config ? updatedLogistics.config.deliverySiteId : this.logisticsState.deliverySiteId,
+      urgency: updatedLogistics.config ? updatedLogistics.config.urgency : this.logisticsState.urgency,
+      trips: updatedLogistics.trips,
+      isValid: updatedLogistics.isValid
+    };
   }
 
   handleSaveQuote() {
