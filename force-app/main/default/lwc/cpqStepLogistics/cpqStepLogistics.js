@@ -206,8 +206,6 @@ export default class CpqStepLogistics extends LightningElement {
                     ...t,
                     Final_Price__c: t.Final_Price__c || t.System_Price__c
                 }));
-                // Show notification to debug
-                showToast(this, 'Success', `Found ${result.length} existing trips.`, 'success');
             } else {
                 console.log('No trips returned from Apex for Opp ID:', this.opportunityId);
             }
