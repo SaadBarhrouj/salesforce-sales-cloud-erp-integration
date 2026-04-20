@@ -17,7 +17,7 @@
         </layoutColumns>
         <layoutColumns>
             <layoutItems>
-                <behavior>Readonly</behavior>
+                <behavior>Required</behavior>
                 <field>Product_Rule__c</field>
             </layoutItems>
         </layoutColumns>

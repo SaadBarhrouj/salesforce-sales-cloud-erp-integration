@@ -197,8 +197,6 @@
         <excludeButtons>MassChangeOwner</excludeButtons>
         <fields>NAME</fields>
         <fields>Direction__c</fields>
-        <fields>Departure_Location__c</fields>
-        <fields>Destination_Location__c</fields>
         <fields>Final_Price__c</fields>
         <relatedList>Trip__c.Opportunity__c</relatedList>
     </relatedLists>

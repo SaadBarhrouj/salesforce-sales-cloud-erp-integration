@@ -155,22 +155,6 @@
         <relatedList>RelatedFileList</relatedList>
     </relatedLists>
     <relatedLists>
-        <fields>NAME</fields>
-        <fields>Trip_Date__c</fields>
-        <fields>Status__c</fields>
-        <fields>Destination_Location__c</fields>
-        <fields>Final_Price__c</fields>
-        <relatedList>Trip__c.Departure_Location__c</relatedList>
-    </relatedLists>
-    <relatedLists>
-        <fields>NAME</fields>
-        <fields>Trip_Date__c</fields>
-        <fields>Status__c</fields>
-        <fields>Departure_Location__c</fields>
-        <fields>Final_Price__c</fields>
-        <relatedList>Trip__c.Destination_Location__c</relatedList>
-    </relatedLists>
-    <relatedLists>
         <fields>OPPORTUNITY.NAME</fields>
         <fields>ACCOUNT.NAME</fields>
         <fields>OPPORTUNITY.CLOSE_DATE</fields>
