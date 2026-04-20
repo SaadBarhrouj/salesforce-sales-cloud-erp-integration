@@ -226,6 +226,20 @@
                     <name>uiBehavior</name>
                     <value>none</value>
                 </fieldInstanceProperties>
+                <fieldItem>Record.Distance_Delivery_Agency_km__c</fieldItem>
+                <identifier>RecordDistance_Delivery_Agency_km__cField</identifier>
+            </fieldInstance>
+        </itemInstances>
+        <name>Facet-10f45e84-f760-4d5f-83fc-3829fa5381f7</name>
+        <type>Facet</type>
+    </flexiPageRegions>
+    <flexiPageRegions>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>none</value>
+                </fieldInstanceProperties>
                 <fieldItem>Record.Transport_Urgency__c</fieldItem>
                 <identifier>RecordTransport_Urgency_cField</identifier>
                 <visibilityRule>
@@ -236,16 +250,6 @@
                     </criteria>
                 </visibilityRule>
             </fieldInstance>
-        </itemInstances>
-        <name>Facet-10f45e84-f760-4d5f-83fc-3829fa5381f7</name>
-        <type>Facet</type>
-    </flexiPageRegions>
-    <flexiPageRegions>
-        <itemInstances>
-            <componentInstance>
-                <componentName>flexipage:blankSpace</componentName>
-                <identifier>flexipage_blankSpace</identifier>
-            </componentInstance>
         </itemInstances>
         <itemInstances>
             <fieldInstance>

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Distance_Delivery_Agency_km__c</fullName>
+    <description>Straight-line distance between the Delivery Site and the Default Agency (in km). Used as a baseline for transport cost calculations and zone/truck selection.</description>
+    <externalId>false</externalId>
+    <formula>IF(
+  OR(ISBLANK(Delivery_Site__c), ISBLANK(Default_Agency__c)),
+  0,
+  ROUND(DISTANCE(Delivery_Site__r.Location, Default_Agency__r.Location, &apos;km&apos;), 2)
+)</formula>
+    <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+    <inlineHelpText>Straight-line distance based on GPS coordinates (as the crow flies).</inlineHelpText>
+    <label>Distance (Delivery to Agency) (km)</label>
+    <precision>18</precision>
+    <required>false</required>
+    <scale>2</scale>
+    <trackTrending>false</trackTrending>
+    <type>Number</type>
+    <unique>false</unique>
+</CustomField>
