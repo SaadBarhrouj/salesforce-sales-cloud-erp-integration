@@ -278,6 +278,37 @@ export default class CpqStepLogistics extends LightningElement {
 
     // ==================== EVENT HANDLERS ====================
 
+    async handleCalculateTransport() {
+        if (!this.hasValidRoute) return;
+        
+        this.isCalculating = true;
+        try {
+            const result = await calculateTrips({
+                opportunityId: this.opportunityId,
+                urgency: this.config.urgency,
+                totalWeight: this.totalWeight
+            });
+            
+            if (result && result.length > 0) {
+                this.trips = result.map((t, index) => ({
+                    ...t,
+                    Id: `temp_${index}`, // mock ID since it's not saved
+                    Final_Price__c: t.Final_Price__c || t.System_Price__c
+                }));
+                showToast(this, 'Success', 'Transport cost calculated successfully based on the minimal cost simulation', 'success');
+            } else {
+                this.trips = [];
+                showToast(this, 'Info', 'No optimal packing found', 'info');
+            }
+        } catch (error) {
+            console.error('Error calculating transport:', error);
+            showToast(this, 'Error Calculating Transport', error.body ? error.body.message : error.message, 'error');
+            this.trips = [];
+        } finally {
+            this.isCalculating = false;
+        }
+    }
+
     /**
      * Handle route settings changes (Agency, Delivery Site, Urgency)
      * When departure or delivery location changes:
