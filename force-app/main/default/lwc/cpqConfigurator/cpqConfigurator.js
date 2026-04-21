@@ -14,12 +14,14 @@ import OPP_TRANSPORT_URGENCY from "@salesforce/schema/Opportunity.Transport_Urge
 import OPP_DELIVERY_SITE from "@salesforce/schema/Opportunity.Delivery_Site__c";
 import getSidebarCategoriesByOfferType from "@salesforce/apex/ProductCategoryController.getSidebarCategoriesByOfferType";
 import getBundleData from "@salesforce/apex/BundleOptionController.getBundleData";
+import saveOpportunity from "@salesforce/apex/OpportunityController.saveOpportunity";
 import { STEPS, MESSAGES, STEP_LIST } from "c/cpqConstants";
 import {
-  deepClone,
-  calculateSelectedProductTotal,
-  formatCurrency,
-  showToast
+    deepClone,
+    calculateSelectedProductTotal,
+    calculateSelectedProductsSubtotal,
+    formatCurrency,
+    showToast
 } from "c/cpqUtils";
 
 const OPP_FIELDS = [
@@ -164,16 +166,13 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
   @track selectedItemLabel = "";
 
   /* ── domain state ─────────────────────────────── */
-  @track quoteState = {
+  @track opportunityState = {
     accountId: "",
     accountName: "",
-    contactId: "",
-    contactName: "",
-    catalogId: "",
-    catalogName: "",
-    startDate: new Date().toISOString().split("T")[0],
-    subscriptionTerm: 12,
-    additionalDiscountPercent: 0
+    pricebookId: "",
+    pricebookName: "",
+    offerTypeId: "",
+    offerTypeName: ""
   };
   @track selectedProducts = [];
   @track logisticsState = {
@@ -186,6 +185,8 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
   };
 
   @track bundleConfigCache = {};
+
+  @track isSaving = false;
 
   /* ═══════════════════════════════════════════════
        GETTERS
@@ -209,7 +210,7 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
   }
 
   get showSidebar() {
-    return !this.isStepLineEditor && !this.isStepLogistics;
+    return this.isStepSelection || this.isStepConfigure;
   }
 
   /* -- bundle config -- */
@@ -612,8 +613,10 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
     } else if (stepKey === STEPS.LINE_EDITOR.key) {
       this.sidebarItems = [];
       this.sidebarIsLoading = false;
-    } else {
-      this._loadReviewSidebar();
+    } else if (stepKey === STEPS.REVIEW.key) {
+      // No sidebar for review step
+      this.sidebarItems = [];
+      this.sidebarIsLoading = false;
     }
   }
 
@@ -676,21 +679,6 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
     }, 300);
   }
 
-  _loadReviewSidebar() {
-    this.sidebarTitle = "Details";
-    this.sidebarIcon = "standard:info";
-    this.sidebarSortLabel = "Field";
-    this.sidebarItems = [
-      { id: "det-001", label: "Account", value: this.quoteState.accountName },
-      { id: "det-002", label: "Start Date", value: this.quoteState.startDate },
-      {
-        id: "det-003",
-        label: "Term",
-        value: `${this.quoteState.subscriptionTerm}m`
-      }
-    ];
-  }
-
   handleItemSelect(event) {
     if (this.isStepConfigure) {
       const bundleConfig = this._getBundleConfigStep();
@@ -747,9 +735,8 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
   /* ── Step 1 events ── */
   handleProductAdd(event) {
     const cartItem = deepClone(event.detail.cartItem);
-    const discount = this.quoteState.additionalDiscountPercent || 0;
     cartItem._formattedTotal = formatCurrency(
-      calculateSelectedProductTotal(cartItem, discount)
+      calculateSelectedProductTotal(cartItem)
     );
     const items = deepClone(this.selectedProducts);
     items.push(cartItem);
@@ -772,13 +759,12 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
   handleConfigUpdate(event) {
     const { itemKey, options, configured } = event.detail;
     const items = deepClone(this.selectedProducts);
-    const discount = this.quoteState.additionalDiscountPercent || 0;
     const idx = items.findIndex((i) => i._key === itemKey);
     if (idx !== -1) {
       items[idx].configuredOptions = deepClone(options);
       items[idx].configured = configured;
       items[idx]._formattedTotal = formatCurrency(
-        calculateSelectedProductTotal(items[idx], discount)
+        calculateSelectedProductTotal(items[idx])
       );
     }
     this.selectedProducts = items;
@@ -788,7 +774,6 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
   handleLineUpdate(event) {
     const { itemKey, field, value, optionId } = event.detail;
     const items = deepClone(this.selectedProducts);
-    const discount = this.quoteState.additionalDiscountPercent || 0;
     const idx = items.findIndex((i) => i._key === itemKey);
     if (idx !== -1) {
       if (field === "quantity") items[idx].quantity = value;
@@ -837,14 +822,6 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
     }
   }
 
-  handleGlobalDiscount(event) {
-    const disc = event.detail.value;
-    const qs = deepClone(this.quoteState);
-    qs.additionalDiscountPercent = disc;
-    this.quoteState = qs;
-    this._recalcAllTotals();
-  }
-
   handleLineSelectionChange(event) {
     this.hasLineSelection = event.detail.hasSelection;
   }
@@ -871,20 +848,22 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
     this.selectedProducts = products;
   }
 
-  /* -- Step 5 events -- */
-  handleLogisticsChange(event) {
-    const updatedLogistics = event.detail.logistics;
-    this.logisticsState = {
-      ...this.logisticsState,
-      agencyId: updatedLogistics.config ? updatedLogistics.config.agencyId : this.logisticsState.agencyId,
-      deliverySiteId: updatedLogistics.config ? updatedLogistics.config.deliverySiteId : this.logisticsState.deliverySiteId,
-      urgency: updatedLogistics.config ? updatedLogistics.config.urgency : this.logisticsState.urgency,
-      trips: updatedLogistics.trips,
-      isValid: updatedLogistics.isValid
-    };
-  }
+    /* -- Step 5 events -- */
+    handleLogisticsChange(event) {
+        const updatedLogistics = event.detail.logistics;
+        this.logisticsState = {
+          ...this.logisticsState,
+          agencyId: updatedLogistics.config ? updatedLogistics.config.agencyId : this.logisticsState.agencyId,
+          deliverySiteId: updatedLogistics.config ? updatedLogistics.config.deliverySiteId : this.logisticsState.deliverySiteId,
+          urgency: updatedLogistics.config ? updatedLogistics.config.urgency : this.logisticsState.urgency,
+          trips: updatedLogistics.trips,
+          isValid: updatedLogistics.isValid,
+          agencyName: updatedLogistics.agencyName || this.logisticsState.agencyName,
+          deliverySiteName: updatedLogistics.deliverySiteName || this.logisticsState.deliverySiteName
+        };
+    }
 
-  handleSaveQuote() {
+  handleSaveOpportunity() {
     this._triggerSave();
   }
 
@@ -911,25 +890,109 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
   }
 
   _recalcAllTotals() {
-    const discount = this.quoteState.additionalDiscountPercent || 0;
     const items = deepClone(this.selectedProducts);
     items.forEach((item) => {
       item._formattedTotal = formatCurrency(
-        calculateSelectedProductTotal(item, discount)
+        calculateSelectedProductTotal(item)
       );
     });
     this.selectedProducts = items;
   }
 
   _triggerSave() {
-    this._showToast("Success", MESSAGES.SAVE_SUCCESS, "success");
+    if (this.isSaving) return;
+
+    if (!this.selectedProducts || this.selectedProducts.length === 0) {
+      showToast(this, "Validation Error", MESSAGES.VALIDATION_NO_PRODUCTS, "error");
+      return;
+    }
+
+    if (this.logisticsState.isTransportRequired && this.logisticsState.isValid === false) {
+      showToast(this, "Validation Error", MESSAGES.LOGISTICS_INCOMPLETE, "error");
+      return;
+    }
+
+    this.isSaving = true;
+
+    const lineItems = this._buildLineItemPayload();
+    const logistics = this._buildLogisticsPayload();
+
+    saveOpportunity({
+      opportunityId: this.recordId,
+      lineItems: lineItems,
+      logistics: logistics
+    })
+      .then((result) => {
+        this.isSaving = false;
+        showToast(this, "Success", MESSAGES.SAVE_SUCCESS, "success");
+        this[NavigationMixin.Navigate]({
+          type: "standard__recordPage",
+          attributes: {
+            recordId: result,
+            objectApiName: "Opportunity",
+            actionName: "view"
+          }
+        });
+      })
+      .catch((error) => {
+        this.isSaving = false;
+        const message = error.body?.message || error.message || MESSAGES.SAVE_ERROR;
+        showToast(this, "Save Error", message, "error");
+      });
+  }
+
+  _buildLineItemPayload() {
+    return this.selectedProducts.map((product) => ({
+      product2Id: product.productId,
+      productName: product.productName,
+      quantity: product.quantity || 1,
+      unitPrice: product.listUnitPrice || product.unitPrice || 0,
+      discountPercent: product.additionalDiscount || 0,
+      isBundle: product.isBundle || false,
+      bundleGroup: product.isBundle ? product.productId : null,
+      options: (product.configuredOptions || []).map((opt) => ({
+        product2Id: opt.productId || opt.Id,
+        productName: opt.productName,
+        quantity: opt.quantity || 1,
+        unitPrice: opt.listUnitPrice || opt.unitPrice || 0,
+        discountPercent: opt.additionalDiscount || opt.discountPercent || 0
+      }))
+    }));
+  }
+
+  _buildLogisticsPayload() {
+    const trips = (this.logisticsState.trips || []).map((trip) => ({
+      id: trip.Id || null,
+      truckType: trip.Truck_Type__c || null,
+      distanceKm: trip.Distance_Km__c || 0,
+      systemPrice: trip.System_Price__c || 0,
+      finalPrice: trip.Final_Price__c || trip.System_Price__c || 0,
+      isPriceOverridden: trip.Is_Price_Overridden__c || false,
+      overrideReason: trip.Override_Reason__c || null,
+      direction: trip.Direction__c || null
+    }));
+
+    return {
+      isTransportRequired: this.logisticsState.isTransportRequired || false,
+      defaultAgencyId: this.logisticsState.agencyId || null,
+      deliverySiteId: this.logisticsState.deliverySiteId || null,
+      transportUrgency: this.logisticsState.urgency || "Standard",
+      totalTransportCost: this._calculateTransportTotal(),
+      trips: trips
+    };
+  }
+
+  _calculateTransportTotal() {
+    if (!this.logisticsState.trips || this.logisticsState.trips.length === 0) return 0;
+    return this.logisticsState.trips.reduce((total, trip) => {
+      return total + (trip.Final_Price__c || trip.System_Price__c || 0);
+    }, 0);
   }
 
   _triggerSaveLines() {
     const lineEditor = this._getLineEditorStep();
     if (lineEditor) {
       lineEditor.saveLines();
-      this._showToast("Success", MESSAGES.LINE_SAVE, "success");
     }
   }
 

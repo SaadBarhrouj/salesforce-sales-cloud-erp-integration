@@ -1,7 +1,15 @@
+/**
+ * @description Service layer for Trip business logic.
+ * Handles trip calculation, retrieval, and persistence operations.
+ */
 public inherited sharing class TripService {
     
     /**
      * @description Calculates new trips and replaces the old ones
+     * @param opportunityId The Opportunity ID to associate trips with.
+     * @param urgency The urgency level for trip calculation.
+     * @param totalWeight The total weight for trip calculation.
+     * @return List of newly created Trip__c records.
      */
     public static List<Trip__c> calculateAndSaveTrips(Id opportunityId, String urgency, Decimal totalWeight) {
         try {
@@ -44,6 +52,8 @@ public inherited sharing class TripService {
     
     /**
      * @description Gets existing trips for an opportunity
+     * @param opportunityId The Opportunity ID to look up trips for.
+     * @return List of Trip__c records associated with the opportunity.
      */
     public static List<Trip__c> getExistingTrips(Id opportunityId) {
         try {
@@ -56,6 +66,7 @@ public inherited sharing class TripService {
     
     /**
      * @description Updates existing trips
+     * @param trips List of Trip__c records to upsert.
      */
     public static void updateTrips(List<Trip__c> trips) {
         try {

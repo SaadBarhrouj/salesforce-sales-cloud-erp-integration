@@ -116,4 +116,21 @@ public inherited sharing class OpportunityDAO {
     //         FROM Opportunity
     //     ];
     // }
+
+    /**
+     * @description Updates an Opportunity record with the provided fields.
+     * @param opportunity The Opportunity record to update. Must have a valid Id.
+     */
+    public static void updateOpportunity(Opportunity opportunity) {
+        if (opportunity == null || opportunity.Id == null) {
+            return;
+        }
+
+        try {
+            update as system opportunity;
+        } catch (DmlException e) {
+            System.debug(LoggingLevel.ERROR, 'OpportunityDAO.updateOpportunity failed: ' + e.getMessage());
+            throw e;
+        }
+    }
 }

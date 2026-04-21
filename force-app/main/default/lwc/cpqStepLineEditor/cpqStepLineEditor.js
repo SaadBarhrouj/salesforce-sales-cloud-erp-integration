@@ -447,8 +447,7 @@ export default class CpqStepLineEditor extends LightningElement {
                 updatedRow._hasError = true;
                 updatedRow._errorMessage = 'Quantity must be at least 1';
                 hasValidationErrors = true;
-            } else if (updatedRow._errorMessage === 'Discount must be between 0 and 100'
-                    || updatedRow._errorMessage === 'Quantity must be at least 1') {
+            } else {
                 updatedRow._hasError = false;
                 updatedRow._errorMessage = '';
             }

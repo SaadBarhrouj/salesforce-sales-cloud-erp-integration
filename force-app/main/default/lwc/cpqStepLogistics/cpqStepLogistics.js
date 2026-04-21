@@ -458,10 +458,15 @@ export default class CpqStepLogistics extends LightningElement {
      * Emit current state to parent component
      */
     emitState() {
+        const selectedAgency = this.selectedAgency;
+        const selectedDelivery = this.selectedDelivery;
+
         const logisticsState = {
             config: deepClone(this.config),
             trips: deepClone(this.trips),
-            isValid: this.validateOverrideReasons()
+            isValid: this.validateOverrideReasons(),
+            agencyName: selectedAgency?.label || selectedAgency?.Name || '',
+            deliverySiteName: selectedDelivery?.label || selectedDelivery?.Name || ''
         };
 
         this.dispatchEvent(new CustomEvent('logisticschange', {

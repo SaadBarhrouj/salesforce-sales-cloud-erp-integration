@@ -35,7 +35,7 @@ public inherited sharing class PricebookEntryDAO {
 
         Map<Id, PricebookEntry> results = new Map<Id, PricebookEntry>();
         List<PricebookEntry> entries = [
-            SELECT Id, Product2Id, UnitPrice, Pricebook2Id
+            SELECT Id, Product2Id, Product2.Name, UnitPrice, Pricebook2Id
             FROM PricebookEntry
             WHERE Product2Id IN :productIds
             AND Pricebook2Id = :pricebookId

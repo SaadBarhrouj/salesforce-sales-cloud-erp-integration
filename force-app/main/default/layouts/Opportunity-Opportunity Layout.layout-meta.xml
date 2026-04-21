@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Layout xmlns="http://soap.sforce.com/2006/04/metadata">
+    <excludeButtons>OpenSlackRecordChannel</excludeButtons>
     <excludeButtons>Submit</excludeButtons>
     <layoutSections>
         <customLabel>false</customLabel>
@@ -188,8 +189,8 @@
         <fields>Product2</fields>
         <fields>Quantity</fields>
         <fields>UnitPrice</fields>
+        <fields>Discount</fields>
         <fields>Is_Bundle_Product__c</fields>
-        <fields>Bundle_Group__c</fields>
         <fields>Description</fields>
         <relatedList>RelatedLineItemList</relatedList>
     </relatedLists>
@@ -197,8 +198,6 @@
         <excludeButtons>MassChangeOwner</excludeButtons>
         <fields>NAME</fields>
         <fields>Direction__c</fields>
-        <fields>Departure_Location__c</fields>
-        <fields>Destination_Location__c</fields>
         <fields>Final_Price__c</fields>
         <relatedList>Trip__c.Opportunity__c</relatedList>
     </relatedLists>
@@ -225,7 +224,7 @@
     <showRunAssignmentRulesCheckbox>false</showRunAssignmentRulesCheckbox>
     <showSubmitAndAttachButton>false</showSubmitAndAttachButton>
     <summaryLayout>
-        <masterLabel>00h720000026FBf</masterLabel>
+        <masterLabel>00hBl000001HG3N</masterLabel>
         <sizeX>4</sizeX>
         <sizeY>0</sizeY>
         <summaryLayoutStyle>Default</summaryLayoutStyle>

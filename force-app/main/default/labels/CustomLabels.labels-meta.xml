@@ -54,4 +54,18 @@
         <shortDescription>Comma-separated catalogs that use the volume pricing</shortDescription>
         <value>Rental and Services,Rental,Services</value>
     </labels>
+    <labels>
+        <fullName>Opportunity_Save_Success</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Success message when an opportunity is saved</shortDescription>
+        <value>Opportunity saved successfully.</value>
+    </labels>
+    <labels>
+        <fullName>Opportunity_No_Line_Items</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Error message when no line items are provided for save</shortDescription>
+        <value>Add at least one product before saving.</value>
+    </labels>
 </CustomLabels>

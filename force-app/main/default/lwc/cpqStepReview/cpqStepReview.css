@@ -1,37 +1,33 @@
-/* cpqStepReview – Review & Summary step */
+/* cpqStepReview – Review & Summary step for Opportunity */
 
 :host {
     display: block;
+    width: 100%;
 }
 
+/* Full-width container without sidebar */
 .review-container {
-    max-width: 960px;
+    max-width: 1200px;
     margin-inline: auto;
+    padding: var(--slds-g-spacing-4, 1rem);
 }
 
-/* ── Option sub-rows ── */
+/* ── Tree Table Styling ── */
+.slds-table_tree .slds-tree__item {
+    display: flex;
+    align-items: center;
+}
+
 .option-sub-row {
     background-color: var(--slds-g-color-neutral-base-95, #f3f3f3);
 }
 
-/* ── Bundle summary cards ── */
-.bundle-summary {
-    background-color: var(--slds-g-color-neutral-base-100, #fff);
+.option-sub-row td {
+    border-top: none;
 }
 
-.badge-success {
-    --slds-c-badge-color-background: var(--slds-g-color-success-base-40, #2e844a);
-    --slds-c-badge-text-color: #fff;
-}
-
-.badge-warning {
-    --slds-c-badge-color-background: var(--slds-g-color-warning-base-50, #dd7a01);
-    --slds-c-badge-text-color: #fff;
-}
-
-/* ── Grand Total card ── */
+/* ── Opportunity Summary Card ── */
 .total-card {
-    background: linear-gradient(135deg, var(--slds-g-color-brand-base-95, #f0f8ff) 0%, var(--slds-g-color-neutral-base-100, #fff) 100%);
     border: 2px solid var(--slds-g-color-brand-base-50, #0176d3);
     border-radius: var(--slds-g-radius-border-2, 0.5rem);
 }
@@ -39,4 +35,88 @@
 .grand-total {
     color: var(--slds-g-color-brand-base-50, #0176d3);
     font-weight: var(--slds-g-font-weight-7, 700);
+}
+
+/* ── Definition Lists ── */
+.slds-dl_horizontal__detail.slds-text-title_bold {
+    font-weight: var(--slds-g-font-weight-7, 700);
+    color: var(--slds-g-color-neutral-base-10, #181818);
+}
+
+/* ── Column Layout for Info Sections ── */
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0 2rem;
+}
+
+.info-row {
+    display: flex;
+    align-items: baseline;
+    min-height: 1.75rem;
+}
+
+.label-col {
+    flex: 0 0 130px;
+    font-size: 0.875rem;
+    white-space: nowrap;
+}
+
+.value-col {
+    flex: 1 1 auto;
+    font-size: 0.875rem;
+    color: var(--slds-g-color-neutral-base-10, #181818);
+}
+
+/* Single column on small screens */
+@media (max-width: 768px) {
+    .info-grid {
+        grid-template-columns: 1fr;
+        gap: 0;
+    }
+    
+    .label-col {
+        flex: 0 0 120px;
+    }
+}
+
+/* ── Table Cell Styling (Line Editor Style) ── */
+.slds-cell-edit {
+    padding: 0.25rem 0.5rem;
+    vertical-align: middle;
+}
+
+.slds-cell_action-mode {
+    vertical-align: middle;
+}
+
+.product-cell-inner {
+    min-height: 2rem;
+    height: 100%;
+}
+
+.product-cell-inner a {
+    color: var(--slds-g-color-brand-base-50, #0176d3);
+    text-decoration: none;
+}
+
+.product-cell-inner a:hover {
+    text-decoration: underline;
+}
+
+.slds-table_tree tbody tr {
+    height: 2rem;
+}
+
+.slds-table_tree td,
+.slds-table_tree th {
+    vertical-align: middle;
+}
+
+/* ── Badge Styling ── */
+.slds-badge_warning {
+    background-color: var(--slds-g-color-warning-base-90, #fedcb8);
+    color: var(--slds-g-color-warning-base-20, #7c4a0b);
+    font-size: 0.75rem;
+    padding: 0.125rem 0.5rem;
 }

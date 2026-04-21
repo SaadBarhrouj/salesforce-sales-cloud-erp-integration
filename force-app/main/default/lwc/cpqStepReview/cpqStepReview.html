@@ -1,41 +1,37 @@
 <template>
     <div class="review-container">
 
-        <!-- ═══ Section 1: Quote Information ═══ -->
+        <!-- ═══ Section 1: Opportunity Details ═══ -->
         <div class="slds-card slds-m-bottom_medium">
             <div class="slds-card__header slds-grid">
                 <header class="slds-media slds-media_center slds-has-flexi-truncate">
                     <div class="slds-media__figure">
-                        <lightning-icon icon-name="standard:contract" size="small"></lightning-icon>
+                        <lightning-icon icon-name="standard:opportunity" size="small"></lightning-icon>
                     </div>
                     <div class="slds-media__body">
-                        <h2 class="slds-card__header-title slds-text-heading_small">Quote Information</h2>
+                        <h2 class="slds-card__header-title slds-text-heading_small">Opportunity Details</h2>
                     </div>
                 </header>
             </div>
             <div class="slds-card__body slds-card__body_inner">
-                <lightning-layout multiple-rows>
-                    <lightning-layout-item size="6" small-device-size="12" padding="horizontal-small">
-                        <dl class="slds-dl_horizontal slds-dl_horizontal_small">
-                            <dt class="slds-dl_horizontal__label slds-text-color_weak">Account</dt>
-                            <dd class="slds-dl_horizontal__detail">{quoteState.accountName}</dd>
-                            <dt class="slds-dl_horizontal__label slds-text-color_weak">Contact</dt>
-                            <dd class="slds-dl_horizontal__detail">{contactDisplay}</dd>
-                            <dt class="slds-dl_horizontal__label slds-text-color_weak">Catalog</dt>
-                            <dd class="slds-dl_horizontal__detail">{quoteState.catalogName}</dd>
-                        </dl>
-                    </lightning-layout-item>
-                    <lightning-layout-item size="6" small-device-size="12" padding="horizontal-small">
-                        <dl class="slds-dl_horizontal slds-dl_horizontal_small">
-                            <dt class="slds-dl_horizontal__label slds-text-color_weak">Start Date</dt>
-                            <dd class="slds-dl_horizontal__detail">{quoteState.startDate}</dd>
-                            <dt class="slds-dl_horizontal__label slds-text-color_weak">Subscription Term</dt>
-                            <dd class="slds-dl_horizontal__detail">{termDisplay}</dd>
-                            <dt class="slds-dl_horizontal__label slds-text-color_weak">Global Discount</dt>
-                            <dd class="slds-dl_horizontal__detail">{discountDisplay}</dd>
-                        </dl>
-                    </lightning-layout-item>
-                </lightning-layout>
+                <div class="info-grid">
+                    <div class="info-row slds-m-bottom_x-small">
+                        <span class="slds-text-color_weak label-col">Opportunity:</span>
+                        <span class="slds-text-title_bold value-col">{opportunityName}</span>
+                    </div>
+                    <div class="info-row slds-m-bottom_x-small">
+                        <span class="slds-text-color_weak label-col">Account:</span>
+                        <span class="value-col">{accountName}</span>
+                    </div>
+                    <div class="info-row slds-m-bottom_x-small">
+                        <span class="slds-text-color_weak label-col">Pricebook:</span>
+                        <span class="value-col">{pricebookName}</span>
+                    </div>
+                    <div class="info-row slds-m-bottom_x-small">
+                        <span class="slds-text-color_weak label-col">Offer Type:</span>
+                        <span class="value-col">{offerTypeName}</span>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -54,54 +50,49 @@
                 </header>
             </div>
             <div class="slds-card__body">
-                <table class="slds-table slds-table_cell-buffer slds-table_bordered slds-table_striped">
+                <table class="slds-table slds-table_cell-buffer slds-table_bordered slds-table_striped slds-tree slds-table_tree"
+                       role="treegrid" aria-label="Opportunity Line Items">
                     <thead>
                         <tr class="slds-line-height_reset">
                             <th scope="col" style="width:40px;">#</th>
                             <th scope="col">Product</th>
                             <th scope="col" style="width:100px;">Code</th>
-                            <th scope="col" style="width:60px;" class="slds-text-align_center">Qty</th>
-                            <th scope="col" style="width:110px;" class="slds-text-align_right">Unit Price</th>
-                            <th scope="col" style="width:90px;" class="slds-text-align_right">Disc. %</th>
-                            <th scope="col" style="width:120px;" class="slds-text-align_right">Line Total</th>
+                            <th scope="col" style="width:70px;" class="slds-text-align_center">Qty</th>
+                            <th scope="col" style="width:110px;" class="slds-text-align_right">List Price</th>
+                            <th scope="col" style="width:80px;" class="slds-text-align_right">Disc.%</th>
+                            <th scope="col" style="width:110px;" class="slds-text-align_right">Net Price</th>
+                            <th scope="col" style="width:120px;" class="slds-text-align_right">Total</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <template for:each={numberedItems} for:item="item">
-                            <tr key={item._key} class="slds-hint-parent">
-                                <td>{item._lineNumber}</td>
-                                <td>
-                                    <div class="slds-grid slds-grid_vertical-align-center">
-                                        <lightning-icon lwc:if={item.isBundle} icon-name="utility:package" size="xx-small" class="slds-m-right_xx-small" title="Bundle"></lightning-icon>
-                                        <span>{item.productName}</span>
+                        <template for:each={flattenedLineItems} for:item="row">
+                            <tr key={row._key} class={row.rowClass} aria-level={row.ariaLevel}>
+                                <td class="slds-cell-edit slds-cell_action-mode">{row.lineNumber}</td>
+                                <th scope="row" class="slds-tree__item slds-cell-edit slds-cell_action-mode" style={row.paddingStyle} title={row.productName}>
+                                    <div class="slds-grid slds-grid_vertical-align-center product-cell-inner">
+                                        <button lwc:if={row.hasOptions}
+                                                class="slds-button slds-button_icon slds-button_icon-x-small slds-m-right_x-small"
+                                                onclick={handleToggleExpand}
+                                                data-id={row.parentKey}
+                                                style={row.buttonVisibility}
+                                                tabindex="-1">
+                                            <lightning-icon icon-name={row.chevronIcon} size="xx-small"></lightning-icon>
+                                        </button>
+                                        <span class="slds-truncate"><a href="javascript:void(0)" onclick={handleProductLinkClick} data-id={row.productId}>{row.productName}</a></span>
                                     </div>
-                                </td>
-                                <td><span class="slds-text-body_small">{item.productCode}</span></td>
-                                <td class="slds-text-align_center">{item.quantity}</td>
-                                <td class="slds-text-align_right">{item._formattedUnitPrice}</td>
-                                <td class="slds-text-align_right">{item._formattedDiscount}</td>
-                                <td class="slds-text-align_right slds-text-title_bold">{item._formattedTotal}</td>
+                                </th>
+                                <td class="slds-cell-edit slds-cell_action-mode"><span class="slds-text-body_small slds-truncate">{row.productCode}</span></td>
+                                <td class="slds-text-align_center slds-cell-edit slds-cell_action-mode">{row.quantity}</td>
+                                <td class="slds-text-align_right slds-cell-edit slds-cell_action-mode">{row.formattedListPrice}</td>
+                                <td class="slds-text-align_right slds-cell-edit slds-cell_action-mode">{row.formattedDiscount}</td>
+                                <td class="slds-text-align_right slds-cell-edit slds-cell_action-mode">{row.formattedNetPrice}</td>
+                                <td class="slds-text-align_right slds-text-title_bold slds-cell-edit slds-cell_action-mode">{row.formattedTotal}</td>
                             </tr>
-                            <!-- Bundle options sub-rows -->
-                            <template lwc:if={item.hasOptions} for:each={item.options} for:item="opt">
-                                <tr key={opt._optKey} class="option-sub-row">
-                                    <td></td>
-                                    <td colspan="2">
-                                        <span class="slds-p-left_large slds-text-body_small slds-text-color_weak">
-                                            ↳ {opt.productName}
-                                        </span>
-                                    </td>
-                                    <td class="slds-text-align_center slds-text-body_small">{opt.quantity}</td>
-                                    <td class="slds-text-align_right slds-text-body_small">{opt._formattedPrice}</td>
-                                    <td></td>
-                                    <td class="slds-text-align_right slds-text-body_small">{opt._formattedOptionTotal}</td>
-                                </tr>
-                            </template>
                         </template>
                     </tbody>
                     <tfoot>
                         <tr>
-                            <td colspan="6" class="slds-text-align_right slds-text-title_caps slds-p-right_small">Subtotal</td>
+                            <td colspan="7" class="slds-text-align_right slds-text-title_caps slds-p-right_small">Subtotal</td>
                             <td class="slds-text-align_right slds-text-heading_small">{formattedSubtotal}</td>
                         </tr>
                     </tfoot>
@@ -109,122 +100,134 @@
             </div>
         </div>
 
-        <!-- ═══ Section 3: Bundle Configurations ═══ -->
-        <template lwc:if={hasBundles}>
+        <!-- ═══ Section 3: Logistics ═══ -->
+        <template lwc:if={isTransportRequired}>
             <div class="slds-card slds-m-bottom_medium">
                 <div class="slds-card__header slds-grid">
                     <header class="slds-media slds-media_center slds-has-flexi-truncate">
                         <div class="slds-media__figure">
-                            <lightning-icon icon-name="standard:bundle_policy" size="small"></lightning-icon>
+                            <lightning-icon icon-name="custom:custom98" size="small"></lightning-icon>
                         </div>
                         <div class="slds-media__body">
-                            <h2 class="slds-card__header-title slds-text-heading_small">Bundle Configurations</h2>
+                            <h2 class="slds-card__header-title slds-text-heading_small">Logistics</h2>
                         </div>
                     </header>
                 </div>
                 <div class="slds-card__body slds-card__body_inner">
-                    <template for:each={bundleItems} for:item="bundle">
-                        <div key={bundle._key} class="slds-box slds-box_x-small slds-m-bottom_small bundle-summary">
-                            <div class="slds-grid slds-grid_align-spread slds-p-bottom_xx-small slds-border_bottom slds-m-bottom_x-small">
-                                <span class="slds-text-title_bold">{bundle.productName}</span>
-                                <lightning-badge label={bundle._configLabel} class={bundle._configBadgeClass}></lightning-badge>
-                            </div>
-                            <ul class="slds-list_dotted slds-text-body_small">
-                                <template for:each={bundle._selectedOptions} for:item="opt">
-                                    <li key={opt._optKey}>
-                                        {opt.productName} — Qty: {opt.quantity} — {opt._formattedPrice}
-                                    </li>
-                                </template>
-                            </ul>
-                            <template lwc:if={bundle._noOptionsSelected}>
-                                <p class="slds-text-body_small slds-text-color_weak slds-p-top_xx-small">No options selected.</p>
-                            </template>
+                    <div class="info-grid">
+                        <div class="info-row slds-m-bottom_x-small">
+                            <span class="slds-text-color_weak label-col">Transport Required:</span>
+                            <span class="value-col">{transportDisplay}</span>
                         </div>
+                        <div class="info-row slds-m-bottom_x-small">
+                            <span class="slds-text-color_weak label-col">Agency:</span>
+                            <span class="value-col">{agencyDisplay}</span>
+                        </div>
+                        <div class="info-row slds-m-bottom_x-small">
+                            <span class="slds-text-color_weak label-col">Urgency:</span>
+                            <span class="value-col">{urgencyDisplay}</span>
+                        </div>
+                        <div class="info-row slds-m-bottom_x-small">
+                            <span class="slds-text-color_weak label-col">Delivery Site:</span>
+                            <span class="value-col">{deliverySiteDisplay}</span>
+                        </div>
+                        <template lwc:if={hasNotes}>
+                            <div class="info-row">
+                                <span class="slds-text-color_weak label-col">Notes:</span>
+                                <span class="value-col">{logisticsState.notes}</span>
+                            </div>
+                        </template>
+                    </div>
+
+                    <!-- Trips Table -->
+                    <template lwc:if={hasTrips}>
+                        <h3 class="slds-text-title_bold slds-m-bottom_small">Trips</h3>
+                        <table class="slds-table slds-table_cell-buffer slds-table_bordered slds-table_striped"
+                                aria-label="Transport Trips">
+                            <thead>
+                                <tr class="slds-line-height_reset">
+                                    <th scope="col" style="width:50px;">#</th>
+                                    <th scope="col">Truck Type</th>
+                                    <th scope="col" style="width:120px;" class="slds-text-align_right">Distance</th>
+                                    <th scope="col" style="width:120px;" class="slds-text-align_right">System Price</th>
+                                    <th scope="col" style="width:120px;" class="slds-text-align_right">Final Price</th>
+                                    <th scope="col" style="width:150px;">Override Reason</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <template for:each={formattedTrips} for:item="trip">
+                                    <tr key={trip.Id}>
+                                        <td>{trip.rowNumber}</td>
+                                        <td>
+                                            <div class="slds-grid slds-grid_vertical-align-center">
+                                                <lightning-icon icon-name="standard:shipment" size="xx-small" class="slds-m-right_x-small"></lightning-icon>
+                                                <span>{trip.Truck_Type__c}</span>
+                                            </div>
+                                        </td>
+                                        <td class="slds-text-align_right">{trip.formattedDistance} km</td>
+                                        <td class="slds-text-align_right slds-text-color_weak">{trip.formattedSystemPrice}</td>
+                                        <td class="slds-text-align_right slds-text-title_bold">
+                                            <template lwc:if={trip.isOverridden}>
+                                                <span class="slds-text-color_error">{trip.formattedFinalPrice}</span>
+                                            </template>
+                                            <template lwc:else>
+                                                {trip.formattedFinalPrice}
+                                            </template>
+                                        </td>
+                                        <td>
+                                            <template lwc:if={trip.Override_Reason__c}>
+                                                <span class="slds-badge slds-badge_warning">{trip.Override_Reason__c}</span>
+                                            </template>
+                                            <template lwc:else>
+                                                <span class="slds-text-color_weak">—</span>
+                                            </template>
+                                        </td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td colspan="4" class="slds-text-align_right slds-text-title_caps slds-p-right_small">Transport Total</td>
+                                    <td class="slds-text-align_right slds-text-heading_small slds-text-title_bold">{formattedTransportTotal}</td>
+                                    <td></td>
+                                </tr>
+                            </tfoot>
+                        </table>
                     </template>
                 </div>
             </div>
         </template>
 
-        <!-- ═══ Section 4: Logistics ═══ -->
-        <div class="slds-card slds-m-bottom_medium">
-            <div class="slds-card__header slds-grid">
-                <header class="slds-media slds-media_center slds-has-flexi-truncate">
-                    <div class="slds-media__figure">
-                        <lightning-icon icon-name="standard:shipment" size="small"></lightning-icon>
-                    </div>
-                    <div class="slds-media__body">
-                        <h2 class="slds-card__header-title slds-text-heading_small">Logistics</h2>
-                    </div>
-                </header>
-            </div>
-            <div class="slds-card__body slds-card__body_inner">
-                <lightning-layout multiple-rows>
-                    <lightning-layout-item size="6" small-device-size="12" padding="horizontal-small">
-                        <dl class="slds-dl_horizontal slds-dl_horizontal_small">
-                            <dt class="slds-dl_horizontal__label slds-text-color_weak">Transport Required</dt>
-                            <dd class="slds-dl_horizontal__detail">{transportDisplay}</dd>
-                            <dt class="slds-dl_horizontal__label slds-text-color_weak">Delivery Site</dt>
-                            <dd class="slds-dl_horizontal__detail">{deliverySiteDisplay}</dd>
-                        </dl>
-                    </lightning-layout-item>
-                    <lightning-layout-item size="6" small-device-size="12" padding="horizontal-small">
-                        <dl class="slds-dl_horizontal slds-dl_horizontal_small">
-                            <dt class="slds-dl_horizontal__label slds-text-color_weak">Transport Agency</dt>
-                            <dd class="slds-dl_horizontal__detail">{agencyDisplay}</dd>
-                            <dt class="slds-dl_horizontal__label slds-text-color_weak">Urgency</dt>
-                            <dd class="slds-dl_horizontal__detail">{urgencyDisplay}</dd>
-                        </dl>
-                    </lightning-layout-item>
-                    <lightning-layout-item lwc:if={hasNotes} size="12" padding="horizontal-small" class="slds-m-top_x-small">
-                        <dl class="slds-dl_horizontal slds-dl_horizontal_small">
-                            <dt class="slds-dl_horizontal__label slds-text-color_weak">Notes</dt>
-                            <dd class="slds-dl_horizontal__detail">{logisticsState.notes}</dd>
-                        </dl>
-                    </lightning-layout-item>
-                </lightning-layout>
-            </div>
-        </div>
-
-        <!-- ═══ Section 5: Grand Total Card ═══ -->
+        <!-- ═══ Section 4: Opportunity Summary ═══ -->
         <div class="slds-card total-card slds-m-bottom_medium">
             <div class="slds-card__body slds-card__body_inner">
-                <lightning-layout vertical-align="center">
-                    <lightning-layout-item flexibility="grow">
+                <lightning-layout vertical-align="center" multiple-rows>
+                    <lightning-layout-item flexibility="grow" size="6" medium-device-size="3" class="slds-text-align_center slds-m-bottom_small">
                         <div class="slds-grid slds-grid_vertical">
-                            <span class="slds-text-title_caps slds-text-color_weak">Estimated Weight</span>
-                            <span class="slds-text-body_regular">{formattedWeight} kg</span>
+                            <span class="slds-text-title_caps slds-text-color_weak">Products Total</span>
+                            <span class="slds-text-heading_small">{formattedProductsSubtotal}</span>
                         </div>
                     </lightning-layout-item>
-                    <lightning-layout-item flexibility="grow">
-                        <div class="slds-grid slds-grid_vertical slds-text-align_center">
-                            <span class="slds-text-title_caps slds-text-color_weak">Products</span>
-                            <span class="slds-text-body_regular">{itemCount}</span>
+                    <lightning-layout-item flexibility="grow" size="6" medium-device-size="3" class="slds-text-align_center slds-m-bottom_small">
+                        <div class="slds-grid slds-grid_vertical">
+                            <span class="slds-text-title_caps slds-text-color_weak">Transport Cost</span>
+                            <span class="slds-text-heading_small">{formattedTransportTotal}</span>
                         </div>
                     </lightning-layout-item>
-                    <lightning-layout-item flexibility="grow">
-                        <div class="slds-grid slds-grid_vertical slds-text-align_right">
+                    <lightning-layout-item flexibility="grow" size="6" medium-device-size="3" class="slds-text-align_center slds-m-bottom_small">
+                        <div class="slds-grid slds-grid_vertical">
+                            <span class="slds-text-title_caps slds-text-color_weak"></span>
+                            <span class="slds-text-heading_small"></span>
+                        </div>
+                    </lightning-layout-item>
+                    <lightning-layout-item flexibility="grow" size="6" medium-device-size="3" class="slds-text-align_right">
+                        <div class="slds-grid slds-grid_vertical">
                             <span class="slds-text-title_caps slds-text-color_weak">Grand Total</span>
-                            <span class="slds-text-heading_medium grand-total">{formattedSubtotal}</span>
+                            <span class="slds-text-heading_medium grand-total">{formattedGrandTotal}</span>
                         </div>
                     </lightning-layout-item>
                 </lightning-layout>
             </div>
-        </div>
-
-        <!-- ═══ Action Buttons ═══ -->
-        <div class="slds-grid slds-grid_align-spread slds-p-top_small">
-            <lightning-button
-                label="Back"
-                icon-name="utility:back"
-                variant="neutral"
-                onclick={handleBack}
-            ></lightning-button>
-            <lightning-button
-                label="Confirm & Save Quote"
-                icon-name="utility:save"
-                variant="brand"
-                onclick={handleSave}
-            ></lightning-button>
         </div>
     </div>
 </template>

@@ -3,9 +3,7 @@
     <fullName>Is_Bundle_Product__c</fullName>
     <defaultValue>false</defaultValue>
     <description>Checkbox indicating whether this line is the bundle product or an option line.</description>
-    <externalId>false</externalId>
     <inlineHelpText>Checkbox indicating whether this line is the bundle product or an option line.</inlineHelpText>
-    <label>Is Bundle Product</label>
-    <trackHistory>false</trackHistory>
+    <label>Is Bundle</label>
     <type>Checkbox</type>
 </CustomField>

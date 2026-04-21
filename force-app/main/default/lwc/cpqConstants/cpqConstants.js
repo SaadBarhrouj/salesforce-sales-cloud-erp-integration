@@ -10,6 +10,12 @@ const DEFAULT_STEP_ACTIONS = [
     { name: 'next', label: 'Next', variant: 'brand' }
 ];
 
+const REVIEW_STEP_ACTIONS = [
+    { name: 'back', label: 'Back', variant: 'neutral' },
+    { name: 'cancel', label: 'Cancel', variant: 'neutral' },
+    { name: 'save', label: 'Save', variant: 'brand' }
+];
+
 const CONFIGURE_STEP_ACTIONS = [
     { name: 'applyRules', label: 'Apply Rules', variant: 'neutral', isStandalone: true },
     { name: 'back', label: 'Back', variant: 'neutral' },
@@ -120,8 +126,8 @@ LINE_EDITOR: {
         }
     },
     REVIEW: {
-        number: 5, key: 'review', label: 'Review & Save', icon: 'standard:task', subtitle: 'Verify everything before saving',
-        header: { showSearch: false, searchPlaceholder: 'Search...', stepActions: DEFAULT_STEP_ACTIONS, globalActions: DEFAULT_GLOBAL_ACTIONS }
+        number: 5, key: 'review', label: 'Review', icon: 'standard:task', subtitle: 'Verify everything before saving',
+        header: { showSearch: false, searchPlaceholder: 'Search...', stepActions: REVIEW_STEP_ACTIONS, globalActions: DEFAULT_GLOBAL_ACTIONS }
     }
 });
 
@@ -180,15 +186,16 @@ export const URGENCY_OPTIONS = Object.freeze([
 export const MESSAGES = Object.freeze({
     REQUIRED_FIELD:   'This field is required.',
     MIN_OPTIONS:      'At least {0} option(s) must be selected in "{1}".',
-    MAX_OPTIONS:      'No more than {0} option(s) allowed in "{1}".',
-    SAVE_SUCCESS:     'Quote saved successfully.',
-    SAVE_ERROR:       'An error occurred while saving the quote.',
+    SAVE_SUCCESS:     'Opportunity saved successfully.',
+    SAVE_ERROR:       'An error occurred while saving the opportunity.',
     CALCULATE_OK:     'Prices recalculated.',
     NO_PRODUCTS:      'Add at least one product before proceeding.',
     CONFIRM_REMOVE:   'Remove "{0}" from the quote?',
     NOT_CONFIGURED:   'One or more bundles have not been configured.',
     LINE_SAVE:        'Line items saved successfully.',
-    LOGISTICS_INCOMPLETE: 'Please complete all required logistics fields.'
+    LOGISTICS_INCOMPLETE: 'Please complete all required logistics fields.',
+    VALIDATION_NO_PRODUCTS: 'Add at least one product before saving.',
+    VALIDATION_LOGISTICS: 'Complete all required logistics fields before saving.'
 });
 
 /* ─── Custom Event Names ─── */

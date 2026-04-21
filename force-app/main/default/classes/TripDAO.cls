@@ -1,3 +1,7 @@
+/**
+ * @description Data access layer for Trip__c records.
+ * Provides CRUD operations with security enforcement.
+ */
 public inherited sharing class TripDAO {
     
     /**
