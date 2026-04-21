@@ -1,20 +1,18 @@
 ﻿import { LightningElement, api, wire } from 'lwc';
 import { getRecord, getFieldValue }    from 'lightning/uiRecordApi';
-import TRIP_DISTANCE_KM  from '@salesforce/schema/Trip__c.Distance_Km__c';
-import TRIP_DIRECTION    from '@salesforce/schema/Trip__c.Direction__c';
+import OPPORTUNITY_DISTANCE_KM from '@salesforce/schema/Opportunity.Distance_Delivery_Agency_km__c';
 
-const TRIP_FIELDS = [
-    TRIP_DISTANCE_KM,
-    TRIP_DIRECTION
+const OPPORTUNITY_FIELDS = [
+    OPPORTUNITY_DISTANCE_KM,
 ];
 
 const OPTIONAL_FIELDS = [
-    'Trip__c.Departure_Location__r.Name',
-    'Trip__c.Departure_Location__r.Latitude',
-    'Trip__c.Departure_Location__r.Longitude',
-    'Trip__c.Destination_Location__r.Name',
-    'Trip__c.Destination_Location__r.Latitude',
-    'Trip__c.Destination_Location__r.Longitude'
+    'Opportunity.Default_Agency__r.Name',
+    'Opportunity.Default_Agency__r.Latitude',
+    'Opportunity.Default_Agency__r.Longitude',
+    'Opportunity.Delivery_Site__r.Name',
+    'Opportunity.Delivery_Site__r.Latitude',
+    'Opportunity.Delivery_Site__r.Longitude'
 ];
 
 export default class TripRouteMap extends LightningElement {
@@ -23,7 +21,7 @@ export default class TripRouteMap extends LightningElement {
     @api mapHeight          = 400;
     @api hideRoutePanel     = false;
     @api hideDirectionsLink = false;
-    @api mapTitle           = 'Trip Route';
+    @api mapTitle           = 'Route Map';
     @api hideIcon           = false;
 
     // Manual Data Ingestion for Configurator
@@ -41,7 +39,7 @@ export default class TripRouteMap extends LightningElement {
 
     @wire(getRecord, {
         recordId       : '$recordId',
-        fields         : TRIP_FIELDS,
+        fields         : OPPORTUNITY_FIELDS,
         optionalFields : OPTIONAL_FIELDS
     })
     record;
@@ -59,43 +57,42 @@ export default class TripRouteMap extends LightningElement {
 
     get distance() {
         if (this.isManualMode) return this.manualDistance;
-        return this._val(TRIP_DISTANCE_KM);
+        return this._val(OPPORTUNITY_DISTANCE_KM);
     }
 
     get direction() {
-        if (this.isManualMode) return 'Delivery';
-        return this._val(TRIP_DIRECTION) || 'Delivery';
+        return 'Delivery';
     }
 
     get departureName() {
         if (this.isManualMode) return this.manualDepartureName || 'Departure';
-        return this._val('Trip__c.Departure_Location__r.Name') || 'Departure';
+        return this._val('Opportunity.Default_Agency__r.Name') || 'Departure';
     }
 
     get departureLat() {
         if (this.isManualMode) return this.manualDepartureLat;
-        return this._val('Trip__c.Departure_Location__r.Latitude');
+        return this._val('Opportunity.Default_Agency__r.Latitude');
     }
 
     get departureLng() {
         if (this.isManualMode) return this.manualDepartureLng;
-        return this._val('Trip__c.Departure_Location__r.Longitude');
+        return this._val('Opportunity.Default_Agency__r.Longitude');
     }
 
     // Destination
     get destinationName() {
         if (this.isManualMode) return this.manualDestinationName || 'Destination';
-        return this._val('Trip__c.Destination_Location__r.Name') || 'Destination';
+        return this._val('Opportunity.Delivery_Site__r.Name') || 'Destination';
     }
 
     get destinationLat() {
         if (this.isManualMode) return this.manualDestinationLat;
-        return this._val('Trip__c.Destination_Location__r.Latitude');
+        return this._val('Opportunity.Delivery_Site__r.Latitude');
     }
 
     get destinationLng() {
         if (this.isManualMode) return this.manualDestinationLng;
-        return this._val('Trip__c.Destination_Location__r.Longitude');
+        return this._val('Opportunity.Delivery_Site__r.Longitude');
     }
 
     get _hasAllCoords() {
