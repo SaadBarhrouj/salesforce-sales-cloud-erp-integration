@@ -13,10 +13,10 @@ public inherited sharing class TripDAO {
         try {
             return [
                 SELECT Id, Distance_Km__c, System_Price__c, Final_Price__c, 
-                       Override_Reason__c, Is_Price_Overridden__c, Truck_Type__c, Direction__c
+                       Override_Reason__c, Is_Price_Overridden__c, Truck_Type__c, 
+                       Direction__c, Trip_Key__c, Transport_Zone__c, Total_Weight_Kg__c, Status__c
                 FROM Trip__c
                 WHERE Opportunity__c = :opportunityId
-                WITH SECURITY_ENFORCED
             ];
         } catch (QueryException e) {
             System.debug(LoggingLevel.ERROR, 'TripDAO.getTripsByOpportunity failed: ' + e.getMessage() + ' | OpportunityId: ' + opportunityId);

@@ -14,17 +14,36 @@ import LOCATION_LNG from '@salesforce/schema/Location.Longitude';
 const LOCATION_FIELDS = [LOCATION_NAME, LOCATION_TYPE, LOCATION_LAT, LOCATION_LNG];
 
 const TRIP_COLUMNS = [
+    { label: 'Trip Key', fieldName: 'Trip_Key__c', type: 'text', sortable: true },
+    { label: 'Direction', fieldName: 'Direction__c', type: 'text', sortable: true },
     { label: 'Truck Type', fieldName: 'Truck_Type__c', type: 'text', sortable: true },
+    { label: 'Transport Zone', fieldName: 'Transport_Zone__c', type: 'text', sortable: true },
     { label: 'Distance (km)', fieldName: 'Distance_Km__c', type: 'number', sortable: true },
+    { label: 'Total Weight', fieldName: 'Total_Weight_Kg__c', type: 'number', sortable: true },
     { label: 'System Price', fieldName: 'System_Price__c', type: 'currency', sortable: true },
     { label: 'Final Price', fieldName: 'Final_Price__c', type: 'currency', editable: true, typeAttributes: { step: '0.01' } },
+    { label: 'Status', fieldName: 'Status__c', type: 'text' },
     { label: 'Override Reason', fieldName: 'Override_Reason__c', type: 'text', editable: true },
 ];
 
 export default class CpqStepLogistics extends LightningElement {
     // ==================== API PROPERTIES ====================
     
-    @api opportunityId;
+    _opportunityId;
+
+    @api
+    get opportunityId() {
+        return this._opportunityId;
+    }
+    
+    set opportunityId(value) {
+        console.log('setter opportunityId called with:', value);
+        this._opportunityId = value;
+        if (value) {
+            this.loadExistingTrips();
+        }
+    }
+
     @api accountId;
     @api totalWeight = 0;
     @api defaultAgencyId = '';
@@ -153,7 +172,7 @@ export default class CpqStepLogistics extends LightningElement {
     };
     
     @track trips = [];
-    @track isCalculating = false;
+    @track isCalculating = true; // Commencer à true pour éviter d'afficher le bloc "No Routes" avant le chargement
     @track previousConfig = {
         agencyId: '',
         deliverySiteId: ''
@@ -172,7 +191,6 @@ export default class CpqStepLogistics extends LightningElement {
         };
         
         this.previousConfig = deepClone(this.config);
-        this.loadExistingTrips();
     }
 
     async loadExistingTrips() {
@@ -181,14 +199,19 @@ export default class CpqStepLogistics extends LightningElement {
         this.isCalculating = true;
         try {
             const result = await getTripsByOpportunity({ opportunityId: this.opportunityId });
+            console.log('Existing trips loaded:', JSON.stringify(result));
+            
             if (result && result.length > 0) {
                 this.trips = result.map(t => ({
                     ...t,
                     Final_Price__c: t.Final_Price__c || t.System_Price__c
                 }));
+            } else {
+                console.log('No trips returned from Apex for Opp ID:', this.opportunityId);
             }
         } catch (error) {
             console.error('Error loading existing trips:', error);
+            showToast(this, 'Error Loading Trips', error.body ? error.body.message : error.message, 'error');
         } finally {
             this.isCalculating = false;
             // Always emit state after load regardless of outcome to sync parent
@@ -263,6 +286,7 @@ export default class CpqStepLogistics extends LightningElement {
      *   3. Trigger auto-recalculation via parent
      */
     handleConfigChange(event) {
+        console.log('handleConfigChange triggered!', event.detail);
         const field = event.target.dataset.field;
         const newValue = event.detail.value;
         
