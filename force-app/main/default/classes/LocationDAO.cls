@@ -67,5 +67,33 @@ public inherited sharing class LocationDAO {
             throw  qe;
         }
     }
+
+    /**
+     * @description Get Locations by their IDs with GPS coordinates.
+     * @param locationIds Set of Location IDs
+     * @return Map of Location ID to Location record
+     */
+    public static Map<Id, Schema.Location> getByIds(Set<Id> locationIds) {
+        if (locationIds == null || locationIds.isEmpty()) {
+            return new Map<Id, Schema.Location>();
+        }
+
+        try {
+            return new Map<Id, Schema.Location>([
+                SELECT 
+                    Id,
+                    Name,
+                    LocationType,
+                    Latitude,
+                    Longitude,
+                    TimeZone
+                FROM Location
+                WHERE Id IN :locationIds
+            ]);
+        } catch (QueryException qe) {
+            System.debug(LoggingLevel.ERROR, 'QueryException in getByIds: ' + qe.getMessage());
+            throw qe;
+        }
+    }
     
 }

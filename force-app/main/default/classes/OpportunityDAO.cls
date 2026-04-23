@@ -62,10 +62,29 @@ public inherited sharing class OpportunityDAO {
         return records.isEmpty() ? null : records[0];
     }
 
+    /**
+     * @description Retrieves Opportunities by IDs with location fields for distance calculation.
+     * @param opportunityIds Set of Opportunity IDs
+     * @return List of Opportunity records with location fields
+     */
+    public static List<Opportunity> getByIds(Set<Id> opportunityIds) {
+        if (opportunityIds == null || opportunityIds.isEmpty()) {
+            return new List<Opportunity>();
+        }
+
+        try {
+            return [
+                SELECT Id, Default_Agency__c, Delivery_Site__c
+                FROM Opportunity
+                WHERE Id IN :opportunityIds
+            ];
+        } catch (QueryException qe) {
+            System.debug(LoggingLevel.ERROR, 'QueryException in getByIdsWithLocations: ' + qe.getMessage());
+            throw qe;
+        }
+    }
 
 
-    //
-    // public static Map<Id, Opportunity> getByIds(Set<Id> recordIds) {
     //     if (recordIds == null || recordIds.isEmpty()) {
     //         return new Map<Id, Opportunity>();
     //     }
