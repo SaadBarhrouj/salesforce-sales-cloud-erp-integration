@@ -21,6 +21,11 @@
                 <default>false</default>
                 <label>ERP</label>
             </value>
+            <value>
+                <fullName>OpenRouteService</fullName>
+                <default>false</default>
+                <label>OpenRouteService</label>
+            </value>
         </valueSetDefinition>
     </valueSet>
 </CustomField>

@@ -35,22 +35,4 @@ public inherited sharing class DistanceCacheDAO {
             throw qe;
         }
     }
-
-    /**
-     * @description Upsert Distance Cache records by Cache Key external ID.
-     * @param caches List of Distance_Cache__c records to upsert
-     */
-    public static void upsertByKey(List<Distance_Cache__c> caches) {
-        if (caches == null || caches.isEmpty()) {
-            return;
-        }
-
-        try {
-            upsert as system caches Cache_Key__c;
-            System.debug(LoggingLevel.INFO, 'DistanceCacheDAO: ' + caches.size() + ' cache record(s) upserted successfully.');
-        } catch (Exception e) {
-            System.debug(LoggingLevel.ERROR, 'Exception in upsertByKey: ' + e.getMessage());
-            throw e;
-        }
-    }
 }

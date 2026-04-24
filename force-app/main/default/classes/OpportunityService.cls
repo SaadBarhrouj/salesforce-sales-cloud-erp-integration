@@ -3,7 +3,7 @@ public inherited sharing class OpportunityService {
     public static void beforeInsert(List<Opportunity> newList) {
         System.debug(LoggingLevel.INFO, '=== [OpportunityService] beforeInsert exécuté ===');
     }
-u
+
     public static void beforeUpdate(List<Opportunity> newList, Map<Id, Opportunity> oldMap) {
         System.debug(LoggingLevel.INFO, '===[OpportunityService] beforeUpdate exécuté ===');
     }
@@ -53,4 +53,3 @@ u
         }
     }
 }
-!

@@ -6,16 +6,11 @@ public class DistanceCalculationQueueable implements Queueable, Database.AllowsC
     
     private Set<Id> opportunityIds;
 
-    // ==========================================
-    // CONSTRUCTOR
-    // ==========================================
+
     public DistanceCalculationQueueable(Set<Id> oppIds) {
         this.opportunityIds = oppIds;
     }
 
-    // ==========================================
-    // EXECUTE METHOD
-    // ==========================================
     public void execute(QueueableContext context) {
         System.debug(LoggingLevel.INFO, '=== [DistanceCalculationQueueable] Execution started ===');
 
@@ -47,12 +42,15 @@ public class DistanceCalculationQueueable implements Queueable, Database.AllowsC
 
         // 2. Retrieve Cached Distances and Location Data via DAOs
         Map<String, Distance_Cache__c> existingCachesMap = DistanceCacheDAO.getByCacheKeys(cacheKeys);
-        Map<Id, Location> locationsMap = LocationDAO.getByIds(locationIds);
+        Map<Id, Schema.Location> locationsMap = LocationDAO.getByIds(locationIds);
 
         // 3. Prepare collections for final DML operations
         List<Opportunity> oppsToUpdate = new List<Opportunity>();
         Map<String, Distance_Cache__c> cachesToUpsertMap = new Map<String, Distance_Cache__c>();
         List<IntegrationLoggerService.LogCalloutRequest> logsToInsert = new List<IntegrationLoggerService.LogCalloutRequest>();
+        
+        // Set to store opportunities that couldn't be processed due to API callout limits
+        Set<Id> unprocessedOppIds = new Set<Id>();
 
         // 4. Iterative processing by ROUTE (not by Opportunity to avoid duplicate API calls)
         for (String routeKey : oppsByRouteMap.keySet()) {
@@ -62,24 +60,28 @@ public class DistanceCalculationQueueable implements Queueable, Database.AllowsC
 
             // SCENARIO A: The route is already in our Salesforce Cache (0 Callout)
             if (existingCachesMap.containsKey(routeKey)) {
-                System.debug(LoggingLevel.INFO, '✅ Cache HIT for route: ' + routeKey);
                 Distance_Cache__c cachedRecord = existingCachesMap.get(routeKey);
                 finalDistanceKm = cachedRecord.Distance_Km__c;
             } 
             // SCENARIO B: The route is not cached, we must call OpenRouteService
             else {
-                System.debug(LoggingLevel.INFO, '🌐 Cache MISS for route: ' + routeKey + '. API call required.');
                 
                 // Prevention of Salesforce limit (Max 100 Callouts per transaction)
-                if (Limits.getCallouts() >= Limits.getLimitCallouts()) {
-                    System.debug(LoggingLevel.ERROR, '🚨 Callout limit reached. Unable to process route: ' + routeKey);
-                    continue; 
+                // Keep margin of safety by checking against limit - 1
+                if (Limits.getCallouts() >= (Limits.getLimitCallouts() - 1)) {
+                    System.debug(LoggingLevel.WARN, 'Callout limit near. Storing route for re-queuing: ' + routeKey);
+                    
+                    // Store opportunities from this route for next Queueable execution
+                    for (Opportunity unprocessedOpp : oppsByRouteMap.get(routeKey)) {
+                        unprocessedOppIds.add(unprocessedOpp.Id);
+                    }
+                    continue;
                 }
 
                 // Get the first opportunity of this group to have the IDs
                 Opportunity referenceOpp = oppsByRouteMap.get(routeKey)[0];
-                Location origin = locationsMap.get(referenceOpp.Default_Agency__c);
-                Location destination = locationsMap.get(referenceOpp.Delivery_Site__c);
+                Schema.Location origin = locationsMap.get(referenceOpp.Default_Agency__c);
+                Schema.Location destination = locationsMap.get(referenceOpp.Delivery_Site__c);
 
                 // Security: Verify that both locations have valid GPS coordinates
                 if (hasValidCoordinates(origin) && hasValidCoordinates(destination)) {
@@ -105,16 +107,17 @@ public class DistanceCalculationQueueable implements Queueable, Database.AllowsC
                         ));
                     }
                 } else {
-                    System.debug(LoggingLevel.WARN, '⚠️ Missing GPS coordinates for Locations of route: ' + routeKey);
+                    System.debug(LoggingLevel.WARN, 'Missing GPS coordinates for Locations of route: ' + routeKey);
                 }
             }
 
             // 5. Apply the found distance to ALL opportunities of this route
+            // Store in Distance_Driving_Route_km__c (actual API-calculated route distance)
             if (finalDistanceKm != null) {
                 for (Opportunity oppToUpdate : oppsByRouteMap.get(routeKey)) {
                     oppsToUpdate.add(new Opportunity(
                         Id = oppToUpdate.Id,
-                        Distance_Km__c = finalDistanceKm
+                        Distance_Driving_Route_km__c = finalDistanceKm
                     ));
                 }
             }
@@ -123,28 +126,35 @@ public class DistanceCalculationQueueable implements Queueable, Database.AllowsC
         // 6. Execute DMLs (Bulk and Secure)
         executeDMLs(cachesToUpsertMap.values(), oppsToUpdate, logsToInsert);
         
+        // Re-queue unprocessed opportunities if any (Queueable chaining for API limit handling)
+        if (!unprocessedOppIds.isEmpty()) {
+            System.debug(LoggingLevel.INFO, 'Re-queuing ' + unprocessedOppIds.size() + ' unprocessed opportunities for next transaction.');
+            
+            // Prevent chaining during test execution (Salesforce testing restriction)
+            if (!Test.isRunningTest()) {
+                System.enqueueJob(new DistanceCalculationQueueable(unprocessedOppIds));
+            }
+        }
+        
         System.debug(LoggingLevel.INFO, '=== [DistanceCalculationQueueable] Execution finished ===');
     }
 
-    // ==========================================
-    // PRIVATE HELPER METHODS
-    // ==========================================
 
-    private Boolean hasValidCoordinates(Location loc) {
+    private Boolean hasValidCoordinates(Schema.Location loc) {
         return (loc != null && loc.Latitude != null && loc.Longitude != null);
     }
 
     private void executeDMLs(List<Distance_Cache__c> caches, List<Opportunity> opps, List<IntegrationLoggerService.LogCalloutRequest> logs) {
         try {
-            // Upsert of Cache via DAO
+            // Upsert of Cache
             if (!caches.isEmpty()) {
-                DistanceCacheDAO.upsertByKey(caches);
+                upsert as system caches Cache_Key__c;
             }
 
             // Update of Opportunities
             if (!opps.isEmpty()) {
                 update as system opps;
-                System.debug(LoggingLevel.INFO, '🎯 ' + opps.size() + ' Opportunity(ies) updated with distance.');
+                System.debug(LoggingLevel.INFO, opps.size() + ' Opportunity(ies) updated with distance.');
             }
 
             // Insertion of Integration Logs
@@ -152,7 +162,7 @@ public class DistanceCalculationQueueable implements Queueable, Database.AllowsC
                 IntegrationLoggerService.logCallouts(logs);
             }
         } catch (Exception e) {
-            System.debug(LoggingLevel.ERROR, '❌ DML error in Queueable: ' + e.getMessage() + ' | Stack: ' + e.getStackTraceString());
+            System.debug(LoggingLevel.ERROR, ' DML error in Queueable: ' + e.getMessage() + ' | Stack: ' + e.getStackTraceString());
         }
     }
 }
