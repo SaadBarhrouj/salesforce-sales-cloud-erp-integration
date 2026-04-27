@@ -223,10 +223,15 @@
                 <fieldItem>Record.Distance_Driving_Route_km__c</fieldItem>
                 <identifier>RecordDistance_Driving_Route_km_cField</identifier>
                 <visibilityRule>
+                    <booleanFilter>1 AND 2</booleanFilter>
                     <criteria>
                         <leftValue>{!Record.Is_Transport_Required__c}</leftValue>
                         <operator>EQUAL</operator>
                         <rightValue>true</rightValue>
+                    </criteria>
+                    <criteria>
+                        <leftValue>{!Record.CreatedBy.FirstName}</leftValue>
+                        <operator>NE</operator>
                     </criteria>
                 </visibilityRule>
             </fieldInstance>
@@ -240,10 +245,15 @@
                 <fieldItem>Record.Total_Transport_Cost__c</fieldItem>
                 <identifier>RecordTotal_Transport_Cost_cField</identifier>
                 <visibilityRule>
+                    <booleanFilter>1 AND 2</booleanFilter>
                     <criteria>
                         <leftValue>{!Record.Is_Transport_Required__c}</leftValue>
                         <operator>EQUAL</operator>
                         <rightValue>true</rightValue>
+                    </criteria>
+                    <criteria>
+                        <leftValue>{!Record.CreatedBy.FirstName}</leftValue>
+                        <operator>NE</operator>
                     </criteria>
                 </visibilityRule>
             </fieldInstance>
@@ -295,10 +305,15 @@
                 <fieldItem>Record.Distance_Straight_Line_km__c</fieldItem>
                 <identifier>RecordDistance_Straight_Line_km_cField</identifier>
                 <visibilityRule>
+                    <booleanFilter>1 AND 2</booleanFilter>
                     <criteria>
                         <leftValue>{!Record.Is_Transport_Required__c}</leftValue>
                         <operator>EQUAL</operator>
                         <rightValue>true</rightValue>
+                    </criteria>
+                    <criteria>
+                        <leftValue>{!Record.CreatedBy.FirstName}</leftValue>
+                        <operator>NE</operator>
                     </criteria>
                 </visibilityRule>
             </fieldInstance>
@@ -312,10 +327,15 @@
                 <fieldItem>Record.Duration_Trip_Minutes__c</fieldItem>
                 <identifier>RecordDuration_Trip_Minutes_cField</identifier>
                 <visibilityRule>
+                    <booleanFilter>1 AND 2</booleanFilter>
                     <criteria>
                         <leftValue>{!Record.Is_Transport_Required__c}</leftValue>
                         <operator>EQUAL</operator>
                         <rightValue>true</rightValue>
+                    </criteria>
+                    <criteria>
+                        <leftValue>{!Record.CreatedBy.FirstName}</leftValue>
+                        <operator>NE</operator>
                     </criteria>
                 </visibilityRule>
             </fieldInstance>
