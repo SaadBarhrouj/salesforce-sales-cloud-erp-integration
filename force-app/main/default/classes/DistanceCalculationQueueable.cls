@@ -6,7 +6,6 @@ public class DistanceCalculationQueueable implements Queueable, Database.AllowsC
     
     private Set<Id> opportunityIds;
 
-
     public DistanceCalculationQueueable(Set<Id> oppIds) {
         this.opportunityIds = oppIds;
     }
@@ -23,11 +22,10 @@ public class DistanceCalculationQueueable implements Queueable, Database.AllowsC
 
         Set<Id> locationIds = new Set<Id>();
         Set<String> cacheKeys = new Set<String>();
-        
-        // Map to group Opportunities that share the SAME route
         Map<String, List<Opportunity>> oppsByRouteMap = new Map<String, List<Opportunity>>();
 
         for (Opportunity opp : oppsToProcess) {
+            
             locationIds.add(opp.Default_Agency__c);
             locationIds.add(opp.Delivery_Site__c);
             
@@ -48,22 +46,21 @@ public class DistanceCalculationQueueable implements Queueable, Database.AllowsC
         List<Opportunity> oppsToUpdate = new List<Opportunity>();
         Map<String, Distance_Cache__c> cachesToUpsertMap = new Map<String, Distance_Cache__c>();
         List<IntegrationLoggerService.LogCalloutRequest> logsToInsert = new List<IntegrationLoggerService.LogCalloutRequest>();
-        
         // Set to store opportunities that couldn't be processed due to API callout limits
         Set<Id> unprocessedOppIds = new Set<Id>();
 
         // 4. Iterative processing by ROUTE (not by Opportunity to avoid duplicate API calls)
         for (String routeKey : oppsByRouteMap.keySet()) {
-            
+
             Decimal finalDistanceKm = null;
             Integer finalDurationMins = null;
 
-            // SCENARIO A: The route is already in our Salesforce Cache (0 Callout)
+            // If The route is already in our Salesforce Cache (0 Callout)
             if (existingCachesMap.containsKey(routeKey)) {
                 Distance_Cache__c cachedRecord = existingCachesMap.get(routeKey);
                 finalDistanceKm = cachedRecord.Distance_Km__c;
             } 
-            // SCENARIO B: The route is not cached, we must call OpenRouteService
+            // If The route is not cached, we must call OpenRouteService
             else {
                 
                 // Prevention of Salesforce limit (Max 100 Callouts per transaction)
