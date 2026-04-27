@@ -82,9 +82,6 @@ public inherited sharing class OpportunityService {
         } catch (TripException e) {
             System.debug(LoggingLevel.ERROR, 'OpportunityService.saveOpportunityWithLines failed: ' + e.getMessage());
             throw new OpportunityException('Error saving trips: ' + e.getMessage(), e);
-        } catch (Exception e) {
-            System.debug(LoggingLevel.ERROR, 'OpportunityService.saveOpportunityWithLines unexpected error: ' + e.getMessage() + ' | Stack: ' + e.getStackTraceString());
-            throw new OpportunityException('Error: ' + e.getMessage() + ' [Type: ' + e.getTypeName() + ']', e);
         }
     }
 
@@ -228,8 +225,6 @@ public inherited sharing class OpportunityService {
                     if (childItem == null) {
                         continue;
                     }
-                    // Note: Parent_Bundle_Item__c relationship would require a custom lookup field
-                    // on OpportunityLineItem to establish parent-child bundle relationships
                     childItem.Bundle_Group__c = bundleGroup;
                     items.add(childItem);
                 }
@@ -345,6 +340,18 @@ public inherited sharing class OpportunityService {
             }
             if (tripData.containsKey('direction')) {
                 trip.Direction__c = (String) tripData.get('direction');
+            }
+            if (tripData.containsKey('countryCode') && tripData.get('countryCode') != null) {
+                trip.Country_Code__c = (String) tripData.get('countryCode');
+            }
+            if (tripData.containsKey('tripDate') && tripData.get('tripDate') != null) {
+                Object tripDateVal = tripData.get('tripDate');
+                if (tripDateVal instanceof Date) {
+                    trip.Trip_Date__c = (Date) tripDateVal;
+                }
+            }
+            if (tripData.containsKey('tripKey') && tripData.get('tripKey') != null) {
+                trip.Trip_Key__c = (String) tripData.get('tripKey');
             }
 
             trips.add(trip);

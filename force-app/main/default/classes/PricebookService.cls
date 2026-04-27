@@ -63,7 +63,7 @@ public inherited sharing class PricebookService {
             response.quantity = quantity;
             response.pricingMethod = PRICEBOOK_METHOD;
             return response;
-        } catch (Exception e) {
+        } catch (PricebookException e) {
             return PricingResponse.error(e.getMessage());
         }
     }
@@ -125,7 +125,7 @@ public inherited sharing class PricebookService {
             response.quantity = quantity;
             response.pricingMethod = method;
             return response;
-        } catch (Exception e) {
+        } catch (PricebookException e) {
             return PricingResponse.error(e.getMessage());
         }
     }

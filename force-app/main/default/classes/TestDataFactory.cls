@@ -419,4 +419,63 @@ public class TestDataFactory {
         return pricebookEntryRecord;
     }
 
+    /**
+     * @description Creates a test Volume_Pricing_Schedule__c record.
+     * @param productId The Product2 ID.
+     * @param pricebookId The Pricebook2 ID (can be null).
+     * @param pricingType 'Block' or 'Tiered'.
+     * @param isActive Whether the schedule is active.
+     * @param doInsert Whether to insert the record into the database.
+     * @return The created Volume_Pricing_Schedule__c record.
+     */
+    public static Volume_Pricing_Schedule__c createVolumePricingSchedule(
+        Id productId,
+        Id pricebookId,
+        String pricingType,
+        Boolean isActive,
+        Boolean doInsert
+    ) {
+        Volume_Pricing_Schedule__c recordItem = new Volume_Pricing_Schedule__c(
+            Product__c = productId,
+            Pricebook__c = pricebookId,
+            Pricing_Type__c = pricingType,
+            Is_Active__c = isActive
+        );
+        if (doInsert) {
+            insert recordItem;
+        }
+        return recordItem;
+    }
+
+    /**
+     * @description Creates a test Volume_Pricing_Tier__c record.
+     * @param scheduleId The Volume_Pricing_Schedule__c ID.
+     * @param lowerBound The minimum quantity for this tier.
+     * @param upperBound The maximum quantity for this tier (can be null).
+     * @param price The price for this tier.
+     * @param sortOrder The sort order.
+     * @param doInsert Whether to insert the record into the database.
+     * @return The created Volume_Pricing_Tier__c record.
+     */
+    public static Volume_Pricing_Tier__c createVolumePricingTier(
+        Id scheduleId,
+        Decimal lowerBound,
+        Decimal upperBound,
+        Decimal price,
+        Decimal sortOrder,
+        Boolean doInsert
+    ) {
+        Volume_Pricing_Tier__c recordItem = new Volume_Pricing_Tier__c(
+            Volume_Pricing_Schedule__c = scheduleId,
+            Lower_Bound__c = lowerBound,
+            Upper_Bound__c = upperBound,
+            Price__c = price,
+            Sort_Order__c = sortOrder
+        );
+        if (doInsert) {
+            insert recordItem;
+        }
+        return recordItem;
+    }
+
 }

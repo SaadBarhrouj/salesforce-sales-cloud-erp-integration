@@ -1,8 +1,10 @@
 /**
  * @description Controller for Product2 CRUD operations exposed to Lightning Web Components.
  * Delegates business logic to Product2Service and data access to Product2DAO.
+ * @author Sales Cloud ERP Integration Team
  */
 public with sharing class Product2Controller {
+
     /**
      * @description Retrieves a single Product2 record by ID.
      * @param recordId The ID of the Product2 record to retrieve.
@@ -18,9 +20,6 @@ public with sharing class Product2Controller {
         } catch (Product2Exception e) {
             System.debug(LoggingLevel.ERROR, 'Product2Controller.getById: ' + e.getMessage());
             throw new AuraHandledException(e.getMessage());
-        } catch (Exception e) {
-            System.debug(LoggingLevel.ERROR, 'Product2Controller.getById unexpected error: ' + e.getMessage() + ' | Stack: ' + e.getStackTraceString());
-            throw new AuraHandledException(getControllerErrorMessage());
         }
     }
 
@@ -40,9 +39,6 @@ public with sharing class Product2Controller {
         } catch (Product2Exception e) {
             System.debug(LoggingLevel.ERROR, 'Product2Controller.getByIds: ' + e.getMessage());
             throw new AuraHandledException(e.getMessage());
-        } catch (Exception e) {
-            System.debug(LoggingLevel.ERROR, 'Product2Controller.getByIds unexpected error: ' + e.getMessage() + ' | Stack: ' + e.getStackTraceString());
-            throw new AuraHandledException(getControllerErrorMessage());
         }
     }
 
@@ -57,9 +53,6 @@ public with sharing class Product2Controller {
         } catch (Product2Exception e) {
             System.debug(LoggingLevel.ERROR, 'Product2Controller.getAll: ' + e.getMessage());
             throw new AuraHandledException(e.getMessage());
-        } catch (Exception e) {
-            System.debug(LoggingLevel.ERROR, 'Product2Controller.getAll unexpected error: ' + e.getMessage() + ' | Stack: ' + e.getStackTraceString());
-            throw new AuraHandledException(getControllerErrorMessage());
         }
     }
 
@@ -79,9 +72,6 @@ public with sharing class Product2Controller {
         } catch (Product2Exception e) {
             System.debug(LoggingLevel.ERROR, 'Product2Controller.getAllByCategory: ' + e.getMessage());
             throw new AuraHandledException(e.getMessage());
-        } catch (Exception e) {
-            System.debug(LoggingLevel.ERROR, 'Product2Controller.getAllByCategory unexpected error: ' + e.getMessage() + ' | Stack: ' + e.getStackTraceString());
-            throw new AuraHandledException(getControllerErrorMessage());
         }
     }
 
@@ -102,9 +92,6 @@ public with sharing class Product2Controller {
         } catch (Product2Exception e) {
             System.debug(LoggingLevel.ERROR, 'Product2Controller.getAllByPricebook: ' + e.getMessage());
             throw new AuraHandledException(e.getMessage());
-        } catch (Exception e) {
-            System.debug(LoggingLevel.ERROR, 'Product2Controller.getAllByPricebook unexpected error: ' + e.getMessage() + ' | Stack: ' + e.getStackTraceString());
-            throw new AuraHandledException(getControllerErrorMessage());
         }
     }
 
@@ -133,9 +120,6 @@ public with sharing class Product2Controller {
         } catch (Product2Exception e) {
             System.debug(LoggingLevel.ERROR, 'Product2Controller.getProductsByCategoryAndPricebook: ' + e.getMessage());
             throw new AuraHandledException(e.getMessage());
-        } catch (Exception e) {
-            System.debug(LoggingLevel.ERROR, 'Product2Controller.getProductsByCategoryAndPricebook unexpected error: ' + e.getMessage() + ' | Stack: ' + e.getStackTraceString());
-            throw new AuraHandledException(getControllerErrorMessage());
         }
     }
 
@@ -157,9 +141,6 @@ public with sharing class Product2Controller {
         } catch (Product2Exception e) {
             System.debug(LoggingLevel.ERROR, 'Product2Controller.saveRecords: ' + e.getMessage());
             throw new AuraHandledException(e.getMessage());
-        } catch (Exception e) {
-            System.debug(LoggingLevel.ERROR, 'Product2Controller.saveRecords unexpected error: ' + e.getMessage() + ' | Stack: ' + e.getStackTraceString());
-            throw new AuraHandledException(getControllerErrorMessage());
         }
     }
 
@@ -181,9 +162,6 @@ public with sharing class Product2Controller {
         } catch (Product2Exception e) {
             System.debug(LoggingLevel.ERROR, 'Product2Controller.deleteRecords: ' + e.getMessage());
             throw new AuraHandledException(e.getMessage());
-        } catch (Exception e) {
-            System.debug(LoggingLevel.ERROR, 'Product2Controller.deleteRecords unexpected error: ' + e.getMessage() + ' | Stack: ' + e.getStackTraceString());
-            throw new AuraHandledException(getControllerErrorMessage());
         }
     }
 
@@ -204,15 +182,4 @@ public with sharing class Product2Controller {
         }
         return recordIds;
     }
-
-    /**
-     * @description Generates a standardized error message for controller failures.
-     * Formats a system label with the Product2 object label.
-     * @return Error message string formatted with the object label
-     */
-    private static String getControllerErrorMessage() {
-        return String.format(System.Label.Generic_Controller_Request_Failed, new List<String>{ Product2.SObjectType.getDescribe().getLabel() });
-    }
-
-
 }

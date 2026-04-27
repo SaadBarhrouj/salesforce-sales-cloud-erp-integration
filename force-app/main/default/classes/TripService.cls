@@ -32,11 +32,11 @@ public inherited sharing class TripService {
             
             Trip__c trip = new Trip__c();
             trip.Opportunity__c = opportunityId;
-            trip.Truck_Type__c = 'Standard Van - ' + urgency;
+            trip.Truck_Type__c = 'Van';
             trip.Distance_Km__c = baseDistance;
             trip.System_Price__c = basePrice;
             trip.Final_Price__c = basePrice;
-            trip.Direction__c = 'Outbound';
+            trip.Direction__c = 'Delivery';
             
             newTrips.add(trip);
             

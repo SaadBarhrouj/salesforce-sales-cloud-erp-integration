@@ -7,6 +7,7 @@ public inherited sharing class PricebookController {
 
     /**
      * @description Calculates line prices for the provided line items.
+     * Catches all exceptions and returns error responses so the LWC always receives a list.
      * @param lineItems Line item payloads containing product, quantity, and discount.
      * @param offerType Catalog or offer identifier used to determine pricing mode.
      * @param pricebookId Pricebook used for standard pricing lookups.
@@ -44,7 +45,8 @@ public inherited sharing class PricebookController {
             return PRICEBOOK_METHOD;
         }
 
-        List<String> volumePricingCatalogs = Label.Volume_Pricing_Catalog_Names.split(',');
+        String catalogNames = Label.Volume_Pricing_Catalog_Names;
+        List<String> volumePricingCatalogs = String.isNotBlank(catalogNames) ? catalogNames.split(',') : new List<String>();
 
         ProductCatalog catalog = ProductCatalogDAO.getById(offerTypeStr);
 

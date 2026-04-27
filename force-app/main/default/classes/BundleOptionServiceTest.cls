@@ -549,4 +549,100 @@ private class BundleOptionServiceTest {
             'Option should use the related product name');
         System.assert(targetOption.containsKey('description'), 'Option should have description');
     }
+
+    /**
+     * @description Tests hasChanges detects field-level differences between two records.
+     */
+    @IsTest
+    static void testHasChangesDetectsDifferences() {
+        Product2 bundleProduct = TestDataFactory.createProduct2(true);
+        Product2 optionProduct = TestDataFactory.createProduct2(true);
+        Bundle_Option__c original = TestDataFactory.createBundleOption(
+            bundleProduct.Id, optionProduct.Id, null, 'Component', 1, 1, 0, 10, false, false, false, true
+        );
+
+        Bundle_Option__c modified = original.clone(true, true, false, false);
+        modified.Option_Type__c = 'Related Product';
+
+        Test.startTest();
+        Boolean result = BundleOptionService.hasChanges(modified, original);
+        Test.stopTest();
+
+        System.assertEquals(true, result, 'hasChanges should detect Option_Type__c modification');
+    }
+
+    /**
+     * @description Tests hasChanges returns false when records are identical.
+     */
+    @IsTest
+    static void testHasChangesReturnsFalseForIdenticalRecords() {
+        Product2 bundleProduct = TestDataFactory.createProduct2(true);
+        Product2 optionProduct = TestDataFactory.createProduct2(true);
+        Bundle_Option__c original = TestDataFactory.createBundleOption(
+            bundleProduct.Id, optionProduct.Id, null, 'Component', 1, 1, 0, 10, false, false, false, true
+        );
+
+        Test.startTest();
+        Boolean result = BundleOptionService.hasChanges(original, original);
+        Test.stopTest();
+
+        System.assertEquals(false, result, 'hasChanges should return false for identical records');
+    }
+
+    /**
+     * @description Tests valuesDiffer handles null values correctly.
+     */
+    @IsTest
+    static void testValuesDifferHandlesNulls() {
+        Test.startTest();
+        Boolean nullVsNull = BundleOptionService.valuesDiffer(null, null);
+        Boolean nullVsValue = BundleOptionService.valuesDiffer(null, 'test');
+        Boolean valueVsNull = BundleOptionService.valuesDiffer('test', null);
+        Boolean sameValues = BundleOptionService.valuesDiffer('test', 'test');
+        Boolean diffValues = BundleOptionService.valuesDiffer('test', 'other');
+        Test.stopTest();
+
+        System.assertEquals(false, nullVsNull, 'Null vs null should not differ');
+        System.assertEquals(true, nullVsValue, 'Null vs value should differ');
+        System.assertEquals(true, valueVsNull, 'Value vs null should differ');
+        System.assertEquals(false, sameValues, 'Same values should not differ');
+        System.assertEquals(true, diffValues, 'Different values should differ');
+    }
+
+    /**
+     * @description Tests that an option with a null option product is handled correctly.
+     * Verifies productId, productCode, productName, and description defaults.
+     */
+    @IsTest
+    static void testGetBundleDataNullOptionProduct() {
+        Product2 bundleProduct = TestDataFactory.createProduct2(true);
+
+        Bundle_Option__c option = new Bundle_Option__c(
+            Bundle_Product__c = bundleProduct.Id,
+            Option_Type__c = 'Component',
+            Sort_Order__c = 1,
+            Default_Quantity__c = 1,
+            Is_Required__c = false,
+            Is_Selected__c = false,
+            Quantity_Editable__c = false
+        );
+        insert option;
+
+        Test.startTest();
+        Map<String, Object> result = BundleOptionService.getBundleData(bundleProduct.Id);
+        Test.stopTest();
+
+        System.assertNotEquals(null, result, 'Result should not be null');
+        List<Map<String, Object>> features = (List<Map<String, Object>>) result.get('features');
+        System.assertEquals(1, features.size(), 'Should have only Other feature');
+
+        List<Map<String, Object>> options = (List<Map<String, Object>>) features[0].get('options');
+        System.assertEquals(1, options.size(), 'Should have 1 option');
+
+        Map<String, Object> optionPayload = options[0];
+        System.assertEquals(null, optionPayload.get('productId'), 'productId should be null for null option product');
+        System.assertEquals('', optionPayload.get('productCode'), 'productCode should default to empty string');
+        System.assertEquals('', optionPayload.get('productName'), 'productName should default to empty string');
+        System.assertEquals('', optionPayload.get('description'), 'description should default to empty string');
+    }
 }

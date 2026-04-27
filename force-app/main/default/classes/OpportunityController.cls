@@ -21,17 +21,6 @@ public with sharing class OpportunityController {
         } catch (OpportunityException e) {
             System.debug(LoggingLevel.ERROR, 'OpportunityController.saveOpportunity: ' + e.getMessage());
             throw new AuraHandledException(e.getMessage());
-        } catch (Exception e) {
-            System.debug(LoggingLevel.ERROR, 'OpportunityController.saveOpportunity unexpected error: ' + e.getMessage() + ' | Stack: ' + e.getStackTraceString());
-            throw new AuraHandledException(getControllerErrorMessage());
         }
-    }
-
-    /**
-     * @description Generates a standardized error message for controller failures.
-     * @return Error message string formatted with the Opportunity object label.
-     */
-    private static String getControllerErrorMessage() {
-        return String.format(System.Label.Generic_Controller_Request_Failed, new List<String>{ Opportunity.SObjectType.getDescribe().getLabel() });
     }
 }
