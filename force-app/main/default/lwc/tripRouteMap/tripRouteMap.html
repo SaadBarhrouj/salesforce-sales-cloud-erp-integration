@@ -81,18 +81,20 @@
                             {departureName}
                         </span>
 
-                        <div class="route-center">
-                            <span class="route-distance">
-                                <template lwc:if={isEstimated}>
-                                    <abbr class="estimated"
-                                          title="Estimated (Haversine × 1.3)">≈</abbr>
-                                </template>
-                                {formattedDistance}
-                            </span>
-                            <template lwc:if={direction}>
-                                <span class="route-direction">{direction}</span>
-                            </template>
-                        </div>
+                        <template lwc:if={isRecordMode}>
+                            <div class="route-center">
+                                <span class="route-distance">
+                                    <template lwc:if={isEstimated}>
+                                        <abbr class="estimated"
+                                              title="Estimated (Haversine × 1.3)">≈</abbr>
+                                    </template>
+                                    {formattedDistance}
+                                </span>
+                                <span class="route-duration">
+                                    {formattedDuration}
+                                </span>
+                            </div>
+                        </template>
 
                         <span class="route-name route-name--right"
                               title={destinationName}>

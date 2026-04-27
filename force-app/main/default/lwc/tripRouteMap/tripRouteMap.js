@@ -1,9 +1,13 @@
 ﻿import { LightningElement, api, wire } from 'lwc';
 import { getRecord, getFieldValue }    from 'lightning/uiRecordApi';
-import OPPORTUNITY_DISTANCE_KM from '@salesforce/schema/Opportunity.Distance_Delivery_Agency_km__c';
+import OPPORTUNITY_DISTANCE_DRIVING from '@salesforce/schema/Opportunity.Distance_Driving_Route_km__c';
+import OPPORTUNITY_DISTANCE_STRAIGHT from '@salesforce/schema/Opportunity.Distance_Straight_Line_km__c';
+import OPPORTUNITY_DURATION_TRIP from '@salesforce/schema/Opportunity.Duration_Trip_Minutes__c';
 
 const OPPORTUNITY_FIELDS = [
-    OPPORTUNITY_DISTANCE_KM,
+    OPPORTUNITY_DISTANCE_DRIVING,
+    OPPORTUNITY_DISTANCE_STRAIGHT,
+    OPPORTUNITY_DURATION_TRIP,
 ];
 
 const OPTIONAL_FIELDS = [
@@ -57,7 +61,33 @@ export default class TripRouteMap extends LightningElement {
 
     get distance() {
         if (this.isManualMode) return this.manualDistance;
-        return this._val(OPPORTUNITY_DISTANCE_KM);
+        
+        // Priority: Driving Distance > Straight Line Distance
+        const drivingDistance = this._val(OPPORTUNITY_DISTANCE_DRIVING);
+        if (drivingDistance != null) {
+            return drivingDistance;
+        }
+        
+        return this._val(OPPORTUNITY_DISTANCE_STRAIGHT);
+    }
+
+    get durationMinutes() {
+        if (this.isManualMode) return null;
+        return this._val(OPPORTUNITY_DURATION_TRIP);
+    }
+
+    get formattedDuration() {
+        const d = this.durationMinutes;
+        if (d == null) return '— min';
+        return `${Math.round(d)} min`;
+    }
+
+    get isEstimated() {
+        // Estimated if only straight-line distance is available (no driving distance)
+        if (this.isManualMode) return false;
+        const drivingDistance = this._val(OPPORTUNITY_DISTANCE_DRIVING);
+        const straightDistance = this._val(OPPORTUNITY_DISTANCE_STRAIGHT);
+        return drivingDistance == null && straightDistance != null;
     }
 
     get direction() {

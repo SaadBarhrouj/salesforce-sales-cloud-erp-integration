@@ -220,8 +220,32 @@
                     <name>uiBehavior</name>
                     <value>none</value>
                 </fieldInstanceProperties>
-                <fieldItem>Record.Distance_Delivery_Agency_km__c</fieldItem>
-                <identifier>RecordDistance_Delivery_Agency_km__cField</identifier>
+                <fieldItem>Record.Distance_Driving_Route_km__c</fieldItem>
+                <identifier>RecordDistance_Driving_Route_km_cField</identifier>
+                <visibilityRule>
+                    <criteria>
+                        <leftValue>{!Record.Is_Transport_Required__c}</leftValue>
+                        <operator>EQUAL</operator>
+                        <rightValue>true</rightValue>
+                    </criteria>
+                </visibilityRule>
+            </fieldInstance>
+        </itemInstances>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>none</value>
+                </fieldInstanceProperties>
+                <fieldItem>Record.Total_Transport_Cost__c</fieldItem>
+                <identifier>RecordTotal_Transport_Cost_cField</identifier>
+                <visibilityRule>
+                    <criteria>
+                        <leftValue>{!Record.Is_Transport_Required__c}</leftValue>
+                        <operator>EQUAL</operator>
+                        <rightValue>true</rightValue>
+                    </criteria>
+                </visibilityRule>
             </fieldInstance>
         </itemInstances>
         <name>Facet-10f45e84-f760-4d5f-83fc-3829fa5381f7</name>
@@ -268,8 +292,25 @@
                     <name>uiBehavior</name>
                     <value>none</value>
                 </fieldInstanceProperties>
-                <fieldItem>Record.Total_Transport_Cost__c</fieldItem>
-                <identifier>RecordTotal_Transport_Cost_cField</identifier>
+                <fieldItem>Record.Distance_Straight_Line_km__c</fieldItem>
+                <identifier>RecordDistance_Straight_Line_km_cField</identifier>
+                <visibilityRule>
+                    <criteria>
+                        <leftValue>{!Record.Is_Transport_Required__c}</leftValue>
+                        <operator>EQUAL</operator>
+                        <rightValue>true</rightValue>
+                    </criteria>
+                </visibilityRule>
+            </fieldInstance>
+        </itemInstances>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>none</value>
+                </fieldInstanceProperties>
+                <fieldItem>Record.Duration_Trip_Minutes__c</fieldItem>
+                <identifier>RecordDuration_Trip_Minutes_cField</identifier>
                 <visibilityRule>
                     <criteria>
                         <leftValue>{!Record.Is_Transport_Required__c}</leftValue>

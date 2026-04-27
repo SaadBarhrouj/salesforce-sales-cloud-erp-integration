@@ -113,12 +113,17 @@ public class DistanceCalculationQueueable implements Queueable, Database.AllowsC
 
             // 5. Apply the found distance to ALL opportunities of this route
             // Store in Distance_Driving_Route_km__c (actual API-calculated route distance)
+            // and Duration_Trip_Minutes__c (estimated trip time)
             if (finalDistanceKm != null) {
                 for (Opportunity oppToUpdate : oppsByRouteMap.get(routeKey)) {
-                    oppsToUpdate.add(new Opportunity(
+                    Opportunity updatedOpp = new Opportunity(
                         Id = oppToUpdate.Id,
                         Distance_Driving_Route_km__c = finalDistanceKm
-                    ));
+                    );
+                    if (finalDurationMins != null) {
+                        updatedOpp.Duration_Trip_Minutes__c = finalDurationMins;
+                    }
+                    oppsToUpdate.add(updatedOpp);
                 }
             }
         }
