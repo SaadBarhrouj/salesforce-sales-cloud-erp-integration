@@ -5,14 +5,14 @@
 private class OpportunityLineItemDAOTest {
 
     @IsTest
-    static void getByOpportunityId_Null_ReturnsEmptyList() {
+    static void getByOpportunityIdNullReturnsEmptyList() {
         List<OpportunityLineItem> result = OpportunityLineItemDAO.getByOpportunityId(null);
         System.assertNotEquals(null, result, 'Should return empty list, not null');
         System.assertEquals(0, result.size(), 'Should return empty list for null Id');
     }
 
     @IsTest
-    static void getByOpportunityId_WithItems_ReturnsItems() {
+    static void getByOpportunityIdWithItemsReturnsItems() {
         Account acc = TestDataFactory.createAccount(true);
         Pricebook2 pb = TestDataFactory.createPricebook2('Test PB', true, true);
         Product2 prod = TestDataFactory.createProduct2(true);
@@ -33,7 +33,7 @@ private class OpportunityLineItemDAOTest {
     }
 
     @IsTest
-    static void deleteByOpportunityId_Null_DoesNothing() {
+    static void deleteByOpportunityIdNullDoesNothing() {
         Test.startTest();
         OpportunityLineItemDAO.deleteByOpportunityId(null);
         Test.stopTest();
@@ -41,7 +41,7 @@ private class OpportunityLineItemDAOTest {
     }
 
     @IsTest
-    static void deleteByOpportunityId_WithItems_DeletesItems() {
+    static void deleteByOpportunityIdWithItemsDeletesItems() {
         Account acc = TestDataFactory.createAccount(true);
         Pricebook2 pb = TestDataFactory.createPricebook2('Test PB', true, true);
         Product2 prod = TestDataFactory.createProduct2(true);
@@ -64,20 +64,20 @@ private class OpportunityLineItemDAOTest {
     }
 
     @IsTest
-    static void insertLineItems_Null_ReturnsNull() {
+    static void insertLineItemsNullReturnsNull() {
         List<OpportunityLineItem> result = OpportunityLineItemDAO.insertLineItems(null);
         System.assertEquals(null, result, 'Should return null for null input');
     }
 
     @IsTest
-    static void insertLineItems_Empty_ReturnsEmpty() {
+    static void insertLineItemsEmptyReturnsEmpty() {
         List<OpportunityLineItem> result = OpportunityLineItemDAO.insertLineItems(new List<OpportunityLineItem>());
         System.assertNotEquals(null, result, 'Should return empty list, not null');
         System.assertEquals(0, result.size(), 'Should return empty list');
     }
 
     @IsTest
-    static void insertLineItems_Valid_InsertsAndReturnsIds() {
+    static void insertLineItemsValidInsertsAndReturnsIds() {
         Account acc = TestDataFactory.createAccount(true);
         Pricebook2 pb = TestDataFactory.createPricebook2('Test PB', true, true);
         Product2 prod = TestDataFactory.createProduct2(true);

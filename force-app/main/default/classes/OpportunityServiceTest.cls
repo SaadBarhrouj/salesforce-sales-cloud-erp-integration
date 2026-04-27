@@ -5,7 +5,7 @@
 private class OpportunityServiceTest {
 
     @IsTest
-    static void saveOpportunityWithLines_NullOpportunityId_ThrowsException() {
+    static void saveOpportunityWithLinesNullOpportunityIdThrowsException() {
         Boolean exceptionThrown = false;
         try {
             OpportunityService.saveOpportunityWithLines(null, new List<Map<String, Object>>(), null);
@@ -17,7 +17,7 @@ private class OpportunityServiceTest {
     }
 
     @IsTest
-    static void saveOpportunityWithLines_NullLineItems_ThrowsException() {
+    static void saveOpportunityWithLinesNullLineItemsThrowsException() {
         Boolean exceptionThrown = false;
         try {
             OpportunityService.saveOpportunityWithLines(TestDataFactory.createOpportunity(true).Id, null, null);
@@ -29,7 +29,7 @@ private class OpportunityServiceTest {
     }
 
     @IsTest
-    static void saveOpportunityWithLines_EmptyLineItems_ThrowsException() {
+    static void saveOpportunityWithLinesEmptyLineItemsThrowsException() {
         Boolean exceptionThrown = false;
         try {
             OpportunityService.saveOpportunityWithLines(TestDataFactory.createOpportunity(true).Id, new List<Map<String, Object>>(), null);
@@ -41,7 +41,7 @@ private class OpportunityServiceTest {
     }
 
     @IsTest
-    static void saveOpportunityWithLines_OpportunityNotFound_ThrowsException() {
+    static void saveOpportunityWithLinesOpportunityNotFoundThrowsException() {
         Boolean exceptionThrown = false;
         String errorMessage = '';
         try {
@@ -59,7 +59,7 @@ private class OpportunityServiceTest {
     }
 
     @IsTest
-    static void saveOpportunityWithLines_NoPricebook_ThrowsException() {
+    static void saveOpportunityWithLinesNoPricebookThrowsException() {
         Account acc = TestDataFactory.createAccount(true);
         Opportunity opp = new Opportunity(
             Name = 'Test Opp',
@@ -84,7 +84,7 @@ private class OpportunityServiceTest {
     }
 
     @IsTest
-    static void saveOpportunityWithLines_MissingPricebookEntry_ThrowsException() {
+    static void saveOpportunityWithLinesMissingPricebookEntryThrowsException() {
         Pricebook2 pb = TestDataFactory.createPricebook2('Test PB', true, true);
         Account acc = TestDataFactory.createAccount(true);
         Opportunity opp = new Opportunity(
@@ -111,7 +111,7 @@ private class OpportunityServiceTest {
     }
 
     @IsTest
-    static void saveOpportunityWithLines_AllNullProductIds_ThrowsException() {
+    static void saveOpportunityWithLinesAllNullProductIdsThrowsException() {
         Pricebook2 pb = TestDataFactory.createPricebook2('Test PB', true, true);
         Account acc = TestDataFactory.createAccount(true);
         Opportunity opp = new Opportunity(
@@ -141,7 +141,7 @@ private class OpportunityServiceTest {
     }
 
     @IsTest
-    static void saveOpportunityWithLines_HappyPath_SavesLineItems() {
+    static void saveOpportunityWithLinesHappyPathSavesLineItems() {
         Pricebook2 pb = TestDataFactory.createPricebook2('Test PB', true, true);
         Account acc = TestDataFactory.createAccount(true);
         Opportunity opp = new Opportunity(
@@ -156,7 +156,7 @@ private class OpportunityServiceTest {
         Product2 prod = TestDataFactory.createProduct2(true);
         PricebookEntry stdPbe = new PricebookEntry(Pricebook2Id = Test.getStandardPricebookId(), Product2Id = prod.Id, UnitPrice = 100, IsActive = true, UseStandardPrice = false);
         insert stdPbe;
-        PricebookEntry pbe = TestDataFactory.createPricebookEntry(pb.Id, prod.Id, 100, true, true);
+        TestDataFactory.createPricebookEntry(pb.Id, prod.Id, 100, true, true);
 
         List<Map<String, Object>> lineItems = new List<Map<String, Object>>{
             new Map<String, Object>{
@@ -177,7 +177,7 @@ private class OpportunityServiceTest {
     }
 
     @IsTest
-    static void saveOpportunityWithLines_BundleWithOptions_SavesParentAndChild() {
+    static void saveOpportunityWithLinesBundleWithOptionsSavesParentAndChild() {
         Pricebook2 pb = TestDataFactory.createPricebook2('Test PB', true, true);
         Account acc = TestDataFactory.createAccount(true);
         Opportunity opp = new Opportunity(
@@ -228,7 +228,7 @@ private class OpportunityServiceTest {
     }
 
 @IsTest
-    static void saveOpportunityWithLines_WithTransportFields_UpdatesOpportunity() {
+    static void saveOpportunityWithLinesWithTransportFieldsUpdatesOpportunity() {
         Pricebook2 pb = TestDataFactory.createPricebook2('Test PB', true, true);
         Account acc = TestDataFactory.createAccount(true);
         
@@ -241,7 +241,7 @@ private class OpportunityServiceTest {
         
         Schema.Location deliveryLoc = new Schema.Location(
             Name = 'Test Delivery Site',
-            LocationType = 'Customer',
+            LocationType = 'Site',
             Country_Code__c = 'FR'
         );
         insert deliveryLoc;
@@ -287,7 +287,7 @@ private class OpportunityServiceTest {
     }
 
     @IsTest
-    static void saveOpportunityWithLines_WithTrips_SavesTrips() {
+    static void saveOpportunityWithLinesWithTripsSavesTrips() {
         Pricebook2 pb = TestDataFactory.createPricebook2('Test PB', true, true);
         Account acc = TestDataFactory.createAccount(true);
         Opportunity opp = new Opportunity(
@@ -341,7 +341,7 @@ private class OpportunityServiceTest {
     }
 
     @IsTest
-    static void saveOpportunityWithLines_NullLogistics_DoesNotFail() {
+    static void saveOpportunityWithLinesNullLogisticsDoesNotFail() {
         Pricebook2 pb = TestDataFactory.createPricebook2('Test PB', true, true);
         Account acc = TestDataFactory.createAccount(true);
         Opportunity opp = new Opportunity(
@@ -377,7 +377,7 @@ private class OpportunityServiceTest {
     // Test removed - edge case difficult to reproduce reliably
 
     @IsTest
-    static void saveOpportunityWithLines_VariousDataTypes_HandlesConversion() {
+    static void saveOpportunityWithLinesVariousDataTypesHandlesConversion() {
         Pricebook2 pb = TestDataFactory.createPricebook2('Test PB', true, true);
         Account acc = TestDataFactory.createAccount(true);
         Opportunity opp = new Opportunity(
@@ -414,7 +414,7 @@ private class OpportunityServiceTest {
     }
 
     @IsTest
-    static void saveOpportunityWithLines_ObjectMapOptions_HandlesConversion() {
+    static void saveOpportunityWithLinesObjectMapOptionsHandlesConversion() {
         Pricebook2 pb = TestDataFactory.createPricebook2('Test PB', true, true);
         Account acc = TestDataFactory.createAccount(true);
         Opportunity opp = new Opportunity(

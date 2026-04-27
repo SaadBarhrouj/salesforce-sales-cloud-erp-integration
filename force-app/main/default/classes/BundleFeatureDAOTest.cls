@@ -8,10 +8,10 @@ private class BundleFeatureDAOTest {
     @IsTest
     static void testGetByProductIdReturnsFeatures() {
         Product2 bundleProduct = TestDataFactory.createProduct2(true);
-        Bundle_Feature__c feature1 = TestDataFactory.createBundleFeature(
+        TestDataFactory.createBundleFeature(
             bundleProduct.Id, 'Feature A', 1, 'Help A', 0, 5, true
         );
-        Bundle_Feature__c feature2 = TestDataFactory.createBundleFeature(
+        TestDataFactory.createBundleFeature(
             bundleProduct.Id, 'Feature B', 2, 'Help B', 1, 3, true
         );
 

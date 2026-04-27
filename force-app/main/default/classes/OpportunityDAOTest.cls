@@ -5,13 +5,13 @@
 private class OpportunityDAOTest {
 
     @IsTest
-    static void getById_Null_ReturnsNull() {
+    static void getByIdNullReturnsNull() {
         Opportunity result = OpportunityDAO.getById(null);
         System.assertEquals(null, result, 'Should return null for null Id');
     }
 
     @IsTest
-    static void getById_ValidId_ReturnsRecord() {
+    static void getByIdValidIdReturnsRecord() {
         Account acc = TestDataFactory.createAccount(true);
         Opportunity opp = new Opportunity(
             Name = 'Test Opp',
@@ -29,7 +29,7 @@ private class OpportunityDAOTest {
     }
 
     @IsTest
-    static void updateOpportunity_Null_DoesNothing() {
+    static void updateOpportunityNullDoesNothing() {
         Test.startTest();
         OpportunityDAO.updateOpportunity(null);
         Test.stopTest();
@@ -37,7 +37,7 @@ private class OpportunityDAOTest {
     }
 
     @IsTest
-    static void updateOpportunity_NullId_DoesNothing() {
+    static void updateOpportunityNullIdDoesNothing() {
         Test.startTest();
         OpportunityDAO.updateOpportunity(new Opportunity());
         Test.stopTest();
@@ -45,7 +45,7 @@ private class OpportunityDAOTest {
     }
 
     @IsTest
-    static void updateOpportunity_Valid_UpdatesFields() {
+    static void updateOpportunityValidUpdatesFields() {
         Account acc = TestDataFactory.createAccount(true);
         Opportunity opp = new Opportunity(
             Name = 'Test Opp',

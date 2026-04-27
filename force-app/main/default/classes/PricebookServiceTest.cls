@@ -5,7 +5,7 @@
 private class PricebookServiceTest {
 
     @IsTest
-    static void calculatePrices_PricebookMethod_ReturnsResponses() {
+    static void calculatePricesPricebookMethodReturnsResponses() {
         Pricebook2 pb = TestDataFactory.createPricebook2('Test PB', true, true);
         Product2 prod1 = TestDataFactory.createProduct2(true);
         Product2 prod2 = TestDataFactory.createProduct2(true);
@@ -32,7 +32,7 @@ private class PricebookServiceTest {
     }
 
     @IsTest
-    static void calculatePrices_VolumePricingMethod_ReturnsResponses() {
+    static void calculatePricesVolumePricingMethodReturnsResponses() {
         Pricebook2 pb = TestDataFactory.createPricebook2('Test PB', true, true);
         Product2 prod = TestDataFactory.createProduct2(true);
         PricebookEntry stdPbe = new PricebookEntry(Pricebook2Id = Test.getStandardPricebookId(), Product2Id = prod.Id, UnitPrice = 100, IsActive = true, UseStandardPrice = false);
@@ -54,7 +54,7 @@ private class PricebookServiceTest {
     }
 
     @IsTest
-    static void calculateByPricebook_Valid_ReturnsSuccess() {
+    static void calculateByPricebookValidReturnsSuccess() {
         Pricebook2 pb = TestDataFactory.createPricebook2('Test PB', true, true);
         Product2 prod = TestDataFactory.createProduct2(true);
         PricebookEntry stdPbe = new PricebookEntry(Pricebook2Id = Test.getStandardPricebookId(), Product2Id = prod.Id, UnitPrice = 100, IsActive = true, UseStandardPrice = false);
@@ -71,7 +71,7 @@ private class PricebookServiceTest {
     }
 
     @IsTest
-    static void calculateByPricebook_NullEntry_ReturnsError() {
+    static void calculateByPricebookNullEntryReturnsError() {
         Pricebook2 pb = TestDataFactory.createPricebook2('Test PB', true, true);
         Product2 prod = TestDataFactory.createProduct2(true);
 
@@ -82,7 +82,7 @@ private class PricebookServiceTest {
     }
 
     @IsTest
-    static void calculateByPricebook_InvalidDiscount_ReturnsError() {
+    static void calculateByPricebookInvalidDiscountReturnsError() {
         PricingResponse response = PricebookService.calculateByPricebook(null, null, 1, 101);
 
         System.assertEquals(false, response.success, 'Should fail');
@@ -90,7 +90,7 @@ private class PricebookServiceTest {
     }
 
     @IsTest
-    static void calculateByPricebook_InvalidQuantity_ReturnsError() {
+    static void calculateByPricebookInvalidQuantityReturnsError() {
         PricingResponse response = PricebookService.calculateByPricebook(null, null, 0, 0);
 
         System.assertEquals(false, response.success, 'Should fail');
@@ -98,7 +98,7 @@ private class PricebookServiceTest {
     }
 
     @IsTest
-    static void calculateByVolumePricing_Tiered_ReturnsSuccess() {
+    static void calculateByVolumePricingTieredReturnsSuccess() {
         Pricebook2 pb = TestDataFactory.createPricebook2('Test PB', true, true);
         Product2 prod = TestDataFactory.createProduct2(true);
         PricebookEntry stdPbe = new PricebookEntry(Pricebook2Id = Test.getStandardPricebookId(), Product2Id = prod.Id, UnitPrice = 100, IsActive = true, UseStandardPrice = false);
@@ -117,7 +117,7 @@ private class PricebookServiceTest {
     }
 
     @IsTest
-    static void calculateByVolumePricing_Block_ReturnsSuccess() {
+    static void calculateByVolumePricingBlockReturnsSuccess() {
         Pricebook2 pb = TestDataFactory.createPricebook2('Test PB', true, true);
         Product2 prod = TestDataFactory.createProduct2(true);
         PricebookEntry stdPbe = new PricebookEntry(Pricebook2Id = Test.getStandardPricebookId(), Product2Id = prod.Id, UnitPrice = 100, IsActive = true, UseStandardPrice = false);
@@ -135,7 +135,7 @@ private class PricebookServiceTest {
     }
 
     @IsTest
-    static void calculateByVolumePricing_NullSchedule_ReturnsError() {
+    static void calculateByVolumePricingNullScheduleReturnsError() {
         Pricebook2 pb = TestDataFactory.createPricebook2('Test PB', true, true);
         Product2 prod = TestDataFactory.createProduct2(true);
 
@@ -146,13 +146,13 @@ private class PricebookServiceTest {
     }
 
     @IsTest
-    static void calculateByVolumePricing_EmptyTiers_ReturnsError() {
+    static void calculateByVolumePricingEmptyTiersReturnsError() {
         Pricebook2 pb = TestDataFactory.createPricebook2('Test PB', true, true);
         Product2 prod = TestDataFactory.createProduct2(true);
         PricebookEntry stdPbe = new PricebookEntry(Pricebook2Id = Test.getStandardPricebookId(), Product2Id = prod.Id, UnitPrice = 100, IsActive = true, UseStandardPrice = false);
         insert stdPbe;
 
-        Volume_Pricing_Schedule__c schedule = TestDataFactory.createVolumePricingSchedule(prod.Id, pb.Id, 'Tiered', true, true);
+        TestDataFactory.createVolumePricingSchedule(prod.Id, pb.Id, 'Tiered', true, true);
 
         PricingResponse response = PricebookService.calculateByVolumePricing(prod.Id, pb.Id, 1, 0);
 
@@ -161,7 +161,7 @@ private class PricebookServiceTest {
     }
 
     @IsTest
-    static void calculateByVolumePricing_NoMatchNoOverage_ReturnsError() {
+    static void calculateByVolumePricingNoMatchNoOverageReturnsError() {
         Pricebook2 pb = TestDataFactory.createPricebook2('Test PB', true, true);
         Product2 prod = TestDataFactory.createProduct2(true);
         PricebookEntry stdPbe = new PricebookEntry(Pricebook2Id = Test.getStandardPricebookId(), Product2Id = prod.Id, UnitPrice = 100, IsActive = true, UseStandardPrice = false);
@@ -177,7 +177,7 @@ private class PricebookServiceTest {
     }
 
     @IsTest
-    static void calculateByVolumePricing_NoMatchWithOverage_ReturnsSuccess() {
+    static void calculateByVolumePricingNoMatchWithOverageReturnsSuccess() {
         Pricebook2 pb = TestDataFactory.createPricebook2('Test PB', true, true);
         Product2 prod = TestDataFactory.createProduct2(true);
         PricebookEntry stdPbe = new PricebookEntry(Pricebook2Id = Test.getStandardPricebookId(), Product2Id = prod.Id, UnitPrice = 100, IsActive = true, UseStandardPrice = false);
@@ -195,7 +195,7 @@ private class PricebookServiceTest {
     }
 
     @IsTest
-    static void calculateByVolumePricing_InvalidDiscount_ReturnsError() {
+    static void calculateByVolumePricingInvalidDiscountReturnsError() {
         PricingResponse response = PricebookService.calculateByVolumePricing(null, null, 1, -1);
 
         System.assertEquals(false, response.success, 'Should fail');
@@ -203,7 +203,7 @@ private class PricebookServiceTest {
     }
 
     @IsTest
-    static void calculateByVolumePricing_InvalidQuantity_ReturnsError() {
+    static void calculateByVolumePricingInvalidQuantityReturnsError() {
         PricingResponse response = PricebookService.calculateByVolumePricing(null, null, 0, 0);
 
         System.assertEquals(false, response.success, 'Should fail');

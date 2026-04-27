@@ -5,7 +5,7 @@
 private class PricebookEntryDAOTest {
 
     @IsTest
-    static void getByProductAndPricebook_Valid_ReturnsEntry() {
+    static void getByProductAndPricebookValidReturnsEntry() {
         Pricebook2 pb = TestDataFactory.createPricebook2('Test PB', true, true);
         Product2 prod = TestDataFactory.createProduct2(true);
         PricebookEntry stdPbe = new PricebookEntry(Pricebook2Id = Test.getStandardPricebookId(), Product2Id = prod.Id, UnitPrice = 100, IsActive = true, UseStandardPrice = false);
@@ -20,12 +20,12 @@ private class PricebookEntryDAOTest {
     }
 
     @IsTest
-    static void getByProductAndPricebook_Inactive_ReturnsNull() {
+    static void getByProductAndPricebookInactiveReturnsNull() {
         Pricebook2 pb = TestDataFactory.createPricebook2('Test PB', true, true);
         Product2 prod = TestDataFactory.createProduct2(true);
         PricebookEntry stdPbe = new PricebookEntry(Pricebook2Id = Test.getStandardPricebookId(), Product2Id = prod.Id, UnitPrice = 100, IsActive = true, UseStandardPrice = false);
         insert stdPbe;
-        PricebookEntry pbe = TestDataFactory.createPricebookEntry(pb.Id, prod.Id, 150, false, true);
+        TestDataFactory.createPricebookEntry(pb.Id, prod.Id, 150, false, true);
 
         PricebookEntry result = PricebookEntryDAO.getByProductAndPricebook(prod.Id, pb.Id);
 
@@ -33,21 +33,21 @@ private class PricebookEntryDAOTest {
     }
 
     @IsTest
-    static void getByProductsAndPricebook_NullSet_ReturnsEmptyMap() {
+    static void getByProductsAndPricebookNullSetReturnsEmptyMap() {
         Map<Id, PricebookEntry> result = PricebookEntryDAO.getByProductsAndPricebook(null, null);
         System.assertNotEquals(null, result, 'Should return empty map, not null');
         System.assertEquals(0, result.size(), 'Should return empty map for null set');
     }
 
     @IsTest
-    static void getByProductsAndPricebook_EmptySet_ReturnsEmptyMap() {
+    static void getByProductsAndPricebookEmptySetReturnsEmptyMap() {
         Map<Id, PricebookEntry> result = PricebookEntryDAO.getByProductsAndPricebook(new Set<Id>(), null);
         System.assertNotEquals(null, result, 'Should return empty map, not null');
         System.assertEquals(0, result.size(), 'Should return empty map for empty set');
     }
 
     @IsTest
-    static void getByProductsAndPricebook_Valid_ReturnsMap() {
+    static void getByProductsAndPricebookValidReturnsMap() {
         Pricebook2 pb = TestDataFactory.createPricebook2('Test PB', true, true);
         Product2 prod1 = TestDataFactory.createProduct2(true);
         Product2 prod2 = TestDataFactory.createProduct2(true);
@@ -55,8 +55,8 @@ private class PricebookEntryDAOTest {
         insert stdPbe1;
         PricebookEntry stdPbe2 = new PricebookEntry(Pricebook2Id = Test.getStandardPricebookId(), Product2Id = prod2.Id, UnitPrice = 100, IsActive = true, UseStandardPrice = false);
         insert stdPbe2;
-        PricebookEntry pbe1 = TestDataFactory.createPricebookEntry(pb.Id, prod1.Id, 150, true, true);
-        PricebookEntry pbe2 = TestDataFactory.createPricebookEntry(pb.Id, prod2.Id, 200, true, true);
+        TestDataFactory.createPricebookEntry(pb.Id, prod1.Id, 150, true, true);
+        TestDataFactory.createPricebookEntry(pb.Id, prod2.Id, 200, true, true);
 
         Map<Id, PricebookEntry> result = PricebookEntryDAO.getByProductsAndPricebook(new Set<Id>{ prod1.Id, prod2.Id }, pb.Id);
 

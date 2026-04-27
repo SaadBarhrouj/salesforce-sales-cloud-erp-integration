@@ -5,7 +5,7 @@
 private class OpportunityControllerTest {
 
     @IsTest
-    static void saveOpportunity_NullOpportunityId_ThrowsAuraHandledException() {
+    static void saveOpportunityNullOpportunityIdThrowsAuraHandledException() {
         Boolean exceptionThrown = false;
         try {
             OpportunityController.saveOpportunity(null, new List<Map<String, Object>>(), null);
@@ -16,7 +16,7 @@ private class OpportunityControllerTest {
     }
 
     @IsTest
-    static void saveOpportunity_NullLineItems_ThrowsAuraHandledException() {
+    static void saveOpportunityNullLineItemsThrowsAuraHandledException() {
         Boolean exceptionThrown = false;
         try {
             OpportunityController.saveOpportunity(TestDataFactory.createOpportunity(true).Id, null, null);
@@ -27,7 +27,7 @@ private class OpportunityControllerTest {
     }
 
     @IsTest
-    static void saveOpportunity_EmptyLineItems_ThrowsAuraHandledException() {
+    static void saveOpportunityEmptyLineItemsThrowsAuraHandledException() {
         Boolean exceptionThrown = false;
         try {
             OpportunityController.saveOpportunity(TestDataFactory.createOpportunity(true).Id, new List<Map<String, Object>>(), null);
@@ -38,7 +38,7 @@ private class OpportunityControllerTest {
     }
 
     @IsTest
-    static void saveOpportunity_HappyPath_ReturnsOpportunityId() {
+    static void saveOpportunityHappyPathReturnsOpportunityId() {
         Pricebook2 pb = TestDataFactory.createPricebook2('Test PB', true, true);
         Account acc = TestDataFactory.createAccount(true);
         Opportunity opp = new Opportunity(

@@ -5,21 +5,21 @@
 private class PricebookControllerTest {
 
     @IsTest
-    static void calculateLinePrices_Null_ReturnsEmptyList() {
+    static void calculateLinePricesNullReturnsEmptyList() {
         List<PricingResponse> responses = PricebookController.calculateLinePrices(null, null, null);
         System.assertNotEquals(null, responses, 'Should return empty list, not null');
         System.assertEquals(0, responses.size(), 'Should return empty list for null input');
     }
 
     @IsTest
-    static void calculateLinePrices_Empty_ReturnsEmptyList() {
+    static void calculateLinePricesEmptyReturnsEmptyList() {
         List<PricingResponse> responses = PricebookController.calculateLinePrices(new List<Map<String, Object>>(), null, null);
         System.assertNotEquals(null, responses, 'Should return empty list, not null');
         System.assertEquals(0, responses.size(), 'Should return empty list for empty input');
     }
 
     @IsTest
-    static void calculateLinePrices_ValidPricebook_ReturnsResponses() {
+    static void calculateLinePricesValidPricebookReturnsResponses() {
         Pricebook2 pb = TestDataFactory.createPricebook2('Test PB', true, true);
         Product2 prod = TestDataFactory.createProduct2(true);
         PricebookEntry stdPbe = new PricebookEntry(Pricebook2Id = Test.getStandardPricebookId(), Product2Id = prod.Id, UnitPrice = 100, IsActive = true, UseStandardPrice = false);
@@ -38,7 +38,7 @@ private class PricebookControllerTest {
     }
 
     @IsTest
-    static void calculateLinePrices_InvalidProductId_ReturnsErrorResponses() {
+    static void calculateLinePricesInvalidProductIdReturnsErrorResponses() {
         List<Map<String, Object>> lineItems = new List<Map<String, Object>>{
             new Map<String, Object>{ 'productId' => 'invalid-id-string', 'quantity' => 1, 'discount' => 0 }
         };
@@ -51,7 +51,7 @@ private class PricebookControllerTest {
     }
 
     @IsTest
-    static void getPricingMethod_Null_ReturnsPricebook() {
+    static void getPricingMethodNullReturnsPricebook() {
         Pricebook2 pb = TestDataFactory.createPricebook2('Test PB', true, true);
         Product2 prod = TestDataFactory.createProduct2(true);
         PricebookEntry stdPbe = new PricebookEntry(Pricebook2Id = Test.getStandardPricebookId(), Product2Id = prod.Id, UnitPrice = 100, IsActive = true, UseStandardPrice = false);
@@ -66,7 +66,7 @@ private class PricebookControllerTest {
     }
 
     @IsTest
-    static void getPricingMethod_Blank_ReturnsPricebook() {
+    static void getPricingMethodBlankReturnsPricebook() {
         Pricebook2 pb = TestDataFactory.createPricebook2('Test PB', true, true);
         Product2 prod = TestDataFactory.createProduct2(true);
         PricebookEntry stdPbe = new PricebookEntry(Pricebook2Id = Test.getStandardPricebookId(), Product2Id = prod.Id, UnitPrice = 100, IsActive = true, UseStandardPrice = false);
@@ -81,7 +81,7 @@ private class PricebookControllerTest {
     }
 
     @IsTest
-    static void getPricingMethod_VolumeCatalog_ReturnsVolumePricing() {
+    static void getPricingMethodVolumeCatalogReturnsVolumePricing() {
         Pricebook2 pb = TestDataFactory.createPricebook2('Test PB', true, true);
         Product2 prod = TestDataFactory.createProduct2(true);
         PricebookEntry stdPbe = new PricebookEntry(Pricebook2Id = Test.getStandardPricebookId(), Product2Id = prod.Id, UnitPrice = 100, IsActive = true, UseStandardPrice = false);
@@ -105,7 +105,7 @@ private class PricebookControllerTest {
     }
 
     @IsTest
-    static void getPricingMethod_RegularCatalog_ReturnsPricebook() {
+    static void getPricingMethodRegularCatalogReturnsPricebook() {
         Pricebook2 pb = TestDataFactory.createPricebook2('Test PB', true, true);
         Product2 prod = TestDataFactory.createProduct2(true);
         PricebookEntry stdPbe = new PricebookEntry(Pricebook2Id = Test.getStandardPricebookId(), Product2Id = prod.Id, UnitPrice = 100, IsActive = true, UseStandardPrice = false);
