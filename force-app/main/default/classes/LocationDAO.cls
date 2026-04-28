@@ -14,7 +14,6 @@ public inherited sharing class LocationDAO {
             return new List<Schema.Location>();
         }
         
-    try {
         return [
             SELECT 
                 Id,
@@ -33,39 +32,30 @@ public inherited sharing class LocationDAO {
             )
             ORDER BY Name ASC
         ];
-    } catch (QueryException qe) {
-        System.debug(LoggingLevel.ERROR, 'QueryException in getLocationsByAccountId: ' + qe.getMessage());
-        throw  qe;
     }
-}
     
     /**
      * @description Get all Locations with a specific type (Agency, Warehouse, etc).
      * @param locationType The Location Type (e.g., 'Agency', 'Warehouse')
      * @return List of Locations of that type
      */
-    public static List<Schema.Location> getLocationsByType(String locationType) {
+public static List<Schema.Location> getLocationsByType(String locationType) {
         if (locationType == null) {
             return new List<Schema.Location>();
         }
         
-        try {
-            return  [
-                SELECT 
-                    Id,
-                    Name,
-                    LocationType,
-                    Latitude,
-                    Longitude,
-                    TimeZone
-                FROM Location
-                WHERE LocationType = :locationType
-                ORDER BY Name ASC
-            ];
-        } catch (QueryException qe) {
-            System.debug(LoggingLevel.ERROR, 'QueryException in getLocationsByType: ' + qe.getMessage());
-            throw  qe;
-        }
+        return  [
+            SELECT 
+                Id,
+                Name,
+                LocationType,
+                Latitude,
+                Longitude,
+                TimeZone
+            FROM Location
+            WHERE LocationType = :locationType
+            ORDER BY Name ASC
+        ];
     }
     
 }

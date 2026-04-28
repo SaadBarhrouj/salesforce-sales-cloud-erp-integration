@@ -287,7 +287,6 @@ private class Product2DAOTest {
 
     @IsTest
     static void testGetProductsByCategoriesAndPricebookNonExistentCategoryReturnsEmptyList() {
-        // Arrange
         Id fakeCategoryId = ProductCategory.SObjectType.getDescribe().getKeyPrefix() + '000000000000';
         Set<Id> categoryIds = new Set<Id>{ fakeCategoryId };
 
@@ -295,7 +294,35 @@ private class Product2DAOTest {
         List<Product2> result = Product2DAO.getProductsByCategoriesAndPricebook(categoryIds, null, null);
         Test.stopTest();
 
-        // Assert
         System.assertEquals(0, result.size(), 'Should return an empty list for a non-existent category ID.');
+    }
+
+    @IsTest
+    static void testGetProductsByCategoriesAndPricebookWithCatalogIdReturnsProducts() {
+        ProductCatalog catalog = [SELECT Id FROM ProductCatalog LIMIT 1];
+        ProductCategory category = [SELECT Id FROM ProductCategory WHERE CatalogId = :catalog.Id LIMIT 1];
+
+        Set<Id> categoryIds = new Set<Id>{ category.Id };
+        Id standardPricebookId = Test.getStandardPricebookId();
+
+        Test.startTest();
+        List<Product2> result = Product2DAO.getProductsByCategoriesAndPricebook(categoryIds, standardPricebookId, catalog.Id);
+        Test.stopTest();
+
+        System.assertNotEquals(null, result, 'Should return products when catalogId is provided');
+    }
+
+    @IsTest
+    static void testGetProductsByCategoriesAndPricebookWithCatalogIdNoCategoriesReturnsEmpty() {
+        ProductCatalog emptyCatalog = TestDataFactory.createProductCatalog('Empty Catalog', true);
+
+        Set<Id> categoryIds = new Set<Id>();
+        Id standardPricebookId = Test.getStandardPricebookId();
+
+        Test.startTest();
+        List<Product2> result = Product2DAO.getProductsByCategoriesAndPricebook(categoryIds, standardPricebookId, emptyCatalog.Id);
+        Test.stopTest();
+
+        System.assertEquals(0, result.size(), 'Should return empty list when catalog has no categories');
     }
 }

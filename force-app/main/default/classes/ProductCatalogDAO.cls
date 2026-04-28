@@ -45,42 +45,4 @@ public inherited sharing class ProductCatalogDAO {
             WHERE Id IN :recordIds
         ]);
     }
-
-
-    /**
-     * Retrieves ProductCatalog records by catalog name.
-     * Returns empty list if the provided name is blank or no records are found.
-     * 
-     * @param recordName The catalog name to search for
-     * @return List of ProductCatalog records matching the name
-     */
-   
-     /**public static List<ProductCatalog> getByName(String recordName) {
-        if (String.isBlank(recordName)) {
-            return new List<ProductCatalog>();
-        }
-
-        return [
-            SELECT
-                Id,
-                Name,
-                OwnerId,
-                Owner.Name
-            FROM ProductCatalog
-            WHERE Name = :recordName
-        ];
-    }*/
-
-    /*
-    public static List<ProductCatalog> getAll() {
-        return [
-            SELECT
-                Id,
-                Name,
-                OwnerId,
-                Owner.Name
-            FROM ProductCatalog
-        ];
-    }
-    */
 }

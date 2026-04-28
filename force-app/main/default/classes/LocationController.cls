@@ -28,12 +28,7 @@ public with sharing class LocationController {
      */
     @AuraEnabled(cacheable=true)
     public static List<Map<String, Object>> getAllAgencies() {
-        try {
-            return LocationService.getAgenciesFormatted();
-        } catch (Exception e) {
-            System.debug(LoggingLevel.ERROR, 'LocationController.getAllAgencies error: ' + e.getMessage());
-            throw new AuraHandledException('Unable to load agencies');
-        }
+        return LocationService.getAgenciesFormatted();
     }
     
 }

@@ -10,13 +10,8 @@ public inherited sharing class LocationService {
      * @return List of Locations formatted for LWC combobox
      */
     public static List<Map<String, Object>> getLocationsByAccountFormatted(Id accountId) {
-        try {
-            List<Schema.Location> locations = LocationDAO.getLocationsByAccountId(accountId);
-            return formatLocationsForUI(locations);
-        } catch (Exception e) {
-            System.debug(LoggingLevel.ERROR, 'LocationService.getLocationsByAccountFormatted error: ' + e.getMessage());
-            throw e;
-        }
+        List<Schema.Location> locations = LocationDAO.getLocationsByAccountId(accountId);
+        return formatLocationsForUI(locations);
     }
     
     /**
@@ -24,13 +19,8 @@ public inherited sharing class LocationService {
      * @return List of Agencies formatted for LWC combobox
      */
     public static List<Map<String, Object>> getAgenciesFormatted() {
-        try {
-            List<Schema.Location> agencies = LocationDAO.getLocationsByType('Warehouse');
-            return formatLocationsForUI(agencies);
-        } catch (Exception e) {
-            System.debug(LoggingLevel.ERROR, 'LocationService.getAgenciesFormatted error: ' + e.getMessage());
-            throw e;
-        }
+        List<Schema.Location> agencies = LocationDAO.getLocationsByType('Warehouse');
+        return formatLocationsForUI(agencies);
     }
     
     /**
