@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Require_Valid_Post_Draft_Status</fullName>
+    <active>true</active>
+    <errorConditionFormula>AND(
+    ISCHANGED(Status),
+    ISPICKVAL(PRIORVALUE(Status), &quot;Draft&quot;),
+    OR(
+        ISPICKVAL(Status, &quot;Approved&quot;),
+        ISPICKVAL(Status, &quot;Rejected&quot;),
+        ISPICKVAL(Status, &quot;Presented&quot;),
+        ISPICKVAL(Status, &quot;Accepted&quot;),
+        ISPICKVAL(Status, &quot;Denied&quot;)
+    )
+)</errorConditionFormula>
+    <errorDisplayField>Status</errorDisplayField>
+    <errorMessage>Quote must be submitted for &apos;Needs Review&apos; before changing to this status.</errorMessage>
+</ValidationRule>
