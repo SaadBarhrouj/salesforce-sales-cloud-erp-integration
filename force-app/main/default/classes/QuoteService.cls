@@ -4,50 +4,87 @@
  */
 public inherited sharing class QuoteService {
 
+    /** Wrapper holding all data required to render the Quote PDF. */
     public class QuotePDFData {
+        /** @return the Quote record with related Account, Contact, and Opportunity. */
         public Quote quote { get; set; }
+        /** @return the list of line item rows for the PDF. */
         public List<LineItemRow> lineItems { get; set; }
+        /** @return the subtotal of all line items. */
         public Decimal lineItemsSubtotal { get; set; }
+        /** @return the list of trip rows for transport costs. */
         public List<TripRow> trips { get; set; }
+        /** @return the total transport cost. */
         public Decimal transportTotal { get; set; }
+        /** @return the grand total (line items + transport). */
         public Decimal grandTotal { get; set; }
+        /** @return whether transport is required for this quote. */
         public Boolean hasTransport { get; set; }
+        /** @return whether any line item has volume pricing. */
         public Boolean hasVolumePricing { get; set; }
     }
 
+    /** Wrapper representing a single line item row in the PDF. */
     public class LineItemRow {
+        /** @return the line number on the quote. */
         public Integer lineNumber { get; set; }
+        /** @return the product name. */
         public String productName { get; set; }
+        /** @return the product family. */
         public String productFamily { get; set; }
+        /** @return the quantity ordered. */
         public Decimal quantity { get; set; }
+        /** @return the unit price. */
         public Decimal unitPrice { get; set; }
+        /** @return the discount percentage. */
         public Decimal discount { get; set; }
+        /** @return the total price for this line. */
         public Decimal totalPrice { get; set; }
+        /** @return whether this item is a bundle. */
         public Boolean isBundle { get; set; }
+        /** @return the rental start date. */
         public Date rentalStartDate { get; set; }
+        /** @return the rental end date. */
         public Date rentalEndDate { get; set; }
+        /** @return the Product2 ID. */
         public Id product2Id { get; set; }
+        /** @return the volume pricing tiers for this product. */
         public List<VolumePricingRow> volumePricingTiers { get; set; }
     }
 
+    /** Wrapper representing a volume pricing schedule row. */
     public class VolumePricingRow {
+        /** @return the product name. */
         public String productName { get; set; }
+        /** @return the pricing type (e.g. Tiered, Flat). */
         public String pricingType { get; set; }
+        /** @return the overage rate. */
         public Decimal overageRate { get; set; }
+        /** @return the list of pricing tiers. */
         public List<VolumePricingTierRow> tiers { get; set; }
     }
 
+    /** Wrapper representing a single volume pricing tier. */
     public class VolumePricingTierRow {
+        /** @return the lower bound quantity. */
         public Decimal lowerBound { get; set; }
+        /** @return the upper bound quantity. */
         public Decimal upperBound { get; set; }
+        /** @return the price for this tier. */
         public Decimal price { get; set; }
     }
 
+    /** Wrapper representing a trip row for transport costs. */
     public class TripRow {
+        /** @return the trip direction. */
         public String direction { get; set; }
+        /** @return the distance in kilometers. */
         public Decimal distanceKm { get; set; }
+        /** @return the total weight in kilograms. */
         public Decimal totalWeightKg { get; set; }
+        /** @return the truck type. */
         public String truckType { get; set; }
+        /** @return the final price for this trip. */
         public Decimal finalPrice { get; set; }
     }
 
