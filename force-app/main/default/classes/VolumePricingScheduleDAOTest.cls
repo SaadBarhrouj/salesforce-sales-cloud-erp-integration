@@ -49,7 +49,7 @@ private class VolumePricingScheduleDAOTest {
         Product2 product = TestDataFactory.createProduct2(true);
         Pricebook2 specificPricebook = TestDataFactory.createPricebook2('Specific Pricebook', true, true);
 
-        Volume_Pricing_Schedule__c globalSchedule = TestDataFactory.createVolumePricingSchedule(
+        TestDataFactory.createVolumePricingSchedule(
             product.Id, null, 'Block', true, true
         );
         Volume_Pricing_Schedule__c specificSchedule = TestDataFactory.createVolumePricingSchedule(

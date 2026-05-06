@@ -1,0 +1,1 @@
+Hi {!Quote.Owner:User}, The quote {!Quote.Name} for {!Quote.Account} has a discount of {!Quote.Discount}% and requires your approval. Quote: {!Quote.QuoteNumber}, Discount: {!Quote.Discount}%, Total: {!Quote.TotalPrice}, Owner: {!Quote.Owner:User}. Please review and approve.

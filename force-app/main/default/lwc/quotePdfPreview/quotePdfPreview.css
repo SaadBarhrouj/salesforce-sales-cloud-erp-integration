@@ -1,0 +1,31 @@
+.modal-wrapper {
+    display: flex;
+    flex-direction: column;
+    height: 80vh;
+    min-height: 500px;
+}
+
+.spinner-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 80vh;
+    min-height: 500px;
+}
+
+.pdf-iframe {
+    flex: 1;
+    width: 100%;
+    border: none;
+    min-height: 0;
+}
+
+.footer-bar {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    border-top: 1px solid #e5e5e5;
+    background-color: #f3f3f3;
+    flex-shrink: 0;
+}

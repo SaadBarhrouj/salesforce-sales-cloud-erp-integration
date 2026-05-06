@@ -73,8 +73,10 @@ target/
 # Ignore local custom skills
 .github/
 .opencode/
+.claude/
 opencode.json
 AGENTS.md
+claude.md
 
 rapportPFE/
 

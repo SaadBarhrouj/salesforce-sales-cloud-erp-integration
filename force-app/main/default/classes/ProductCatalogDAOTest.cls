@@ -108,7 +108,6 @@ private class ProductCatalogDAOTest {
     @IsTest
     static void getByIdSingleRecordLimit() {
         ProductCatalog cat1 = TestDataFactory.createProductCatalog('First', true);
-        ProductCatalog cat2 = TestDataFactory.createProductCatalog('Second', true);
 
         Test.startTest();
         ProductCatalog result = ProductCatalogDAO.getById(cat1.Id);

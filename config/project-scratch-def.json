@@ -1,6 +1,6 @@
 {
   "orgName": "Sales Cloud ERP CI Scratch Org",
-  "edition": "developer",
+  "edition": "Developer",
   "features": [
     "EnableSetPasswordInApi",
     "ProductCatalogManagementAddOn"
@@ -9,8 +9,8 @@
     "lightningExperienceSettings": {
       "enableS1DesktopEnabled": true
     },
-    "mobileSettings": {
-      "enableS1EncryptedStoragePref2": false
+    "quoteSettings": {
+      "enableQuote": true
     }
   }
 }
