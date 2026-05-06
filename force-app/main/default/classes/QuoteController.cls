@@ -3,20 +3,28 @@
  * Exposes the QuotePDFData assembled by QuoteService to the VF page.
  * Uses the Quote standard controller as the primary record context.
  */
-public with sharing class QuotePDFController {
+public with sharing class QuoteController {
 
     private final Quote quote;
+    /** @description The PDF data assembled by QuoteService for the VF page. */
     public QuoteService.QuotePDFData pdfData { get; private set; }
+    /** @description Whether the quote has line items. */
     public Boolean hasLineItems { get; private set; }
+    /** @description Whether the quote has trips. */
     public Boolean hasTrips { get; private set; }
+    /** @description Whether the quote has volume pricing. */
     public Boolean hasVolumePricing { get; private set; }
+    /** @description Whether the quote has transport. */
     public Boolean hasTransport { get; private set; }
+    /** @description Test hook to bypass getContentAsPDF in test context. */
+    @TestVisible
+    private static Blob mockPdfBlob = null;
 
     /**
      * @description Constructor accepting the standard controller.
      * @param controller The Quote standard controller.
      */
-    public QuotePDFController(ApexPages.StandardController controller) {
+    public QuoteController(ApexPages.StandardController controller) {
         this.quote = (Quote) controller.getRecord();
         loadData();
     }
@@ -32,7 +40,7 @@ public with sharing class QuotePDFController {
             hasVolumePricing = pdfData.hasVolumePricing;
             hasTransport = pdfData.hasTransport;
         } catch (Exception e) {
-            System.debug(LoggingLevel.ERROR, 'QuotePDFController failed: ' + e.getMessage());
+            System.debug(LoggingLevel.ERROR, 'QuoteController failed: ' + e.getMessage());
             ApexPages.addMessage(new ApexPages.Message(
                 ApexPages.Severity.ERROR, 'Failed to generate quote PDF: ' + e.getMessage()
             ));
@@ -91,6 +99,7 @@ public with sharing class QuotePDFController {
 
     /**
      * @description Gets the Quote Number for the header.
+     * @return The quote number string.
      */
     public String getQuoteNumber() {
         return pdfData?.quote?.QuoteNumber;
@@ -98,6 +107,7 @@ public with sharing class QuotePDFController {
 
     /**
      * @description Gets the formatted expiration date.
+     * @return The formatted expiration date string.
      */
     public String getExpirationDateFormatted() {
         if (pdfData?.quote?.ExpirationDate == null) {
@@ -108,6 +118,7 @@ public with sharing class QuotePDFController {
 
     /**
      * @description Gets the Account Name.
+     * @return The account name string.
      */
     public String getAccountName() {
         return pdfData?.quote?.Account?.Name;
@@ -115,6 +126,7 @@ public with sharing class QuotePDFController {
 
     /**
      * @description Gets the Contact Name.
+     * @return The contact name string.
      */
     public String getContactName() {
         return pdfData?.quote?.Contact?.Name;
@@ -122,6 +134,7 @@ public with sharing class QuotePDFController {
 
     /**
      * @description Gets the Contact Email.
+     * @return The contact email string.
      */
     public String getContactEmail() {
         return pdfData?.quote?.Contact?.Email;
@@ -129,6 +142,7 @@ public with sharing class QuotePDFController {
 
     /**
      * @description Gets the Contact Phone.
+     * @return The contact phone string.
      */
     public String getContactPhone() {
         return pdfData?.quote?.Contact?.Phone;
@@ -136,6 +150,7 @@ public with sharing class QuotePDFController {
 
     /**
      * @description Gets the Account Phone.
+     * @return The account phone string.
      */
     public String getAccountPhone() {
         return pdfData?.quote?.Account?.Phone;
@@ -143,6 +158,7 @@ public with sharing class QuotePDFController {
 
     /**
      * @description Gets formatted line items subtotal.
+     * @return The formatted subtotal string.
      */
     public String getLineItemsSubtotal() {
         return formatCurrency(pdfData?.lineItemsSubtotal);
@@ -150,6 +166,7 @@ public with sharing class QuotePDFController {
 
     /**
      * @description Gets formatted transport total.
+     * @return The formatted transport total string.
      */
     public String getTransportTotal() {
         return formatCurrency(pdfData?.transportTotal);
@@ -157,6 +174,7 @@ public with sharing class QuotePDFController {
 
     /**
      * @description Gets formatted grand total.
+     * @return The formatted grand total string.
      */
     public String getGrandTotal() {
         return formatCurrency(pdfData?.grandTotal);
@@ -164,8 +182,43 @@ public with sharing class QuotePDFController {
 
     /**
      * @description Returns whether the transport section should be displayed.
+     * @return True if transport section should be shown.
      */
     public Boolean getShowTransportSection() {
         return hasTransport && hasTrips;
+    }
+
+    // ── @AuraEnabled methods for the Quote PDF Preview LWC Quick Action ──
+
+    /**
+     * @description Generates the PDF and saves it as a QuoteDocument on the Quote.
+     * Callout (getContentAsPDF) runs before DML (insert), so synchronous is safe.
+     * The QuoteDocument Name is auto-generated by Salesforce (includes version).
+     * @param quoteId The ID of the Quote to save the PDF for.
+     * @return The auto-generated name of the created QuoteDocument.
+     */
+    @AuraEnabled
+    public static String savePDF(String quoteId) {
+        if (quoteId == null) {
+            throw new QuoteException('Quote ID is required.');
+        }
+
+        if ([SELECT COUNT() FROM Quote WHERE Id = :quoteId] == 0) {
+            throw new QuoteException('Quote not found.');
+        }
+
+        PageReference pdfPage = Page.QuotePDF;
+        pdfPage.getParameters().put('id', quoteId);
+        Blob pdfBlob = mockPdfBlob != null ? mockPdfBlob : pdfPage.getContentAsPDF();
+
+        QuoteDocument qd = new QuoteDocument();
+        qd.QuoteId = quoteId;
+        qd.Document = pdfBlob;
+        insert qd;
+
+        QuoteDocument inserted = [
+            SELECT Name FROM QuoteDocument WHERE Id = :qd.Id
+        ];
+        return inserted.Name;
     }
 }

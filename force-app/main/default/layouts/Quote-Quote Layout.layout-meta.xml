@@ -313,12 +313,12 @@
             <sortOrder>27</sortOrder>
         </platformActionListItems>
         <platformActionListItems>
-            <actionName>Generate_PDF</actionName>
-            <actionType>CustomButton</actionType>
+            <actionName>Quote.SendEmail</actionName>
+            <actionType>QuickAction</actionType>
             <sortOrder>28</sortOrder>
         </platformActionListItems>
         <platformActionListItems>
-            <actionName>Quote.SendEmail</actionName>
+            <actionName>Quote.Generate_PDF</actionName>
             <actionType>QuickAction</actionType>
             <sortOrder>29</sortOrder>
         </platformActionListItems>

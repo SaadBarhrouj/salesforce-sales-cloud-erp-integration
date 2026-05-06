@@ -1,4 +1,4 @@
-<apex:page standardController="Quote" extensions="QuotePDFController" 
+<apex:page standardController="Quote" extensions="QuoteController" 
     renderAs="pdf" applyBodyTag="false" applyHtmlTag="false" showHeader="false" sidebar="false">
 
     <head>

@@ -6,88 +6,93 @@ public inherited sharing class QuoteService {
 
     /** Wrapper holding all data required to render the Quote PDF. */
     public class QuotePDFData {
-        /** @return the Quote record with related Account, Contact, and Opportunity. */
+        /** @description The Quote record with related Account, Contact, and Opportunity. */
         public Quote quote { get; set; }
-        /** @return the list of line item rows for the PDF. */
+        /** @description The list of line item rows for the PDF. */
         public List<LineItemRow> lineItems { get; set; }
-        /** @return the subtotal of all line items. */
+        /** @description The subtotal of all line items. */
         public Decimal lineItemsSubtotal { get; set; }
-        /** @return the list of trip rows for transport costs. */
+        /** @description The list of trip rows for transport costs. */
         public List<TripRow> trips { get; set; }
-        /** @return the total transport cost. */
+        /** @description The total transport cost. */
         public Decimal transportTotal { get; set; }
-        /** @return the grand total (line items + transport). */
+        /** @description The grand total (line items + transport). */
         public Decimal grandTotal { get; set; }
-        /** @return whether transport is required for this quote. */
+        /** @description Whether transport is required for this quote. */
         public Boolean hasTransport { get; set; }
-        /** @return whether any line item has volume pricing. */
+        /** @description Whether any line item has volume pricing. */
         public Boolean hasVolumePricing { get; set; }
     }
 
     /** Wrapper representing a single line item row in the PDF. */
     public class LineItemRow {
-        /** @return the line number on the quote. */
+        /** @description The line number on the quote. */
         public Integer lineNumber { get; set; }
-        /** @return the product name. */
+        /** @description The product name. */
         public String productName { get; set; }
-        /** @return the product family. */
+        /** @description The product family. */
         public String productFamily { get; set; }
-        /** @return the quantity ordered. */
+        /** @description The quantity ordered. */
         public Decimal quantity { get; set; }
-        /** @return the unit price. */
+        /** @description The unit price. */
         public Decimal unitPrice { get; set; }
-        /** @return the discount percentage. */
+        /** @description The discount percentage. */
         public Decimal discount { get; set; }
-        /** @return the total price for this line. */
+        /** @description The total price for this line. */
         public Decimal totalPrice { get; set; }
-        /** @return whether this item is a bundle. */
+        /** @description Whether this item is a bundle. */
         public Boolean isBundle { get; set; }
-        /** @return the rental start date. */
+        /** @description The rental start date. */
         public Date rentalStartDate { get; set; }
-        /** @return the rental end date. */
+        /** @description The rental end date. */
         public Date rentalEndDate { get; set; }
-        /** @return the Product2 ID. */
+        /** @description The Product2 ID. */
         public Id product2Id { get; set; }
-        /** @return the volume pricing tiers for this product. */
+        /** @description The volume pricing tiers for this product. */
         public List<VolumePricingRow> volumePricingTiers { get; set; }
     }
 
     /** Wrapper representing a volume pricing schedule row. */
     public class VolumePricingRow {
-        /** @return the product name. */
+        /** @description The product name. */
         public String productName { get; set; }
-        /** @return the pricing type (e.g. Tiered, Flat). */
+        /** @description The pricing type (e.g. Tiered, Flat). */
         public String pricingType { get; set; }
-        /** @return the overage rate. */
+        /** @description The overage rate. */
         public Decimal overageRate { get; set; }
-        /** @return the list of pricing tiers. */
+        /** @description The list of pricing tiers. */
         public List<VolumePricingTierRow> tiers { get; set; }
     }
 
     /** Wrapper representing a single volume pricing tier. */
     public class VolumePricingTierRow {
-        /** @return the lower bound quantity. */
+        /** @description The lower bound quantity. */
         public Decimal lowerBound { get; set; }
-        /** @return the upper bound quantity. */
+        /** @description The upper bound quantity. */
         public Decimal upperBound { get; set; }
-        /** @return the price for this tier. */
+        /** @description The price for this tier. */
         public Decimal price { get; set; }
     }
 
     /** Wrapper representing a trip row for transport costs. */
     public class TripRow {
-        /** @return the trip direction. */
+        /** @description The trip direction. */
         public String direction { get; set; }
-        /** @return the distance in kilometers. */
+        /** @description The distance in kilometers. */
         public Decimal distanceKm { get; set; }
-        /** @return the total weight in kilograms. */
+        /** @description The total weight in kilograms. */
         public Decimal totalWeightKg { get; set; }
-        /** @return the truck type. */
+        /** @description The truck type. */
         public String truckType { get; set; }
-        /** @return the final price for this trip. */
+        /** @description The final price for this trip. */
         public Decimal finalPrice { get; set; }
     }
 
+    /**
+     * @description Builds all data required for the Quote PDF.
+     * @param quoteId The ID of the Quote to build data for.
+     * @return QuotePDFData containing all PDF rendering data.
+     */
     public static QuotePDFData buildQuotePDFData(Id quoteId) {
         if (quoteId == null) {
             throw new QuoteException('Quote ID is required.');
@@ -108,10 +113,25 @@ public inherited sharing class QuoteService {
             productIds.add(qli.Product2Id);
         }
 
-        Map<Id, Product2> productMap = Product2DAO.getByIds(productIds);
-
         Id pricebookId = quote.Opportunity != null
             ? quote.Opportunity.Pricebook2Id : null;
+
+        Map<Id, Volume_Pricing_Schedule__c> scheduleByProduct = new Map<Id, Volume_Pricing_Schedule__c>();
+        for (Volume_Pricing_Schedule__c schedule : [
+            SELECT Id, Product__c, Pricing_Type__c, Overage_Rate__c,
+                (SELECT Id, Lower_Bound__c, Upper_Bound__c, Price__c, Sort_Order__c
+                 FROM Volume_Pricing_Tiers__r
+                 ORDER BY Sort_Order__c ASC)
+            FROM Volume_Pricing_Schedule__c
+            WHERE Product__c IN :productIds
+            AND Is_Active__c = true
+            AND (Pricebook__c = :pricebookId OR Pricebook__c = null)
+            ORDER BY Pricebook__c DESC NULLS LAST
+        ]) {
+            if (!scheduleByProduct.containsKey(schedule.Product__c)) {
+                scheduleByProduct.put(schedule.Product__c, schedule);
+            }
+        }
 
         List<LineItemRow> rows = new List<LineItemRow>();
         Decimal subtotal = 0;
@@ -137,22 +157,10 @@ public inherited sharing class QuoteService {
                 subtotal += row.totalPrice;
             }
 
-            List<Volume_Pricing_Schedule__c> schedules = [
-                SELECT Id, Product__c, Pricing_Type__c, Overage_Rate__c,
-                    (SELECT Id, Lower_Bound__c, Upper_Bound__c, Price__c, Sort_Order__c
-                     FROM Volume_Pricing_Tiers__r
-                     ORDER BY Sort_Order__c ASC)
-                FROM Volume_Pricing_Schedule__c
-                WHERE Product__c = :qli.Product2Id
-                AND Is_Active__c = true
-                AND (Pricebook__c = :pricebookId OR Pricebook__c = null)
-                ORDER BY Pricebook__c DESC NULLS LAST
-                LIMIT 1
-            ];
+            Volume_Pricing_Schedule__c schedule = scheduleByProduct.get(qli.Product2Id);
 
-            if (!schedules.isEmpty()) {
+            if (schedule != null) {
                 hasAnyVolumePricing = true;
-                Volume_Pricing_Schedule__c schedule = schedules[0];
                 VolumePricingRow vpRow = new VolumePricingRow();
                 vpRow.productName = qli.Product2.Name;
                 vpRow.pricingType = schedule.Pricing_Type__c;

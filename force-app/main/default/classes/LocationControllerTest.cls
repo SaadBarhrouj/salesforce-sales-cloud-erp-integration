@@ -44,8 +44,6 @@ private class LocationControllerTest {
 
     @IsTest
     static void getLocationsByAccountThrowsAuraHandledExceptionOnError() {
-        Account acc = TestDataFactory.createAccount(true);
-        
         Test.startTest();
         try {
             LocationController.getLocationsByAccount('invalid-id');

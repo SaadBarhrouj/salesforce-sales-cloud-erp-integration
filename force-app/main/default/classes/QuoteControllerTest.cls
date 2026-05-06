@@ -1,9 +1,9 @@
 /**
- * @description Test class for QuotePDFController, QuoteService, and QuoteDAO.
+ * @description Test class for QuoteController, QuoteService, and QuoteDAO.
  * Covers quote PDF data assembly, empty states, transport, and formatting.
  */
 @IsTest
-private class QuotePDFControllerTest {
+private class QuoteControllerTest {
 
     private static Pricebook2 createTestPricebook() {
         Pricebook2 pb = new Pricebook2(
@@ -102,7 +102,7 @@ private class QuotePDFControllerTest {
         Test.setCurrentPage(pageRef);
 
         ApexPages.StandardController sc = new ApexPages.StandardController(q);
-        QuotePDFController ctrl = new QuotePDFController(sc);
+        QuoteController ctrl = new QuoteController(sc);
 
         System.assertNotEquals(null, ctrl.pdfData, 'PDF data should not be null');
         System.assert(ctrl.hasLineItems, 'Should have line items');
@@ -131,7 +131,7 @@ private class QuotePDFControllerTest {
         Test.setCurrentPage(pageRef);
 
         ApexPages.StandardController sc = new ApexPages.StandardController(q);
-        QuotePDFController ctrl = new QuotePDFController(sc);
+        QuoteController ctrl = new QuoteController(sc);
 
         System.assertNotEquals(null, ctrl.pdfData, 'PDF data should not be null');
         System.assertEquals(false, ctrl.hasLineItems, 'Should not have line items');
@@ -152,7 +152,7 @@ private class QuotePDFControllerTest {
 
         Test.startTest();
         ApexPages.StandardController sc = new ApexPages.StandardController(q);
-        QuotePDFController ctrl = new QuotePDFController(sc);
+        QuoteController ctrl = new QuoteController(sc);
 
         System.assertEquals('$1,234.56', ctrl.formatCurrency(1234.56), 'Currency format incorrect');
         System.assertEquals('$0.00', ctrl.formatCurrency(null), 'Null currency should be $0.00');
@@ -189,10 +189,79 @@ private class QuotePDFControllerTest {
     static void testQuoteServiceInvalidId() {
         Boolean caught = false;
         try {
-            QuoteService.buildQuotePDFData('0Q0xx0000000001');
+            QuoteService.buildQuotePDFData(Quote.SObjectType.getDescribe().getKeyPrefix() + '000000000000');
         } catch (Exception e) {
             caught = true;
         }
         System.assert(caught, 'Should have thrown exception for invalid ID');
+    }
+
+    /**
+     * @description Tests that savePDF creates a QuoteDocument and returns its name.
+     */
+    @IsTest
+    static void testSavePDF() {
+        Pricebook2 pb = createTestPricebook();
+        Product2 prod = createTestProduct('D');
+        createTestEntry(pb.Id, prod.Id);
+        Opportunity opp = createTestOpportunity(pb.Id);
+        Quote q = createTestQuote(opp.Id, pb.Id);
+
+        QuoteController.mockPdfBlob = Blob.valueOf('Test PDF Content');
+        Test.startTest();
+        String savedName = QuoteController.savePDF(q.Id);
+        Test.stopTest();
+
+        System.assertNotEquals(null, savedName, 'Returned name should not be null');
+        System.assert(savedName.contains('.pdf'), 'Name should contain .pdf, got: ' + savedName);
+
+        List<QuoteDocument> docs = [
+            SELECT Id, Name, QuoteId, Document
+            FROM QuoteDocument
+            WHERE QuoteId = :q.Id
+        ];
+        System.assertEquals(1, docs.size(), 'Should have created one QuoteDocument');
+        System.assertEquals(savedName, docs[0].Name, 'Returned name should match stored name');
+        System.assertNotEquals(null, docs[0].Document, 'Document blob should not be null');
+    }
+
+    /**
+     * @description Tests that sequential saves produce distinct QuoteDocuments.
+     */
+    @IsTest
+    static void testSavePDFMultiple() {
+        Pricebook2 pb = createTestPricebook();
+        Product2 prod = createTestProduct('E');
+        createTestEntry(pb.Id, prod.Id);
+        Opportunity opp = createTestOpportunity(pb.Id);
+        Quote q = createTestQuote(opp.Id, pb.Id);
+
+        QuoteController.mockPdfBlob = Blob.valueOf('Test PDF Content');
+        Test.startTest();
+        QuoteController.savePDF(q.Id);
+        QuoteController.savePDF(q.Id);
+        Test.stopTest();
+
+        List<QuoteDocument> docs = [
+            SELECT Id, Name
+            FROM QuoteDocument
+            WHERE QuoteId = :q.Id
+        ];
+        System.assertEquals(2, docs.size(), 'Should have created two QuoteDocuments');
+    }
+
+    /**
+     * @description Tests that savePDF throws exception for null quote ID.
+     */
+    @IsTest
+    static void testSavePDFNullId() {
+        Boolean caught = false;
+        try {
+            QuoteController.savePDF(null);
+        } catch (QuoteException e) {
+            caught = true;
+            System.assert(e.getMessage().contains('required'), 'Message should mention required');
+        }
+        System.assert(caught, 'Should have thrown QuoteException');
     }
 }
