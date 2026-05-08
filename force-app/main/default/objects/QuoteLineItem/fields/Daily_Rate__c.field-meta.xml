@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Daily_Rate__c</fullName>
+    <description>Snapshot of the per-day catalog price at save time for rental lines. Standard UnitPrice on this record is the period-prorated price (Daily_Rate × Rental_Days). This field preserves the raw daily rate for reporting.</description>
+    <inlineHelpText>Per-day list price snapshot. UnitPrice represents the prorated full-period unit price.</inlineHelpText>
+    <label>Daily Rate</label>
+    <precision>16</precision>
+    <required>false</required>
+    <scale>2</scale>
+    <trackHistory>false</trackHistory>
+    <type>Currency</type>
+</CustomField>

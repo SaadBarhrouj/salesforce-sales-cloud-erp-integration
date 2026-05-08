@@ -33,7 +33,7 @@ public inherited sharing class QuoteDAO {
 
     /**
      * @description Retrieves all QuoteLineItems for a Quote with Product2 name
-     * and the related OpportunityLineItem rental date fields.
+     * and the related OpportunityLineItem service date fields.
      * @param quoteId The Quote ID.
      * @return List of QuoteLineItem records.
      */
@@ -45,9 +45,8 @@ public inherited sharing class QuoteDAO {
             SELECT Id, QuoteId, Product2Id, Product2.Name, Product2.Family,
                    Quantity, UnitPrice, ListPrice, Discount, TotalPrice,
                    LineNumber, Description, Is_Bundle__c,
-                   OpportunityLineItemId,
-                   OpportunityLineItem.Rental_Start_Date__c,
-                   OpportunityLineItem.Rental_End_Date__c
+                   Service_Start_Date__c, Service_End_Date__c,
+                   Daily_Rate__c, Service_Days__c
             FROM QuoteLineItem
             WHERE QuoteId = :quoteId
             ORDER BY LineNumber ASC, Id ASC

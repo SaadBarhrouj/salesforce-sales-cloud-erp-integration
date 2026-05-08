@@ -42,12 +42,16 @@ public inherited sharing class QuoteService {
         public Decimal totalPrice { get; set; }
         /** @description Whether this item is a bundle. */
         public Boolean isBundle { get; set; }
-        /** @description The rental start date. */
-        public Date rentalStartDate { get; set; }
-        /** @description The rental end date. */
-        public Date rentalEndDate { get; set; }
+        /** @description The service start date. */
+        public Date serviceStartDate { get; set; }
+        /** @description The service end date. */
+        public Date serviceEndDate { get; set; }
         /** @description The Product2 ID. */
         public Id product2Id { get; set; }
+        /** @description Snapshot of the per-day catalog price for service lines. */
+        public Decimal dailyRate { get; set; }
+        /** @description Inclusive day count for the service period. */
+        public Integer serviceDays { get; set; }
         /** @description The volume pricing tiers for this product. */
         public List<VolumePricingRow> volumePricingTiers { get; set; }
     }
@@ -148,10 +152,10 @@ public inherited sharing class QuoteService {
             row.totalPrice = qli.TotalPrice;
             row.isBundle = qli.Is_Bundle__c;
             row.product2Id = qli.Product2Id;
-            row.rentalStartDate = qli.OpportunityLineItem != null
-                ? qli.OpportunityLineItem.Rental_Start_Date__c : null;
-            row.rentalEndDate = qli.OpportunityLineItem != null
-                ? qli.OpportunityLineItem.Rental_End_Date__c : null;
+            row.serviceStartDate = qli.Service_Start_Date__c;
+            row.serviceEndDate = qli.Service_End_Date__c;
+            row.dailyRate = qli.Daily_Rate__c;
+            row.serviceDays = (qli.Service_Days__c != null) ? Integer.valueOf(qli.Service_Days__c) : null;
 
             if (row.totalPrice != null) {
                 subtotal += row.totalPrice;

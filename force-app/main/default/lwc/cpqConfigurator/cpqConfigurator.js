@@ -1,6 +1,7 @@
 import { LightningElement, api, track, wire } from "lwc";
 import { NavigationMixin } from "lightning/navigation";
 import { getRecord, getFieldValue } from "lightning/uiRecordApi";
+import VOLUME_PRICING_CATALOG_NAMES from "@salesforce/label/c.Volume_Pricing_Catalog_Names";
 import OPP_NAME from "@salesforce/schema/Opportunity.Name";
 import OPP_ACCOUNT_ID from "@salesforce/schema/Opportunity.AccountId";
 import OPP_ACCOUNT_NAME from "@salesforce/schema/Opportunity.Account.Name";
@@ -183,7 +184,6 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
     urgency: "",
     notes: ""
   };
-
   @track bundleConfigCache = {};
 
   @track isSaving = false;
@@ -243,6 +243,15 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
       return getFieldValue(this.opportunityRecord.data, OPP_OFFER_TYPE) || "";
     }
     return "";
+  }
+
+  get isVolumeOffer() {
+    if (!this.opportunityRecord?.data) return false;
+    const name = String(getFieldValue(this.opportunityRecord.data, OPP_OFFER_TYPE_NAME) || "").toLowerCase();
+    if (!name || !VOLUME_PRICING_CATALOG_NAMES) return false;
+    return VOLUME_PRICING_CATALOG_NAMES
+      .split(",")
+      .some(token => token.trim().toLowerCase() === name);
   }
 
   /* -- header -- */
@@ -839,6 +848,12 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
         products[idx].netUnitPrice = lineItem.netUnitPrice;
         products[idx].netTotal = lineItem.netTotal;
         products[idx]._formattedTotal = formatCurrency(lineItem.netTotal);
+        // Persist service-period fields the line editor cascaded into the row.
+        // Without this, the dates the rep set in the line editor are dropped on
+        // the round-trip and Apex rejects the save with "Each service line must..."
+        products[idx].serviceStartDate = lineItem.serviceStartDate || null;
+        products[idx].serviceEndDate = lineItem.serviceEndDate || null;
+        products[idx].dailyRate = lineItem.dailyRate ?? products[idx].dailyRate;
         if (lineItem.configuredOptions && lineItem.configuredOptions.length > 0) {
           products[idx].configuredOptions = lineItem.configuredOptions;
         }
@@ -946,15 +961,21 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
       product2Id: product.productId,
       productName: product.productName,
       quantity: product.quantity || 1,
-      unitPrice: product.listUnitPrice || product.unitPrice || 0,
+      unitPrice: this.isVolumeOffer
+        ? (product.dailyRate ?? product.listUnitPrice ?? product.unitPrice ?? 0)
+        : (product.listUnitPrice || product.unitPrice || 0),
       discountPercent: product.additionalDiscount || 0,
       isBundle: product.isBundle || false,
       bundleGroup: product.isBundle ? product.productId : null,
+      serviceStartDate: this.isVolumeOffer ? (product.serviceStartDate || null) : null,
+      serviceEndDate: this.isVolumeOffer ? (product.serviceEndDate || null) : null,
       options: (product.configuredOptions || []).map((opt) => ({
         product2Id: opt.productId || opt.Id,
         productName: opt.productName,
         quantity: opt.quantity || 1,
-        unitPrice: opt.listUnitPrice || opt.unitPrice || 0,
+        unitPrice: this.isVolumeOffer
+          ? (opt.dailyRate ?? opt.listUnitPrice ?? opt.unitPrice ?? 0)
+          : (opt.listUnitPrice || opt.unitPrice || 0),
         discountPercent: opt.additionalDiscount || opt.discountPercent || 0
       }))
     }));

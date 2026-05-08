@@ -63,9 +63,14 @@ public inherited sharing class OpportunityService {
                 throw new OpportunityException('Opportunity must have a Pricebook assigned.');
             }
 
+            Boolean isVolume = isVolumeOffer(opportunity.Offer_Type__c);
+            if (isVolume) {
+                validateServiceLines(lineItemData);
+            }
+
             Map<Id, PricebookEntry> entryByProductId = resolvePricebookEntries(lineItemData, pricebookId);
 
-            List<OpportunityLineItem> lineItems = buildLineItems(opportunityId, lineItemData, entryByProductId);
+            List<OpportunityLineItem> lineItems = buildLineItems(opportunityId, lineItemData, entryByProductId, isVolume);
 
             OpportunityLineItemDAO.deleteByOpportunityId(opportunityId);
             OpportunityLineItemDAO.insertLineItems(lineItems);
@@ -82,6 +87,53 @@ public inherited sharing class OpportunityService {
         } catch (TripException e) {
             System.debug(LoggingLevel.ERROR, 'OpportunityService.saveOpportunityWithLines failed: ' + e.getMessage());
             throw new OpportunityException('Error saving trips: ' + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * @description Returns true if the given Offer Type's catalog name is in
+     * Volume_Pricing_Catalog_Names. Volume catalogs use day-bracketed tiers and
+     * therefore require service dates and prorated UnitPrice persistence.
+     * @param offerTypeId Opportunity.Offer_Type__c (ProductCatalog Id).
+     * @return Whether this offer drives day-bracketed Volume Pricing.
+     */
+    private static Boolean isVolumeOffer(Id offerTypeId) {
+        if (offerTypeId == null) {
+            return false;
+        }
+        ProductCatalog catalog = ProductCatalogDAO.getById(offerTypeId);
+        if (catalog == null) {
+            return false;
+        }
+        String csv = Label.Volume_Pricing_Catalog_Names;
+        if (String.isBlank(csv)) {
+            return false;
+        }
+        for (String token : csv.split(',')) {
+            if (token.trim().equalsIgnoreCase(catalog.Name)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * @description Validates that every line carries a complete service window.
+     * Dates are set per line by the line editor (the header in the configurator
+     * is a UI-only default that cascades into each line before save).
+     * @param lineItemData Line items; each must have serviceStartDate <= serviceEndDate.
+     * @throws OpportunityException if any line lacks dates or has end before start.
+     */
+    private static void validateServiceLines(List<Map<String, Object>> lineItemData) {
+        for (Map<String, Object> item : lineItemData) {
+            Date lineStart = toDate(item.get('serviceStartDate'));
+            Date lineEnd = toDate(item.get('serviceEndDate'));
+            if (lineStart == null || lineEnd == null) {
+                throw new OpportunityException('Each service line must have both Start and End dates.');
+            }
+            if (lineEnd < lineStart) {
+                throw new OpportunityException('Service End Date must be on or after Start Date on every line.');
+            }
         }
     }
 
@@ -182,12 +234,14 @@ public inherited sharing class OpportunityService {
      * @param opportunityId      The Opportunity ID to associate line items with.
      * @param lineItemData        Line item payloads from the CPQ configurator.
      * @param entryByProductId    Map of Product2Id to PricebookEntry for price lookups.
+     * @param isVolume            Whether the active Offer Type uses day-bracketed Volume Pricing.
      * @return List of OpportunityLineItem records ready for insert.
      */
     private static List<OpportunityLineItem> buildLineItems(
         Id opportunityId,
         List<Map<String, Object>> lineItemData,
-        Map<Id, PricebookEntry> entryByProductId
+        Map<Id, PricebookEntry> entryByProductId,
+        Boolean isVolume
     ) {
         List<OpportunityLineItem> items = new List<OpportunityLineItem>();
 
@@ -197,7 +251,7 @@ public inherited sharing class OpportunityService {
             String bundleGroup = (String) itemData.get('bundleGroup');
 
             OpportunityLineItem parentItem = buildSingleLineItem(
-                opportunityId, product2Id, itemData, entryByProductId
+                opportunityId, product2Id, itemData, entryByProductId, isVolume
             );
             if (parentItem == null) {
                 continue;
@@ -217,10 +271,15 @@ public inherited sharing class OpportunityService {
                     if (optData == null) {
                         continue;
                     }
+                    if (isVolume) {
+                        // Bundle options inherit the parent line's service window.
+                        optData.put('serviceStartDate', itemData.get('serviceStartDate'));
+                        optData.put('serviceEndDate', itemData.get('serviceEndDate'));
+                    }
                     Id optProduct2Id = toId(optData.get('product2Id'));
 
                     OpportunityLineItem childItem = buildSingleLineItem(
-                        opportunityId, optProduct2Id, optData, entryByProductId
+                        opportunityId, optProduct2Id, optData, entryByProductId, isVolume
                     );
                     if (childItem == null) {
                         continue;
@@ -241,13 +300,15 @@ public inherited sharing class OpportunityService {
      * @param product2Id          The Product2 ID for this line item.
      * @param data                The payload map containing quantity, unitPrice, discountPercent.
      * @param entryByProductId    Map of Product2Id to PricebookEntry.
+     * @param isVolume            Whether the active Offer Type uses day-bracketed Volume Pricing.
      * @return A populated OpportunityLineItem SObject (not yet inserted).
      */
     private static OpportunityLineItem buildSingleLineItem(
         Id opportunityId,
         Id product2Id,
         Map<String, Object> data,
-        Map<Id, PricebookEntry> entryByProductId
+        Map<Id, PricebookEntry> entryByProductId,
+        Boolean isVolume
     ) {
         PricebookEntry entry = entryByProductId.get(product2Id);
 
@@ -255,9 +316,22 @@ public inherited sharing class OpportunityService {
         item.OpportunityId = opportunityId;
         item.PricebookEntryId = entry.Id;
         item.Quantity = toInteger(data.get('quantity'));
-        item.UnitPrice = toDecimal(data.get('unitPrice'));
         item.Discount = toDecimal(data.get('discountPercent'));
 
+        Decimal rawUnitPrice = toDecimal(data.get('unitPrice'));
+
+        if (isVolume) {
+            Date sd = toDate(data.get('serviceStartDate'));
+            Date ed = toDate(data.get('serviceEndDate'));
+            Integer days = sd.daysBetween(ed) + 1;
+            Decimal dailyRate = rawUnitPrice;
+            item.UnitPrice = (dailyRate * days).setScale(2);
+            item.Daily_Rate__c = dailyRate;
+            item.Service_Start_Date__c = sd;
+            item.Service_End_Date__c = ed;
+        } else {
+            item.UnitPrice = rawUnitPrice;
+        }
         return item;
     }
 
@@ -433,6 +507,25 @@ public inherited sharing class OpportunityService {
             return Decimal.valueOf(String.valueOf(value));
         } catch (Exception e) {
             return 0;
+        }
+    }
+
+    /**
+     * @description Converts an Object value to a Date.
+     * @param value The value to convert (Date instance or ISO date string).
+     * @return The Date value, or null on failure.
+     */
+    private static Date toDate(Object value) {
+        if (value == null) {
+            return null;
+        }
+        if (value instanceof Date) {
+            return (Date) value;
+        }
+        try {
+            return Date.valueOf(String.valueOf(value));
+        } catch (Exception e) {
+            return null;
         }
     }
 }

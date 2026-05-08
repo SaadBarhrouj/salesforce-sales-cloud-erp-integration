@@ -4,7 +4,7 @@ import calculateLinePrices from '@salesforce/apex/PricebookController.calculateL
 
 const DEBOUNCE_DELAY = 500;
 
-const COLUMNS = [
+const BASE_COLUMNS = [
     { type: 'text', fieldName: 'productName', label: 'Product', isProduct: true },
     { type: 'text', fieldName: 'productCode', label: 'Code', isCode: true },
     { type: 'number', fieldName: 'quantity', label: 'Qty', editable: true, isQty: true },
@@ -12,6 +12,12 @@ const COLUMNS = [
     { type: 'number', fieldName: 'additionalDiscount', label: 'Disc. %', editable: true, isDiscount: true },
     { type: 'currency', fieldName: 'netUnitPrice', label: 'Net Price', isCurrency: true, isNetPrice: true },
     { type: 'currency', fieldName: 'netTotal', label: 'Total', isCurrency: true, isTotal: true }
+];
+
+const SERVICE_COLUMNS_INSERT = [
+    { type: 'date', fieldName: 'serviceStartDate', label: 'Start', editable: true, isStartDate: true },
+    { type: 'date', fieldName: 'serviceEndDate', label: 'End', editable: true, isEndDate: true },
+    { type: 'currency', fieldName: 'dailyRate', label: 'Daily Rate', isCurrency: true, isDailyRate: true }
 ];
 
 export default class CpqStepLineEditor extends LightningElement {
@@ -26,6 +32,24 @@ export default class CpqStepLineEditor extends LightningElement {
     _debounceTimer = null;
     _calculationSequence = 0;
     _initialPricingRequested = false;
+
+    _isVolumeOffer = false;
+    _headerStart = null;
+    _headerEnd = null;
+
+    @api
+    get isVolumeOffer() { return this._isVolumeOffer; }
+    set isVolumeOffer(v) {
+        this._isVolumeOffer = !!v;
+        this._cascadeHeaderToLines();
+    }
+
+    get serviceStartDate() { return this._headerStart; }
+    get serviceEndDate() { return this._headerEnd; }
+
+    get headerDays() {
+        return this._daysBetween(this._headerStart, this._headerEnd);
+    }
 
     @api
     get pricebookId() {
@@ -54,13 +78,20 @@ export default class CpqStepLineEditor extends LightningElement {
         this._selectedProducts = value || [];
         this._initialPricingRequested = false;
         this._prepareLineItems();
+        // After rebuilding lines, push header dates onto fresh lines so a rep
+        // who set the header before adding products doesn't have to retype.
+        this._cascadeHeaderToLines();
         this._scheduleInitialPricing();
     }
 
     // ─── GETTERS ────────────────────────────────────────────────────────────
 
     get columns() {
-        return COLUMNS;
+        if (!this._isVolumeOffer) return BASE_COLUMNS;
+        // Insert service-period columns between Qty and List Price for visual grouping.
+        const out = [...BASE_COLUMNS];
+        out.splice(3, 0, ...SERVICE_COLUMNS_INSERT);
+        return out;
     }
 
     get isEmpty() {
@@ -119,6 +150,7 @@ export default class CpqStepLineEditor extends LightningElement {
                 formattedListPrice: formatCurrency(Number.isFinite(row.listUnitPrice) ? row.listUnitPrice : 0),
                 formattedNetPrice: formatCurrency(Number.isFinite(row.netUnitPrice) ? row.netUnitPrice : 0),
                 formattedNetTotal: formatCurrency(Number.isFinite(row.netTotal) ? row.netTotal : 0),
+                formattedDailyRate: formatCurrency(Number.isFinite(row.dailyRate) ? row.dailyRate : 0),
                 
             });
         }
@@ -146,15 +178,20 @@ export default class CpqStepLineEditor extends LightningElement {
             _hasError: false,
             _errorMessage: '',
             _hasChildren: hasOptions,
+            _serviceOverridden: !!item._serviceOverridden,
             productId: item.productId,
             productCode: item.productCode,
             productName: item.productName,
             quantity: qty,
             listUnitPrice: listPrice,
+            dailyRate: Number(item.dailyRate) || listPrice,
             additionalDiscount: discount,
             netUnitPrice: netPrice,
             netTotal: total,
-            isBundle: item.isBundle
+            isBundle: item.isBundle,
+            serviceStartDate: item.serviceStartDate || null,
+            serviceEndDate: item.serviceEndDate || null,
+            serviceDays: this._daysBetween(item.serviceStartDate, item.serviceEndDate)
         };
     }
 
@@ -171,15 +208,20 @@ export default class CpqStepLineEditor extends LightningElement {
             _isOption: true,
             _hasError: false,
             _errorMessage: '',
+            _serviceOverridden: false,
             productId: opt.productId || opt.Id,
             optionId: opt.Id,
             productCode: opt.productCode,
             productName: opt.productName,
             quantity: optQty,
             listUnitPrice: optListPrice,
+            dailyRate: Number(opt.dailyRate) || optListPrice,
             additionalDiscount: optDiscount,
             netUnitPrice: optNetPrice,
-            netTotal: optNetTotal
+            netTotal: optNetTotal,
+            serviceStartDate: opt.serviceStartDate || null,
+            serviceEndDate: opt.serviceEndDate || null,
+            serviceDays: this._daysBetween(opt.serviceStartDate, opt.serviceEndDate)
         };
     }
 
@@ -208,6 +250,41 @@ export default class CpqStepLineEditor extends LightningElement {
         }
         this.expandedRows = preservedExpand;
         this.isLoading = false;
+    }
+
+    // ─── RENTAL HELPERS ─────────────────────────────────────────────────────
+
+    _cascadeHeaderToLines() {
+        if (!this._isVolumeOffer) return;
+        if (!this.lineItems || !this.lineItems.length) return;
+        const days = this._daysBetween(this._headerStart, this._headerEnd);
+        this.lineItems = this.lineItems.map(row => {
+            if (row._serviceOverridden) return row;
+            return {
+                ...row,
+                serviceStartDate: this._headerStart,
+                serviceEndDate: this._headerEnd,
+                serviceDays: days
+            };
+        });
+        this._schedulePricingCalculation();
+    }
+
+    _daysBetween(s, e) {
+        if (!s || !e) return 0;
+        const sd = new Date(s);
+        const ed = new Date(e);
+        const ms = ed.getTime() - sd.getTime();
+        if (ms < 0) return 0;
+        return Math.floor(ms / (1000 * 60 * 60 * 24)) + 1; // inclusive
+    }
+
+    handleHeaderServiceChange(event) {
+        const field = event.target.dataset.field;
+        const value = event.target.value || null;
+        if (field === 'serviceStartDate') this._headerStart = value;
+        if (field === 'serviceEndDate') this._headerEnd = value;
+        this._cascadeHeaderToLines();
     }
 
     // ─── EVENTS / DOM ACTIONS ───────────────────────────────────────────────
@@ -295,12 +372,27 @@ export default class CpqStepLineEditor extends LightningElement {
             if (row._key !== itemKey) return row;
 
             const updatedRow = { ...row, [fieldName]: value };
-            if (fieldName === 'quantity' || fieldName === 'additionalDiscount') {
-                const listPrice = Number(updatedRow.listUnitPrice) || 0;
+            if (fieldName === 'serviceStartDate' || fieldName === 'serviceEndDate') {
+                updatedRow._serviceOverridden = true;
+                updatedRow.serviceDays = this._daysBetween(updatedRow.serviceStartDate, updatedRow.serviceEndDate);
+            }
+            const isPriceImpacting = fieldName === 'quantity'
+                || fieldName === 'additionalDiscount'
+                || fieldName === 'serviceStartDate'
+                || fieldName === 'serviceEndDate';
+            if (isPriceImpacting) {
+                const dailyRate = Number(updatedRow.dailyRate) || Number(updatedRow.listUnitPrice) || 0;
+                const days = this._isVolumeOffer ? Math.max(updatedRow.serviceDays || 0, 0) : 1;
+                const effectiveListPrice = this._isVolumeOffer
+                    ? dailyRate * days
+                    : (Number(updatedRow.listUnitPrice) || 0);
                 const discount = Number(updatedRow.additionalDiscount) || 0;
                 const qty = Number(updatedRow.quantity) || 1;
-                updatedRow.netUnitPrice = listPrice * (1 - discount / 100);
+                updatedRow.netUnitPrice = effectiveListPrice * (1 - discount / 100);
                 updatedRow.netTotal = updatedRow.netUnitPrice * qty;
+                if (this._isVolumeOffer) {
+                    updatedRow.listUnitPrice = effectiveListPrice;
+                }
             }
             return updatedRow;
         });
@@ -359,7 +451,9 @@ export default class CpqStepLineEditor extends LightningElement {
             pricingRequestItems.push({
                 productId: row.productId,
                 quantity: row.quantity,
-                discount: row.additionalDiscount
+                discount: row.additionalDiscount,
+                serviceStartDate: this._isVolumeOffer ? row.serviceStartDate : null,
+                serviceEndDate: this._isVolumeOffer ? row.serviceEndDate : null
             });
         }
 
@@ -389,6 +483,10 @@ export default class CpqStepLineEditor extends LightningElement {
                         rowToUpdate.listUnitPrice = result.listPrice;
                         rowToUpdate.netUnitPrice = result.netPrice;
                         rowToUpdate.netTotal = result.totalPrice;
+                        if (result.dailyRate != null) {
+                            rowToUpdate.dailyRate = result.dailyRate;
+                            rowToUpdate.serviceDays = result.serviceDays;
+                        }
                         rowToUpdate._hasError = false;
                         rowToUpdate._errorMessage = '';
                     } else {
@@ -433,9 +531,9 @@ export default class CpqStepLineEditor extends LightningElement {
         if (this.isLoading || this.lineItems.length === 0) return false;
 
         let hasValidationErrors = false;
-        
+
         this.lineItems = this.lineItems.map(row => {
-            const updatedRow = { ...row };
+            const updatedRow = { ...row, _hasError: false, _errorMessage: '' };
             const discount = Number(updatedRow.additionalDiscount);
             const quantity = Number(updatedRow.quantity);
 
@@ -447,9 +545,18 @@ export default class CpqStepLineEditor extends LightningElement {
                 updatedRow._hasError = true;
                 updatedRow._errorMessage = 'Quantity must be at least 1';
                 hasValidationErrors = true;
-            } else {
-                updatedRow._hasError = false;
-                updatedRow._errorMessage = '';
+            }
+
+            if (this._isVolumeOffer && !updatedRow._hasError) {
+                if (!updatedRow.serviceStartDate || !updatedRow.serviceEndDate) {
+                    updatedRow._hasError = true;
+                    updatedRow._errorMessage = 'Service Start and End dates are required';
+                    hasValidationErrors = true;
+                } else if (new Date(updatedRow.serviceEndDate) < new Date(updatedRow.serviceStartDate)) {
+                    updatedRow._hasError = true;
+                    updatedRow._errorMessage = 'End Date must be on or after Start Date';
+                    hasValidationErrors = true;
+                }
             }
 
             return updatedRow;
@@ -486,9 +593,12 @@ export default class CpqStepLineEditor extends LightningElement {
                     productName: row.productName,
                     quantity: row.quantity,
                     unitPrice: row.listUnitPrice,
+                    dailyRate: row.dailyRate,
                     netUnitPrice: row.netUnitPrice,
                     netTotal: row.netTotal,
-                    additionalDiscount: row.additionalDiscount
+                    additionalDiscount: row.additionalDiscount,
+                    serviceStartDate: row.serviceStartDate || null,
+                    serviceEndDate: row.serviceEndDate || null
                 });
             }
         }
@@ -502,10 +612,13 @@ export default class CpqStepLineEditor extends LightningElement {
                     productName: row.productName,
                     quantity: row.quantity,
                     listUnitPrice: row.listUnitPrice,
+                    dailyRate: row.dailyRate,
                     additionalDiscount: row.additionalDiscount,
                     netUnitPrice: row.netUnitPrice,
                     netTotal: row.netTotal,
                     isBundle: row.isBundle,
+                    serviceStartDate: row.serviceStartDate || null,
+                    serviceEndDate: row.serviceEndDate || null,
                     configuredOptions: optionsMap[row._key] || []
                 });
             }

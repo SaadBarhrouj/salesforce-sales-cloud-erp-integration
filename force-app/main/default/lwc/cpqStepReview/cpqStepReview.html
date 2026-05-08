@@ -58,6 +58,12 @@
                             <th scope="col">Product</th>
                             <th scope="col" style="width:100px;">Code</th>
                             <th scope="col" style="width:70px;" class="slds-text-align_center">Qty</th>
+                            <template lwc:if={isVolumeOffer}>
+                                <th scope="col" style="width:110px;">Service Start</th>
+                                <th scope="col" style="width:110px;">Service End</th>
+                                <th scope="col" style="width:60px;" class="slds-text-align_center">Days</th>
+                                <th scope="col" style="width:110px;" class="slds-text-align_right">Daily Rate</th>
+                            </template>
                             <th scope="col" style="width:110px;" class="slds-text-align_right">List Price</th>
                             <th scope="col" style="width:80px;" class="slds-text-align_right">Disc.%</th>
                             <th scope="col" style="width:110px;" class="slds-text-align_right">Net Price</th>
@@ -83,6 +89,12 @@
                                 </th>
                                 <td class="slds-cell-edit slds-cell_action-mode"><span class="slds-text-body_small slds-truncate">{row.productCode}</span></td>
                                 <td class="slds-text-align_center slds-cell-edit slds-cell_action-mode">{row.quantity}</td>
+                                <template lwc:if={isVolumeOffer}>
+                                    <td class="slds-cell-edit slds-cell_action-mode">{row.formattedServiceStart}</td>
+                                    <td class="slds-cell-edit slds-cell_action-mode">{row.formattedServiceEnd}</td>
+                                    <td class="slds-text-align_center slds-cell-edit slds-cell_action-mode">{row.serviceDays}</td>
+                                    <td class="slds-text-align_right slds-cell-edit slds-cell_action-mode">{row.formattedDailyRate}</td>
+                                </template>
                                 <td class="slds-text-align_right slds-cell-edit slds-cell_action-mode">{row.formattedListPrice}</td>
                                 <td class="slds-text-align_right slds-cell-edit slds-cell_action-mode">{row.formattedDiscount}</td>
                                 <td class="slds-text-align_right slds-cell-edit slds-cell_action-mode">{row.formattedNetPrice}</td>
@@ -92,7 +104,7 @@
                     </tbody>
                     <tfoot>
                         <tr>
-                            <td colspan="7" class="slds-text-align_right slds-text-title_caps slds-p-right_small">Subtotal</td>
+                            <td colspan={subtotalColspan} class="slds-text-align_right slds-text-title_caps slds-p-right_small">Subtotal</td>
                             <td class="slds-text-align_right slds-text-heading_small">{formattedSubtotal}</td>
                         </tr>
                     </tfoot>

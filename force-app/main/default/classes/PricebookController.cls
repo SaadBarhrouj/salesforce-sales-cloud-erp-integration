@@ -32,6 +32,8 @@ public inherited sharing class PricebookController {
 
     /**
      * @description Resolves the pricing method from the supplied offer type.
+     * Catalogs in Volume_Pricing_Catalog_Names use day-bracketed Volume Pricing
+     * (service dates required); everything else falls back to standard Pricebook.
      * @param offerType Catalog identifier.
      * @return The pricing method name.
      */
@@ -39,22 +41,37 @@ public inherited sharing class PricebookController {
         if (offerType == null) {
             return PRICEBOOK_METHOD;
         }
-
         String offerTypeStr = String.valueOf(offerType);
         if (String.isBlank(offerTypeStr)) {
             return PRICEBOOK_METHOD;
         }
 
-        String catalogNames = Label.Volume_Pricing_Catalog_Names;
-        List<String> volumePricingCatalogs = String.isNotBlank(catalogNames) ? catalogNames.split(',') : new List<String>();
-
         ProductCatalog catalog = ProductCatalogDAO.getById(offerTypeStr);
+        if (catalog == null) {
+            return PRICEBOOK_METHOD;
+        }
 
-        for (String volumePricingCatalog : volumePricingCatalogs) {
-            if (catalog != null && catalog.Name == volumePricingCatalog.trim()) {
-                return VOLUME_PRICING_METHOD;
-            }
+        if (catalogNameIn(catalog.Name, Label.Volume_Pricing_Catalog_Names)) {
+            return VOLUME_PRICING_METHOD;
         }
         return PRICEBOOK_METHOD;
+    }
+
+    /**
+     * @description Returns true if `name` matches any comma-separated entry in `csv`.
+     * @param name The catalog name to test.
+     * @param csv The comma-separated catalog name list (Custom Label value).
+     * @return Whether the name appears in the list.
+     */
+    private static Boolean catalogNameIn(String name, String csv) {
+        if (String.isBlank(csv) || String.isBlank(name)) {
+            return false;
+        }
+        for (String token : csv.split(',')) {
+            if (token.trim().equalsIgnoreCase(name)) {
+                return true;
+            }
+        }
+        return false;
     }
 }

@@ -11,6 +11,10 @@ public class PricingResponse {
     @AuraEnabled public Decimal discount;
     @AuraEnabled public Integer quantity;
     @AuraEnabled public String pricingMethod;
+    @AuraEnabled public Decimal dailyRate;
+    @AuraEnabled public Integer serviceDays;
+    @AuraEnabled public Date serviceStartDate;
+    @AuraEnabled public Date serviceEndDate;
 
     /**
      * @description Creates a successful pricing response with default values.
