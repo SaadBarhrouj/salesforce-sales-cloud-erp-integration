@@ -27,6 +27,26 @@ force-app/main/default/objects/Account/fields/ChannelProgramName.field-meta.xml
 force-app/main/default/objects/Account/fields/IsCustomerPortal.field-meta.xml
 force-app/main/default/objects/Account/fields/IsPartner.field-meta.xml
 
+# Field Service Lightning fields (Location, Quote, Product2)
+force-app/main/default/objects/Location/fields/AccountId.field-meta.xml
+force-app/main/default/objects/Quote/fields/RelatedWorkId.field-meta.xml
+force-app/main/default/objects/Product2/fields/IsAssetizable.field-meta.xml
+force-app/main/default/objects/Product2/fields/IsSerialized.field-meta.xml
+
+# Salesforce Industries / Order Management fields (Product2, ProductCategory, QuoteLineItem)
+force-app/main/default/objects/Product2/fields/AvailabilityDate.field-meta.xml
+force-app/main/default/objects/Product2/fields/BasedOnId.field-meta.xml
+force-app/main/default/objects/Product2/fields/ConfigureDuringSale.field-meta.xml
+force-app/main/default/objects/Product2/fields/DiscontinuedDate.field-meta.xml
+force-app/main/default/objects/Product2/fields/EndOfLifeDate.field-meta.xml
+force-app/main/default/objects/Product2/fields/HelpText.field-meta.xml
+force-app/main/default/objects/Product2/fields/IsSoldOnlyWithOtherProds.field-meta.xml
+force-app/main/default/objects/Product2/fields/SpecificationType.field-meta.xml
+force-app/main/default/objects/Product2/fields/TransferRecordMode.field-meta.xml
+force-app/main/default/objects/Product2/fields/UnitOfMeasureId.field-meta.xml
+force-app/main/default/objects/ProductCategory/fields/Code.field-meta.xml
+force-app/main/default/objects/QuoteLineItem/fields/QuantityUnitOfMeasureId.field-meta.xml
+
 # Added by Illuminated Cloud
 /.illuminatedCloud/
 **/*.ts
