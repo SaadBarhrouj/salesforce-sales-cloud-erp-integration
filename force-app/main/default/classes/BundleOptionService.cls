@@ -124,7 +124,11 @@ public inherited sharing class BundleOptionService {
             'quantityEditable' => optionRecord.Quantity_Editable__c ?? false,
             'isRequired' => optionRecord.Is_Required__c ?? false,
             'isSelected' => optionRecord.Is_Selected__c ?? false,
-            'optionType' => optionRecord.Option_Type__c
+            'optionType' => optionRecord.Option_Type__c,
+            'w' => product?.Width_cm__c,
+            'h' => product?.Height_cm__c,
+            'd' => product?.Depth_cm__c,
+            'weight' => product?.Unit_Weight_Kg__c
         };
     }
 

@@ -154,7 +154,11 @@ export default class CpqStepLineEditor extends LightningElement {
             additionalDiscount: discount,
             netUnitPrice: netPrice,
             netTotal: total,
-            isBundle: item.isBundle
+            isBundle: item.isBundle,
+            w: item.w,
+            h: item.h,
+            d: item.d,
+            weight: item.weight
         };
     }
 
@@ -179,7 +183,11 @@ export default class CpqStepLineEditor extends LightningElement {
             listUnitPrice: optListPrice,
             additionalDiscount: optDiscount,
             netUnitPrice: optNetPrice,
-            netTotal: optNetTotal
+            netTotal: optNetTotal,
+            w: opt.w,
+            h: opt.h,
+            d: opt.d,
+            weight: opt.weight
         };
     }
 
@@ -489,7 +497,11 @@ export default class CpqStepLineEditor extends LightningElement {
                     unitPrice: row.listUnitPrice,
                     netUnitPrice: row.netUnitPrice,
                     netTotal: row.netTotal,
-                    additionalDiscount: row.additionalDiscount
+                    additionalDiscount: row.additionalDiscount,
+                    w: row.w,
+                    h: row.h,
+                    d: row.d,
+                    weight: row.weight
                 });
             }
         }
@@ -507,6 +519,10 @@ export default class CpqStepLineEditor extends LightningElement {
                     netUnitPrice: row.netUnitPrice,
                     netTotal: row.netTotal,
                     isBundle: row.isBundle,
+                    w: row.w,
+                    h: row.h,
+                    d: row.d,
+                    weight: row.weight,
                     configuredOptions: optionsMap[row._key] || []
                 });
             }
@@ -565,3 +581,6 @@ export default class CpqStepLineEditor extends LightningElement {
         }
     }
 }
+
+
+

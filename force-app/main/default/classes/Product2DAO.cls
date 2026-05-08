@@ -108,8 +108,7 @@ public inherited sharing class Product2DAO {
                     IsActive,
                     Name,
                     ProductCode,
-                    Unit_Weight_Kg__c,
-                    (SELECT Id FROM Options__r)
+                    Unit_Weight_Kg__c, Width_cm__c, Height_cm__c, Depth_cm__c, (SELECT Id FROM Options__r)
                 FROM Product2
             ];
         } catch (QueryException e) {
@@ -152,8 +151,7 @@ public inherited sharing class Product2DAO {
                     IsActive,
                     Name,
                     ProductCode,
-                    Unit_Weight_Kg__c,
-                    (SELECT Id FROM Options__r)
+                    Unit_Weight_Kg__c, Width_cm__c, Height_cm__c, Depth_cm__c, (SELECT Id FROM Options__r)
                 FROM Product2
                 WHERE Id IN :productIds
             ];
@@ -197,8 +195,7 @@ public inherited sharing class Product2DAO {
                     IsActive,
                     Name,
                     ProductCode,
-                    Unit_Weight_Kg__c,
-                    (SELECT Id FROM Options__r)
+                    Unit_Weight_Kg__c, Width_cm__c, Height_cm__c, Depth_cm__c, (SELECT Id FROM Options__r)
                 FROM Product2
                 WHERE Id IN :productIdsInPricebook
                 AND IsActive = true
@@ -272,8 +269,7 @@ public inherited sharing class Product2DAO {
                         IsActive,
                         Name,
                         ProductCode,
-                        Unit_Weight_Kg__c,
-                        (SELECT Id FROM Options__r)
+                        Unit_Weight_Kg__c, Width_cm__c, Height_cm__c, Depth_cm__c, (SELECT Id FROM Options__r)
                     FROM Product2
                     WHERE Id IN :productIdsFromCategories
                     AND IsActive = true
@@ -303,8 +299,7 @@ public inherited sharing class Product2DAO {
                     IsActive,
                     Name,
                     ProductCode,
-                    Unit_Weight_Kg__c,
-                    (SELECT Id FROM Options__r)
+                    Unit_Weight_Kg__c, Width_cm__c, Height_cm__c, Depth_cm__c, (SELECT Id FROM Options__r)
                 FROM Product2
                 WHERE Id IN :productIdsInPricebook
                 AND IsActive = true
@@ -315,3 +310,4 @@ public inherited sharing class Product2DAO {
         }
     }
 }
+

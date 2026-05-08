@@ -212,7 +212,11 @@ export default class cpqStepBundleConfig extends LightningElement {
             unitPrice: option.unitPrice,
             isQtyEditable: option.quantityEditable,
             isRequired: option.isRequired,
-            isSelected: option.isSelected
+            isSelected: option.isSelected,
+            w: option.w,
+            h: option.h,
+            d: option.d,
+            weight: option.weight
         }));
     }
 

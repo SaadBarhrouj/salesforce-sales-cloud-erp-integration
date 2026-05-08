@@ -430,7 +430,7 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
     else if (action === "refreshPricing") this._getLineEditorStep()?.handleHeaderAction('refreshPricing');
     else if (action === "deleteSelected") this._getLineEditorStep()?.handleHeaderAction('deleteSelected');
     else if (action === "resetEditing") this._handleResetEditing();
-    else if (action === "calculateTransport") this._getLogisticsStep()?.handleCalculateTrips();
+    else if (action === "calculateTransport") this._getLogisticsStep()?.handleCalculateTransport();
     else if (action === "openGoogleMaps") this._getLogisticsStep()?.openRouteInGoogleMaps();
   }
 

@@ -1,181 +1,351 @@
+/**
+ * @description Domain Service class to calculate transport trips.
+ * Picks the BinSolver scenario with the LOWEST total transport cost
+ * (cost = sum over bins of price(zone, truck, distance)).
+ */
 public inherited sharing class TripService {
-    
+
+    public class TripException extends Exception {}
+
+    // ========== CONSTANTS ==========
+
+    private static final String DEFAULT_COUNTRY_CODE = 'MA';
+    private static final String OBJECTIVE_MIN_BINS  = 'minBins';
+    private static final String OBJECTIVE_MIN_WASTE = 'minWaste';
+
+    // ========== CPQ DTOs (FOR LWC COMMUNICATION) ==========
+
+    public class CPQItem {
+        public String productId;
+        public Integer quantity;
+        public Decimal w;
+        public Decimal h;
+        public Decimal d;
+        public Decimal weight;
+        public List<CPQOption> options;
+    }
+
+    public class CPQOption {
+        public Boolean isSelected;
+        public Integer quantity;
+        public Decimal weight;
+        public Decimal w;
+        public Decimal h;
+        public Decimal d;
+    }
+
     /**
-     * @description Calculates new trips using BinSolver without saving
+     * @description Internal value object — a fully priced candidate solution.
      */
-    public static List<Trip__c> calculateAndSaveTrips(Id opportunityId, String urgency, Decimal totalWeight) {
-        try {
-            if (opportunityId == null) {
-                throw new TripException('OpportunityId cannot be null');
-            }
-            
-            // 1. Fetch Opportunity details
-            Opportunity opp = [SELECT Id, Distance_Delivery_Agency_km__c, Total_Weight_Kg__c 
-                               FROM Opportunity 
-                               WHERE Id = :opportunityId 
-                               LIMIT 1];
-                               
-            Decimal distance = opp.Distance_Delivery_Agency_km__c != null ? opp.Distance_Delivery_Agency_km__c : 0;
-            if (distance == 0) {
-                 throw new TripException('La distance de livraison doit être calculée avant d\'estimer le coût.');
-            }
-
-            // 2. Fetch Opp Line Items (Products)
-            List<OpportunityLineItem> olis = [SELECT Id, Quantity, Product2.Weight__c, Product2.Unit_Weight_Kg__c, 
-                                              Product2.Height_cm__c, Product2.Width_cm__c, Product2.Depth_cm__c 
-                                              FROM OpportunityLineItem 
-                                              WHERE OpportunityId = :opportunityId AND Product2.Name != null];
-            
-            if (olis.isEmpty()) {
-                throw new TripException('L\'opportunité ne contient aucun produit à expédier.');
-            }
-
-            // 3. Prepare BinSolver Items
-            List<Map<String, Object>> items = new List<Map<String, Object>>();
-            for (OpportunityLineItem oli : olis) {
-                if (oli.Product2.Height_cm__c == null || oli.Product2.Width_cm__c == null || oli.Product2.Depth_cm__c == null) {
-                    continue; // Skip items without dimensions
-                }
-                Map<String, Object> itemMap = new Map<String, Object>();
-                itemMap.put('id', String.valueOf(oli.Id));
-                itemMap.put('w', oli.Product2.Width_cm__c);
-                itemMap.put('h', oli.Product2.Height_cm__c);
-                itemMap.put('d', oli.Product2.Depth_cm__c);
-                itemMap.put('quantity', Integer.valueOf(oli.Quantity));
-                if (oli.Product2.Unit_Weight_Kg__c != null) {
-                    itemMap.put('weight', oli.Product2.Unit_Weight_Kg__c);
-                }
-                items.add(itemMap);
-            }
-            if (items.isEmpty()) {
-                throw new TripException('Aucun produit n\'a de dimensions valides pour le calcul du transport.');
-            }
-
-            // 4. Fetch Trucks & Prepare Bins
-            List<Truck_Type__mdt> allTrucks = [SELECT MasterLabel, Truck_Code__c, Width_cm__c, Height_cm__c, Depth_cm__c, Max_Weight_Kg__c, Quantity__c 
-                                               FROM Truck_Type__mdt];
-            
-            List<Map<String, Object>> bins = new List<Map<String, Object>>();
-            for (Truck_Type__mdt t : allTrucks) {
-                Map<String, Object> binMap = new Map<String, Object>();
-                binMap.put('id', t.Truck_Code__c);
-                binMap.put('w', t.Width_cm__c);
-                binMap.put('h', t.Height_cm__c);
-                binMap.put('d', t.Depth_cm__c);
-                if (t.Max_Weight_Kg__c != null) {
-                    binMap.put('maxWeight', t.Max_Weight_Kg__c);
-                }
-                binMap.put('quantity', t.Quantity__c != null ? Integer.valueOf(t.Quantity__c) : 5);
-                bins.add(binMap);
-            }
-
-            // 5. Fetch Transport Metadata (Zones & Rates)
-            List<Transport_Zone__mdt> zones = [SELECT Zone_Code__c, Min_Distance_Km__c, Max_Distance_Km__c 
-                                               FROM Transport_Zone__mdt];
-            String determineZone = 'Unknown';
-            for (Transport_Zone__mdt z : zones) {
-                if (distance >= z.Min_Distance_Km__c && distance <= z.Max_Distance_Km__c) {
-                    determineZone = z.Zone_Code__c;
-                    break;
-                }
-            }
-            
-            List<Transport_Rate__mdt> ratesList = [SELECT Truck_Code__c, Zone_Code__c, Base_Price__c, Price_Per_Extra_Km__c, Included_Km__c 
-                                                   FROM Transport_Rate__mdt];
-                                                   
-            Map<String, Transport_Rate__mdt> ratesMap = new Map<String, Transport_Rate__mdt>();
-            for (Transport_Rate__mdt r : ratesList) {
-                ratesMap.put(r.Zone_Code__c + '_' + r.Truck_Code__c, r);
-            }
-
-            // 6. Two BinSolver calls
-            String responseMinBins = BinSolverAPI.packItems('minBins', items, bins, opportunityId);
-            String responseMinWaste = BinSolverAPI.packItems('minWaste', items, bins, opportunityId);
-            
-            // 7. Parse Responses & Calculate Costs
-            List<Trip__c> minBinsTrips = calculateTripsForResponse(responseMinBins, determineZone, distance, opportunityId, ratesMap);
-            List<Trip__c> minWasteTrips = calculateTripsForResponse(responseMinWaste, determineZone, distance, opportunityId, ratesMap);
-            
-            Decimal costMinBins = getTotalCost(minBinsTrips);
-            Decimal costMinWaste = getTotalCost(minWasteTrips);
-            
-            // 8. Return least expensive scenario WITHOUT inserting to DB
-            if (costMinBins <= costMinWaste) {
-                return minBinsTrips;
-            } else {
-                return minWasteTrips;
-            }
-            
-        } catch (Exception e) {
-            System.debug(LoggingLevel.ERROR, 'TripService.calculateAndSaveTrips failed: ' + e.getMessage() + '\n' + e.getStackTraceString());
-            throw new TripException('Error calculating trips: ' + e.getMessage(), e);
-        }
-    }
-
-    private static Decimal getTotalCost(List<Trip__c> trips) {
-        Decimal total = 0;
-        if(trips != null) {
-            for(Trip__c t : trips) {
-                total += (t.System_Price__c != null ? t.System_Price__c : 0);
-            }
-        }
-        return total;
-    }
-
-    private static List<Trip__c> calculateTripsForResponse(String jsonResponse, String zoneCode, Decimal distance, Id opportunityId, Map<String, Transport_Rate__mdt> ratesMap) {
+    private class PricedSolution {
+        Decimal totalCost = 0;
+        String objective;
         List<Trip__c> trips = new List<Trip__c>();
-        Map<String, Object> parseRes = (Map<String, Object>) JSON.deserializeUntyped(jsonResponse);
-        
-        List<Object> packedBins = (List<Object>) parseRes.get('bins');
-        if (packedBins != null) {
-            for (Object o : packedBins) {
-                Map<String, Object> b = (Map<String, Object>) o;
-                String truckCode = (String) b.get('id');
-                
-                Decimal price = 0;
-                String key = zoneCode + '_' + truckCode;
-                if (ratesMap.containsKey(key)) {
-                    Transport_Rate__mdt r = ratesMap.get(key);
-                    price = r.Base_Price__c != null ? r.Base_Price__c : 0;
-                    if (r.Price_Per_Extra_Km__c != null && r.Included_Km__c != null && distance > r.Included_Km__c) {
-                        price += (distance - r.Included_Km__c) * r.Price_Per_Extra_Km__c;
+    }
+
+    // ========== PUBLIC BUSINESS METHODS ==========
+
+    /**
+     * @description Entry point for LWC. Generates trips and selects the cheapest packing solution.
+     * @param opportunityId Parent Opportunity ID.
+     * @param agencyId Departure agency Location Id (current LWC selection); falls back to Opportunity.Default_Agency__c.
+     * @param deliverySiteId Delivery Location Id (current LWC selection); falls back to Opportunity.Delivery_Site__c.
+     * @param urgency Transport priority.
+     * @param cpqItemsJson JSON string of CPQ items.
+     * @return List of Trip__c records ready for review or insertion.
+     */
+    public static List<Trip__c> calculateTripsWithCPQItems(
+        Id opportunityId,
+        Id agencyId,
+        Id deliverySiteId,
+        String urgency,
+        String cpqItemsJson
+    ) {
+        try {
+            validateInputs(opportunityId, cpqItemsJson);
+
+            // 0. Resolve agency / delivery site (LWC values win, Opportunity record is the fallback)
+            Id resolvedAgencyId = agencyId;
+            Id resolvedDeliveryId = deliverySiteId;
+            if (resolvedAgencyId == null || resolvedDeliveryId == null) {
+                Opportunity opp = OpportunityDAO.getById(opportunityId);
+                if (opp == null) throw new TripException('Opportunity not found: ' + opportunityId);
+                if (resolvedAgencyId == null)   resolvedAgencyId   = opp.Default_Agency__c;
+                if (resolvedDeliveryId == null) resolvedDeliveryId = opp.Delivery_Site__c;
+            }
+            if (resolvedAgencyId == null || resolvedDeliveryId == null) {
+                throw new TripException('Departure agency and delivery site are required.');
+            }
+
+            // 1. Distance: cache first, OpenRouteService on miss
+            Decimal distanceKm = resolveDistance(resolvedAgencyId, resolvedDeliveryId, opportunityId);
+            if (distanceKm == null) {
+                throw new TripException('Unable to resolve driving distance for the selected route.');
+            }
+
+            // 2. Zone derived from distance (CMDT)
+            Transport_Zone__mdt zone = resolveZone(distanceKm, DEFAULT_COUNTRY_CODE);
+            if (zone == null) {
+                throw new TripException('No Transport_Zone__mdt matches distance ' + distanceKm + ' km for country ' + DEFAULT_COUNTRY_CODE);
+            }
+
+            // 3. Build pricing table once: Truck_Code -> Transport_Rate__mdt for the resolved zone
+            Map<String, Transport_Rate__mdt> rateByTruck = buildRateMap(DEFAULT_COUNTRY_CODE, zone.Zone_Code__c);
+            if (rateByTruck.isEmpty()) {
+                throw new TripException('No Transport_Rate__mdt configured for zone ' + zone.Zone_Code__c + ' in country ' + DEFAULT_COUNTRY_CODE);
+            }
+
+            // 4. Bin Solver — generate candidate packings (parallel objectives stay, but selection criterion changes)
+            List<CPQItem> cpqItems = (List<CPQItem>) JSON.deserialize(cpqItemsJson, List<CPQItem>.class);
+            List<BinSolverAPI.ItemRequest> items = buildItemsFromCPQ(cpqItems);
+            if (items.isEmpty()) throw new TripException('No valid items found for transport calculation.');
+
+            // Restrict the truck fleet to trucks that have a rate in this zone (otherwise we'd be packing trucks we can't price)
+            List<BinSolverAPI.BinRequest> bins = fetchTrucksFromMetadata(rateByTruck.keySet());
+            if (bins.isEmpty()) {
+                throw new TripException('No truck templates with pricing available for zone ' + zone.Zone_Code__c);
+            }
+
+            BinSolverAPI.PackingResult resMinBins  = BinSolverAPI.callPackingApi(buildRequest(OBJECTIVE_MIN_BINS,  items, bins), opportunityId);
+            BinSolverAPI.PackingResult resMinWaste = BinSolverAPI.callPackingApi(buildRequest(OBJECTIVE_MIN_WASTE, items, bins), opportunityId);
+
+            // Persist BinSolver audit logs
+            List<IntegrationLoggerService.LogCalloutRequest> logs = new List<IntegrationLoggerService.LogCalloutRequest>();
+            if (resMinBins.logRequest  != null) logs.add(resMinBins.logRequest);
+            if (resMinWaste.logRequest != null) logs.add(resMinWaste.logRequest);
+            if (!logs.isEmpty()) IntegrationLoggerService.logCallouts(logs);
+
+            // 5. Cost optimization — price every candidate solution, pick the cheapest
+            List<PricedSolution> candidates = new List<PricedSolution>();
+            if (resMinBins.isSuccess) {
+                PricedSolution s = priceSolution(resMinBins.responseBody, rateByTruck, distanceKm, zone, opportunityId);
+                if (s != null) { s.objective = OBJECTIVE_MIN_BINS;  candidates.add(s); }
+            }
+            if (resMinWaste.isSuccess) {
+                PricedSolution s = priceSolution(resMinWaste.responseBody, rateByTruck, distanceKm, zone, opportunityId);
+                if (s != null) { s.objective = OBJECTIVE_MIN_WASTE; candidates.add(s); }
+            }
+
+            if (candidates.isEmpty()) {
+                throw new TripException('BinSolver could not generate a valid packing solution.');
+            }
+
+            PricedSolution winner = candidates[0];
+            for (Integer i = 1; i < candidates.size(); i++) {
+                if (candidates[i].totalCost < winner.totalCost) winner = candidates[i];
+            }
+            return winner.trips;
+
+        } catch (TripException te) {
+            throw te;
+        } catch (Exception e) {
+            throw new TripException('Trip Service Error: ' + e.getMessage());
+        }
+    }
+
+    // ========== STEP 1: DISTANCE ==========
+
+    /**
+     * @description Returns driving distance in km. Uses Distance_Cache__c first; on miss calls
+     * OpenRouteService and caches the result. Returns null if no usable distance can be obtained.
+     */
+    private static Decimal resolveDistance(Id agencyId, Id deliveryId, Id opportunityId) {
+        String cacheKey = String.valueOf(agencyId) + '_' + String.valueOf(deliveryId);
+        Map<String, Distance_Cache__c> cached = DistanceCacheDAO.getByCacheKeys(new Set<String>{ cacheKey });
+        if (cached.containsKey(cacheKey) && cached.get(cacheKey).Distance_Km__c != null) {
+            return cached.get(cacheKey).Distance_Km__c;
+        }
+
+        Map<Id, Schema.Location> locs = LocationDAO.getByIds(new Set<Id>{ agencyId, deliveryId });
+        Schema.Location origin = locs.get(agencyId);
+        Schema.Location destination = locs.get(deliveryId);
+        if (origin == null || destination == null
+            || origin.Latitude == null || origin.Longitude == null
+            || destination.Latitude == null || destination.Longitude == null) {
+            return null;
+        }
+
+        RouteCalculationService.RouteResult api = RouteCalculationService.callOpenRouteService(origin, destination, opportunityId);
+        if (api.logRequest != null) {
+            IntegrationLoggerService.logCallouts(new List<IntegrationLoggerService.LogCalloutRequest>{ api.logRequest });
+        }
+        if (!api.isSuccess || api.distanceKm == null) {
+            return null;
+        }
+
+        DistanceCacheDAO.upsertCaches(new List<Distance_Cache__c>{
+            new Distance_Cache__c(
+                Cache_Key__c = cacheKey,
+                Origin_Location__c = origin.Id,
+                Destination_Location__c = destination.Id,
+                Distance_Km__c = api.distanceKm,
+                Duration_Minutes__c = api.durationMinutes
+            )
+        });
+        return api.distanceKm;
+    }
+
+    // ========== STEP 2: ZONE ==========
+
+    /**
+     * @description Picks the Transport_Zone__mdt whose distance bracket contains `distanceKm`.
+     * Semantics follow the field documentation: Min_Distance_Km__c <= distance < Max_Distance_Km__c.
+     */
+    private static Transport_Zone__mdt resolveZone(Decimal distanceKm, String countryCode) {
+        for (Transport_Zone__mdt z : Transport_Zone__mdt.getAll().values()) {
+            if (z.Country_Code__c != countryCode) continue;
+            Decimal lo = z.Min_Distance_Km__c;
+            Decimal hi = z.Max_Distance_Km__c;
+            if (lo == null || hi == null) continue;
+            if (distanceKm >= lo && distanceKm < hi) return z;
+        }
+        return null;
+    }
+
+    // ========== STEP 3: TRUCK FLEET ==========
+
+    /**
+     * @description Loads truck templates from CMDT, optionally restricted to a set of truck codes.
+     */
+    private static List<BinSolverAPI.BinRequest> fetchTrucksFromMetadata(Set<String> allowedCodes) {
+        List<BinSolverAPI.BinRequest> bins = new List<BinSolverAPI.BinRequest>();
+        for (Truck_Type__mdt t : Truck_Type__mdt.getAll().values()) {
+            if (allowedCodes != null && !allowedCodes.isEmpty() && !allowedCodes.contains(t.Truck_Code__c)) {
+                continue;
+            }
+            BinSolverAPI.BinRequest b = new BinSolverAPI.BinRequest();
+            b.id = t.Truck_Code__c;
+            b.w = t.Width_cm__c;
+            b.h = t.Height_cm__c;
+            b.d = t.Depth_cm__c;
+            b.maxWeight = t.Max_Weight_Kg__c;
+            b.quantity = (t.Quantity__c != null) ? Integer.valueOf(t.Quantity__c) : 5;
+            bins.add(b);
+        }
+        return bins;
+    }
+
+    // ========== STEP 4 & 5: COST CALCULATION + OPTIMIZATION ==========
+
+    /**
+     * @description Build Truck_Code -> Transport_Rate__mdt map for the active country/zone.
+     */
+    private static Map<String, Transport_Rate__mdt> buildRateMap(String countryCode, String zoneCode) {
+        Map<String, Transport_Rate__mdt> result = new Map<String, Transport_Rate__mdt>();
+        for (Transport_Rate__mdt r : Transport_Rate__mdt.getAll().values()) {
+            if (r.Country_Code__c != countryCode) continue;
+            if (r.Zone_Code__c != zoneCode) continue;
+            result.put(r.Truck_Code__c, r);
+        }
+        return result;
+    }
+
+    /**
+     * @description Per-trip price = max(Minimum_Price, Base_Price + max(0, distance - Included_Km) * Price_Per_Extra_Km).
+     */
+    private static Decimal computeTripCost(Transport_Rate__mdt rate, Decimal distanceKm) {
+        Decimal extraKm = distanceKm - (rate.Included_Km__c != null ? rate.Included_Km__c : 0);
+        if (extraKm < 0) extraKm = 0;
+        Decimal raw = (rate.Base_Price__c != null ? rate.Base_Price__c : 0)
+                    + extraKm * (rate.Price_Per_Extra_Km__c != null ? rate.Price_Per_Extra_Km__c : 0);
+        Decimal floor = (rate.Minimum_Price__c != null) ? rate.Minimum_Price__c : 0;
+        return (raw < floor ? floor : raw).setScale(2);
+    }
+
+    /**
+     * @description Parses a BinSolver response, prices each bin against the rate table, and
+     * builds the Trip__c list. Returns null if any bin's truck has no matching rate (the
+     * solution is unpriceable so it must not win the cost comparison).
+     */
+    private static PricedSolution priceSolution(
+        String jsonResponse,
+        Map<String, Transport_Rate__mdt> rateByTruck,
+        Decimal distanceKm,
+        Transport_Zone__mdt zone,
+        Id opportunityId
+    ) {
+        Map<String, Object> root = (Map<String, Object>) JSON.deserializeUntyped(jsonResponse);
+        List<Object> binsData = (List<Object>) root.get('bins');
+        if (binsData == null || binsData.isEmpty()) return null;
+
+        PricedSolution sol = new PricedSolution();
+        for (Object obj : binsData) {
+            Map<String, Object> binMap = (Map<String, Object>) obj;
+            String truckCode = (String) binMap.get('templateId');
+            Transport_Rate__mdt rate = rateByTruck.get(truckCode);
+            if (rate == null) {
+                // Truck without a published rate -> can't price this scenario fairly
+                return null;
+            }
+
+            Decimal cost = computeTripCost(rate, distanceKm);
+            sol.totalCost += cost;
+
+            Trip__c trip = new Trip__c();
+            trip.Opportunity__c           = opportunityId;
+            trip.Direction__c             = 'Delivery';
+            trip.Truck_Type__c            = truckCode;
+            trip.Transport_Zone__c        = zone.Zone_Code__c;
+            trip.Distance_Km__c           = distanceKm;
+            trip.Total_Weight_Kg__c       = toDecimal(binMap.get('weight'));
+            trip.System_Price__c          = cost;
+            trip.Final_Price__c           = cost;
+            trip.Rate_Currency__c         = rate.Currency_Code__c;
+            trip.Bin_Visualization_URL__c = (String) binMap.get('vizUrl');
+            sol.trips.add(trip);
+        }
+        return sol;
+    }
+
+    // ========== HELPERS ==========
+
+    private static List<BinSolverAPI.ItemRequest> buildItemsFromCPQ(List<CPQItem> cpqItems) {
+        List<BinSolverAPI.ItemRequest> items = new List<BinSolverAPI.ItemRequest>();
+        for (CPQItem cpq : cpqItems) {
+            if (cpq.w == null || cpq.h == null) continue;
+
+            BinSolverAPI.ItemRequest it = new BinSolverAPI.ItemRequest();
+            it.id = cpq.productId;
+            it.w = cpq.w; it.h = cpq.h; it.d = cpq.d;
+            it.weight = cpq.weight;
+            it.quantity = cpq.quantity;
+            items.add(it);
+
+            if (cpq.options != null) {
+                for (CPQOption opt : cpq.options) {
+                    if (opt.isSelected && opt.w != null) {
+                        BinSolverAPI.ItemRequest oit = new BinSolverAPI.ItemRequest();
+                        oit.id = 'OPT-' + Crypto.getRandomInteger();
+                        oit.w = opt.w; oit.h = opt.h; oit.d = opt.d;
+                        oit.weight = opt.weight;
+                        oit.quantity = opt.quantity;
+                        items.add(oit);
                     }
                 }
-                
-                Trip__c trip = new Trip__c();
-                trip.Opportunity__c = opportunityId;
-                trip.Truck_Type__c = truckCode; // Must match picklist/reference
-                trip.System_Price__c = price;
-                trip.Final_Price__c = price;
-                trip.Direction__c = 'Outbound';
-                trip.Transport_Zone__c = zoneCode;
-                trips.add(trip);
             }
         }
-        return trips;
+        return items;
     }
-    
-    /**
-     * @description Gets existing trips for an opportunity
-     */
-    public static List<Trip__c> getExistingTrips(Id opportunityId) {
-        try {
-            return TripDAO.getTripsByOpportunity(opportunityId);
-        } catch (Exception e) {
-            System.debug(LoggingLevel.ERROR, 'TripService.getExistingTrips failed: ' + e.getMessage());
-            throw new TripException('Error fetching existing trips: ' + e.getMessage(), e);
+
+    private static BinSolverAPI.PackingRequest buildRequest(String objective, List<BinSolverAPI.ItemRequest> items, List<BinSolverAPI.BinRequest> bins) {
+        BinSolverAPI.PackingRequest req = new BinSolverAPI.PackingRequest();
+        req.objective = objective;
+        req.items = items;
+        req.bins = bins;
+        return req;
+    }
+
+    private static void validateInputs(Id opportunityId, String json) {
+        if (opportunityId == null || String.isBlank(json)) {
+            throw new TripException('Opportunity ID and Items JSON are required.');
         }
     }
-    
-    /**
-     * @description Updates existing trips
-     */
-    public static void updateTrips(List<Trip__c> trips) {
-        try {
-            TripDAO.upsertTrips(trips);
-        } catch (Exception e) {
-            System.debug(LoggingLevel.ERROR, 'TripService.updateTrips failed: ' + e.getMessage());
-            throw new TripException('Error updating trips: ' + e.getMessage(), e);
-        }
+
+    private static Decimal toDecimal(Object value) {
+        if (value == null) return null;
+        if (value instanceof Decimal) return (Decimal) value;
+        if (value instanceof Double)  return Decimal.valueOf((Double) value);
+        if (value instanceof Integer) return Decimal.valueOf((Integer) value);
+        try { return Decimal.valueOf(String.valueOf(value)); } catch (Exception e) { return null; }
     }
 }

@@ -38,7 +38,11 @@ public inherited sharing class BundleOptionDAO {
                     Feature__r.Name,
                     Option_Product__r.Name,
                     Option_Product__r.ProductCode,
-                    Option_Product__r.Description
+                    Option_Product__r.Description,
+                    Option_Product__r.Width_cm__c,
+                    Option_Product__r.Height_cm__c,
+                    Option_Product__r.Depth_cm__c,
+                    Option_Product__r.Unit_Weight_Kg__c
                 FROM Bundle_Option__c
                 WHERE Bundle_Product__c = :bundleProductId
                 ORDER BY Sort_Order__c ASC, Name ASC
@@ -203,3 +207,4 @@ public inherited sharing class BundleOptionDAO {
     }
     */
 }
+

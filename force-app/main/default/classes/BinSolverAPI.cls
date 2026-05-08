@@ -1,24 +1,27 @@
 /**
- * @description Service class to handle BinSolver API Callouts (3D Bin Packing)
+ * @description Service class to handle technical communication with the BinSolver API.
+ * This class uses structured DTOs (Data Transfer Objects) to match the OpenAPI 3.0.3 schema.
+ * Supports automatic retries and integrates with IntegrationLoggerService for audit trails.
  */
 public inherited sharing class BinSolverAPI {
 
-    // ========== CONSTANTES ==========
+    // ========== CONSTANTS ==========
     private static final String NAMED_CREDENTIAL = 'callout:BinSolver_API';
     private static final String DISPLAY_URL = 'https://api.binsolver.com';
     private static final String API_ENDPOINT = '/pack';
     private static final String SERVICE_NAME = 'BinSolver';
     private static final String HTTP_METHOD = 'POST';
-    private static final Integer HTTP_TIMEOUT_MS = 60000;
+    private static final Integer HTTP_TIMEOUT_MS = 60000; 
     private static final Integer MAX_RETRIES = 3;
 
-    // ========== REQUEST WRAPPERS ==========
+    // ========== REQUEST WRAPPERS (DTOs) ==========
+    
     /**
-     * @description Racine de la requête de packing
+     * @description Root object for the /pack request.
      */
     public class PackingRequest {
-        public String objective;
-        public Boolean allowUnplaced;
+        public String objective;      // Enum: fast, minBins, maxPlaced, minWaste, etc.
+        public Boolean allowUnplaced; // Defaults to true.
         public List<BinRequest> bins;
         public List<ItemRequest> items;
 
@@ -30,40 +33,37 @@ public inherited sharing class BinSolverAPI {
     }
 
     /**
-     * @description Structure d'un contenant (Bin/Box)
+     * @description Represents a container/truck template.
      */
     public class BinRequest {
-        public String id;
-        public Decimal w;
-        public Decimal h;
-        public Decimal d;
-        public Decimal maxWeight;
-        public Integer quantity;
-
-        public BinRequest() {
-            this.quantity = 1;
-        }
+        public String id;        // Identifier mapped to Truck_Code__c
+        public Decimal w;         // Width (X)
+        public Decimal h;         // Height (Y)
+        public Decimal d;         // Depth (Z)
+        public Decimal maxWeight; // Maximum weight capacity
+        public Integer quantity;  // Available quantity of this bin type
     }
 
     /**
-     * @description Structure d'un objet à emballer (Item)
+     * @description Represents an item to be packed.
      */
     public class ItemRequest {
-        public String id;
-        public Decimal w;
-        public Decimal h;
-        public Decimal d;
-        public Decimal wg;
-        public Integer vr;
+        public String id;       // Item identifier (e.g., OLI ID)
+        public Decimal w;        // Width (X)
+        public Decimal h;        // Height (Y)
+        public Decimal d;        // Depth (Z)
+        public Decimal weight;   // Unit weight
+        public Integer quantity; // Quantity of this item to pack
     }
 
-    // ========== RESPONSE WRAPPER ==========
+    // ========== RESPONSE WRAPPERS ==========
+    
     /**
-     * @description Objet retourné au Queueable/Caller
+     * @description Structured result returned to the business service.
      */
     public class PackingResult {
         public Boolean isSuccess { get; set; }
-        public String responseBody { get; set; }
+        public String responseBody { get; set; } // Raw JSON response for parsing
         public IntegrationLoggerService.LogCalloutRequest logRequest { get; set; }
 
         public PackingResult() {
@@ -71,18 +71,19 @@ public inherited sharing class BinSolverAPI {
         }
     }
 
-    // ========== PUBLIC METHOD ==========
+    // ========== PUBLIC METHODS ==========
+
     /**
-     * @description Executes the API call with retry management and log preparation
-     * @param request Structured PackingRequest object
-     * @param relatedRecordId ID of the related record (for logging)
-     * @return PackingResult containing success, body and log
+     * @description Executes the Packing API call with retry logic.
+     * @param request The structured PackingRequest object.
+     * @param relatedRecordId Salesforce ID for log association.
+     * @return PackingResult containing API data and prepared logs.
      */
     public static PackingResult callPackingApi(PackingRequest request, Id relatedRecordId) {
         PackingResult result = new PackingResult();
         IntegrationLoggerService.LogCalloutRequest logReq = initializeLogRequest(relatedRecordId);
 
-        // Clean serialization
+        // Serialize request, suppressing nulls to comply with API strictness
         String requestBody = JSON.serialize(request, true);
         logReq.requestPayload = requestBody;
 
@@ -108,12 +109,10 @@ public inherited sharing class BinSolverAPI {
                     isCompleted = true;
                 } else {
                     logReq.errorCode = 'HTTP_ERROR_' + res.getStatusCode();
-                    System.debug(LoggingLevel.WARN, 'BinSolver Attempt ' + attempt + ' failed with status ' + res.getStatusCode());
                 }
             } catch (Exception e) {
                 logReq.errorCode = (e instanceof CalloutException) ? 'CALLOUT_EXCEPTION' : 'APEX_EXCEPTION';
-                logReq.responseBody = e.getMessage() + ' | Stack: ' + e.getStackTraceString();
-                System.debug(LoggingLevel.ERROR, 'BinSolver Attempt ' + attempt + ' Exception: ' + e.getMessage());
+                logReq.responseBody = e.getMessage() + ' | ' + e.getStackTraceString();
             }
         }
 
@@ -121,28 +120,18 @@ public inherited sharing class BinSolverAPI {
         return result;
     }
 
-    // ========== PRIVATE HELPER METHODS ==========
+    // ========== PRIVATE HELPERS ==========
 
-    /**
-     * @description Initializes the log with basic metadata
-     * @param relatedRecordId ID of the related record
-     * @return Initialized LogCalloutRequest object
-     */
     private static IntegrationLoggerService.LogCalloutRequest initializeLogRequest(Id relatedRecordId) {
         IntegrationLoggerService.LogCalloutRequest logReq = new IntegrationLoggerService.LogCalloutRequest();
         logReq.serviceName = SERVICE_NAME;
-        logReq.actionType = 'Calculate';
+        logReq.actionType = 'calculate';
         logReq.relatedRecordId = relatedRecordId;
         logReq.method = HTTP_METHOD;
         logReq.endpoint = DISPLAY_URL + API_ENDPOINT;
         return logReq;
     }
 
-    /**
-     * @description Builds the HttpRequest object
-     * @param requestBody The JSON request body as string
-     * @return Configured HttpRequest object
-     */
     private static HttpRequest buildHttpRequest(String requestBody) {
         HttpRequest req = new HttpRequest();
         req.setEndpoint(NAMED_CREDENTIAL + API_ENDPOINT);
