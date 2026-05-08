@@ -34,6 +34,22 @@
                 <field>ServiceDate</field>
             </layoutItems>
             <layoutItems>
+                <behavior>Edit</behavior>
+                <field>Service_Start_Date__c</field>
+            </layoutItems>
+            <layoutItems>
+                <behavior>Edit</behavior>
+                <field>Service_End_Date__c</field>
+            </layoutItems>
+            <layoutItems>
+                <behavior>Edit</behavior>
+                <field>Daily_Rate__c</field>
+            </layoutItems>
+            <layoutItems>
+                <behavior>Readonly</behavior>
+                <field>Service_Days__c</field>
+            </layoutItems>
+            <layoutItems>
                 <behavior>Readonly</behavior>
                 <field>ProductCode</field>
             </layoutItems>

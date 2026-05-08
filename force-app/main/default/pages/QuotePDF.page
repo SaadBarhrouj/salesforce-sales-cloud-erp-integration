@@ -57,7 +57,20 @@
             .grid-table th, .grid-table td {
                 border: 1px solid #ccc;
                 padding: 4px 6px;
+                word-break: break-word;
+                overflow-wrap: anywhere;
             }
+
+            /* Force the Product column to absorb spare width while small
+               numeric/date cells stay compact so long product names wrap
+               inside their cell instead of pushing the layout. */
+            .col-qty       { width: 6%; }
+            .col-product   { width: auto; }
+            .col-date      { width: 11%; }
+            .col-dailyrate { width: 10%; }
+            .col-unitprice { width: 10%; }
+            .col-discount  { width: 8%; }
+            .col-total     { width: 12%; }
 
             .label-header {
                 background-color: #DDEBF7;
@@ -249,13 +262,16 @@
         <apex:outputPanel rendered="{!hasLineItems}">
             <table class="grid-table">
                 <tr>
-                    <th class="data-table-th">QTY</th>
-                    <th class="data-table-th">PRODUCT</th>
-                    <th class="data-table-th">UNIT PRICE</th>
-                    <th class="data-table-th">DISCOUNT</th>
-                    <th class="data-table-th">RENTAL START</th>
-                    <th class="data-table-th">RENTAL END</th>
-                    <th class="data-table-th number-cell">TOTAL</th>
+                    <th class="data-table-th col-qty">QTY</th>
+                    <th class="data-table-th col-product">PRODUCT</th>
+                    <apex:outputPanel rendered="{!hasVolumePricing}" layout="none">
+                        <th class="data-table-th col-date">SERVICE START</th>
+                        <th class="data-table-th col-date">SERVICE END</th>
+                        <th class="data-table-th number-cell col-dailyrate">DAILY RATE</th>
+                    </apex:outputPanel>
+                    <th class="data-table-th number-cell col-unitprice">UNIT PRICE</th>
+                    <th class="data-table-th number-cell col-discount">DISCOUNT</th>
+                    <th class="data-table-th number-cell col-total">TOTAL</th>
                 </tr>
                 <apex:repeat value="{!pdfData.lineItems}" var="row">
                     <tr class="{!IF(row.isBundle, 'bundle-row', '')}">
@@ -269,6 +285,23 @@
                             <apex:outputPanel rendered="{!row.isBundle}">
                             </apex:outputPanel>
                         </td>
+                        <apex:outputPanel rendered="{!hasVolumePricing}" layout="none">
+                            <td class="data-table-td number-cell">
+                                <apex:outputText value="{0, date, MM/dd/yyyy}">
+                                    <apex:param value="{!row.serviceStartDate}" />
+                                </apex:outputText>
+                            </td>
+                            <td class="data-table-td number-cell">
+                                <apex:outputText value="{0, date, MM/dd/yyyy}">
+                                    <apex:param value="{!row.serviceEndDate}" />
+                                </apex:outputText>
+                            </td>
+                            <td class="data-table-td number-cell">
+                                <apex:outputText value="{0, number, $#,###,##0.00}">
+                                    <apex:param value="{!row.dailyRate}" />
+                                </apex:outputText>
+                            </td>
+                        </apex:outputPanel>
                         <td class="data-table-td number-cell">
                             <apex:outputText value="{0, number, $#,###,##0.00}">
                                 <apex:param value="{!row.unitPrice}" />
@@ -280,16 +313,6 @@
                             </apex:outputText>
                         </td>
                         <td class="data-table-td number-cell">
-                            <apex:outputText value="{0, date, MM/dd/yyyy}">
-                                <apex:param value="{!row.rentalStartDate}" />
-                            </apex:outputText>
-                        </td>
-                        <td class="data-table-td number-cell">
-                            <apex:outputText value="{0, date, MM/dd/yyyy}">
-                                <apex:param value="{!row.rentalEndDate}" />
-                            </apex:outputText>
-                        </td>
-                        <td class="data-table-td number-cell">
                             <apex:outputText value="{0, number, $#,###,##0.00}">
                                 <apex:param value="{!row.totalPrice}" />
                             </apex:outputText>
@@ -297,10 +320,18 @@
                     </tr>
                 </apex:repeat>
 
-                <tr class="subtotal-row">
-                    <td class="data-table-td" colspan="6">Products Subtotal</td>
-                    <td class="data-table-td number-cell">{!LineItemsSubtotal}</td>
-                </tr>
+                <apex:outputPanel rendered="{!hasVolumePricing}" layout="none">
+                    <tr class="subtotal-row">
+                        <td class="data-table-td" colspan="7">Products Subtotal</td>
+                        <td class="data-table-td number-cell">{!LineItemsSubtotal}</td>
+                    </tr>
+                </apex:outputPanel>
+                <apex:outputPanel rendered="{!NOT(hasVolumePricing)}" layout="none">
+                    <tr class="subtotal-row">
+                        <td class="data-table-td" colspan="4">Products Subtotal</td>
+                        <td class="data-table-td number-cell">{!LineItemsSubtotal}</td>
+                    </tr>
+                </apex:outputPanel>
             </table>
         </apex:outputPanel>
 
@@ -314,8 +345,8 @@
 
             <table class="grid-table">
                 <tr>
-                    <th class="data-table-th">Quantity Range</th>
-                    <th class="data-table-th number-cell">Price</th>
+                    <th class="data-table-th">Days Range</th>
+                    <th class="data-table-th number-cell">Price / Day</th>
                 </tr>
                 <apex:repeat value="{!pdfData.lineItems}" var="row">
                     <apex:outputPanel rendered="{!row.volumePricingTiers != null}" layout="none">

@@ -20,7 +20,7 @@ public inherited sharing class OpportunityLineItemDAO {
                    Quantity, UnitPrice, ListPrice, Discount, TotalPrice,
                    Is_Bundle_Product__c, Bundle_Group__c,
                    Departure_Agency__c, Delivery_Date__c,
-                   Pickup_Date__c, Rental_Start_Date__c, Rental_End_Date__c,
+                   Pickup_Date__c, Service_Start_Date__c, Service_End_Date__c,
                    Trip_Delivery__c, Trip_Pickup__c
             FROM OpportunityLineItem
             WHERE OpportunityId = :opportunityId

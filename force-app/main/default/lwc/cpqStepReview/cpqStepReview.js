@@ -7,8 +7,23 @@ export default class CpqStepReview extends NavigationMixin(LightningElement) {
     @api opportunityState = {};
     @api opportunityRecord;
     @api logisticsState = {};
+    @api isVolumeOffer = false;
 
     expandedRows = new Set();
+
+    _formatDate(value) {
+        if (!value) return '—';
+        const d = new Date(value);
+        if (isNaN(d.getTime())) return '—';
+        return d.toLocaleDateString();
+    }
+
+    _daysBetween(start, end) {
+        if (!start || !end) return 0;
+        const ms = new Date(end).getTime() - new Date(start).getTime();
+        if (ms < 0) return 0;
+        return Math.floor(ms / (1000 * 60 * 60 * 24)) + 1;
+    }
 
     /* ═══ Opportunity Details ═══ */
 
@@ -81,7 +96,11 @@ export default class CpqStepReview extends NavigationMixin(LightningElement) {
                 chevronIcon: isExpanded ? 'utility:chevrondown' : 'utility:chevronright',
                 buttonVisibility: hasOptions ? '' : 'visibility: hidden;',
                 paddingStyle: 'padding-left: 0;',
-                rowClass: 'slds-hint-parent'
+                rowClass: 'slds-hint-parent',
+                formattedServiceStart: this._formatDate(product.serviceStartDate),
+                formattedServiceEnd: this._formatDate(product.serviceEndDate),
+                serviceDays: this._daysBetween(product.serviceStartDate, product.serviceEndDate),
+                formattedDailyRate: formatCurrency(product.dailyRate || 0)
             });
             
             if (hasOptions && isExpanded) {
@@ -104,7 +123,11 @@ export default class CpqStepReview extends NavigationMixin(LightningElement) {
                         chevronIcon: '',
                         buttonVisibility: 'display: none;',
                         paddingStyle: 'padding-left: 2rem;',
-                        rowClass: 'slds-hint-parent option-sub-row'
+                        rowClass: 'slds-hint-parent option-sub-row',
+                        formattedServiceStart: this._formatDate(product.serviceStartDate),
+                        formattedServiceEnd: this._formatDate(product.serviceEndDate),
+                        serviceDays: this._daysBetween(product.serviceStartDate, product.serviceEndDate),
+                        formattedDailyRate: formatCurrency(opt.dailyRate || 0)
                     });
                 });
             }
@@ -115,6 +138,12 @@ export default class CpqStepReview extends NavigationMixin(LightningElement) {
 
     get formattedSubtotal() {
         return formatCurrency(calculateSelectedProductsSubtotal(this.selectedProducts || []));
+    }
+
+    get subtotalColspan() {
+        // 7 base columns precede the Total cell (#, Product, Code, Qty, List, Disc, Net).
+        // Volume offers add 4 more (Service Start/End, Days, Daily Rate).
+        return this.isVolumeOffer ? 11 : 7;
     }
 
     get formattedProductsSubtotal() {

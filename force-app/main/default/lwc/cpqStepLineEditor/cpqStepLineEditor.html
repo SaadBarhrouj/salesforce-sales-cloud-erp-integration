@@ -19,8 +19,39 @@
 
         <!-- Main Content -->
         <template lwc:if={isNotEmpty}>
+            <!-- Service Period Header (volume-pricing offers only) -->
+            <template lwc:if={isVolumeOffer}>
+                <div class="service-header slds-grid slds-gutters slds-m-bottom_small slds-p-around_x-small">
+                    <div class="slds-col">
+                        <lightning-input
+                            type="date"
+                            label="Service Start Date"
+                            value={serviceStartDate}
+                            data-field="serviceStartDate"
+                            onchange={handleHeaderServiceChange}>
+                        </lightning-input>
+                    </div>
+                    <div class="slds-col">
+                        <lightning-input
+                            type="date"
+                            label="Service End Date"
+                            value={serviceEndDate}
+                            data-field="serviceEndDate"
+                            onchange={handleHeaderServiceChange}>
+                        </lightning-input>
+                    </div>
+                    <div class="slds-col">
+                        <label class="slds-form-element__label">Days</label>
+                        <div class="slds-form-element__control slds-text-heading_small slds-p-vertical_xxx-small">{headerDays}</div>
+                    </div>
+                </div>
+            </template>
+
             <!-- Line Items Tree Grid (Custom Blueprint) -->
-            <div class="slds-table_edit_container slds-is-relative slds-m-bottom_medium slds-scrollable_x">
+            <!-- No overflow:auto on the wrapper: the date picker popover from
+                 lightning-input type="date" must be free to escape the table
+                 container. -->
+            <div class="slds-table_edit_container slds-is-relative slds-m-bottom_medium">
                 <table aria-multiselectable="true"
                     class="slds-table slds-table_bordered slds-table_edit slds-table_fixed-layout slds-table_resizable-cols slds-tree slds-table_tree"
                     role="treegrid" aria-label="CPQ Line Editor Tree Grid">
@@ -124,6 +155,28 @@
                                         <td key={col.fieldName} data-label={col.label} role="gridcell" class="slds-cell-edit slds-cell_action-mode">
                                             <span class="slds-grid slds-grid_align-end slds-grid_vertical-align-center slds-p-horizontal_x-small" style="height: 100%;">
                                                 <template lwc:if={col.editable}>
+                                                    <!-- Service Start Date Field -->
+                                                    <template lwc:if={col.isStartDate}>
+                                                        <lightning-input type="date"
+                                                            variant="label-hidden"
+                                                            value={row.serviceStartDate}
+                                                            data-id={row.rowId}
+                                                            data-field="serviceStartDate"
+                                                            onchange={handleInlineEdit}>
+                                                        </lightning-input>
+                                                    </template>
+
+                                                    <!-- Service End Date Field -->
+                                                    <template lwc:if={col.isEndDate}>
+                                                        <lightning-input type="date"
+                                                            variant="label-hidden"
+                                                            value={row.serviceEndDate}
+                                                            data-id={row.rowId}
+                                                            data-field="serviceEndDate"
+                                                            onchange={handleInlineEdit}>
+                                                        </lightning-input>
+                                                    </template>
+
                                                     <!-- Quantity Field -->
                                                     <template lwc:if={col.isQty}>
                                                         <template lwc:if={row.isQtyEditable}>
@@ -170,14 +223,19 @@
                                                     </template>
                                                 </template>
                                                 <template lwc:else>
-                                                    <div class="slds-truncate" title={row.formattedNetPrice} lwc:if={col.isCurrency}>
-                                                        <template lwc:if={col.isListPrice}>{row.formattedListPrice}</template>
-                                                        <template lwc:if={col.isNetPrice}>{row.formattedNetPrice}</template>
-                                                        <template lwc:if={col.isTotal}>{row.formattedNetTotal}</template>
-                                                    </div>
-                                                    <div class="slds-truncate" title={row.productCode} lwc:else>
-                                                        {row.productCode}
-                                                    </div>
+                                                    <template lwc:if={col.isCurrency}>
+                                                        <div class="slds-truncate" title={row.formattedNetPrice}>
+                                                            <template lwc:if={col.isListPrice}>{row.formattedListPrice}</template>
+                                                            <template lwc:if={col.isNetPrice}>{row.formattedNetPrice}</template>
+                                                            <template lwc:if={col.isTotal}>{row.formattedNetTotal}</template>
+                                                            <template lwc:if={col.isDailyRate}>{row.formattedDailyRate}</template>
+                                                        </div>
+                                                    </template>
+                                                    <template lwc:else>
+                                                        <div class="slds-truncate" title={row.productCode}>
+                                                            {row.productCode}
+                                                        </div>
+                                                    </template>
                                                 </template>
                                             </span>
                                         </td>

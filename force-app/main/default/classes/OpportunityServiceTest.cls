@@ -457,4 +457,72 @@ private class OpportunityServiceTest {
         List<OpportunityLineItem> items = [SELECT Id FROM OpportunityLineItem WHERE OpportunityId = :opp.Id];
         System.assertEquals(2, items.size(), 'Should create parent and child line items');
     }
+
+    @IsTest
+    static void saveOpportunityWithLinesVolumeProratesUnitPriceAndStoresSidecars() {
+        ProductCatalog rentalCatalog = TestDataFactory.createProductCatalog('Rental', true);
+        Product2 prod = TestDataFactory.createProduct2(true);
+        Pricebook2 pb = TestDataFactory.createPricebook2('PB-Rental', true, true);
+        PricebookEntry std = new PricebookEntry(Pricebook2Id = Test.getStandardPricebookId(), Product2Id = prod.Id, UnitPrice = 100, IsActive = true, UseStandardPrice = false);
+        insert std;
+        TestDataFactory.createPricebookEntry(pb.Id, prod.Id, 100, true, true);
+        Opportunity opp = TestDataFactory.createOpportunityWithPricebook(rentalCatalog.Id, pb.Id, true);
+
+        Date startDate = Date.newInstance(2026, 6, 1);
+        Date endDate = Date.newInstance(2026, 6, 5); // 5 days inclusive
+
+        // The LWC sends `unitPrice` = resolved per-day rate plus per-line dates
+        // (the line editor's header is a UI default that cascades into each line
+        // before save; there is no Opportunity-level service field).
+        Map<String, Object> line = new Map<String, Object>{
+            'product2Id' => prod.Id,
+            'quantity' => 2,
+            'unitPrice' => 50,
+            'discountPercent' => 0,
+            'isBundle' => false,
+            'serviceStartDate' => startDate,
+            'serviceEndDate' => endDate
+        };
+
+        Test.startTest();
+        OpportunityService.saveOpportunityWithLines(opp.Id, new List<Map<String, Object>>{ line }, null);
+        Test.stopTest();
+
+        OpportunityLineItem oli = [
+            SELECT Quantity, UnitPrice, TotalPrice, Daily_Rate__c, Service_Days__c,
+                   Service_Start_Date__c, Service_End_Date__c
+            FROM OpportunityLineItem WHERE OpportunityId = :opp.Id LIMIT 1
+        ];
+        System.assertEquals(2, oli.Quantity);
+        System.assertEquals(250, oli.UnitPrice, 'UnitPrice = dailyRate * days');
+        System.assertEquals(500, oli.TotalPrice, 'TotalPrice = qty * UnitPrice');
+        System.assertEquals(50, oli.Daily_Rate__c);
+        System.assertEquals(5, oli.Service_Days__c);
+        System.assertEquals(startDate, oli.Service_Start_Date__c);
+        System.assertEquals(endDate, oli.Service_End_Date__c);
+    }
+
+    @IsTest
+    static void saveOpportunityWithLinesVolumeRejectsMissingDates() {
+        ProductCatalog rentalCatalog = TestDataFactory.createProductCatalog('Rental', true);
+        Product2 prod = TestDataFactory.createProduct2(true);
+        Pricebook2 pb = TestDataFactory.createPricebook2('PB-Rental-Missing', true, true);
+        PricebookEntry std = new PricebookEntry(Pricebook2Id = Test.getStandardPricebookId(), Product2Id = prod.Id, UnitPrice = 100, IsActive = true, UseStandardPrice = false);
+        insert std;
+        TestDataFactory.createPricebookEntry(pb.Id, prod.Id, 50, true, true);
+        Opportunity opp = TestDataFactory.createOpportunityWithPricebook(rentalCatalog.Id, pb.Id, true);
+
+        Map<String, Object> line = new Map<String, Object>{
+            'product2Id' => prod.Id, 'quantity' => 1, 'unitPrice' => 50, 'discountPercent' => 0
+        };
+
+        Boolean threw = false;
+        try {
+            OpportunityService.saveOpportunityWithLines(opp.Id, new List<Map<String, Object>>{ line }, null);
+        } catch (OpportunityException e) {
+            threw = true;
+            System.assert(e.getMessage().contains('service line'), 'Specific message: ' + e.getMessage());
+        }
+        System.assert(threw, 'Expected exception when a service line is missing dates for a Volume catalog');
+    }
 }

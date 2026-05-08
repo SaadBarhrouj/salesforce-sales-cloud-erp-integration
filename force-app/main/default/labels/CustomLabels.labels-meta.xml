@@ -51,7 +51,7 @@
         <fullName>Volume_Pricing_Catalog_Names</fullName>
         <language>en_US</language>
         <protected>false</protected>
-        <shortDescription>Comma-separated catalogs that use the volume pricing</shortDescription>
+        <shortDescription>Catalogs using day-bracketed volume tiers; rental dates required.</shortDescription>
         <value>Rental and Services,Rental,Services</value>
     </labels>
     <labels>
@@ -68,4 +68,11 @@
         <shortDescription>Error message when no line items are provided for save</shortDescription>
         <value>Add at least one product before saving.</value>
     </labels>
-</CustomLabels> 
+    <labels>
+        <fullName>Rental_Catalog_Names</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Comma-separated catalog names that use rental (period-based) pricing</shortDescription>
+        <value>Rental and Services,Rental</value>
+    </labels>
+</CustomLabels>

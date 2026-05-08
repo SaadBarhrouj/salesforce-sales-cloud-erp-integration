@@ -4,7 +4,7 @@
  */
 public inherited sharing class PricebookService {
     private static final String PRICEBOOK_METHOD = 'Pricebook';
-    private static final String VOLUME_PRICING_METHOD = 'VolumePricing';  
+    private static final String VOLUME_PRICING_METHOD = 'VolumePricing';
       
     /**
      * @description Calculates pricing for multiple line items based on a pricing method.
@@ -20,9 +20,11 @@ public inherited sharing class PricebookService {
             Id productId = (Id) item.get('productId');
             Integer quantity = toInteger(item.get('quantity'));
             Decimal discount = toDecimal(item.get('discount'));
+            Date startDate = toDate(item.get('serviceStartDate'));
+            Date endDate = toDate(item.get('serviceEndDate'));
 
             PricingResponse response = pricingMethod == VOLUME_PRICING_METHOD
-                ? calculateByVolumePricing(productId, pricebookId, quantity, discount)
+                ? calculateByVolumePricing(productId, pricebookId, quantity, discount, startDate, endDate)
                 : calculateByPricebook(productId, pricebookId, quantity, discount);
 
             responses.add(response);
@@ -69,20 +71,31 @@ public inherited sharing class PricebookService {
     }
 
     /**
-     * @description Calculates price using Volume Pricing Schedules and Tiers.
+     * @description Calculates price using day-bracketed Volume Pricing tiers.
+     * The tier whose Lower_Bound/Upper_Bound contains the inclusive day count is selected.
+     * The tier price is interpreted as the per-day rate at that bracket.
+     *
+     * Tiered: total = tierPrice (per day) * qty * days * (1 - discount%)
+     * Block:  total = tierPrice (per day) * days * (1 - discount%)  -- qty-agnostic
+     *
      * @param productId Product Id with an active schedule.
      * @param pricebookId Pricebook Id for lookup.
-     * @param quantity Quantity to determine the tier.
+     * @param quantity Quantity (multiplied for Tiered, ignored for Block).
      * @param discount Discount percentage to apply.
+     * @param startDate Service start date (inclusive); required.
+     * @param endDate Service end date (inclusive); required.
      * @return PricingResponse with tiered or block pricing result.
      */
-    public static PricingResponse calculateByVolumePricing(Id productId, Id pricebookId, Integer quantity, Decimal discount) {
+    public static PricingResponse calculateByVolumePricing(
+        Id productId, Id pricebookId, Integer quantity, Decimal discount, Date startDate, Date endDate
+    ) {
         try {
             validateDiscount(discount);
             validateQuantity(quantity);
+            Integer days = validateAndComputeDays(startDate, endDate);
 
             Volume_Pricing_Schedule__c schedule = VolumePricingScheduleDAO.getActiveByProductAndPricebook(productId, pricebookId);
-            
+
             if (schedule == null) {
                 return PricingResponse.error('Volume pricing schedule not found for product');
             }
@@ -92,20 +105,21 @@ public inherited sharing class PricebookService {
                 return PricingResponse.error('No volume pricing tiers defined');
             }
 
-            Volume_Pricing_Tier__c matchedTier = findMatchedTier(tiers, quantity);
+            Volume_Pricing_Tier__c matchedTier = findMatchedTier(tiers, days);
 
-            Decimal listPrice;
+            Decimal dailyRate;
             String method;
 
             if (matchedTier != null) {
-                listPrice = matchedTier.Price__c.setScale(2);
+                dailyRate = matchedTier.Price__c.setScale(2);
             } else if (schedule.Overage_Rate__c != null) {
-                listPrice = schedule.Overage_Rate__c.setScale(2);
+                dailyRate = schedule.Overage_Rate__c.setScale(2);
             } else {
-                return PricingResponse.error('No matching tier for quantity: ' + quantity);
+                return PricingResponse.error('No matching tier for service days: ' + days);
             }
 
-            Decimal netPrice = listPrice * (1 - discount / 100).setScale(2);
+            Decimal listPrice = (dailyRate * days).setScale(2);
+            Decimal netPrice = (listPrice * (1 - discount / 100)).setScale(2);
             Decimal totalPrice;
 
             if (schedule.Pricing_Type__c == 'Block') {
@@ -124,6 +138,10 @@ public inherited sharing class PricebookService {
             response.discount = discount;
             response.quantity = quantity;
             response.pricingMethod = method;
+            response.dailyRate = dailyRate;
+            response.serviceDays = days;
+            response.serviceStartDate = startDate;
+            response.serviceEndDate = endDate;
             return response;
         } catch (PricebookException e) {
             return PricingResponse.error(e.getMessage());
@@ -131,16 +149,53 @@ public inherited sharing class PricebookService {
     }
 
     /**
-     * @description Finds the matching volume pricing tier for a given quantity.
+     * @description Validates service dates and returns the inclusive day count.
+     * @param startDate The service start date.
+     * @param endDate The service end date.
+     * @return Inclusive day count (end - start + 1).
+     * @throws PricebookException if dates are missing or end < start.
+     */
+    private static Integer validateAndComputeDays(Date startDate, Date endDate) {
+        if (startDate == null || endDate == null) {
+            throw new PricebookException('Service Start Date and End Date are required.');
+        }
+        if (endDate < startDate) {
+            throw new PricebookException('Service End Date must be on or after Service Start Date.');
+        }
+        return startDate.daysBetween(endDate) + 1;
+    }
+
+    /**
+     * @description Converts an Object value to a Date.
+     * @param value The value to convert (Date instance or ISO date string).
+     * @return The Date value, or null on failure.
+     */
+    private static Date toDate(Object value) {
+        if (value == null) {
+            return null;
+        }
+        if (value instanceof Date) {
+            return (Date) value;
+        }
+        try {
+            return Date.valueOf(String.valueOf(value));
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    /**
+     * @description Finds the matching volume pricing tier whose day-bracket
+     * (Lower_Bound__c .. Upper_Bound__c) contains the given inclusive day count.
      * @param tiers List of Volume_Pricing_Tier__c records to search.
-     * @param quantity The quantity to match against tier bounds.
+     * @param days The inclusive service day count.
      * @return The matched tier, or null if no tier matches.
      */
-    private static Volume_Pricing_Tier__c findMatchedTier(List<Volume_Pricing_Tier__c> tiers, Integer quantity) {
-        Decimal qty = Decimal.valueOf(quantity);
+    private static Volume_Pricing_Tier__c findMatchedTier(List<Volume_Pricing_Tier__c> tiers, Integer days) {
+        Decimal value = Decimal.valueOf(days);
         for (Volume_Pricing_Tier__c tier : tiers) {
-            if (tier.Lower_Bound__c != null && qty >= tier.Lower_Bound__c) {
-                if (tier.Upper_Bound__c == null || qty <= tier.Upper_Bound__c) {
+            if (tier.Lower_Bound__c != null && value >= tier.Lower_Bound__c) {
+                if (tier.Upper_Bound__c == null || value <= tier.Upper_Bound__c) {
                     return tier;
                 }
             }

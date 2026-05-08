@@ -92,15 +92,24 @@ private class PricebookControllerTest {
 
         ProductCatalog catalog = TestDataFactory.createProductCatalog('Rental', true);
 
+        Date s = Date.newInstance(2026, 6, 1);
+        Date e = Date.newInstance(2026, 6, 5); // 5 days inclusive
         List<Map<String, Object>> lineItems = new List<Map<String, Object>>{
-            new Map<String, Object>{ 'productId' => prod.Id, 'quantity' => 5, 'discount' => 0 }
+            new Map<String, Object>{
+                'productId' => prod.Id,
+                'quantity' => 5,
+                'discount' => 0,
+                'serviceStartDate' => s,
+                'serviceEndDate' => e
+            }
         };
 
         List<PricingResponse> responses = PricebookController.calculateLinePrices(lineItems, catalog.Id, pb.Id);
 
         System.assertEquals(1, responses.size(), 'Should return one response');
         System.assertEquals(true, responses[0].success, 'Response should succeed');
-        System.assertEquals(80, responses[0].listPrice, 'Volume price should match');
+        System.assertEquals(80, responses[0].dailyRate, 'Tier price (per day) should match');
+        System.assertEquals(400, responses[0].listPrice, 'listPrice = dailyRate * days = 80 * 5');
         System.assertEquals('Tiered', responses[0].pricingMethod, 'Method should be VolumePricing Tiered');
     }
 
@@ -124,5 +133,39 @@ private class PricebookControllerTest {
         System.assertEquals(true, responses[0].success, 'Response should succeed');
         System.assertEquals(100, responses[0].listPrice, 'Pricebook price should match');
         System.assertEquals('Pricebook', responses[0].pricingMethod, 'Method should be Pricebook');
+    }
+
+    @IsTest
+    static void calculateLinePricesVolumeCatalogRoutesToDayBracketed() {
+        ProductCatalog rentalCatalog = TestDataFactory.createProductCatalog('Rental', true);
+        Product2 product = TestDataFactory.createProduct2(true);
+        Pricebook2 pb = TestDataFactory.createPricebook2('PB-Rental', true, true);
+        PricebookEntry std = new PricebookEntry(Pricebook2Id = Test.getStandardPricebookId(), Product2Id = product.Id, UnitPrice = 100, IsActive = true, UseStandardPrice = false);
+        insert std;
+        TestDataFactory.createPricebookEntry(pb.Id, product.Id, 100, true, true);
+
+        Volume_Pricing_Schedule__c schedule = TestDataFactory.createVolumePricingSchedule(product.Id, pb.Id, 'Tiered', true, true);
+        // Tier brackets days 1-7 at $75/day.
+        TestDataFactory.createVolumePricingTier(schedule.Id, 1, 7, 75, 1, true);
+
+        Map<String, Object> line = new Map<String, Object>{
+            'productId' => product.Id,
+            'quantity' => 2,
+            'discount' => 0,
+            'serviceStartDate' => Date.newInstance(2026, 6, 1),
+            'serviceEndDate' => Date.newInstance(2026, 6, 4) // 4 days inclusive
+        };
+
+        Test.startTest();
+        List<PricingResponse> responses = PricebookController.calculateLinePrices(
+            new List<Map<String, Object>>{ line }, rentalCatalog.Id, pb.Id
+        );
+        Test.stopTest();
+
+        System.assertEquals(1, responses.size());
+        System.assertEquals('Tiered', responses[0].pricingMethod, 'Day-bracketed Volume Pricing applies');
+        System.assertEquals(4, responses[0].serviceDays);
+        System.assertEquals(75, responses[0].dailyRate);
+        System.assertEquals(600, responses[0].totalPrice, '75 * 4 (days) * 2 (qty) = 600');
     }
 }

@@ -39,17 +39,29 @@ private class PricebookServiceTest {
         insert stdPbe;
 
         Volume_Pricing_Schedule__c schedule = TestDataFactory.createVolumePricingSchedule(prod.Id, pb.Id, 'Tiered', true, true);
+        // Tier brackets days 1-10 at $80/day.
         TestDataFactory.createVolumePricingTier(schedule.Id, 1, 10, 80, 1, true);
 
+        Date startDate = Date.newInstance(2026, 6, 1);
+        Date endDate = Date.newInstance(2026, 6, 5); // 5 days inclusive
         List<Map<String, Object>> lineItems = new List<Map<String, Object>>{
-            new Map<String, Object>{ 'productId' => prod.Id, 'quantity' => 5, 'discount' => 0 }
+            new Map<String, Object>{
+                'productId' => prod.Id,
+                'quantity' => 5,
+                'discount' => 0,
+                'serviceStartDate' => startDate,
+                'serviceEndDate' => endDate
+            }
         };
 
         List<PricingResponse> responses = PricebookService.calculatePrices(lineItems, 'VolumePricing', pb.Id);
 
         System.assertEquals(1, responses.size(), 'Should return one response');
         System.assertEquals(true, responses[0].success, 'Response should succeed');
-        System.assertEquals(80, responses[0].listPrice, 'Tier price should match');
+        System.assertEquals(80, responses[0].dailyRate, 'Daily rate snapshots tier price');
+        System.assertEquals(5, responses[0].serviceDays, 'Inclusive day count');
+        System.assertEquals(400, responses[0].listPrice, 'listPrice = dailyRate * days = 80 * 5');
+        System.assertEquals(2000, responses[0].totalPrice, 'Tiered total = listPrice * qty = 400 * 5');
         System.assertEquals('Tiered', responses[0].pricingMethod, 'Method should be Tiered');
     }
 
@@ -105,14 +117,19 @@ private class PricebookServiceTest {
         insert stdPbe;
 
         Volume_Pricing_Schedule__c schedule = TestDataFactory.createVolumePricingSchedule(prod.Id, pb.Id, 'Tiered', true, true);
+        // Tier brackets 1-10 days at $80/day.
         TestDataFactory.createVolumePricingTier(schedule.Id, 1, 10, 80, 1, true);
 
-        PricingResponse response = PricebookService.calculateByVolumePricing(prod.Id, pb.Id, 5, 5);
+        Date s = Date.newInstance(2026, 6, 1);
+        Date e = Date.newInstance(2026, 6, 5); // 5 days inclusive
+        PricingResponse response = PricebookService.calculateByVolumePricing(prod.Id, pb.Id, 5, 5, s, e);
 
         System.assertEquals(true, response.success, 'Should succeed');
-        System.assertEquals(80, response.listPrice, 'Tier price should match');
-        System.assertEquals(76.00, response.netPrice, 'Net price should be 80 * 0.95');
-        System.assertEquals(380.00, response.totalPrice, 'Total price should be 76 * 5');
+        System.assertEquals(80, response.dailyRate, 'Daily rate snapshots tier price');
+        System.assertEquals(5, response.serviceDays, 'Inclusive day count');
+        System.assertEquals(400, response.listPrice, 'listPrice = dailyRate * days = 80 * 5');
+        System.assertEquals(380.00, response.netPrice, 'Net = 400 * (1 - 0.05)');
+        System.assertEquals(1900.00, response.totalPrice, 'Total = 380 * qty(5)');
         System.assertEquals('Tiered', response.pricingMethod, 'Method should be Tiered');
     }
 
@@ -124,13 +141,17 @@ private class PricebookServiceTest {
         insert stdPbe;
 
         Volume_Pricing_Schedule__c schedule = TestDataFactory.createVolumePricingSchedule(prod.Id, pb.Id, 'Block', true, true);
+        // Block tier brackets 1-10 days at $500/day flat-per-period.
         TestDataFactory.createVolumePricingTier(schedule.Id, 1, 10, 500, 1, true);
 
-        PricingResponse response = PricebookService.calculateByVolumePricing(prod.Id, pb.Id, 5, 0);
+        Date s = Date.newInstance(2026, 6, 1);
+        Date e = Date.newInstance(2026, 6, 5); // 5 days inclusive
+        PricingResponse response = PricebookService.calculateByVolumePricing(prod.Id, pb.Id, 5, 0, s, e);
 
         System.assertEquals(true, response.success, 'Should succeed');
-        System.assertEquals(500, response.listPrice, 'Tier price should match');
-        System.assertEquals(500, response.totalPrice, 'Block total should equal netPrice');
+        System.assertEquals(500, response.dailyRate, 'Daily rate snapshots tier price');
+        System.assertEquals(2500, response.listPrice, 'listPrice = dailyRate * days = 500 * 5');
+        System.assertEquals(2500, response.totalPrice, 'Block total is qty-agnostic, scales with days only');
         System.assertEquals('Block', response.pricingMethod, 'Method should be Block');
     }
 
@@ -139,7 +160,9 @@ private class PricebookServiceTest {
         Pricebook2 pb = TestDataFactory.createPricebook2('Test PB', true, true);
         Product2 prod = TestDataFactory.createProduct2(true);
 
-        PricingResponse response = PricebookService.calculateByVolumePricing(prod.Id, pb.Id, 1, 0);
+        Date s = Date.newInstance(2026, 6, 1);
+        Date e = Date.newInstance(2026, 6, 1);
+        PricingResponse response = PricebookService.calculateByVolumePricing(prod.Id, pb.Id, 1, 0, s, e);
 
         System.assertEquals(false, response.success, 'Should fail');
         System.assert(response.errorMessage.contains('Volume pricing schedule not found'), 'Error should indicate missing schedule');
@@ -154,7 +177,9 @@ private class PricebookServiceTest {
 
         TestDataFactory.createVolumePricingSchedule(prod.Id, pb.Id, 'Tiered', true, true);
 
-        PricingResponse response = PricebookService.calculateByVolumePricing(prod.Id, pb.Id, 1, 0);
+        Date s = Date.newInstance(2026, 6, 1);
+        Date e = Date.newInstance(2026, 6, 1);
+        PricingResponse response = PricebookService.calculateByVolumePricing(prod.Id, pb.Id, 1, 0, s, e);
 
         System.assertEquals(false, response.success, 'Should fail');
         System.assert(response.errorMessage.contains('No volume pricing tiers defined'), 'Error should indicate empty tiers');
@@ -168,12 +193,15 @@ private class PricebookServiceTest {
         insert stdPbe;
 
         Volume_Pricing_Schedule__c schedule = TestDataFactory.createVolumePricingSchedule(prod.Id, pb.Id, 'Tiered', true, true);
+        // Tier brackets 1-5 days; the requested 10-day service period falls outside.
         TestDataFactory.createVolumePricingTier(schedule.Id, 1, 5, 80, 1, true);
 
-        PricingResponse response = PricebookService.calculateByVolumePricing(prod.Id, pb.Id, 10, 0);
+        Date s = Date.newInstance(2026, 6, 1);
+        Date e = Date.newInstance(2026, 6, 10); // 10 days
+        PricingResponse response = PricebookService.calculateByVolumePricing(prod.Id, pb.Id, 1, 0, s, e);
 
         System.assertEquals(false, response.success, 'Should fail');
-        System.assert(response.errorMessage.contains('No matching tier for quantity'), 'Error should indicate no matching tier');
+        System.assert(response.errorMessage.contains('No matching tier for service days'), 'Error should indicate no matching day-tier');
     }
 
     @IsTest
@@ -188,15 +216,19 @@ private class PricebookServiceTest {
         update schedule;
         TestDataFactory.createVolumePricingTier(schedule.Id, 1, 5, 80, 1, true);
 
-        PricingResponse response = PricebookService.calculateByVolumePricing(prod.Id, pb.Id, 10, 0);
+        Date s = Date.newInstance(2026, 6, 1);
+        Date e = Date.newInstance(2026, 6, 10); // 10 days, beyond the 1-5 tier
+        PricingResponse response = PricebookService.calculateByVolumePricing(prod.Id, pb.Id, 1, 0, s, e);
 
         System.assertEquals(true, response.success, 'Should succeed using overage rate');
-        System.assertEquals(50, response.listPrice, 'Overage rate should be used');
+        System.assertEquals(50, response.dailyRate, 'Overage rate is the per-day fallback');
+        System.assertEquals(500, response.listPrice, 'listPrice = overageRate * days = 50 * 10');
     }
 
     @IsTest
     static void calculateByVolumePricingInvalidDiscountReturnsError() {
-        PricingResponse response = PricebookService.calculateByVolumePricing(null, null, 1, -1);
+        Date s = Date.today();
+        PricingResponse response = PricebookService.calculateByVolumePricing(null, null, 1, -1, s, s);
 
         System.assertEquals(false, response.success, 'Should fail');
         System.assert(response.errorMessage.contains('Discount must be between 0 and 100'), 'Error should indicate invalid discount');
@@ -204,9 +236,45 @@ private class PricebookServiceTest {
 
     @IsTest
     static void calculateByVolumePricingInvalidQuantityReturnsError() {
-        PricingResponse response = PricebookService.calculateByVolumePricing(null, null, 0, 0);
+        Date s = Date.today();
+        PricingResponse response = PricebookService.calculateByVolumePricing(null, null, 0, 0, s, s);
 
         System.assertEquals(false, response.success, 'Should fail');
         System.assert(response.errorMessage.contains('Quantity must be at least 1'), 'Error should indicate invalid quantity');
     }
+
+    @IsTest
+    static void calculateByVolumePricingFailsWhenDatesMissing() {
+        Pricebook2 pb = TestDataFactory.createPricebook2('PB-NoDates', true, true);
+        Product2 prod = TestDataFactory.createProduct2(true);
+        PricebookEntry stdPbe = new PricebookEntry(Pricebook2Id = Test.getStandardPricebookId(), Product2Id = prod.Id, UnitPrice = 100, IsActive = true, UseStandardPrice = false);
+        insert stdPbe;
+
+        Volume_Pricing_Schedule__c schedule = TestDataFactory.createVolumePricingSchedule(prod.Id, pb.Id, 'Tiered', true, true);
+        TestDataFactory.createVolumePricingTier(schedule.Id, 1, 10, 80, 1, true);
+
+        PricingResponse response = PricebookService.calculateByVolumePricing(prod.Id, pb.Id, 1, 0, null, null);
+
+        System.assertEquals(false, response.success, 'Should fail when dates missing');
+        System.assert(response.errorMessage.contains('required'), 'Error should mention required dates');
+    }
+
+    @IsTest
+    static void calculateByVolumePricingFailsWhenEndBeforeStart() {
+        Pricebook2 pb = TestDataFactory.createPricebook2('PB-Inv', true, true);
+        Product2 prod = TestDataFactory.createProduct2(true);
+        PricebookEntry stdPbe = new PricebookEntry(Pricebook2Id = Test.getStandardPricebookId(), Product2Id = prod.Id, UnitPrice = 100, IsActive = true, UseStandardPrice = false);
+        insert stdPbe;
+
+        Volume_Pricing_Schedule__c schedule = TestDataFactory.createVolumePricingSchedule(prod.Id, pb.Id, 'Tiered', true, true);
+        TestDataFactory.createVolumePricingTier(schedule.Id, 1, 10, 80, 1, true);
+
+        Date s = Date.today();
+        Date e = s.addDays(-1);
+        PricingResponse response = PricebookService.calculateByVolumePricing(prod.Id, pb.Id, 1, 0, s, e);
+
+        System.assertEquals(false, response.success, 'Should fail when end < start');
+        System.assert(response.errorMessage.contains('on or after'), 'Error should indicate date order');
+    }
+
 }

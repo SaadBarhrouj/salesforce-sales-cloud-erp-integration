@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Service_Start_Date__c</fullName>
+    <description>Start date of the service period for this Quote Line. Populated by QuoteLineItemTrigger from the parent OpportunityLineItem on standard Sync Quote.</description>
+    <inlineHelpText>Service start date for this quote line.</inlineHelpText>
+    <label>Service Start Date</label>
+    <required>false</required>
+    <trackHistory>false</trackHistory>
+    <type>Date</type>
+</CustomField>
