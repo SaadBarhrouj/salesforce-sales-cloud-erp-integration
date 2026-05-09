@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomApplication xmlns="http://soap.sforce.com/2006/04/metadata">
+    <brand>
+        <headerColor>#E40115</headerColor>
+        <logo>LOXFORCE_Logo3</logo>
+        <logoVersion>1</logoVersion>
+        <shouldOverrideOrgTheme>true</shouldOverrideOrgTheme>
+    </brand>
+    <description>End-to-end sales platform for LOXAM covering equipment rental, parts sales, and services. Handles product catalog, dynamic bundle configuration, multi-tier pricing, automated quoting, order management, invoicing, and delivery tracking.</description>
+    <formFactors>Small</formFactors>
+    <formFactors>Large</formFactors>
+    <isNavAutoTempTabsDisabled>false</isNavAutoTempTabsDisabled>
+    <isNavPersonalizationDisabled>false</isNavPersonalizationDisabled>
+    <isNavTabPersistenceDisabled>false</isNavTabPersistenceDisabled>
+    <isOmniPinnedViewEnabled>false</isOmniPinnedViewEnabled>
+    <label>LOXFORCE</label>
+    <navType>Standard</navType>
+    <tabs>standard-home</tabs>
+    <tabs>standard-Account</tabs>
+    <tabs>standard-Contact</tabs>
+    <tabs>standard-Opportunity</tabs>
+    <tabs>standard-Quote</tabs>
+    <tabs>standard-ProductCatalog</tabs>
+    <tabs>standard-ProductCategory</tabs>
+    <tabs>standard-Product2</tabs>
+    <tabs>standard-Pricebook2</tabs>
+    <tabs>Volume_Pricing_Schedule__c</tabs>
+    <tabs>Product_Rule__c</tabs>
+    <tabs>standard-Location</tabs>
+    <tabs>Trip__c</tabs>
+    <tabs>standard-WorkbenchHome</tabs>
+    <uiType>Lightning</uiType>
+    <utilityBar>LOXFORCE_UtilityBar</utilityBar>
+</CustomApplication>
