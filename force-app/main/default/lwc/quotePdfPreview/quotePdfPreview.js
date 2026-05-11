@@ -44,6 +44,9 @@ export default class QuotePdfPreview extends LightningElement {
                     })
                 );
                 this.dispatchEvent(new CloseActionScreenEvent());
+                // Hard reload so the Quote Documents related list shows the new file.
+                // Delay briefly so the success toast renders before navigation.
+                setTimeout(() => window.location.reload(), 600);
             })
             .catch((error) => {
                 this.isLoading = false;
