@@ -28,7 +28,6 @@
     <tabs>Product_Rule__c</tabs>
     <tabs>standard-Location</tabs>
     <tabs>Trip__c</tabs>
-    <tabs>standard-WorkbenchHome</tabs>
     <uiType>Lightning</uiType>
     <utilityBar>LOXFORCE_UtilityBar</utilityBar>
 </CustomApplication>

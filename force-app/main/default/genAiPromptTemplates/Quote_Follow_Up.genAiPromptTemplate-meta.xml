@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<GenAiPromptTemplate xmlns="http://soap.sforce.com/2006/04/metadata">
+    <activeVersionIdentifier>wpyLIERkkPG/LR7ehih7NXgk7xIhRqGkCj0SY72WLjE=_1</activeVersionIdentifier>
+    <developerName>Quote_Follow_Up</developerName>
+    <masterLabel>Quote Follow-Up</masterLabel>
+    <overridable>false</overridable>
+    <relatedEntity>Contact</relatedEntity>
+    <templateVersions>
+        <content>You are a sales representative at LOXAM.
+
+Write a professional, human, concise customer email to follow up on a quote that is expiring soon.
+The email must sound natural, polite, and helpful, creating a slight sense of urgency without being pushy. It must be personalized using the Salesforce data provided below.
+Do not invent facts, prices, products, commercial conditions, dates, or history that are not present in the grounding data.
+
+Customer and sender context:
+- Sender: {!$Input:Sender.Name}
+- Recipient: {!$Input:Recipient.Name}
+- Recipient company: {!$Input:Recipient.Account.Name}
+
+Business context:
+
+Quote Data:
+{!$RecordSnapshot:Quote.snapshot}
+
+Opportunity Data:
+{!$RecordSnapshot:Quote.Opportunity.snapshot}
+
+Instructions for parsing data:
+- Extract the quote number, grand total, and exact expiration date.
+- DO NOT extract or list the individual products, quantities, discounts, or line-item prices.
+- Ignore internal system metadata, record IDs, hyperlinks, activity IDs, email message IDs, file IDs, and raw JSON syntax.
+
+Output rules:
+- Return valid JSON only.
+- Return exactly two keys: &quot;subject&quot; and &quot;body&quot;.
+- The &quot;body&quot; value must contain HTML only.
+- Do not wrap the JSON in markdown fences (do not use ```json or ```html).
+- Do not add any keys other than &quot;subject&quot; and &quot;body&quot;.
+- Do not add any text before or after the JSON object.
+
+Critical HTML rules:
+- DO NOT use any newline characters (\n) or line breaks anywhere in the JSON body string. The entire HTML output must be one single, continuous line.
+- Use `&lt;p style=&quot;margin: 0 0 15px 0;&quot;&gt;` for all generated paragraphs to safely control spacing inside the email composer.
+- Preserve the header HTML exactly as provided below, without changing any tag, style, attribute, or URL.
+- Preserve the footer HTML exactly as provided below, without changing any tag, style, attribute, or URL.
+- Generate only the inner body content between the greeting paragraph and the closing signature.
+- Do not use markdown. Do not escape the HTML.
+
+Email writing rules:
+- Keep the tone warm, highly professional, executive, and concise.
+- Acknowledge that you are following up on the previously sent quote.
+- Highlight that Quote [Number] is scheduled to expire soon on [Expiration Date].
+- DO NOT insert tables or bulleted lists. State that the quote document is attached for their reference.
+
+Use this exact JSON structure:
+
+{
+ &quot;subject&quot;: &quot;Write a professional subject line mentioning the quote follow-up&quot;,
+ &quot;body&quot;: &quot;&lt;div style=\&quot;max-width: 600px; margin: 20px auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 8px rgba(0,0,0,0.1); font-family: Arial, Helvetica, sans-serif; font-size: 14px; color: #1f1f1f;\&quot;&gt;&lt;div style=\&quot;background-color: #333333; padding: 20px; text-align: center; border-bottom: 4px solid #e3001b;\&quot;&gt;&lt;a href=\&quot;https://www.loxam.com\&quot; target=\&quot;_blank\&quot;&gt;&lt;img src=\&quot;https://orgfarm-71cab80f09-dev-ed.develop.file.force.com/sfc/dist/version/download/?oid=00Dak00000rcIE7&amp;ids=068ak00000ICclV&amp;d=%2Fa%2Fak000000F4hd%2FEz8Q5AruanPqJu.pW5jCvDg_Diu_R1P4YRfVQR4YLaE&amp;asPdf=false\&quot; alt=\&quot;LOXAM\&quot; style=\&quot;max-width: 250px; height: auto; border: none;\&quot;&gt;&lt;/a&gt;&lt;/div&gt;&lt;div style=\&quot;padding: 30px; line-height: 1.6;\&quot;&gt;&lt;p style=\&quot;margin: 0 0 15px 0;\&quot;&gt;Hello {!$Input:Recipient.Name},&lt;/p&gt;GENERATED_BODY_CONTENT_ONLY&lt;p style=\&quot;margin: 0;\&quot;&gt;Best regards,&lt;br&gt;&lt;b&gt;{!$Input:Sender.Name}&lt;/b&gt;&lt;br&gt;LOXAM Team&lt;/p&gt;&lt;/div&gt;&lt;div style=\&quot;background-color: #333333; color: #ffffff; text-align: center; padding: 20px; font-size: 12px;\&quot;&gt;&lt;p style=\&quot;margin: 0 0 10px 0;\&quot;&gt;&lt;b&gt;LOXAM&lt;/b&gt; | \&quot;Safety, always &amp; everywhere\&quot;&lt;/p&gt;&lt;p style=\&quot;margin: 0 0 10px 0;\&quot;&gt;Immeuble Le Cap, 8 rue Félix Pyat, 92800 Puteaux La Défense, France&lt;br&gt;Tel: +33 1 58 440 400 | &lt;a href=\&quot;https://www.loxam.com\&quot; style=\&quot;color: #ffffff; text-decoration: none; font-weight: bold;\&quot;&gt;www.loxam.com&lt;/a&gt;&lt;/p&gt;&lt;div style=\&quot;font-size: 10px; color: #999999; margin-top: 15px;\&quot;&gt;This email and any attachments are confidential and intended solely for the use of the individual or entity to whom they are addressed.&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;&quot;
+}
+</content>
+        <fileDroppingStrategy>{&quot;dropFilesBy&quot;:&quot;LAST_MODIFIED_DATE&quot;,&quot;dropFileStartingWith&quot;:&quot;OLDEST&quot;}</fileDroppingStrategy>
+        <inputs>
+            <apiName>Sender</apiName>
+            <definition>SOBJECT://User</definition>
+            <referenceName>Input:Sender</referenceName>
+            <required>true</required>
+        </inputs>
+        <inputs>
+            <apiName>Recipient</apiName>
+            <definition>SOBJECT://Contact</definition>
+            <referenceName>Input:Recipient</referenceName>
+            <required>true</required>
+        </inputs>
+        <inputs>
+            <apiName>RelatedObject</apiName>
+            <definition>SOBJECT://Quote</definition>
+            <referenceName>Input:Quote</referenceName>
+            <required>true</required>
+        </inputs>
+        <isCitationEnabled>false</isCitationEnabled>
+        <primaryModel>sfdc_ai__DefaultBedrockAnthropicClaude45Opus</primaryModel>
+        <status>Published</status>
+        <templateDataProviders>
+            <definition>invocable://getDataForGrounding</definition>
+            <description>Retrieves record data for grounding a prompt template.</description>
+            <label>Record Snapshot</label>
+            <parameters>
+                <definition>primitive://String</definition>
+                <isRequired>true</isRequired>
+                <parameterName>recordId</parameterName>
+                <valueExpression>{!$Input:Quote.Id}</valueExpression>
+            </parameters>
+            <referenceName>RecordSnapshot:Quote</referenceName>
+        </templateDataProviders>
+        <templateDataProviders>
+            <definition>invocable://getDataForGrounding</definition>
+            <description>Retrieves record data for grounding a prompt template.</description>
+            <label>Record Snapshot</label>
+            <parameters>
+                <definition>primitive://String</definition>
+                <isRequired>true</isRequired>
+                <parameterName>recordId</parameterName>
+                <valueExpression>{!$Input:Quote.Opportunity.Id}</valueExpression>
+            </parameters>
+            <referenceName>RecordSnapshot:Quote.Opportunity</referenceName>
+        </templateDataProviders>
+        <versionIdentifier>wpyLIERkkPG/LR7ehih7NXgk7xIhRqGkCj0SY72WLjE=_1</versionIdentifier>
+    </templateVersions>
+    <type>einstein_gpt__salesEmail</type>
+    <visibility>Global</visibility>
+</GenAiPromptTemplate>
