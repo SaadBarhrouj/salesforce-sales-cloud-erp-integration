@@ -303,19 +303,14 @@
             <sortOrder>26</sortOrder>
         </platformActionListItems>
         <platformActionListItems>
-            <actionName>CreatePdf</actionName>
-            <actionType>StandardButton</actionType>
-            <sortOrder>27</sortOrder>
-        </platformActionListItems>
-        <platformActionListItems>
             <actionName>Quote.SendEmail</actionName>
             <actionType>QuickAction</actionType>
-            <sortOrder>28</sortOrder>
+            <sortOrder>27</sortOrder>
         </platformActionListItems>
         <platformActionListItems>
             <actionName>Quote.Generate_PDF</actionName>
             <actionType>QuickAction</actionType>
-            <sortOrder>29</sortOrder>
+            <sortOrder>28</sortOrder>
         </platformActionListItems>
     </platformActionList>
     <relatedContent>

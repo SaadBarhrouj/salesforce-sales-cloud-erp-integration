@@ -33,6 +33,9 @@ force-app/main/default/objects/Quote/fields/RelatedWorkId.field-meta.xml
 force-app/main/default/objects/Product2/fields/IsAssetizable.field-meta.xml
 force-app/main/default/objects/Product2/fields/IsSerialized.field-meta.xml
 
+# GenAiPromptTemplate components requiring Einstein GPT Platform feature
+force-app/main/default/genAiPromptTemplates/
+
 # Salesforce Industries / Order Management fields (Product2, ProductCategory, QuoteLineItem)
 force-app/main/default/objects/Product2/fields/AvailabilityDate.field-meta.xml
 force-app/main/default/objects/Product2/fields/BasedOnId.field-meta.xml

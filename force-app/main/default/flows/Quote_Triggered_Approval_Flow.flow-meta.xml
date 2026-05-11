@@ -1,6 +1,138 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Flow xmlns="http://soap.sforce.com/2006/04/metadata">
     <actionCalls>
+        <name>Notify_Manager_Review_Needed</name>
+        <label>Notify Manager - Review Needed</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <actionName>customNotificationAction</actionName>
+        <actionType>customNotificationAction</actionType>
+        <connector>
+            <targetReference>Send_Email_to_Sales_Manager</targetReference>
+        </connector>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>customNotifTypeId</name>
+            <value>
+                <elementReference>Get_Approval_Notification_Type.Id</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>recipientIds</name>
+            <value>
+                <collectionElements>
+                    <elementReference>$Record.Owner:User.ManagerId</elementReference>
+                </collectionElements>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>title</name>
+            <value>
+                <stringValue>Quote Approval Needed: {!$Record.Name}</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>body</name>
+            <value>
+                <stringValue>Quote {!$Record.QuoteNumber} has a discount of {!$Record.Discount}% and requires your approval.</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>targetId</name>
+            <value>
+                <elementReference>$Record.Id</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>customNotificationAction</nameSegment>
+        <offset>0</offset>
+    </actionCalls>
+    <actionCalls>
+        <name>Notify_Owner_Approved</name>
+        <label>Notify Owner - Approved</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <actionName>customNotificationAction</actionName>
+        <actionType>customNotificationAction</actionType>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>customNotifTypeId</name>
+            <value>
+                <elementReference>Get_Approval_Notification_Type.Id</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>recipientIds</name>
+            <value>
+                <collectionElements>
+                    <elementReference>$Record.OwnerId</elementReference>
+                </collectionElements>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>title</name>
+            <value>
+                <stringValue>Quote Approved: {!$Record.Name}</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>body</name>
+            <value>
+                <stringValue>Your quote {!$Record.QuoteNumber} has been approved by your manager.</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>targetId</name>
+            <value>
+                <elementReference>$Record.Id</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>customNotificationAction</nameSegment>
+        <offset>0</offset>
+    </actionCalls>
+    <actionCalls>
+        <name>Notify_Owner_Rejected</name>
+        <label>Notify Owner - Rejected</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <actionName>customNotificationAction</actionName>
+        <actionType>customNotificationAction</actionType>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>customNotifTypeId</name>
+            <value>
+                <elementReference>Get_Approval_Notification_Type.Id</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>recipientIds</name>
+            <value>
+                <collectionElements>
+                    <elementReference>$Record.OwnerId</elementReference>
+                </collectionElements>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>title</name>
+            <value>
+                <stringValue>Quote Rejected: {!$Record.Name}</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>body</name>
+            <value>
+                <stringValue>Your quote {!$Record.QuoteNumber} was rejected by your manager.</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>targetId</name>
+            <value>
+                <elementReference>$Record.Id</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>customNotificationAction</nameSegment>
+        <offset>0</offset>
+    </actionCalls>
+    <actionCalls>
         <name>Sales_Manager_Approval</name>
         <label>Sales Manager Approval</label>
         <locationX>0</locationX>
@@ -124,6 +256,31 @@
             <label>if Approved</label>
         </rules>
     </decisions>
+    <decisions>
+        <name>Discount_Check</name>
+        <label>Discount Check</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <defaultConnector>
+            <targetReference>Update_to_Approved</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>Discount &lt; 20%</defaultConnectorLabel>
+        <rules>
+            <name>Needs_Manager_Approval</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.Discount</leftValueReference>
+                <operator>GreaterThanOrEqualTo</operator>
+                <rightValue>
+                    <numberValue>20.0</numberValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Update_to_In_Review</targetReference>
+            </connector>
+            <label>Discount &gt;= 20%</label>
+        </rules>
+    </decisions>
     <environments>Default</environments>
     <interviewLabel>Quote Triggered Approval Flow {!$Flow.CurrentDateTime}</interviewLabel>
     <label>Quote Triggered Approval Flow</label>
@@ -146,11 +303,35 @@
         </value>
     </processMetadataValues>
     <processType>AutoLaunchedFlow</processType>
+    <recordLookups>
+        <name>Get_Approval_Notification_Type</name>
+        <label>Get Approval Notification Type</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Notify_Manager_Review_Needed</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>DeveloperName</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>Quote_Approval_Update</stringValue>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>CustomNotificationType</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
     <recordUpdates>
         <name>Update_Records_2</name>
         <label>Update to Approved</label>
         <locationX>0</locationX>
         <locationY>0</locationY>
+        <connector>
+            <targetReference>Notify_Owner_Approved</targetReference>
+        </connector>
         <inputAssignments>
             <field>Status</field>
             <value>
@@ -164,10 +345,26 @@
         <label>Update to Rejected</label>
         <locationX>0</locationX>
         <locationY>0</locationY>
+        <connector>
+            <targetReference>Notify_Owner_Rejected</targetReference>
+        </connector>
         <inputAssignments>
             <field>Status</field>
             <value>
                 <stringValue>Rejected</stringValue>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <recordUpdates>
+        <name>Update_to_Approved</name>
+        <label>Update to Approved</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <inputAssignments>
+            <field>Status</field>
+            <value>
+                <stringValue>Approved</stringValue>
             </value>
         </inputAssignments>
         <inputReference>$Record</inputReference>
@@ -178,7 +375,7 @@
         <locationX>0</locationX>
         <locationY>0</locationY>
         <connector>
-            <targetReference>Send_Email_to_Sales_Manager</targetReference>
+            <targetReference>Get_Approval_Notification_Type</targetReference>
         </connector>
         <inputAssignments>
             <field>Status</field>
@@ -192,7 +389,7 @@
         <locationX>0</locationX>
         <locationY>0</locationY>
         <connector>
-            <targetReference>Update_to_In_Review</targetReference>
+            <targetReference>Discount_Check</targetReference>
         </connector>
         <doesRequireRecordChangedToMeetCriteria>true</doesRequireRecordChangedToMeetCriteria>
         <filterLogic>and</filterLogic>
@@ -201,13 +398,6 @@
             <operator>EqualTo</operator>
             <value>
                 <stringValue>Needs Review</stringValue>
-            </value>
-        </filters>
-        <filters>
-            <field>Discount</field>
-            <operator>GreaterThanOrEqualTo</operator>
-            <value>
-                <numberValue>20.0</numberValue>
             </value>
         </filters>
         <object>Quote</object>
