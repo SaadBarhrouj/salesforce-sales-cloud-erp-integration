@@ -220,6 +220,23 @@
                     <name>uiBehavior</name>
                     <value>none</value>
                 </fieldInstanceProperties>
+                <fieldItem>Record.Transport_Urgency__c</fieldItem>
+                <identifier>RecordTransport_Urgency_cField</identifier>
+                <visibilityRule>
+                    <criteria>
+                        <leftValue>{!Record.Is_Transport_Required__c}</leftValue>
+                        <operator>EQUAL</operator>
+                        <rightValue>true</rightValue>
+                    </criteria>
+                </visibilityRule>
+            </fieldInstance>
+        </itemInstances>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>readonly</value>
+                </fieldInstanceProperties>
                 <fieldItem>Record.Distance_Driving_Route_km__c</fieldItem>
                 <identifier>RecordDistance_Driving_Route_km_cField</identifier>
                 <visibilityRule>
@@ -268,8 +285,8 @@
                     <name>uiBehavior</name>
                     <value>none</value>
                 </fieldInstanceProperties>
-                <fieldItem>Record.Transport_Urgency__c</fieldItem>
-                <identifier>RecordTransport_Urgency_cField</identifier>
+                <fieldItem>Record.Trip_Direction_Mode__c</fieldItem>
+                <identifier>RecordTrip_Direction_Mode_cField</identifier>
                 <visibilityRule>
                     <criteria>
                         <leftValue>{!Record.Is_Transport_Required__c}</leftValue>
@@ -322,7 +339,7 @@
             <fieldInstance>
                 <fieldInstanceProperties>
                     <name>uiBehavior</name>
-                    <value>none</value>
+                    <value>readonly</value>
                 </fieldInstanceProperties>
                 <fieldItem>Record.Duration_Trip_Minutes__c</fieldItem>
                 <identifier>RecordDuration_Trip_Minutes_cField</identifier>
@@ -339,6 +356,12 @@
                     </criteria>
                 </visibilityRule>
             </fieldInstance>
+        </itemInstances>
+        <itemInstances>
+            <componentInstance>
+                <componentName>flexipage:blankSpace</componentName>
+                <identifier>flexipage_blankSpace</identifier>
+            </componentInstance>
         </itemInstances>
         <name>Facet-e8fbab31-5997-4c46-a79b-8b042d743fcf</name>
         <type>Facet</type>
