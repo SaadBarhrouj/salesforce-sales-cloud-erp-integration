@@ -176,6 +176,19 @@ export const URGENCY_OPTIONS = Object.freeze([
     { label: 'Urgent',   value: 'Urgent' }
 ]);
 
+/* ─── Trip Direction Mode (rental only) ─── */
+export const DIRECTION_MODE = Object.freeze({
+    DELIVERY: 'Delivery',
+    PICKUP:   'Pickup',
+    BOTH:     'Delivery_Pickup'
+});
+
+export const DIRECTION_MODE_OPTIONS = Object.freeze([
+    { label: 'Delivery',          value: DIRECTION_MODE.DELIVERY },
+    { label: 'Pickup',            value: DIRECTION_MODE.PICKUP },
+    { label: 'Delivery & Pickup', value: DIRECTION_MODE.BOTH }
+]);
+
 /* ─── User-Facing Messages ─── */
 export const MESSAGES = Object.freeze({
     REQUIRED_FIELD:   'This field is required.',

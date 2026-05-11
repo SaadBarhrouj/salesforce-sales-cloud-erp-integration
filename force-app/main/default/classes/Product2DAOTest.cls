@@ -286,6 +286,42 @@ private class Product2DAOTest {
     }
 
     @IsTest
+    static void testGetServiceIdsFromIdsReturnsServiceMatchesOnly() {
+        Product2 service = TestDataFactory.createProduct2(false);
+        service.Family = 'Service';
+        insert service;
+        Product2 good = [SELECT Id FROM Product2 WHERE Id != :service.Id LIMIT 1];
+
+        Set<Id> input = new Set<Id>{ service.Id, good.Id };
+
+        Test.startTest();
+        Set<Id> result = Product2DAO.getServiceIdsFromIds(input);
+        Test.stopTest();
+
+        System.assertEquals(1, result.size(), 'Only the Service-family product should be returned.');
+        System.assertEquals(true, result.contains(service.Id), 'Service product Id should be present in the result.');
+        System.assertEquals(false, result.contains(good.Id), 'Non-service product Id must not be present.');
+    }
+
+    @IsTest
+    static void testGetServiceIdsFromIdsNullInputReturnsEmptySet() {
+        Test.startTest();
+        Set<Id> result = Product2DAO.getServiceIdsFromIds(null);
+        Test.stopTest();
+
+        System.assertEquals(0, result.size(), 'Null input should return an empty set.');
+    }
+
+    @IsTest
+    static void testGetServiceIdsFromIdsEmptyInputReturnsEmptySet() {
+        Test.startTest();
+        Set<Id> result = Product2DAO.getServiceIdsFromIds(new Set<Id>());
+        Test.stopTest();
+
+        System.assertEquals(0, result.size(), 'Empty input should return an empty set.');
+    }
+
+    @IsTest
     static void testGetProductsByCategoriesAndPricebookNonExistentCategoryReturnsEmptyList() {
         // Arrange
         Id fakeCategoryId = ProductCategory.SObjectType.getDescribe().getKeyPrefix() + '000000000000';

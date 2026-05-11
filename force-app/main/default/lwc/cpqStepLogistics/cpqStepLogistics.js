@@ -1,7 +1,7 @@
 import { LightningElement, api, track, wire } from 'lwc';
 import { getRecord, getFieldValue } from 'lightning/uiRecordApi';
 import { deepClone, showToast } from 'c/cpqUtils';
-import { URGENCY_OPTIONS, ILLUSTRATIONS } from 'c/cpqConstants';
+import { URGENCY_OPTIONS, DIRECTION_MODE_OPTIONS, DIRECTION_MODE, ILLUSTRATIONS } from 'c/cpqConstants';
 import getLocationsByAccount from '@salesforce/apex/LocationController.getLocationsByAccount';
 import getAllAgencies from '@salesforce/apex/LocationController.getAllAgencies';
 import calculateTripsWithCPQItems from '@salesforce/apex/TripController.calculateTripsWithCPQItems';
@@ -10,8 +10,15 @@ import LOCATION_NAME from '@salesforce/schema/Location.Name';
 import LOCATION_TYPE from '@salesforce/schema/Location.LocationType';
 import LOCATION_LAT from '@salesforce/schema/Location.Latitude';
 import LOCATION_LNG from '@salesforce/schema/Location.Longitude';
+import OPP_OFFER_TYPE_NAME from '@salesforce/schema/Opportunity.Offer_Type__r.Name';
+import OPP_TRIP_DIRECTION_MODE from '@salesforce/schema/Opportunity.Trip_Direction_Mode__c';
+import RENTAL_CATALOG_NAMES from '@salesforce/label/c.Rental_Catalog_Names';
 
 const LOCATION_FIELDS = [LOCATION_NAME, LOCATION_TYPE, LOCATION_LAT, LOCATION_LNG];
+const OPPORTUNITY_FIELDS = [OPP_OFFER_TYPE_NAME, OPP_TRIP_DIRECTION_MODE];
+const RENTAL_CATALOG_SET = new Set(
+    (RENTAL_CATALOG_NAMES || '').split(',').map(s => s.trim().toLowerCase()).filter(Boolean)
+);
 
 const TRIP_COLUMNS = [
     { label: 'Trip Key', fieldName: 'Trip_Key__c', type: 'text', sortable: true },
@@ -131,6 +138,21 @@ export default class CpqStepLogistics extends LightningElement {
         }
     }
     
+    // Load offer type name + persisted direction mode from Opportunity
+    @wire(getRecord, { recordId: '$opportunityId', fields: OPPORTUNITY_FIELDS })
+    wiredOpportunity({ data, error }) {
+        if (data) {
+            this.offerTypeName = getFieldValue(data, OPP_OFFER_TYPE_NAME) || '';
+            const persistedMode = getFieldValue(data, OPP_TRIP_DIRECTION_MODE);
+            if (persistedMode && this.config.directionMode !== persistedMode) {
+                this.config = { ...this.config, directionMode: persistedMode };
+                this.emitState();
+            }
+        } else if (error) {
+            console.warn('Error loading opportunity offer type:', error);
+        }
+    }
+
     // Load default delivery site name by ID using standard LDS
     @wire(getRecord, { recordId: '$defaultDeliverySiteId', fields: LOCATION_FIELDS })
     wiredDefaultDeliveryLocation({ data, error }) {
@@ -161,16 +183,19 @@ export default class CpqStepLogistics extends LightningElement {
     }
     
     // ==================== INTERNAL STATE ====================
-    
+
     urgencyOptions = URGENCY_OPTIONS;
-    
+    directionModeOptions = DIRECTION_MODE_OPTIONS;
+
     @track accountLocations = [];
     @track agencies = [];
-    
+    @track offerTypeName = '';
+
     @track config = {
         agencyId: '',
         deliverySiteId: '',
-        urgency: 'Standard'
+        urgency: 'Standard',
+        directionMode: DIRECTION_MODE.DELIVERY
     };
     
     @track trips = [];
@@ -185,13 +210,14 @@ export default class CpqStepLogistics extends LightningElement {
     // ==================== LIFECYCLE ====================
 
     connectedCallback() {
-        // Initialize config with defaults
+        // Initialize config with defaults; preserve directionMode if already hydrated by the Opportunity wire
         this.config = {
             agencyId: this.defaultAgencyId || '',
             deliverySiteId: this.defaultDeliverySiteId || '',
-            urgency: this.defaultUrgency || 'Standard'
+            urgency: this.defaultUrgency || 'Standard',
+            directionMode: this.config.directionMode || DIRECTION_MODE.DELIVERY
         };
-        
+
         this.previousConfig = deepClone(this.config);
     }
 
@@ -239,6 +265,16 @@ export default class CpqStepLogistics extends LightningElement {
      */
     get selectedDelivery() {
         return this.accountLocations.find(loc => loc.value === this.config.deliverySiteId);
+    }
+
+    /**
+     * Rental offers — match the Offer Type Name against the Rental_Catalog_Names custom label
+     * (canonical source of truth, same convention as Apex Label.Volume_Pricing_Catalog_Names usage).
+     * Sale offers never need a pickup question.
+     */
+    get isRental() {
+        if (!this.offerTypeName) return false;
+        return RENTAL_CATALOG_SET.has(this.offerTypeName.trim().toLowerCase());
     }
 
     /**
@@ -314,7 +350,8 @@ export default class CpqStepLogistics extends LightningElement {
                     agencyId: this.config.agencyId,
                     deliverySiteId: this.config.deliverySiteId,
                     urgency: this.config.urgency,
-                    cpqItemsJson: JSON.stringify(cpqItems)
+                    cpqItemsJson: JSON.stringify(cpqItems),
+                    directionMode: this.isRental ? this.config.directionMode : DIRECTION_MODE.DELIVERY
                 });
             }
             
@@ -348,21 +385,26 @@ export default class CpqStepLogistics extends LightningElement {
         console.log('handleConfigChange triggered!', event.detail);
         const field = event.target.dataset.field;
         const newValue = event.detail.value;
-        
+
         // Update config
         this.config[field] = newValue;
-        
+
         // Check if location-related fields changed
         const isLocationChange = field === 'agencyId' || field === 'deliverySiteId';
-        
+        // Direction mode change invalidates existing trips (each Trip__c is stamped with a direction)
+        const isDirectionChange = field === 'directionMode';
+
         if (isLocationChange && this.didLocationChange()) {
             // Clear trips when location changes
             this.trips = [];
-            
+
             // Update previous config to avoid redundant clears
             this.previousConfig = deepClone(this.config);
-            
+
             // Emit state change to trigger parent auto-recalculation
+            this.emitState();
+        } else if (isDirectionChange) {
+            this.trips = [];
             this.emitState();
         } else {
             // For non-location changes (like urgency), just emit state

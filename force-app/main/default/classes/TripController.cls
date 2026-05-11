@@ -21,6 +21,8 @@ public with sharing class TripController {
      * @param deliverySiteId Delivery Location Id (current LWC selection)
      * @param urgency Transport urgency level
      * @param cpqItemsJson JSON serialized array of CPQ items with dimensions and weight
+     * @param directionMode Optional 'Delivery' (default), 'Pickup', or 'Both'. Used for rental opportunities
+     *        where the wizard asks whether to generate delivery, pickup, or both sets of trips.
      * @return List of calculated Trip records
      */
     @AuraEnabled
@@ -29,10 +31,11 @@ public with sharing class TripController {
         Id agencyId,
         Id deliverySiteId,
         String urgency,
-        String cpqItemsJson
+        String cpqItemsJson,
+        String directionMode
     ) {
         try {
-            return TripService.calculateTripsWithCPQItems(opportunityId, agencyId, deliverySiteId, urgency, cpqItemsJson);
+            return TripService.calculateTripsWithCPQItems(opportunityId, agencyId, deliverySiteId, urgency, cpqItemsJson, directionMode);
         } catch (TripService.TripException e) {
             throw new AuraHandledException(e.getMessage());
         } catch (Exception e) {

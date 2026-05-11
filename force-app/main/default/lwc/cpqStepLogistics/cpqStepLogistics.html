@@ -45,6 +45,20 @@
                                     class="slds-m-top_small"
                                 ></lightning-combobox>
                             </lightning-layout-item>
+
+                            <template lwc:if={isRental}>
+                                <lightning-layout-item size="6" class="slds-p-left_x-small">
+                                    <lightning-combobox
+                                        label="Trip Direction"
+                                        value={config.directionMode}
+                                        options={directionModeOptions}
+                                        field-level-help="For rental opportunities, generate delivery trips, pickup (return) trips, or both."
+                                        onchange={handleConfigChange}
+                                        data-field="directionMode"
+                                        class="slds-m-top_small"
+                                    ></lightning-combobox>
+                                </lightning-layout-item>
+                            </template>
                         </lightning-layout>
                     </div>
 

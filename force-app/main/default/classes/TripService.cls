@@ -13,6 +13,10 @@ public inherited sharing class TripService {
     private static final String OBJECTIVE_MIN_BINS  = 'minBins';
     private static final String OBJECTIVE_MIN_WASTE = 'minWaste';
 
+    private static final String DIRECTION_DELIVERY = 'Delivery';
+    private static final String DIRECTION_PICKUP   = 'Pickup';
+    private static final String DIRECTION_BOTH     = 'Delivery_Pickup';
+
     // ========== CPQ DTOs (FOR LWC COMMUNICATION) ==========
 
     public class CPQItem {
@@ -52,6 +56,9 @@ public inherited sharing class TripService {
      * @param deliverySiteId Delivery Location Id (current LWC selection); falls back to Opportunity.Delivery_Site__c.
      * @param urgency Transport priority.
      * @param cpqItemsJson JSON string of CPQ items.
+     * @param directionMode One of 'Delivery' (default), 'Pickup', 'Both'. For rental opportunities the
+     *        LWC asks the user which direction(s) of trips to generate. 'Both' runs the packing twice
+     *        and concatenates the resulting Trip__c lists, one set per direction.
      * @return List of Trip__c records ready for review or insertion.
      */
     public static List<Trip__c> calculateTripsWithCPQItems(
@@ -59,10 +66,13 @@ public inherited sharing class TripService {
         Id agencyId,
         Id deliverySiteId,
         String urgency,
-        String cpqItemsJson
+        String cpqItemsJson,
+        String directionMode
     ) {
         try {
             validateInputs(opportunityId, cpqItemsJson);
+
+            String mode = normalizeDirectionMode(directionMode);
 
             // 0. Resolve agency / delivery site (LWC values win, Opportunity record is the fallback)
             Id resolvedAgencyId = agencyId;
@@ -95,9 +105,10 @@ public inherited sharing class TripService {
                 throw new TripException('No Transport_Rate__mdt configured for zone ' + zone.Zone_Code__c + ' in country ' + DEFAULT_COUNTRY_CODE);
             }
 
-            // 4. Bin Solver — generate candidate packings (parallel objectives stay, but selection criterion changes)
+            // 4. Parse CPQ items, exclude Service-typed products from packing
             List<CPQItem> cpqItems = (List<CPQItem>) JSON.deserialize(cpqItemsJson, List<CPQItem>.class);
-            List<BinSolverAPI.ItemRequest> items = buildItemsFromCPQ(cpqItems);
+            Set<Id> serviceIds = collectServiceIds(cpqItems);
+            List<BinSolverAPI.ItemRequest> items = buildItemsFromCPQ(cpqItems, serviceIds);
             if (items.isEmpty()) throw new TripException('No valid items found for transport calculation.');
 
             // Restrict the truck fleet to trucks that have a rate in this zone (otherwise we'd be packing trucks we can't price)
@@ -106,41 +117,89 @@ public inherited sharing class TripService {
                 throw new TripException('No truck templates with pricing available for zone ' + zone.Zone_Code__c);
             }
 
-            BinSolverAPI.PackingResult resMinBins  = BinSolverAPI.callPackingApi(buildRequest(OBJECTIVE_MIN_BINS,  items, bins), opportunityId);
-            BinSolverAPI.PackingResult resMinWaste = BinSolverAPI.callPackingApi(buildRequest(OBJECTIVE_MIN_WASTE, items, bins), opportunityId);
-
-            // Persist BinSolver audit logs
-            List<IntegrationLoggerService.LogCalloutRequest> logs = new List<IntegrationLoggerService.LogCalloutRequest>();
-            if (resMinBins.logRequest  != null) logs.add(resMinBins.logRequest);
-            if (resMinWaste.logRequest != null) logs.add(resMinWaste.logRequest);
-            if (!logs.isEmpty()) IntegrationLoggerService.logCallouts(logs);
-
-            // 5. Cost optimization — price every candidate solution, pick the cheapest
-            List<PricedSolution> candidates = new List<PricedSolution>();
-            if (resMinBins.isSuccess) {
-                PricedSolution s = priceSolution(resMinBins.responseBody, rateByTruck, distanceKm, zone, opportunityId);
-                if (s != null) { s.objective = OBJECTIVE_MIN_BINS;  candidates.add(s); }
-            }
-            if (resMinWaste.isSuccess) {
-                PricedSolution s = priceSolution(resMinWaste.responseBody, rateByTruck, distanceKm, zone, opportunityId);
-                if (s != null) { s.objective = OBJECTIVE_MIN_WASTE; candidates.add(s); }
+            // 5. Direction branching — Both runs the packing twice (delivery + pickup) and concatenates.
+            //    All callouts happen first; DML (logs + Opportunity update) is deferred to the end
+            //    so the Apex "no DML between callouts" rule is never violated.
+            List<IntegrationLoggerService.LogCalloutRequest> accumulatedLogs = new List<IntegrationLoggerService.LogCalloutRequest>();
+            List<Trip__c> output = new List<Trip__c>();
+            if (mode == DIRECTION_BOTH) {
+                output.addAll(calculateForDirection(DIRECTION_DELIVERY, items, bins, rateByTruck, distanceKm, zone, opportunityId, accumulatedLogs));
+                output.addAll(calculateForDirection(DIRECTION_PICKUP,   items, bins, rateByTruck, distanceKm, zone, opportunityId, accumulatedLogs));
+            } else {
+                output.addAll(calculateForDirection(mode, items, bins, rateByTruck, distanceKm, zone, opportunityId, accumulatedLogs));
             }
 
-            if (candidates.isEmpty()) {
-                throw new TripException('BinSolver could not generate a valid packing solution.');
-            }
+            // 6. Single DML batch — log callouts only. The direction-mode choice is persisted
+            //    later in the wizard's final-save step, not here.
+            if (!accumulatedLogs.isEmpty()) IntegrationLoggerService.logCallouts(accumulatedLogs);
 
-            PricedSolution winner = candidates[0];
-            for (Integer i = 1; i < candidates.size(); i++) {
-                if (candidates[i].totalCost < winner.totalCost) winner = candidates[i];
-            }
-            return winner.trips;
+            return output;
 
         } catch (TripException te) {
             throw te;
         } catch (Exception e) {
             throw new TripException('Trip Service Error: ' + e.getMessage());
         }
+    }
+
+    /**
+     * @description Runs the two packing objectives (minBins + minWaste) for a single direction,
+     * picks the cheapest priced solution, and stamps every resulting Trip__c with the given direction.
+     * Log requests are appended to {@code accumulatedLogs} for a single end-of-transaction DML insert
+     * — never inserted here, otherwise a subsequent direction's callouts would violate the
+     * "no DML between callouts" rule and fail with CalloutException.
+     */
+    private static List<Trip__c> calculateForDirection(
+        String direction,
+        List<BinSolverAPI.ItemRequest> items,
+        List<BinSolverAPI.BinRequest> bins,
+        Map<String, Transport_Rate__mdt> rateByTruck,
+        Decimal distanceKm,
+        Transport_Zone__mdt zone,
+        Id opportunityId,
+        List<IntegrationLoggerService.LogCalloutRequest> accumulatedLogs
+    ) {
+        BinSolverAPI.PackingResult resMinBins  = BinSolverAPI.callPackingApi(buildRequest(OBJECTIVE_MIN_BINS,  items, bins), opportunityId);
+        BinSolverAPI.PackingResult resMinWaste = BinSolverAPI.callPackingApi(buildRequest(OBJECTIVE_MIN_WASTE, items, bins), opportunityId);
+
+        if (resMinBins.logRequest  != null) accumulatedLogs.add(resMinBins.logRequest);
+        if (resMinWaste.logRequest != null) accumulatedLogs.add(resMinWaste.logRequest);
+
+        List<PricedSolution> candidates = new List<PricedSolution>();
+        if (resMinBins.isSuccess) {
+            PricedSolution s = priceSolution(resMinBins.responseBody, rateByTruck, distanceKm, zone, opportunityId, direction);
+            if (s != null) { s.objective = OBJECTIVE_MIN_BINS;  candidates.add(s); }
+        }
+        if (resMinWaste.isSuccess) {
+            PricedSolution s = priceSolution(resMinWaste.responseBody, rateByTruck, distanceKm, zone, opportunityId, direction);
+            if (s != null) { s.objective = OBJECTIVE_MIN_WASTE; candidates.add(s); }
+        }
+
+        if (candidates.isEmpty()) {
+            throw new TripException('BinSolver could not generate a valid packing solution for direction ' + direction + '.');
+        }
+
+        PricedSolution winner = candidates[0];
+        for (Integer i = 1; i < candidates.size(); i++) {
+            if (candidates[i].totalCost < winner.totalCost) winner = candidates[i];
+        }
+        return winner.trips;
+    }
+
+    private static String normalizeDirectionMode(String raw) {
+        if (String.isBlank(raw)) return DIRECTION_DELIVERY;
+        if (raw == DIRECTION_PICKUP || raw == DIRECTION_BOTH || raw == DIRECTION_DELIVERY) return raw;
+        return DIRECTION_DELIVERY;
+    }
+
+    private static Set<Id> collectServiceIds(List<CPQItem> cpqItems) {
+        Set<Id> productIds = new Set<Id>();
+        for (CPQItem c : cpqItems) {
+            if (c.productId != null) {
+                try { productIds.add((Id) c.productId); } catch (Exception ignore) {}
+            }
+        }
+        return Product2DAO.getServiceIdsFromIds(productIds);
     }
 
     // ========== STEP 1: DISTANCE ==========
@@ -262,7 +321,8 @@ public inherited sharing class TripService {
         Map<String, Transport_Rate__mdt> rateByTruck,
         Decimal distanceKm,
         Transport_Zone__mdt zone,
-        Id opportunityId
+        Id opportunityId,
+        String direction
     ) {
         Map<String, Object> root = (Map<String, Object>) JSON.deserializeUntyped(jsonResponse);
         List<Object> binsData = (List<Object>) root.get('bins');
@@ -283,7 +343,7 @@ public inherited sharing class TripService {
 
             Trip__c trip = new Trip__c();
             trip.Opportunity__c           = opportunityId;
-            trip.Direction__c             = 'Delivery';
+            trip.Direction__c             = direction;
             trip.Truck_Type__c            = truckCode;
             trip.Transport_Zone__c        = zone.Zone_Code__c;
             trip.Distance_Km__c           = distanceKm;
@@ -299,10 +359,12 @@ public inherited sharing class TripService {
 
     // ========== HELPERS ==========
 
-    private static List<BinSolverAPI.ItemRequest> buildItemsFromCPQ(List<CPQItem> cpqItems) {
+    private static List<BinSolverAPI.ItemRequest> buildItemsFromCPQ(List<CPQItem> cpqItems, Set<Id> serviceProductIds) {
         List<BinSolverAPI.ItemRequest> items = new List<BinSolverAPI.ItemRequest>();
         for (CPQItem cpq : cpqItems) {
             if (cpq.w == null || cpq.h == null) continue;
+            // Service-typed products are intangible (labor, setup, training, etc.) — they don't get packed.
+            if (cpq.productId != null && serviceProductIds != null && serviceProductIds.contains((Id) cpq.productId)) continue;
 
             BinSolverAPI.ItemRequest it = new BinSolverAPI.ItemRequest();
             it.id = cpq.productId;

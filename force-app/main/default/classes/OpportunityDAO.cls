@@ -85,6 +85,23 @@ public inherited sharing class OpportunityDAO {
     }
 
 
+    /**
+     * @description Updates a single Opportunity record. Performs a partial-update friendly DML.
+     * @param record The Opportunity to update. Must include Id.
+     */
+    public static void updateRecord(Opportunity record) {
+        if (record == null || record.Id == null) {
+            return;
+        }
+        try {
+            update record;
+        } catch (DmlException e) {
+            System.debug(LoggingLevel.ERROR, 'OpportunityDAO.updateRecord failed: ' + e.getMessage() + ' | Id: ' + record.Id);
+            throw e;
+        }
+    }
+
+
     //     if (recordIds == null || recordIds.isEmpty()) {
     //         return new Map<Id, Opportunity>();
     //     }

@@ -207,6 +207,37 @@ public inherited sharing class Product2DAO {
     }
 
     /**
+     * @description Returns the subset of the given Product2 IDs whose Family picklist equals 'Service'.
+     * Used to exclude intangible / labor lines from BinSolver packing calculations. Family is the
+     * standard categorization field in this org (values: Equipment, Service) — Type is system-managed
+     * and cannot accept custom values.
+     * @param productIds The Product2 IDs to inspect.
+     * @return Set of IDs whose Family = 'Service'. Empty set if input is null/empty or no matches.
+     */
+    public static Set<Id> getServiceIdsFromIds(Set<Id> productIds) {
+        Set<Id> serviceIds = new Set<Id>();
+
+        if (productIds == null || productIds.isEmpty()) {
+            return serviceIds;
+        }
+
+        try {
+            for (Product2 p : [
+                SELECT Id
+                FROM Product2
+                WHERE Id IN :productIds
+                AND Family = 'Service'
+            ]) {
+                serviceIds.add(p.Id);
+            }
+            return serviceIds;
+        } catch (QueryException e) {
+            System.debug(LoggingLevel.ERROR, 'Product2DAO.getServiceIdsFromIds failed: ' + e.getMessage());
+            throw e;
+        }
+    }
+
+    /**
      * @description Retrieves Product2 records filtered by multiple category IDs, pricebook, and catalog.
      * Intersects products assigned to the specified categories with products having active
      * PricebookEntry records in the given pricebook, constrained to the specified catalog.
