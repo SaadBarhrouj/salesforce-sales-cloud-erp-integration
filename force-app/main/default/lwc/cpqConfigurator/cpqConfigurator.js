@@ -1,6 +1,6 @@
 import { LightningElement, api, track, wire } from "lwc";
 import { NavigationMixin } from "lightning/navigation";
-import { getRecord, getFieldValue } from "lightning/uiRecordApi";
+import { getRecord, getFieldValue, getRecordNotifyChange } from "lightning/uiRecordApi";
 import VOLUME_PRICING_CATALOG_NAMES from "@salesforce/label/c.Volume_Pricing_Catalog_Names";
 import OPP_NAME from "@salesforce/schema/Opportunity.Name";
 import OPP_ACCOUNT_ID from "@salesforce/schema/Opportunity.AccountId";
@@ -39,6 +39,24 @@ const OPP_FIELDS = [
   OPP_TRANSPORT_URGENCY
 ];
 
+const INITIAL_LOGISTICS_STATE = {
+  accountId: "",
+  isTransportRequired: false,
+  deliverySiteId: "",
+  agencyId: "",
+  urgency: "Standard",
+  notes: ""
+};
+
+const INITIAL_OPPORTUNITY_STATE = {
+  accountId: "",
+  accountName: "",
+  pricebookId: "",
+  pricebookName: "",
+  offerTypeId: "",
+  offerTypeName: ""
+};
+
 export default class CpqConfigurator extends NavigationMixin(LightningElement) {
   @api recordId;
   @api objectApiName;
@@ -51,26 +69,40 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
   wiredOpportunityRecord(result) {
     this.opportunityRecord = result;
     if (result.data) {
-      const accountId = getFieldValue(result.data, OPP_ACCOUNT_ID);
-      const defaultAgencyId = getFieldValue(result.data, OPP_DEFAULT_AGENCY) || "";
-      const deliverySiteId = getFieldValue(result.data, OPP_DELIVERY_SITE) || "";
-      
       this.logisticsState = {
         ...this.logisticsState,
-        accountId: accountId,
-        isTransportRequired: getFieldValue(result.data, OPP_TRANSPORT_REQUIRED) || false,
-        agencyId: defaultAgencyId,
-        deliverySiteId: deliverySiteId,
-        urgency: getFieldValue(result.data, OPP_TRANSPORT_URGENCY) || "Standard"
+        ...this._logisticsFromOpp(result.data)
       };
+    } else if (result.error) {
+      console.error("Error loading Opportunity record:", result.error);
+      const detail = result.error?.body?.message
+        || (Array.isArray(result.error?.body) && result.error.body[0]?.message)
+        || result.error?.message
+        || "Unable to load Opportunity.";
+      showToast(this, "Load Error", detail, "error");
     }
     this.initSidebarData(this.currentStep.key);
   }
 
+  _logisticsFromOpp(data) {
+    return {
+      accountId: getFieldValue(data, OPP_ACCOUNT_ID) || "",
+      isTransportRequired: getFieldValue(data, OPP_TRANSPORT_REQUIRED) || false,
+      agencyId: getFieldValue(data, OPP_DEFAULT_AGENCY) || "",
+      deliverySiteId: getFieldValue(data, OPP_DELIVERY_SITE) || "",
+      urgency: getFieldValue(data, OPP_TRANSPORT_URGENCY) || "Standard"
+    };
+  }
+
   /* ── lifecycle ────────────────────────────────── */
   connectedCallback() {
-    // Initialize sidebar data when component mounts
     this.initSidebarData(this.currentStep.key);
+  }
+
+  disconnectedCallback() {
+    if (this.recordId) {
+      getRecordNotifyChange([{ recordId: this.recordId }]);
+    }
   }
 
   async _goNext() {
@@ -100,12 +132,12 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
     );
     if (currentIndex < STEP_LIST.length - 1) {
       let nextIndex = currentIndex + 1;
-      
-      // Skip logistics step if transport not required
-      if (STEP_LIST[nextIndex].key === STEPS.LOGISTICS.key && !this.logisticsState.isTransportRequired) {
+      if (STEP_LIST[nextIndex].key === STEPS.CONFIGURE.key && !this.hasBundles) {
         nextIndex++;
       }
-      
+      if (STEP_LIST[nextIndex] && STEP_LIST[nextIndex].key === STEPS.LOGISTICS.key && !this.logisticsState.isTransportRequired) {
+        nextIndex++;
+      }
       if (nextIndex < STEP_LIST.length) {
         this.currentStep = STEP_LIST[nextIndex];
         this.initSidebarData(this.currentStep.key);
@@ -134,15 +166,15 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
     );
     if (currentIndex > 0) {
       let prevIndex = currentIndex - 1;
-      
-      // Skip logistics step if transport not required
       if (STEP_LIST[prevIndex].key === STEPS.LOGISTICS.key && !this.logisticsState.isTransportRequired) {
         prevIndex--;
       }
-      
+      if (prevIndex >= 0 && STEP_LIST[prevIndex].key === STEPS.CONFIGURE.key && !this.hasBundles) {
+        prevIndex--;
+      }
       if (prevIndex >= 0) {
         this.currentStep = STEP_LIST[prevIndex];
-        
+
         if (this.currentStep.key === STEPS.SELECTION.key) {
           this.selectedItemId = "";
           this.selectedItemLabel = "";
@@ -167,23 +199,9 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
   @track selectedItemLabel = "";
 
   /* ── domain state ─────────────────────────────── */
-  @track opportunityState = {
-    accountId: "",
-    accountName: "",
-    pricebookId: "",
-    pricebookName: "",
-    offerTypeId: "",
-    offerTypeName: ""
-  };
+  @track opportunityState = { ...INITIAL_OPPORTUNITY_STATE };
   @track selectedProducts = [];
-  @track logisticsState = {
-    accountId: "",
-    isTransportRequired: false,
-    deliverySiteId: "",
-    agencyId: "",
-    urgency: "",
-    notes: ""
-  };
+  @track logisticsState = { ...INITIAL_LOGISTICS_STATE };
   @track bundleConfigCache = {};
 
   @track isSaving = false;
@@ -204,6 +222,9 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
   }
   get isStepLogistics() {
     return this.currentStep.key === STEPS.LOGISTICS.key && this.logisticsState.isTransportRequired;
+  }
+  get hasBundles() {
+    return (this.selectedProducts || []).some((p) => p.isBundle);
   }
   get isStepReview() {
     return this.currentStep.key === STEPS.REVIEW.key;
@@ -894,6 +915,7 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
        ═══════════════════════════════════════════════ */
 
   _navigateToOpportunity() {
+    this._resetWizardState();
     this[NavigationMixin.Navigate]({
       type: "standard__recordPage",
       attributes: {
@@ -902,6 +924,26 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
         actionName: "view"
       }
     });
+  }
+
+  _resetWizardState() {
+    this.selectedProducts = [];
+    this.bundleConfigCache = {};
+    this.selectedItemId = "";
+    this.selectedItemLabel = "";
+    this.sidebarItems = [];
+    this.hasLineSelection = false;
+    this.isSaving = false;
+    this.currentStep = STEPS.SELECTION;
+    this.opportunityState = { ...INITIAL_OPPORTUNITY_STATE };
+    const oppLogistics = this.opportunityRecord?.data
+      ? this._logisticsFromOpp(this.opportunityRecord.data)
+      : {};
+    this.logisticsState = { ...INITIAL_LOGISTICS_STATE, ...oppLogistics };
+    this.initSidebarData(this.currentStep.key);
+    if (this.recordId) {
+      getRecordNotifyChange([{ recordId: this.recordId }]);
+    }
   }
 
   _recalcAllTotals() {
@@ -940,6 +982,7 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
       .then((result) => {
         this.isSaving = false;
         showToast(this, "Success", MESSAGES.SAVE_SUCCESS, "success");
+        this._resetWizardState();
         this[NavigationMixin.Navigate]({
           type: "standard__recordPage",
           attributes: {

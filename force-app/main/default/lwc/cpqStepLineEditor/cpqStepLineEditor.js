@@ -428,7 +428,6 @@ export default class CpqStepLineEditor extends LightningElement {
             const row = updatedData[i];
             const hasServerProductId = row.productId && row.productId !== row.optionId;
 
-            // Local-only options don't need server pricing
             if (row._isOption && !hasServerProductId) {
                 const optListPrice = Number(row.listUnitPrice) || 0;
                 const optQty = Number(row.quantity) || 1;
@@ -445,6 +444,15 @@ export default class CpqStepLineEditor extends LightningElement {
                     _errorMessage: ''
                 };
                 continue;
+            }
+
+            if (this._isVolumeOffer) {
+                const missingDates = !row.serviceStartDate || !row.serviceEndDate;
+                const inverted = !missingDates && new Date(row.serviceEndDate) < new Date(row.serviceStartDate);
+                if (missingDates || inverted) {
+                    updatedData[i] = { ...row, _hasError: false, _errorMessage: '' };
+                    continue;
+                }
             }
 
             pricingRequestKeys.push(row._key);
