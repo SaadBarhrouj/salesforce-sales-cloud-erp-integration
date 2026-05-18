@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<GenAiPromptTemplate xmlns="http://soap.sforce.com/2006/04/metadata">
+    <activeVersionIdentifier>OJyCE4z5YWcBClAbZvWwXeuOfAnkOWuLphIB1R94wxA=_4</activeVersionIdentifier>
+    <description>Generates a personalized thank-you email sent to the customer once a Quote has been accepted and electronically signed.</description>
+    <developerName>Quote_Accepted_Thank_You_Email</developerName>
+    <masterLabel>Quote Accepted Thank You Email</masterLabel>
+    <overridable>false</overridable>
+    <templateVersions>
+        <content>You are a customer relationship assistant for LOXAM, an equipment company. Write a short, warm, and professional thank-you email in English to the customer who has just accepted and electronically signed a quote.
+
+Context: 
+- Quote number: {!$Input:Input_Quote.Name}
+- Customer account:  {!$Input:Input_Quote.Account.Name} 
+- Total amount: {!$Input:Input_Quote.GrandTotal}
+
+The email must:
+ - Thank the customer for their trust in LOXAM
+ - Confirm that the signed quote has been received and is now being processed 
+- Mention that a LOXAM representative will follow up shortly to finalize the next steps 
+- Stay concise (4 to 6 sentences), polite, and professional 
+- Be signed &apos;The LOXAM Team&apos;
+Output only the body of the email, without a subject line and without placeholders.
+</content>
+        <fileDroppingStrategy>{&quot;dropFilesBy&quot;:&quot;LAST_MODIFIED_DATE&quot;,&quot;dropFileStartingWith&quot;:&quot;OLDEST&quot;}</fileDroppingStrategy>
+        <inputs>
+            <apiName>Input_Quote</apiName>
+            <definition>SOBJECT://Quote</definition>
+            <masterLabel>Input_Quote</masterLabel>
+            <referenceName>Input:Input_Quote</referenceName>
+            <required>true</required>
+        </inputs>
+        <isCitationEnabled>false</isCitationEnabled>
+        <primaryModel>sfdc_ai__DefaultGPT5Mini</primaryModel>
+        <status>Published</status>
+        <versionIdentifier>OJyCE4z5YWcBClAbZvWwXeuOfAnkOWuLphIB1R94wxA=_1</versionIdentifier>
+    </templateVersions>
+    <templateVersions>
+        <content>You are a sales representative at LOXAM.
+
+Write a professional, warm, concise customer email thanking the customer for accepting and electronically signing a quote.
+The email must sound natural, sincere, and confident. It must be personalized using the Salesforce data provided below.
+Do not invent facts, prices, products, commercial conditions, dates, or history that are not present in the grounding data.
+
+Customer and quote context:
+- Recipient: {!$Input:Input_Quote.Contact.Name}
+- Recipient company: {!$Input:Input_Quote.Account.Name}
+- Quote number: {!$Input:Input_Quote.Name}
+- Total amount: {!$Input:Input_Quote.GrandTotal}
+
+Instructions for parsing data:
+- Use the quote number and total amount only when they help confirm what was signed.
+- DO NOT list line items, products, quantities, discounts, or per-line prices.
+- Ignore internal system metadata, record IDs, hyperlinks, activity IDs, email message IDs, file IDs, and raw JSON syntax.
+
+Output rules:
+- Return HTML only.
+- Do not return JSON. Do not wrap the HTML in markdown fences (do not use ```html).
+- Do not add any text before or after the HTML.
+
+Critical HTML rules:
+- DO NOT use any newline characters (\n) or line breaks anywhere in the HTML output. The entire HTML must be one single, continuous line.
+- Use `&lt;p style=&quot;margin: 0 0 15px 0;&quot;&gt;` for all generated paragraphs to safely control spacing inside the email composer.
+- Preserve the header HTML exactly as provided below, without changing any tag, style, attribute, or URL.
+- Preserve the footer HTML exactly as provided below, without changing any tag, style, attribute, or URL.
+- Generate only the inner body content between the greeting paragraph and the closing signature.
+- Do not use markdown. Do not escape the HTML.
+
+Email writing rules:
+- Keep the tone warm, sincere, highly professional, and concise (4 to 6 sentences total in the generated body).
+- Thank the customer for their trust in LOXAM.
+- Confirm that the signed quote has been received and is now being processed.
+- Mention that a LOXAM representative will follow up shortly to finalize the next steps.
+- Reference the quote number naturally if it fits.
+
+Use this exact HTML structure (return as one continuous line, replacing GENERATED_BODY_CONTENT_ONLY with your generated paragraphs):
+
+&lt;div style=&quot;max-width: 600px; margin: 20px auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 8px rgba(0,0,0,0.1); font-family: Arial, Helvetica, sans-serif; font-size: 14px; color: #1f1f1f;&quot;&gt;&lt;div style=&quot;background-color: #333333; padding: 20px; text-align: center; border-bottom: 4px solid #e3001b;&quot;&gt;&lt;a href=&quot;https://www.loxam.com&quot; target=&quot;_blank&quot;&gt;&lt;img src=&quot;https://orgfarm-71cab80f09-dev-ed.develop.file.force.com/sfc/dist/version/download/?oid=00Dak00000rcIE7&amp;ids=068ak00000ICclV&amp;d=%2Fa%2Fak000000F4hd%2FEz8Q5AruanPqJu.pW5jCvDg_Diu_R1P4YRfVQR4YLaE&amp;asPdf=false&quot; alt=&quot;LOXAM&quot; style=&quot;max-width: 250px; height: auto; border: none;&quot;&gt;&lt;/a&gt;&lt;/div&gt;&lt;div style=&quot;padding: 30px; line-height: 1.6;&quot;&gt;&lt;p style=&quot;margin: 0 0 15px 0;&quot;&gt;Hello {!$Input:Input_Quote.Contact.Name},&lt;/p&gt;GENERATED_BODY_CONTENT_ONLY&lt;p style=&quot;margin: 0;&quot;&gt;Best regards,&lt;br&gt;&lt;b&gt;The LOXAM Team&lt;/b&gt;&lt;/p&gt;&lt;/div&gt;&lt;div style=&quot;background-color: #333333; color: #ffffff; text-align: center; padding: 20px; font-size: 12px;&quot;&gt;&lt;p style=&quot;margin: 0 0 10px 0;&quot;&gt;&lt;b&gt;LOXAM&lt;/b&gt; | &quot;Safety, always &amp; everywhere&quot;&lt;/p&gt;&lt;p style=&quot;margin: 0 0 10px 0;&quot;&gt;Immeuble Le Cap, 8 rue Félix Pyat, 92800 Puteaux La Défense, France&lt;br&gt;Tel: +33 1 58 440 400 | &lt;a href=&quot;https://www.loxam.com&quot; style=&quot;color: #ffffff; text-decoration: none; font-weight: bold;&quot;&gt;www.loxam.com&lt;/a&gt;&lt;/p&gt;&lt;div style=&quot;font-size: 10px; color: #999999; margin-top: 15px;&quot;&gt;This email and any attachments are confidential and intended solely for the use of the individual or entity to whom they are addressed.&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;
+</content>
+        <fileDroppingStrategy>{&quot;dropFilesBy&quot;:&quot;LAST_MODIFIED_DATE&quot;,&quot;dropFileStartingWith&quot;:&quot;OLDEST&quot;}</fileDroppingStrategy>
+        <inputs>
+            <apiName>Input_Quote</apiName>
+            <definition>SOBJECT://Quote</definition>
+            <masterLabel>Input_Quote</masterLabel>
+            <referenceName>Input:Input_Quote</referenceName>
+            <required>true</required>
+        </inputs>
+        <isCitationEnabled>false</isCitationEnabled>
+        <primaryModel>sfdc_ai__DefaultGPT5Mini</primaryModel>
+        <status>Published</status>
+        <versionIdentifier>OJyCE4z5YWcBClAbZvWwXeuOfAnkOWuLphIB1R94wxA=_2</versionIdentifier>
+    </templateVersions>
+    <templateVersions>
+        <content>You are a sales representative at LOXAM.
+
+Write a professional, warm, concise customer email thanking the customer for accepting and signing a quote.
+The email must sound natural, sincere, and confident. It must be personalized using the Salesforce data provided below.
+Do not invent facts, prices, products, commercial conditions, dates, or history that are not present in the grounding data.
+
+Customer and quote context:
+- Recipient: {!$Input:Input_Quote.Contact.Name}
+- Recipient company: {!$Input:Input_Quote.Account.Name}
+- Quote number: {!$Input:Input_Quote.Name}
+- Total amount: {!$Input:Input_Quote.GrandTotal}
+
+Instructions for parsing data:
+- Use the quote number and total amount only when they help confirm what was signed.
+- DO NOT list line items, products, quantities, discounts, or per-line prices.
+- Ignore internal system metadata, record IDs, hyperlinks, activity IDs, email message IDs, file IDs, and raw JSON syntax.
+
+Output rules:
+- Return HTML only.
+- Do not return JSON. Do not wrap the HTML in markdown fences (do not use ```html).
+- Do not add any text before or after the HTML.
+
+Critical HTML rules:
+- DO NOT use any newline characters (\n) or line breaks anywhere in the HTML output. The entire HTML must be one single, continuous line.
+- Use `&lt;p style=&quot;margin: 0 0 15px 0;&quot;&gt;` for all generated paragraphs to safely control spacing inside the email composer.
+- Preserve the header HTML exactly as provided below, without changing any tag, style, attribute, or URL.
+- Preserve the footer HTML exactly as provided below, without changing any tag, style, attribute, or URL.
+- Generate only the inner body content between the greeting paragraph and the closing signature.
+- Do not use markdown. Do not escape the HTML.
+
+Email writing rules:
+- Keep the tone warm, sincere, highly professional, and concise (4 to 6 sentences total in the generated body).
+- Thank the customer for their trust in LOXAM.
+- Confirm that the signed quote has been received and is now being processed.
+- Mention that a LOXAM representative will follow up shortly to finalize the next steps.
+- Reference the quote number naturally if it fits.
+
+Use this exact HTML structure (return as one continuous line, replacing GENERATED_BODY_CONTENT_ONLY with your generated paragraphs):
+
+&lt;div style=&quot;max-width: 600px; margin: 20px auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 8px rgba(0,0,0,0.1); font-family: Arial, Helvetica, sans-serif; font-size: 14px; color: #1f1f1f;&quot;&gt;&lt;div style=&quot;background-color: #333333; padding: 20px; text-align: center; border-bottom: 4px solid #e3001b;&quot;&gt;&lt;a href=&quot;https://www.loxam.com&quot; target=&quot;_blank&quot;&gt;&lt;img src=&quot;https://orgfarm-71cab80f09-dev-ed.develop.file.force.com/sfc/dist/version/download/?oid=00Dak00000rcIE7&amp;ids=068ak00000ICclV&amp;d=%2Fa%2Fak000000F4hd%2FEz8Q5AruanPqJu.pW5jCvDg_Diu_R1P4YRfVQR4YLaE&amp;asPdf=false&quot; alt=&quot;LOXAM&quot; style=&quot;max-width: 250px; height: auto; border: none;&quot;&gt;&lt;/a&gt;&lt;/div&gt;&lt;div style=&quot;padding: 30px; line-height: 1.6;&quot;&gt;&lt;p style=&quot;margin: 0 0 15px 0;&quot;&gt;Hello {!$Input:Input_Quote.Contact.Name},&lt;/p&gt;GENERATED_BODY_CONTENT_ONLY&lt;p style=&quot;margin: 0;&quot;&gt;Best regards,&lt;br&gt;&lt;b&gt;The LOXAM Team&lt;/b&gt;&lt;/p&gt;&lt;/div&gt;&lt;div style=&quot;background-color: #333333; color: #ffffff; text-align: center; padding: 20px; font-size: 12px;&quot;&gt;&lt;p style=&quot;margin: 0 0 10px 0;&quot;&gt;&lt;b&gt;LOXAM&lt;/b&gt; | &quot;Safety, always &amp; everywhere&quot;&lt;/p&gt;&lt;p style=&quot;margin: 0 0 10px 0;&quot;&gt;Immeuble Le Cap, 8 rue Félix Pyat, 92800 Puteaux La Défense, France&lt;br&gt;Tel: +33 1 58 440 400 | &lt;a href=&quot;https://www.loxam.com&quot; style=&quot;color: #ffffff; text-decoration: none; font-weight: bold;&quot;&gt;www.loxam.com&lt;/a&gt;&lt;/p&gt;&lt;div style=&quot;font-size: 10px; color: #999999; margin-top: 15px;&quot;&gt;This email and any attachments are confidential and intended solely for the use of the individual or entity to whom they are addressed.&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;
+</content>
+        <fileDroppingStrategy>{&quot;dropFilesBy&quot;:&quot;LAST_MODIFIED_DATE&quot;,&quot;dropFileStartingWith&quot;:&quot;OLDEST&quot;}</fileDroppingStrategy>
+        <inputs>
+            <apiName>Input_Quote</apiName>
+            <definition>SOBJECT://Quote</definition>
+            <masterLabel>Input_Quote</masterLabel>
+            <referenceName>Input:Input_Quote</referenceName>
+            <required>true</required>
+        </inputs>
+        <isCitationEnabled>false</isCitationEnabled>
+        <primaryModel>sfdc_ai__DefaultGPT5Mini</primaryModel>
+        <status>Published</status>
+        <versionIdentifier>OJyCE4z5YWcBClAbZvWwXeuOfAnkOWuLphIB1R94wxA=_3</versionIdentifier>
+    </templateVersions>
+    <templateVersions>
+        <content>You are a sales representative at LOXAM.
+
+Write a professional, warm, concise customer email thanking the customer for accepting and signing a quote.
+The email must sound natural, sincere, and confident. It must be personalized using the Salesforce data provided below.
+Do not invent facts, prices, products, commercial conditions, dates, or history that are not present in the grounding data.
+
+Customer context:
+- Recipient: {!$Input:Input_Quote.Contact.Name}
+- Recipient company: {!$Input:Input_Quote.Account.Name}
+- Total amount: {!$Input:Input_Quote.GrandTotal}
+
+Instructions for parsing data:
+- Do NOT mention any quote number, quote ID, or internal reference number anywhere in the email body.
+- DO NOT list line items, products, quantities, discounts, or per-line prices.
+- Ignore internal system metadata, record IDs, hyperlinks, activity IDs, email message IDs, file IDs, and raw JSON syntax.
+
+Output rules:
+- Return HTML only.
+- Do not return JSON. Do not wrap the HTML in markdown fences (do not use ```html).
+- Do not add any text before or after the HTML.
+
+Critical HTML rules:
+- DO NOT use any newline characters (\n) or line breaks anywhere in the HTML output. The entire HTML must be one single, continuous line.
+- Use `&lt;p style=&quot;margin: 0 0 15px 0;&quot;&gt;` for all generated paragraphs to safely control spacing inside the email composer.
+- Preserve the header HTML exactly as provided below, without changing any tag, style, attribute, or URL.
+- Preserve the footer HTML exactly as provided below, without changing any tag, style, attribute, or URL.
+- Generate only the inner body content between the greeting paragraph and the closing signature.
+- Do not use markdown. Do not escape the HTML.
+
+Email writing rules:
+- Keep the tone warm, sincere, highly professional, and concise (4 to 6 sentences total in the generated body).
+- Thank the customer for their trust in LOXAM.
+- Confirm that the signed quote has been received and is now being processed.
+- Mention that a LOXAM representative will follow up shortly to finalize the next steps.
+- Do NOT reference any quote number or internal identifier.
+
+Use this exact HTML structure (return as one continuous line, replacing GENERATED_BODY_CONTENT_ONLY with your generated paragraphs):
+
+&lt;div style=&quot;max-width: 600px; margin: 20px auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 8px rgba(0,0,0,0.1); font-family: Arial, Helvetica, sans-serif; font-size: 14px; color: #1f1f1f;&quot;&gt;&lt;div style=&quot;background-color: #333333; padding: 20px; text-align: center; border-bottom: 4px solid #e3001b;&quot;&gt;&lt;a href=&quot;https://www.loxam.com&quot; target=&quot;_blank&quot;&gt;&lt;img src=&quot;https://orgfarm-71cab80f09-dev-ed.develop.file.force.com/sfc/dist/version/download/?oid=00Dak00000rcIE7&amp;ids=068ak00000ICclV&amp;d=%2Fa%2Fak000000F4hd%2FEz8Q5AruanPqJu.pW5jCvDg_Diu_R1P4YRfVQR4YLaE&amp;asPdf=false&quot; alt=&quot;LOXAM&quot; style=&quot;max-width: 250px; height: auto; border: none;&quot;&gt;&lt;/a&gt;&lt;/div&gt;&lt;div style=&quot;padding: 30px; line-height: 1.6;&quot;&gt;&lt;p style=&quot;margin: 0 0 15px 0;&quot;&gt;Hello {!$Input:Input_Quote.Contact.Name},&lt;/p&gt;GENERATED_BODY_CONTENT_ONLY&lt;p style=&quot;margin: 0;&quot;&gt;Best regards,&lt;br&gt;&lt;b&gt;The LOXAM Team&lt;/b&gt;&lt;/p&gt;&lt;/div&gt;&lt;div style=&quot;background-color: #333333; color: #ffffff; text-align: center; padding: 20px; font-size: 12px;&quot;&gt;&lt;p style=&quot;margin: 0 0 10px 0;&quot;&gt;&lt;b&gt;LOXAM&lt;/b&gt; | &quot;Safety, always &amp; everywhere&quot;&lt;/p&gt;&lt;p style=&quot;margin: 0 0 10px 0;&quot;&gt;Immeuble Le Cap, 8 rue Félix Pyat, 92800 Puteaux La Défense, France&lt;br&gt;Tel: +33 1 58 440 400 | &lt;a href=&quot;https://www.loxam.com&quot; style=&quot;color: #ffffff; text-decoration: none; font-weight: bold;&quot;&gt;www.loxam.com&lt;/a&gt;&lt;/p&gt;&lt;div style=&quot;font-size: 10px; color: #999999; margin-top: 15px;&quot;&gt;This email and any attachments are confidential and intended solely for the use of the individual or entity to whom they are addressed.&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;
+</content>
+        <fileDroppingStrategy>{&quot;dropFilesBy&quot;:&quot;LAST_MODIFIED_DATE&quot;,&quot;dropFileStartingWith&quot;:&quot;OLDEST&quot;}</fileDroppingStrategy>
+        <inputs>
+            <apiName>Input_Quote</apiName>
+            <definition>SOBJECT://Quote</definition>
+            <masterLabel>Input_Quote</masterLabel>
+            <referenceName>Input:Input_Quote</referenceName>
+            <required>true</required>
+        </inputs>
+        <isCitationEnabled>false</isCitationEnabled>
+        <primaryModel>sfdc_ai__DefaultGPT5Mini</primaryModel>
+        <status>Published</status>
+        <versionIdentifier>OJyCE4z5YWcBClAbZvWwXeuOfAnkOWuLphIB1R94wxA=_4</versionIdentifier>
+    </templateVersions>
+    <type>einstein_gpt__flex</type>
+    <visibility>Global</visibility>
+</GenAiPromptTemplate>

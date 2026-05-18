@@ -251,12 +251,13 @@ Critical HTML rules:
 - Do not use markdown. Do not escape the HTML.
 
 Email writing rules:
-- Keep the tone warm, highly professional, executive, and concise.
-- Briefly acknowledge the quote and its purpose in one or two short sentences.
-- DO NOT insert tables or bulleted lists of the products. All detailed line items are in the attached PDF.
-- State clearly that the detailed quote is attached as a PDF for their review.
-- Mention the quote number, the grand total, and the expiration date in a natural sentence.
-- End with a clear next step.
+- Keep the tone warm, professional, executive, and very concise (3 to 4 short sentences total in the generated body).
+- Briefly acknowledge the quote in one short sentence.
+- State that the detailed quote is attached as a PDF for their review.
+- Mention the quote number, grand total, and expiration date naturally in one sentence.
+- End with a clear ask: invite the customer to confirm acceptance. Indicate briefly that, once confirmed, they will receive a DocuSign envelope to sign electronically.
+- DO NOT explain DocuSign steps, include signing links, or describe how to sign. The DocuSign email handles all signing details.
+- DO NOT insert tables or bulleted lists of products. All detailed line items are in the attached PDF.
 
 Use this exact JSON structure:
 
