@@ -308,9 +308,11 @@
                             </apex:outputText>
                         </td>
                         <td class="data-table-td number-cell">
-                            <apex:outputText value="{0, number, #,##0.00}%">
-                                <apex:param value="{!row.discount}" />
-                            </apex:outputText>
+                            <apex:outputPanel rendered="{!AND(NOT(ISBLANK(row.discount)), row.discount > 0)}" layout="none">
+                                <apex:outputText value="{0, number, #,##0.00}%">
+                                    <apex:param value="{!row.discount}" />
+                                </apex:outputText>
+                            </apex:outputPanel>
                         </td>
                         <td class="data-table-td number-cell">
                             <apex:outputText value="{0, number, $#,###,##0.00}">
@@ -354,9 +356,6 @@
                             <tr class="bundle-row">
                                 <td colspan="2" class="data-table-td">
                                     {!vpRow.productName} — Pricing Type: {!vpRow.pricingType}
-                                    <apex:outputPanel rendered="{!AND(NOT(ISBLANK(vpRow.overageRate)), vpRow.overageRate > 0)}">
-                                        (Overage Rate: <apex:outputText value="{0, number, $#,###,##0.00}"><apex:param value="{!vpRow.overageRate}"/></apex:outputText>)
-                                    </apex:outputPanel>
                                 </td>
                             </tr>
                             <apex:repeat value="{!vpRow.tiers}" var="tier">

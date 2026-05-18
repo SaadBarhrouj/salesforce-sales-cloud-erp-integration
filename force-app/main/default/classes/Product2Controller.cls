@@ -99,21 +99,26 @@ public with sharing class Product2Controller {
      * @description Retrieves Product2 records filtered by category hierarchy, pricebook, and catalog.
      * Resolves all descendant categories and constrains products to those with active
      * PricebookEntry records in the specified pricebook, limited to the given catalog.
-     * @param categoryId The ProductCategory ID to filter by. Pass null or empty for all products.
-     * @param pricebookId The Pricebook2 ID to constrain products to. Pass null for no pricebook filtering.
-     * @param catalogId The ProductCatalog ID to constrain products to. Pass null for no catalog filtering.
-     * @return List of Product2 records in the category hierarchy with active pricebook entries.
+     * @param categoryId The ProductCategory ID to filter by. Pass null or empty for all
+     *        categories within the supplied pricebook and catalog.
+     * @param pricebookId The Pricebook2 ID to constrain products to. Required.
+     * @param catalogId The ProductCatalog ID to constrain products to. Required.
+     * @return List of Product2 records in the category hierarchy with active pricebook
+     *         entries, or an empty list if pricebookId or catalogId is missing.
      */
     @AuraEnabled(cacheable=true)
     public static List<Product2> getProductsByCategoryAndPricebook(String categoryId, String pricebookId, String catalogId) {
         try {
+            if (String.isBlank(pricebookId) || String.isBlank(catalogId)) {
+                return new List<Product2>();
+            }
             Id safeCategoryId = String.isBlank(categoryId) ? null : (Id) categoryId;
-            Id safePricebookId = String.isBlank(pricebookId) ? null : (Id) pricebookId;
-            Id safeCatalogId = String.isBlank(catalogId) ? null : (Id) catalogId;
+            Id safePricebookId = (Id) pricebookId;
+            Id safeCatalogId = (Id) catalogId;
             if (safeCategoryId != null && !String.valueOf(safeCategoryId).startsWith('0ZG')) {
                 throw new Product2Exception('Invalid Category ID');
             }
-            if (safePricebookId != null && !String.valueOf(safePricebookId).startsWith('01s')) {
+            if (!String.valueOf(safePricebookId).startsWith('01s')) {
                 throw new Product2Exception('Invalid Pricebook ID');
             }
             return Product2Service.getProductsByCategoryAndPricebook(safeCategoryId, safePricebookId, safeCatalogId);

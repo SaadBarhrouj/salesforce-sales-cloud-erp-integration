@@ -489,7 +489,7 @@ private class Product2ControllerTest {
     }
 
     @IsTest
-    static void testGetProductsByCategoryAndPricebookNullParamsReturnsAll() {
+    static void testGetProductsByCategoryAndPricebookNullPricebookAndCatalogReturnsEmpty() {
         // Arrange
         User testUser = TestDataFactory.createUser(true);
         List<Product2> result = new List<Product2>();
@@ -502,11 +502,11 @@ private class Product2ControllerTest {
         }
 
         // Assert
-        System.assertEquals(true, result.size() >= 1, 'Should return all products when both params are null.');
+        System.assertEquals(0, result.size(), 'Missing Pricebook/Catalog must produce an empty list.');
     }
 
     @IsTest
-    static void testGetProductsByCategoryAndPricebookBlankParamsReturnsAll() {
+    static void testGetProductsByCategoryAndPricebookBlankPricebookAndCatalogReturnsEmpty() {
         // Arrange
         User testUser = TestDataFactory.createUser(true);
         List<Product2> result = new List<Product2>();
@@ -514,12 +514,12 @@ private class Product2ControllerTest {
         // Act
         System.runAs(testUser) {
             Test.startTest();
-            result = Product2Controller.getProductsByCategoryAndPricebook('', '   ', null);
+            result = Product2Controller.getProductsByCategoryAndPricebook('', '   ', '   ');
             Test.stopTest();
         }
 
         // Assert
-        System.assertEquals(true, result.size() >= 1, 'Should return all products when both params are blank.');
+        System.assertEquals(0, result.size(), 'Blank Pricebook/Catalog must produce an empty list.');
     }
 
     @IsTest
@@ -528,10 +528,11 @@ private class Product2ControllerTest {
         User testUser = TestDataFactory.createUser(true);
         Product2 product1;
         ProductCategory category;
+        ProductCatalog catalog;
         Id standardPricebookId;
         System.runAs(testUser) {
             product1 = TestDataFactory.createProduct2(true);
-            ProductCatalog catalog = TestDataFactory.createProductCatalog('Test Catalog', true);
+            catalog = TestDataFactory.createProductCatalog('Test Catalog', true);
             category = TestDataFactory.createProductCategory(catalog.Id, null, 'Test Cat', true, true);
             TestDataFactory.createProductCategoryProduct(category.Id, product1.Id, true);
             standardPricebookId = Test.getStandardPricebookId();
@@ -542,7 +543,7 @@ private class Product2ControllerTest {
         // Act
         System.runAs(testUser) {
             Test.startTest();
-            result = Product2Controller.getProductsByCategoryAndPricebook(category.Id, standardPricebookId, null);
+            result = Product2Controller.getProductsByCategoryAndPricebook(category.Id, standardPricebookId, catalog.Id);
             Test.stopTest();
         }
 

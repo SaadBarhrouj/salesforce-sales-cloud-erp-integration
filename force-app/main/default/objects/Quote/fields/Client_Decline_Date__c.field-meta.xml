@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Client_Decline_Date__c</fullName>
+    <description>Date and time when the client declined the quote via DocuSign electronic signature</description>
+    <inlineHelpText>Automatically populated when the client declines the quote in DocuSign. Not to be confused with manager rejection during internal approval workflow.</inlineHelpText>
+    <label>Client Decline Date</label>
+    <required>false</required>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackHistory>false</trackHistory>
+    <type>DateTime</type>
+</CustomField>

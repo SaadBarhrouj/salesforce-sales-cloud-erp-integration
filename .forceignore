@@ -33,8 +33,16 @@ force-app/main/default/objects/Quote/fields/RelatedWorkId.field-meta.xml
 force-app/main/default/objects/Product2/fields/IsAssetizable.field-meta.xml
 force-app/main/default/objects/Product2/fields/IsSerialized.field-meta.xml
 
-# GenAiPromptTemplate components requiring Einstein GPT Platform feature
-force-app/main/default/genAiPromptTemplates/
+# GenAiPromptTemplate salesEmail-type templates require Sales Email license
+force-app/main/default/genAiPromptTemplates/Quote_Follow_Up.genAiPromptTemplate-meta.xml
+
+# GenAiPromptTemplates and flows that invoke them require the GenAI prompt-template feature
+force-app/main/default/genAiPromptTemplates/Initial_Quote.genAiPromptTemplate-meta.xml
+force-app/main/default/genAiPromptTemplates/Quote_Accepted_Thank_You_Email.genAiPromptTemplate-meta.xml
+force-app/main/default/flows/Quote_Accepted_Close_Opportunity_and_Notify.flow-meta.xml
+
+# DocuSign Negotiate (dfsle) package not installed in scratch orgs
+force-app/main/default/flows/DocuSign_Completed_Update_Quote.flow-meta.xml
 
 # Salesforce Industries / Order Management fields (Product2, ProductCategory, QuoteLineItem)
 force-app/main/default/objects/Product2/fields/AvailabilityDate.field-meta.xml

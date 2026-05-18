@@ -316,7 +316,10 @@ public inherited sharing class OpportunityService {
         item.OpportunityId = opportunityId;
         item.PricebookEntryId = entry.Id;
         item.Quantity = toInteger(data.get('quantity'));
-        item.Discount = toDecimal(data.get('discountPercent'));
+        Decimal discount = toDecimal(data.get('discountPercent'));
+        if (discount != null && discount != 0) {
+            item.Discount = discount;
+        }
 
         Decimal rawUnitPrice = toDecimal(data.get('unitPrice'));
 
