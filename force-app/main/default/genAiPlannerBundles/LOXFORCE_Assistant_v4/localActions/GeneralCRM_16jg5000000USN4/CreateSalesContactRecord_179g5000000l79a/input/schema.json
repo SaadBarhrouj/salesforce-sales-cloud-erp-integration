@@ -1,0 +1,22 @@
+{
+  "required" : [ "contactRecord", "accountRecord" ],
+  "unevaluatedProperties" : false,
+  "properties" : {
+    "contactRecord" : {
+      "title" : "Contact Record",
+      "description" : "The Contact record to identify or create.",
+      "lightning:type" : "lightning__recordInfoType",
+      "lightning:isPII" : false,
+      "copilotAction:isUserInput" : true
+    },
+    "accountRecord" : {
+      "title" : "Account Record",
+      "description" : "The Account record that is related to the Contact Record and should be identified or created.",
+      "lightning:type" : "lightning__recordInfoType",
+      "lightning:isPII" : false,
+      "copilotAction:isUserInput" : true
+    }
+  },
+  "lightning:type" : "lightning__objectType",
+  "lightning:textIndexed" : true
+}

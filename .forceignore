@@ -41,6 +41,10 @@ force-app/main/default/genAiPromptTemplates/Initial_Quote.genAiPromptTemplate-me
 force-app/main/default/genAiPromptTemplates/Quote_Accepted_Thank_You_Email.genAiPromptTemplate-meta.xml
 force-app/main/default/flows/Quote_Accepted_Close_Opportunity_and_Notify.flow-meta.xml
 
+# Agentforce agents (Bot, BotVersion, GenAiPlannerBundle) — require Agentforce feature, not available in scratch orgs
+force-app/main/default/bots/
+force-app/main/default/genAiPlannerBundles/
+
 # DocuSign Negotiate (dfsle) package not installed in scratch orgs
 force-app/main/default/flows/DocuSign_Completed_Update_Quote.flow-meta.xml
 

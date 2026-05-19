@@ -1,0 +1,479 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<GenAiPlannerBundle xmlns="http://soap.sforce.com/2006/04/metadata">
+    <description>Assistant IA interne de la plateforme LOXFORCE, le CRM Salesforce de LOXAM dédié à la location et à la vente d&apos;équipements lourds. LOXFORCE Assistant aide les commerciaux, responsables commerciaux et responsables logistiques à consulter leur portefeuille (comptes, opportunités, devis), préparer leurs rendez-vous client via la génération de briefs contextuels, gérer le cycle de vie des devis (résumé, envoi au client) et accéder aux procédures internes LOXAM via la base de connaissances.</description>
+    <localTopicLinks>
+        <genAiPluginName>AccountManagement_16jg5000000USN4</genAiPluginName>
+    </localTopicLinks>
+    <localTopicLinks>
+        <genAiPluginName>GeneralCRM_16jg5000000USN4</genAiPluginName>
+    </localTopicLinks>
+    <localTopicLinks>
+        <genAiPluginName>GeneralFAQ_16jg5000000USN4</genAiPluginName>
+    </localTopicLinks>
+    <localTopicLinks>
+        <genAiPluginName>agent_router_16jg5000000USN4</genAiPluginName>
+    </localTopicLinks>
+    <localTopicLinks>
+        <genAiPluginName>ambiguous_question_16jg5000000USN4</genAiPluginName>
+    </localTopicLinks>
+    <localTopicLinks>
+        <genAiPluginName>off_topic_16jg5000000USN4</genAiPluginName>
+    </localTopicLinks>
+    <localTopics>
+        <fullName>GeneralCRM_16jg5000000USN4</fullName>
+        <canEscalate>false</canEscalate>
+        <description>Engages and interacts with the user about any request that could be CRM data related. This could be tasks such as identify and summarize records, answer queries, aggregate data, find and query objects, update records, or drafting and refining emails.</description>
+        <developerName>GeneralCRM_16jg5000000USN4</developerName>
+        <genAiPluginInstructions>
+            <description>You are LOXFORCE Assistant, an internal AI copilot for LOXAM sales teams within the LOXFORCE platform.
+
+BEHAVIOR
+- Always reply in the same language as the user&apos;s last message. For utterances of 1-2 words with no clear language signal, reply in French.
+- Be concise, professional, and action-oriented.
+- Never invent data. If unknown, say so clearly.
+- Address users by first name when known.
+
+DATA HANDLING
+- Always respect the connected user&apos;s permissions and visibility rules.
+- For &quot;my/mine/I&quot;, filter records by Owner = connected user.
+- Display amounts in MAD by default. Use date format DD/MM/YYYY.
+
+INTERACTIONS
+- For ambiguous requests, ask one clarifying question rather than guessing.
+- Before modifying data or sending emails, summarize the action and wait for confirmation.
+- After completing an action, briefly confirm what was done.
+- Never provide legal or financial advice.</description>
+            <developerName>instruction0_179g5000000l79a</developerName>
+            <language>en_US</language>
+            <masterLabel>instruction0_179g5000000l79a</masterLabel>
+            <sortOrder>1</sortOrder>
+        </genAiPluginInstructions>
+        <language>en_US</language>
+        <localActionLinks>
+            <functionName>GetActivityDetails_179g5000000l79a</functionName>
+        </localActionLinks>
+        <localActionLinks>
+            <functionName>DraftOrReviseEmail_179g5000000l79a</functionName>
+        </localActionLinks>
+        <localActionLinks>
+            <functionName>ExtractFieldsAndValuesFromUserInput_179g5000000l79a</functionName>
+        </localActionLinks>
+        <localActionLinks>
+            <functionName>UpdateRecordFields_179g5000000l79a</functionName>
+        </localActionLinks>
+        <localActionLinks>
+            <functionName>QueryRecordsWithAggregate_179g5000000l79a</functionName>
+        </localActionLinks>
+        <localActionLinks>
+            <functionName>GetRecordDetails_179g5000000l79a</functionName>
+        </localActionLinks>
+        <localActionLinks>
+            <functionName>GetActivitiesTimeline_179g5000000l79a</functionName>
+        </localActionLinks>
+        <localActionLinks>
+            <functionName>QueryRecords_179g5000000l79a</functionName>
+        </localActionLinks>
+        <localActionLinks>
+            <functionName>IdentifyObjectByName_179g5000000l79a</functionName>
+        </localActionLinks>
+        <localActionLinks>
+            <functionName>AnswerQuestionsWithKnowledge_179g5000000l79a</functionName>
+        </localActionLinks>
+        <localActionLinks>
+            <functionName>IdentifyRecordByName_179g5000000l79a</functionName>
+        </localActionLinks>
+        <localActionLinks>
+            <functionName>CreateSalesContactRecord_179g5000000l79a</functionName>
+        </localActionLinks>
+        <localActions>
+            <fullName>CreateSalesContactRecord_179g5000000l79a</fullName>
+            <description>Searches for a matching Contact record. If one is not found, creates a new Contact record.</description>
+            <developerName>CreateSalesContactRecord_179g5000000l79a</developerName>
+            <invocationTarget>sales_sfa_flows__CreateSalesContact</invocationTarget>
+            <invocationTargetType>flow</invocationTargetType>
+            <isConfirmationRequired>true</isConfirmationRequired>
+            <isIncludeInProgressIndicator>true</isIncludeInProgressIndicator>
+            <localDeveloperName>CreateSalesContactRecord</localDeveloperName>
+            <masterLabel>Create Sales Contact Record</masterLabel>
+            <source>sales_sdr_agent__CreateSalesContactRecord</source>
+        </localActions>
+        <localActions>
+            <fullName>GetRecordDetails_179g5000000l79a</fullName>
+            <description>Generates a text blob containing record details, including object fields and values and records from related lists.</description>
+            <developerName>GetRecordDetails_179g5000000l79a</developerName>
+            <invocationTarget>getDataForGrounding</invocationTarget>
+            <invocationTargetType>standardInvocableAction</invocationTargetType>
+            <isConfirmationRequired>false</isConfirmationRequired>
+            <isIncludeInProgressIndicator>true</isIncludeInProgressIndicator>
+            <localDeveloperName>GetRecordDetails</localDeveloperName>
+            <masterLabel>Get Record Details</masterLabel>
+            <progressIndicatorMessage>Getting details</progressIndicatorMessage>
+            <source>EmployeeCopilot__GetRecordDetails</source>
+        </localActions>
+        <localActions>
+            <fullName>AnswerQuestionsWithKnowledge_179g5000000l79a</fullName>
+            <description>Answers questions about company policies and procedures, troubleshooting steps, or product information. For example: “What is your return policy?” “How do I fix an issue?” or “What features does a product have?”</description>
+            <developerName>AnswerQuestionsWithKnowledge_179g5000000l79a</developerName>
+            <invocationTarget>streamKnowledgeSearch</invocationTarget>
+            <invocationTargetType>standardInvocableAction</invocationTargetType>
+            <isConfirmationRequired>false</isConfirmationRequired>
+            <isIncludeInProgressIndicator>true</isIncludeInProgressIndicator>
+            <localDeveloperName>AnswerQuestionsWithKnowledge</localDeveloperName>
+            <masterLabel>Answer Questions with Knowledge</masterLabel>
+            <progressIndicatorMessage>Getting answers</progressIndicatorMessage>
+            <source>EmployeeCopilot__AnswerQuestionsWithKnowledge</source>
+        </localActions>
+        <localActions>
+            <fullName>GetActivitiesTimeline_179g5000000l79a</fullName>
+            <description>Retrieve a timeline of all CRM activities associated with one record, including past and future activities.</description>
+            <developerName>GetActivitiesTimeline_179g5000000l79a</developerName>
+            <invocationTarget>getActivitiesTimeline</invocationTarget>
+            <invocationTargetType>standardInvocableAction</invocationTargetType>
+            <isConfirmationRequired>false</isConfirmationRequired>
+            <isIncludeInProgressIndicator>true</isIncludeInProgressIndicator>
+            <localDeveloperName>GetActivitiesTimeline</localDeveloperName>
+            <masterLabel>Get Activities Timeline</masterLabel>
+            <progressIndicatorMessage>Retrieving activities</progressIndicatorMessage>
+            <source>EmployeeCopilot__GetActivitiesTimeline</source>
+        </localActions>
+        <localActions>
+            <fullName>UpdateRecordFields_179g5000000l79a</fullName>
+            <description>Updates fields on a Salesforce CRM record. The action ExtractFieldsAndValuesFromUserInput must be called prior to this action to extract the record&apos;s fields and values.</description>
+            <developerName>UpdateRecordFields_179g5000000l79a</developerName>
+            <invocationTarget>einsteinCopilotUpdateRecord</invocationTarget>
+            <invocationTargetType>standardInvocableAction</invocationTargetType>
+            <isConfirmationRequired>true</isConfirmationRequired>
+            <isIncludeInProgressIndicator>true</isIncludeInProgressIndicator>
+            <localDeveloperName>UpdateRecordFields</localDeveloperName>
+            <masterLabel>Update Record</masterLabel>
+            <progressIndicatorMessage>Making updates</progressIndicatorMessage>
+            <source>EmployeeCopilot__UpdateRecordFields</source>
+        </localActions>
+        <localActions>
+            <fullName>ExtractFieldsAndValuesFromUserInput_179g5000000l79a</fullName>
+            <description>Extracts Salesforce CRM record fields and their corresponding field values from the user input. This action must run before updateRecord to convert user input to a Salesforce sObject.</description>
+            <developerName>ExtractFieldsAndValuesFromUserInput_179g5000000l79a</developerName>
+            <invocationTarget>getRecordFieldsAndValues</invocationTarget>
+            <invocationTargetType>standardInvocableAction</invocationTargetType>
+            <isConfirmationRequired>false</isConfirmationRequired>
+            <isIncludeInProgressIndicator>true</isIncludeInProgressIndicator>
+            <localDeveloperName>ExtractFieldsAndValuesFromUserInput</localDeveloperName>
+            <masterLabel>Extract Fields And Values From User Input</masterLabel>
+            <progressIndicatorMessage>Preparing your changes</progressIndicatorMessage>
+            <source>EmployeeCopilot__ExtractFieldsAndValuesFromUserInput</source>
+        </localActions>
+        <localActions>
+            <fullName>DraftOrReviseEmail_179g5000000l79a</fullName>
+            <description>Creates an email draft or revises the latest generated email based on user input.</description>
+            <developerName>DraftOrReviseEmail_179g5000000l79a</developerName>
+            <invocationTarget>getDraftOrReviseEmailPrompt</invocationTarget>
+            <invocationTargetType>standardInvocableAction</invocationTargetType>
+            <isConfirmationRequired>false</isConfirmationRequired>
+            <isIncludeInProgressIndicator>true</isIncludeInProgressIndicator>
+            <localDeveloperName>DraftOrReviseEmail</localDeveloperName>
+            <masterLabel>Draft or Revise Email</masterLabel>
+            <progressIndicatorMessage>Crafting your email</progressIndicatorMessage>
+            <source>EmployeeCopilot__DraftOrReviseEmail</source>
+        </localActions>
+        <localActions>
+            <fullName>QueryRecords_179g5000000l79a</fullName>
+            <description>Finds and retrieves Salesforce CRM records based on user input and specific conditions, such as field values. This action automatically identifies the correct records and object type. e.g. &apos;Find all open opportunities created in the last 5 days sorted by created date.&apos;</description>
+            <developerName>QueryRecords_179g5000000l79a</developerName>
+            <invocationTarget>queryRecords</invocationTarget>
+            <invocationTargetType>standardInvocableAction</invocationTargetType>
+            <isConfirmationRequired>false</isConfirmationRequired>
+            <isIncludeInProgressIndicator>true</isIncludeInProgressIndicator>
+            <localDeveloperName>QueryRecords</localDeveloperName>
+            <masterLabel>Query Records</masterLabel>
+            <source>EmployeeCopilot__QueryRecords</source>
+        </localActions>
+        <localActions>
+            <fullName>IdentifyObjectByName_179g5000000l79a</fullName>
+            <description>Finds the Salesforce object API name by extracting an object name from the user input.</description>
+            <developerName>IdentifyObjectByName_179g5000000l79a</developerName>
+            <invocationTarget>identifyObject</invocationTarget>
+            <invocationTargetType>standardInvocableAction</invocationTargetType>
+            <isConfirmationRequired>false</isConfirmationRequired>
+            <isIncludeInProgressIndicator>true</isIncludeInProgressIndicator>
+            <localDeveloperName>IdentifyObjectByName</localDeveloperName>
+            <masterLabel>Identify Object by Name</masterLabel>
+            <source>EmployeeCopilot__IdentifyObjectByName</source>
+        </localActions>
+        <localActions>
+            <fullName>GetActivityDetails_179g5000000l79a</fullName>
+            <description>Provides data about an activity record, including its content and other key details. The record type is strictly limited to a Call, Email, Event, or Task.</description>
+            <developerName>GetActivityDetails_179g5000000l79a</developerName>
+            <invocationTarget>getActivityDetails</invocationTarget>
+            <invocationTargetType>standardInvocableAction</invocationTargetType>
+            <isConfirmationRequired>false</isConfirmationRequired>
+            <isIncludeInProgressIndicator>true</isIncludeInProgressIndicator>
+            <localDeveloperName>GetActivityDetails</localDeveloperName>
+            <masterLabel>Get Activity Details</masterLabel>
+            <progressIndicatorMessage>Getting activity details</progressIndicatorMessage>
+            <source>EmployeeCopilot__GetActivityDetails</source>
+        </localActions>
+        <localActions>
+            <fullName>QueryRecordsWithAggregate_179g5000000l79a</fullName>
+            <description>Answers aggregation questions (such as count, sum, max, min, or average) about Salesforce CRM data based on the user input and specific conditions, such as field values. For example &apos;Find the number of open opportunities created in the last 5 days.&apos;</description>
+            <developerName>QueryRecordsWithAggregate_179g5000000l79a</developerName>
+            <invocationTarget>queryRecordsWithAggregate</invocationTarget>
+            <invocationTargetType>standardInvocableAction</invocationTargetType>
+            <isConfirmationRequired>false</isConfirmationRequired>
+            <isIncludeInProgressIndicator>true</isIncludeInProgressIndicator>
+            <localDeveloperName>QueryRecordsWithAggregate</localDeveloperName>
+            <masterLabel>Query Records with Aggregate</masterLabel>
+            <source>EmployeeCopilot__QueryRecordsWithAggregate</source>
+        </localActions>
+        <localActions>
+            <fullName>IdentifyRecordByName_179g5000000l79a</fullName>
+            <description>Searches for Salesforce CRM records by name and returns a list of matching Salesforce CRM record IDs.</description>
+            <developerName>IdentifyRecordByName_179g5000000l79a</developerName>
+            <invocationTarget>identifyRecordByName</invocationTarget>
+            <invocationTargetType>standardInvocableAction</invocationTargetType>
+            <isConfirmationRequired>false</isConfirmationRequired>
+            <isIncludeInProgressIndicator>true</isIncludeInProgressIndicator>
+            <localDeveloperName>IdentifyRecordByName</localDeveloperName>
+            <masterLabel>Identify Record by Name</masterLabel>
+            <source>EmployeeCopilot__IdentifyRecordByName</source>
+        </localActions>
+        <localDeveloperName>GeneralCRM</localDeveloperName>
+        <masterLabel>General CRM</masterLabel>
+        <pluginType>Topic</pluginType>
+    </localTopics>
+    <localTopics>
+        <fullName>AccountManagement_16jg5000000USN4</fullName>
+        <canEscalate>false</canEscalate>
+        <description>Handles customer inquiries about changing their contact information and resetting their password.</description>
+        <developerName>AccountManagement_16jg5000000USN4</developerName>
+        <genAiPluginInstructions>
+            <description>You are LOXFORCE Assistant, an internal AI copilot for LOXAM sales teams within the LOXFORCE platform.
+
+BEHAVIOR
+- Always reply in the same language as the user&apos;s last message. For utterances of 1-2 words with no clear language signal, reply in French.
+- Be concise, professional, and action-oriented.
+- Never invent data. If unknown, say so clearly.
+- Address users by first name when known.
+
+DATA HANDLING
+- Always respect the connected user&apos;s permissions and visibility rules.
+- For &quot;my/mine/I&quot;, filter records by Owner = connected user.
+- Display amounts in MAD by default. Use date format DD/MM/YYYY.
+
+INTERACTIONS
+- For ambiguous requests, ask one clarifying question rather than guessing.
+- Before modifying data or sending emails, summarize the action and wait for confirmation.
+- After completing an action, briefly confirm what was done.
+- Never provide legal or financial advice.</description>
+            <developerName>instruction0_179g5000000l79V</developerName>
+            <language>en_US</language>
+            <masterLabel>instruction0_179g5000000l79V</masterLabel>
+            <sortOrder>1</sortOrder>
+        </genAiPluginInstructions>
+        <language>en_US</language>
+        <localActionLinks>
+            <functionName>ResetSecurePassword_179g5000000l79V</functionName>
+        </localActionLinks>
+        <localActionLinks>
+            <functionName>UpdateVerifiedContact_179g5000000l79V</functionName>
+        </localActionLinks>
+        <localActionLinks>
+            <functionName>AnswerQuestionsWithKnowledge_179g5000000l79V</functionName>
+        </localActionLinks>
+        <localActions>
+            <fullName>UpdateVerifiedContact_179g5000000l79V</fullName>
+            <description>Updates fields on a customer&apos;s contact record, such as the email address, phone number, or postal address.</description>
+            <developerName>UpdateVerifiedContact_179g5000000l79V</developerName>
+            <invocationTarget>SvcCopilotTmpl__UpdateVrfyCtct</invocationTarget>
+            <invocationTargetType>flow</invocationTargetType>
+            <isConfirmationRequired>true</isConfirmationRequired>
+            <isIncludeInProgressIndicator>true</isIncludeInProgressIndicator>
+            <localDeveloperName>UpdateVerifiedContact</localDeveloperName>
+            <masterLabel>Update Verified Contact</masterLabel>
+            <source>SvcCopilotTmpl__UpdateVerifiedContact</source>
+        </localActions>
+        <localActions>
+            <fullName>AnswerQuestionsWithKnowledge_179g5000000l79V</fullName>
+            <description>Answers questions about company policies and procedures, troubleshooting steps, or product information. For example: “What is your return policy?” “How do I fix an issue?” or “What features does a product have?”</description>
+            <developerName>AnswerQuestionsWithKnowledge_179g5000000l79V</developerName>
+            <invocationTarget>streamKnowledgeSearch</invocationTarget>
+            <invocationTargetType>standardInvocableAction</invocationTargetType>
+            <isConfirmationRequired>false</isConfirmationRequired>
+            <isIncludeInProgressIndicator>true</isIncludeInProgressIndicator>
+            <localDeveloperName>AnswerQuestionsWithKnowledge</localDeveloperName>
+            <masterLabel>Answer Questions with Knowledge</masterLabel>
+            <progressIndicatorMessage>Getting answers</progressIndicatorMessage>
+            <source>EmployeeCopilot__AnswerQuestionsWithKnowledge</source>
+        </localActions>
+        <localActions>
+            <fullName>ResetSecurePassword_179g5000000l79V</fullName>
+            <description>Send a password reset link to the email address associated with the given Contact ID.</description>
+            <developerName>ResetSecurePassword_179g5000000l79V</developerName>
+            <invocationTarget>SvcCopilotTmpl__ResetScrPassword</invocationTarget>
+            <invocationTargetType>flow</invocationTargetType>
+            <isConfirmationRequired>true</isConfirmationRequired>
+            <isIncludeInProgressIndicator>true</isIncludeInProgressIndicator>
+            <localDeveloperName>ResetSecurePassword</localDeveloperName>
+            <masterLabel>Reset Secure Password</masterLabel>
+            <source>SvcCopilotTmpl__ResetSecurePassword</source>
+        </localActions>
+        <localDeveloperName>AccountManagement</localDeveloperName>
+        <masterLabel>Account Management</masterLabel>
+        <pluginType>Topic</pluginType>
+    </localTopics>
+    <localTopics>
+        <fullName>off_topic_16jg5000000USN4</fullName>
+        <canEscalate>false</canEscalate>
+        <description>Redirect conversation to relevant topics when user request goes off-topic</description>
+        <developerName>off_topic_16jg5000000USN4</developerName>
+        <genAiPluginInstructions>
+            <description>You are LOXFORCE Assistant, an internal AI copilot for LOXAM sales teams within the LOXFORCE platform.
+
+BEHAVIOR
+- Always reply in the same language as the user&apos;s last message. For utterances of 1-2 words with no clear language signal, reply in French.
+- Be concise, professional, and action-oriented.
+- Never invent data. If unknown, say so clearly.
+- Address users by first name when known.
+
+DATA HANDLING
+- Always respect the connected user&apos;s permissions and visibility rules.
+- For &quot;my/mine/I&quot;, filter records by Owner = connected user.
+- Display amounts in MAD by default. Use date format DD/MM/YYYY.
+
+INTERACTIONS
+- For ambiguous requests, ask one clarifying question rather than guessing.
+- Before modifying data or sending emails, summarize the action and wait for confirmation.
+- After completing an action, briefly confirm what was done.
+- Never provide legal or financial advice.</description>
+            <developerName>instruction0_179g5000000l79X</developerName>
+            <language>en_US</language>
+            <masterLabel>instruction0_179g5000000l79X</masterLabel>
+            <sortOrder>1</sortOrder>
+        </genAiPluginInstructions>
+        <language>en_US</language>
+        <localDeveloperName>off_topic</localDeveloperName>
+        <masterLabel>Off Topic</masterLabel>
+        <pluginType>Topic</pluginType>
+    </localTopics>
+    <localTopics>
+        <fullName>GeneralFAQ_16jg5000000USN4</fullName>
+        <canEscalate>false</canEscalate>
+        <description>This topic is for helping answer customer&apos;s questions by searching through the knowledge articles and providing information from those articles. The questions can be about the company and its products, policies or business procedures</description>
+        <developerName>GeneralFAQ_16jg5000000USN4</developerName>
+        <genAiPluginInstructions>
+            <description>You are LOXFORCE Assistant, an internal AI copilot for LOXAM sales teams within the LOXFORCE platform.
+
+BEHAVIOR
+- Always reply in the same language as the user&apos;s last message. For utterances of 1-2 words with no clear language signal, reply in French.
+- Be concise, professional, and action-oriented.
+- Never invent data. If unknown, say so clearly.
+- Address users by first name when known.
+
+DATA HANDLING
+- Always respect the connected user&apos;s permissions and visibility rules.
+- For &quot;my/mine/I&quot;, filter records by Owner = connected user.
+- Display amounts in MAD by default. Use date format DD/MM/YYYY.
+
+INTERACTIONS
+- For ambiguous requests, ask one clarifying question rather than guessing.
+- Before modifying data or sending emails, summarize the action and wait for confirmation.
+- After completing an action, briefly confirm what was done.
+- Never provide legal or financial advice.</description>
+            <developerName>instruction0_179g5000000l79W</developerName>
+            <language>en_US</language>
+            <masterLabel>instruction0_179g5000000l79W</masterLabel>
+            <sortOrder>1</sortOrder>
+        </genAiPluginInstructions>
+        <language>en_US</language>
+        <localActionLinks>
+            <functionName>AnswerQuestionsWithKnowledge_179g5000000l79W</functionName>
+        </localActionLinks>
+        <localActions>
+            <fullName>AnswerQuestionsWithKnowledge_179g5000000l79W</fullName>
+            <description>Answers questions about company policies and procedures, troubleshooting steps, or product information. For example: &apos;What is your return policy?&apos; &apos;How do I fix an issue?&apos; or &apos;What features does a product have?&apos;</description>
+            <developerName>AnswerQuestionsWithKnowledge_179g5000000l79W</developerName>
+            <invocationTarget>streamKnowledgeSearch</invocationTarget>
+            <invocationTargetType>standardInvocableAction</invocationTargetType>
+            <isConfirmationRequired>false</isConfirmationRequired>
+            <isIncludeInProgressIndicator>true</isIncludeInProgressIndicator>
+            <localDeveloperName>AnswerQuestionsWithKnowledge</localDeveloperName>
+            <masterLabel>Answer Questions with Knowledge</masterLabel>
+            <progressIndicatorMessage>Getting answers</progressIndicatorMessage>
+            <source>EmployeeCopilot__AnswerQuestionsWithKnowledge</source>
+        </localActions>
+        <localDeveloperName>GeneralFAQ</localDeveloperName>
+        <masterLabel>General FAQ</masterLabel>
+        <pluginType>Topic</pluginType>
+    </localTopics>
+    <localTopics>
+        <fullName>agent_router_16jg5000000USN4</fullName>
+        <canEscalate>false</canEscalate>
+        <description>Welcome the user and determine the appropriate subagent based on user input</description>
+        <developerName>agent_router_16jg5000000USN4</developerName>
+        <genAiPluginInstructions>
+            <description>You are LOXFORCE Assistant, an internal AI copilot for LOXAM sales teams within the LOXFORCE platform.
+
+BEHAVIOR
+- Always reply in the same language as the user&apos;s last message. For utterances of 1-2 words with no clear language signal, reply in French.
+- Be concise, professional, and action-oriented.
+- Never invent data. If unknown, say so clearly.
+- Address users by first name when known.
+
+DATA HANDLING
+- Always respect the connected user&apos;s permissions and visibility rules.
+- For &quot;my/mine/I&quot;, filter records by Owner = connected user.
+- Display amounts in MAD by default. Use date format DD/MM/YYYY.
+
+INTERACTIONS
+- For ambiguous requests, ask one clarifying question rather than guessing.
+- Before modifying data or sending emails, summarize the action and wait for confirmation.
+- After completing an action, briefly confirm what was done.
+- Never provide legal or financial advice.
+
+{{state.AgentScriptInternal_agent_instructions}}</description>
+            <developerName>instruction0_179g5000000l79Z</developerName>
+            <language>en_US</language>
+            <masterLabel>instruction0_179g5000000l79Z</masterLabel>
+            <sortOrder>1</sortOrder>
+        </genAiPluginInstructions>
+        <language>en_US</language>
+        <localDeveloperName>agent_router</localDeveloperName>
+        <masterLabel>Agent Router</masterLabel>
+        <pluginType>Topic</pluginType>
+    </localTopics>
+    <localTopics>
+        <fullName>ambiguous_question_16jg5000000USN4</fullName>
+        <canEscalate>false</canEscalate>
+        <description>Redirect conversation to relevant topics when user request is too ambiguous</description>
+        <developerName>ambiguous_question_16jg5000000USN4</developerName>
+        <genAiPluginInstructions>
+            <description>You are LOXFORCE Assistant, an internal AI copilot for LOXAM sales teams within the LOXFORCE platform.
+
+BEHAVIOR
+- Always reply in the same language as the user&apos;s last message. For utterances of 1-2 words with no clear language signal, reply in French.
+- Be concise, professional, and action-oriented.
+- Never invent data. If unknown, say so clearly.
+- Address users by first name when known.
+
+DATA HANDLING
+- Always respect the connected user&apos;s permissions and visibility rules.
+- For &quot;my/mine/I&quot;, filter records by Owner = connected user.
+- Display amounts in MAD by default. Use date format DD/MM/YYYY.
+
+INTERACTIONS
+- For ambiguous requests, ask one clarifying question rather than guessing.
+- Before modifying data or sending emails, summarize the action and wait for confirmation.
+- After completing an action, briefly confirm what was done.
+- Never provide legal or financial advice.</description>
+            <developerName>instruction0_179g5000000l79Y</developerName>
+            <language>en_US</language>
+            <masterLabel>instruction0_179g5000000l79Y</masterLabel>
+            <sortOrder>1</sortOrder>
+        </genAiPluginInstructions>
+        <language>en_US</language>
+        <localDeveloperName>ambiguous_question</localDeveloperName>
+        <masterLabel>Ambiguous Question</masterLabel>
+        <pluginType>Topic</pluginType>
+    </localTopics>
+    <masterLabel>LOXFORCE Assistant</masterLabel>
+    <plannerType>Atlas__ConcurrentMultiAgentOrchestration</plannerType>
+</GenAiPlannerBundle>
