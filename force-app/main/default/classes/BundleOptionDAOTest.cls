@@ -76,6 +76,7 @@ private class BundleOptionDAOTest {
         Bundle_Option__c option = new Bundle_Option__c(
             Bundle_Product__c = bundleProduct.Id,
             Option_Type__c = 'Component',
+            Default_Quantity__c = 1,
             Sort_Order__c = 1
         );
         insert option;

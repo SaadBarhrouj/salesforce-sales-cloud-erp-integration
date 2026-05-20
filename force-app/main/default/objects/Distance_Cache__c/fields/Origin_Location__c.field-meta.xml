@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Origin_Location__c</fullName>
+    <deleteConstraint>Restrict</deleteConstraint>
+    <description>Lookup to the starting point of the route (usually the Agency).</description>
+    <inlineHelpText>The starting Location for the route calculation.</inlineHelpText>
+    <label>Origin Location</label>
+    <referenceTo>Location</referenceTo>
+    <relationshipLabel>Distance Caches</relationshipLabel>
+    <relationshipName>Distance_Caches</relationshipName>
+    <required>true</required>
+    <trackTrending>false</trackTrending>
+    <type>Lookup</type>
+</CustomField>

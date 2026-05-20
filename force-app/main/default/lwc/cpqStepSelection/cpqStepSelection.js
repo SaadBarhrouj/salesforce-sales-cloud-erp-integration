@@ -294,7 +294,10 @@ export default class CpqStepSelection extends LightningElement {
             netTotal: 0,
             configured: true,
             options: [],
-            weight: product.Unit_Weight_Kg__c || 0
+            weight: product.Unit_Weight_Kg__c || 0,
+            w: product.Width_cm__c,  // width in cm
+            h: product.Height_cm__c, // height in cm
+            d: product.Depth_cm__c   // depth in cm
         };
         this.dispatchEvent(new CustomEvent(EVENTS.PRODUCT_ADD, { detail: { cartItem } }));
     }

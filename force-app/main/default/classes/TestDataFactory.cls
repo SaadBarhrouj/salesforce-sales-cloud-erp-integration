@@ -168,7 +168,6 @@ public class TestDataFactory {
             Default_Quantity__c = defaultQuantity,
             Min_Quantity__c = minQuantity,
             Max_Quantity__c = maxQuantity,
-            Quantity_Editable__c = quantityEditable,
             Is_Required__c = isRequired,
             Is_Selected__c = isSelected
         );
@@ -476,6 +475,62 @@ public class TestDataFactory {
             insert recordItem;
         }
         return recordItem;
+    }
+
+    /**
+     * @description Builds a complete bundle scenario for option-type qty tests:
+     * one bundle with three options (Component, Accessory, Related Product),
+     * PricebookEntries on the standard pricebook, and a test Opportunity.
+     * @return Map with keys opportunityId, bundleProductId, componentProductId, accessoryProductId, relatedProductId.
+     */
+    public static Map<String, Object> seedBundleScenario() {
+        Account acc = createAccount(true);
+
+        Product2 bundleProd = new Product2(Name='Test Bundle ' + nextSuffix(), ProductCode='TEST-BUNDLE-' + nextSuffix(), Family='Equipment', Type='Bundle', IsActive=true);
+        Product2 compProd   = new Product2(Name='Test Component ' + nextSuffix(), ProductCode='TEST-COMP-' + nextSuffix(), Family='Equipment', IsActive=true);
+        Product2 accProd    = new Product2(Name='Test Accessory ' + nextSuffix(), ProductCode='TEST-ACC-' + nextSuffix(), Family='Equipment', IsActive=true);
+        Product2 relProd    = new Product2(Name='Test Related ' + nextSuffix(), ProductCode='TEST-REL-' + nextSuffix(), Family='Equipment', IsActive=true);
+        insert new List<Product2>{ bundleProd, compProd, accProd, relProd };
+
+        Id stdPb = Test.getStandardPricebookId();
+        insert new List<PricebookEntry>{
+            new PricebookEntry(Pricebook2Id=stdPb, Product2Id=bundleProd.Id, UnitPrice=100, IsActive=true),
+            new PricebookEntry(Pricebook2Id=stdPb, Product2Id=compProd.Id,   UnitPrice=25,  IsActive=true),
+            new PricebookEntry(Pricebook2Id=stdPb, Product2Id=accProd.Id,    UnitPrice=30,  IsActive=true),
+            new PricebookEntry(Pricebook2Id=stdPb, Product2Id=relProd.Id,    UnitPrice=50,  IsActive=true)
+        };
+
+        Bundle_Feature__c feat = new Bundle_Feature__c(
+            Product__c = bundleProd.Id,
+            Name = 'Feat ' + nextSuffix(),
+            Min_Options__c = 1,
+            Max_Options__c = 3,
+            Sort_Order__c = 1
+        );
+        insert feat;
+
+        insert new List<Bundle_Option__c>{
+            new Bundle_Option__c(Bundle_Product__c=bundleProd.Id, Feature__c=feat.Id, Option_Product__c=compProd.Id, Option_Type__c='Component',       Default_Quantity__c=4, Min_Quantity__c=4, Max_Quantity__c=4, Sort_Order__c=1),
+            new Bundle_Option__c(Bundle_Product__c=bundleProd.Id, Feature__c=feat.Id, Option_Product__c=accProd.Id,  Option_Type__c='Accessory',       Default_Quantity__c=2, Min_Quantity__c=1, Max_Quantity__c=5, Sort_Order__c=2),
+            new Bundle_Option__c(Bundle_Product__c=bundleProd.Id, Feature__c=feat.Id, Option_Product__c=relProd.Id,  Option_Type__c='Related Product', Default_Quantity__c=1, Min_Quantity__c=1, Max_Quantity__c=5, Sort_Order__c=3)
+        };
+
+        Opportunity opp = new Opportunity(
+            Name='Test Opp ' + nextSuffix(),
+            AccountId=acc.Id,
+            StageName='Prospecting',
+            CloseDate=Date.today().addDays(30),
+            Pricebook2Id=stdPb
+        );
+        insert opp;
+
+        return new Map<String, Object>{
+            'opportunityId'      => opp.Id,
+            'bundleProductId'    => bundleProd.Id,
+            'componentProductId' => compProd.Id,
+            'accessoryProductId' => accProd.Id,
+            'relatedProductId'   => relProd.Id
+        };
     }
 
 }

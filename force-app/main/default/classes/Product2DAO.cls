@@ -92,8 +92,7 @@ public inherited sharing class Product2DAO {
                 IsActive,
                 Name,
                 ProductCode,
-                Unit_Weight_Kg__c,
-                (SELECT Id FROM Options__r)
+                Unit_Weight_Kg__c, Width_cm__c, Height_cm__c, Depth_cm__c, (SELECT Id FROM Options__r)
             FROM Product2
         ];
     }
@@ -104,6 +103,7 @@ public inherited sharing class Product2DAO {
      * @return List of Product2 records associated with the category.
      */
     public static List<Product2> getByCategoryId(Id categoryId) {
+        
         if (categoryId == null) {
             return getAll();
         }
@@ -131,8 +131,7 @@ public inherited sharing class Product2DAO {
                 IsActive,
                 Name,
                 ProductCode,
-                Unit_Weight_Kg__c,
-                (SELECT Id FROM Options__r)
+                Unit_Weight_Kg__c, Width_cm__c, Height_cm__c, Depth_cm__c, (SELECT Id FROM Options__r)
             FROM Product2
             WHERE Id IN :productIds
         ];
@@ -145,6 +144,7 @@ public inherited sharing class Product2DAO {
      * @return List of Product2 records with active pricebook entries.
      */
     public static List<Product2> getAllByPricebook(Id pricebookId) {
+        
         if (pricebookId == null) {
             return getAll();
         }
@@ -171,12 +171,42 @@ public inherited sharing class Product2DAO {
                 IsActive,
                 Name,
                 ProductCode,
-                Unit_Weight_Kg__c,
-                (SELECT Id FROM Options__r)
+                Unit_Weight_Kg__c, Width_cm__c, Height_cm__c, Depth_cm__c, (SELECT Id FROM Options__r)
             FROM Product2
             WHERE Id IN :productIdsInPricebook
             AND IsActive = true
         ];
+    }
+
+    /**
+     * @description Returns the subset of the given Product2 IDs whose Family picklist equals 'Service'.
+     * Used to exclude intangible / labor lines from BinSolver packing calculations. Family is the
+     * standard categorization field in this org (values: Equipment, Service) — Type is system-managed
+     * and cannot accept custom values.
+     * @param productIds The Product2 IDs to inspect.
+     * @return Set of IDs whose Family = 'Service'. Empty set if input is null/empty or no matches.
+     */
+    public static Set<Id> getServiceIdsFromIds(Set<Id> productIds) {
+        Set<Id> serviceIds = new Set<Id>();
+
+        if (productIds == null || productIds.isEmpty()) {
+            return serviceIds;
+        }
+
+        try {
+            for (Product2 p : [
+                SELECT Id
+                FROM Product2
+                WHERE Id IN :productIds
+                AND Family = 'Service'
+            ]) {
+                serviceIds.add(p.Id);
+            }
+            return serviceIds;
+        } catch (QueryException e) {
+            System.debug(LoggingLevel.ERROR, 'Product2DAO.getServiceIdsFromIds failed: ' + e.getMessage());
+            throw e;
+        }
     }
 
     /**
@@ -241,8 +271,7 @@ public inherited sharing class Product2DAO {
                     IsActive,
                     Name,
                     ProductCode,
-                    Unit_Weight_Kg__c,
-                    (SELECT Id FROM Options__r)
+                    Unit_Weight_Kg__c, Width_cm__c, Height_cm__c, Depth_cm__c, (SELECT Id FROM Options__r)
                 FROM Product2
                 WHERE Id IN :productIdsFromCategories
                 AND IsActive = true
@@ -272,8 +301,7 @@ public inherited sharing class Product2DAO {
                 IsActive,
                 Name,
                 ProductCode,
-                Unit_Weight_Kg__c,
-                (SELECT Id FROM Options__r)
+                Unit_Weight_Kg__c, Width_cm__c, Height_cm__c, Depth_cm__c, (SELECT Id FROM Options__r)
             FROM Product2
             WHERE Id IN :productIdsInPricebook
             AND IsActive = true

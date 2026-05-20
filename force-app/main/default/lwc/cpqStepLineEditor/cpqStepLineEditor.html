@@ -107,7 +107,6 @@
                                 <!-- Error Cell -->
                                 <td class="slds-cell-edit slds-cell-error slds-cell_action-mode" role="gridcell">
                                     <div class="slds-grid slds-grid_vertical-align-center">
-                                        <span class="slds-row-number slds-text-body_small slds-text-color_weak slds-m-right_xx-small"></span>
                                         <template lwc:if={row._hasError}>
                                             <lightning-icon
                                                 icon-name="utility:error"
@@ -184,18 +183,16 @@
                                                                 variant="label-hidden"
                                                                 class="input-right-align"
                                                                 value={row.quantity}
+                                                                min={row.minQuantity}
+                                                                max={row.maxQuantity}
+                                                                step="1"
                                                                 data-id={row.rowId}
                                                                 data-field="quantity"
                                                                 onchange={handleInlineEdit}>
                                                             </lightning-input>
                                                         </template>
                                                         <template lwc:else>
-                                                            <lightning-input type="number"
-                                                                variant="label-hidden"
-                                                                class="input-right-align"
-                                                                value={row.quantity}
-                                                                disabled>
-                                                            </lightning-input>
+                                                            <span class="readonly-cell-value">{row.quantity}</span>
                                                         </template>
                                                     </template>
 

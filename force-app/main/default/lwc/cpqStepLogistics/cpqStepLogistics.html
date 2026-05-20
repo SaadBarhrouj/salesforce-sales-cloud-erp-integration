@@ -45,6 +45,20 @@
                                     class="slds-m-top_small"
                                 ></lightning-combobox>
                             </lightning-layout-item>
+
+                            <template lwc:if={isRental}>
+                                <lightning-layout-item size="6" class="slds-p-left_x-small">
+                                    <lightning-combobox
+                                        label="Trip Direction"
+                                        value={config.directionMode}
+                                        options={directionModeOptions}
+                                        field-level-help="For rental opportunities, generate delivery trips, pickup (return) trips, or both."
+                                        onchange={handleConfigChange}
+                                        data-field="directionMode"
+                                        class="slds-m-top_small"
+                                    ></lightning-combobox>
+                                </lightning-layout-item>
+                            </template>
                         </lightning-layout>
                     </div>
 
@@ -84,7 +98,7 @@
                     
                     <!-- EMPTY STATE FOR TRIPS -->
                     <template lwc:elseif={showEmptyState}>
-                        <div class="slds-align_absolute-center slds-m-top_xx-large slds-p-around_large text-center-width">
+                        <div class="slds-m-top_xx-large slds-p-around_large" style="text-align: center; max-width: 100%;">
                             <c-empty-state
                                 illustration-name={emptyStateIllustration}
                                 title="No Routes Calculated"
@@ -114,7 +128,7 @@
                                     manual-destination-lat={selectedDelivery.Latitude}
                                     manual-destination-lng={selectedDelivery.Longitude}
                                     manual-destination-name={selectedDelivery.Name}
-                                    map-title="Route Settings"
+                                    map-title="Route Map"
                                     hide-icon
                                     hide-directions-link>
                                 </c-trip-route-map>
@@ -123,7 +137,7 @@
 
                         <!-- Empty state when route is invalid -->
                         <template lwc:else>
-                            <div class="slds-align_absolute-center slds-m-top_xx-large slds-p-around_large text-center-width" style="height: 100%;">
+                            <div class="slds-m-top_xx-large slds-p-around_large" style="height: 100%; text-align: center; max-width: 100%;">
                                 <c-empty-state
                                     illustration-name={emptyStateIllustration}
                                     title="Map Unavailable"

@@ -346,7 +346,6 @@ private class BundleOptionServiceTest {
         System.assert(option.containsKey('defaultQuantity'), 'Option should have defaultQuantity');
         System.assert(option.containsKey('minQuantity'), 'Option should have minQuantity');
         System.assert(option.containsKey('maxQuantity'), 'Option should have maxQuantity');
-        System.assert(option.containsKey('quantityEditable'), 'Option should have quantityEditable');
         System.assert(option.containsKey('isRequired'), 'Option should have isRequired');
         System.assert(option.containsKey('isSelected'), 'Option should have isSelected');
         System.assert(option.containsKey('optionType'), 'Option should have optionType');
@@ -436,12 +435,14 @@ private class BundleOptionServiceTest {
         Product2 bundleProduct = TestDataFactory.createProduct2(true);
         Product2 optionProduct = TestDataFactory.createProduct2(true);
 
-        // Create option with null quantity fields using TestDataFactory
+        // Create option with all quantity fields null. We use Related Product type so the
+        // Default_Qty_Required_For_Fixed_Types validation rule (which gates Component/Accessory)
+        // does not fire, leaving the service's null-to-0 default behavior testable.
         TestDataFactory.createBundleOption(
             bundleProduct.Id,
             optionProduct.Id,
             null,
-            'Component',
+            'Related Product',
             1,
             null,
             null,
@@ -623,8 +624,7 @@ private class BundleOptionServiceTest {
             Sort_Order__c = 1,
             Default_Quantity__c = 1,
             Is_Required__c = false,
-            Is_Selected__c = false,
-            Quantity_Editable__c = false
+            Is_Selected__c = false
         );
         insert option;
 
@@ -644,5 +644,50 @@ private class BundleOptionServiceTest {
         System.assertEquals('', optionPayload.get('productCode'), 'productCode should default to empty string');
         System.assertEquals('', optionPayload.get('productName'), 'productName should default to empty string');
         System.assertEquals('', optionPayload.get('description'), 'description should default to empty string');
+    }
+
+    /**
+     * @description Tests getOptionMetadata returns a map keyed by "parentId|optionId" with the expected fields.
+     */
+    @IsTest
+    static void getOptionMetadataReturnsKeyedMap() {
+        Product2 bundle = TestDataFactory.createProduct2(true);
+        Product2 opt    = TestDataFactory.createProduct2(true);
+
+        Bundle_Option__c bo = new Bundle_Option__c(
+            Bundle_Product__c   = bundle.Id,
+            Option_Product__c   = opt.Id,
+            Option_Type__c      = 'Component',
+            Default_Quantity__c = 4,
+            Min_Quantity__c     = 4,
+            Max_Quantity__c     = 4,
+            Sort_Order__c       = 1
+        );
+        insert bo;
+
+        Map<Id, Set<Id>> request = new Map<Id, Set<Id>>{ bundle.Id => new Set<Id>{ opt.Id } };
+
+        Test.startTest();
+        Map<String, Map<String, Object>> result = BundleOptionService.getOptionMetadata(request);
+        Test.stopTest();
+
+        String key = String.valueOf(bundle.Id) + '|' + String.valueOf(opt.Id);
+        System.assert(result.containsKey(key), 'Expected key for (bundle, option) pair');
+        System.assertEquals('Component', (String) result.get(key).get('optionType'), 'optionType mismatch');
+        System.assertEquals(4, (Decimal) result.get(key).get('defaultQuantity'), 'defaultQuantity mismatch');
+    }
+
+    /**
+     * @description Tests getOptionMetadata returns an empty map for null or empty input.
+     */
+    @IsTest
+    static void getOptionMetadataHandlesNullAndEmptyInputs() {
+        Test.startTest();
+        Map<String, Map<String, Object>> r1 = BundleOptionService.getOptionMetadata(null);
+        Map<String, Map<String, Object>> r2 = BundleOptionService.getOptionMetadata(new Map<Id, Set<Id>>());
+        Test.stopTest();
+
+        System.assert(r1.isEmpty(), 'Result should be empty for null input');
+        System.assert(r2.isEmpty(), 'Result should be empty for empty input');
     }
 }

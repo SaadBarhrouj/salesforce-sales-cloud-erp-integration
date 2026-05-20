@@ -1,17 +1,24 @@
-﻿import { LightningElement, api, track, wire } from 'lwc';
+import { LightningElement, api, track, wire } from 'lwc';
 import { getRecord, getFieldValue } from 'lightning/uiRecordApi';
 import { deepClone, showToast } from 'c/cpqUtils';
-import { URGENCY_OPTIONS, ILLUSTRATIONS } from 'c/cpqConstants';
+import { URGENCY_OPTIONS, DIRECTION_MODE_OPTIONS, DIRECTION_MODE, ILLUSTRATIONS } from 'c/cpqConstants';
 import getLocationsByAccount from '@salesforce/apex/LocationController.getLocationsByAccount';
 import getAllAgencies from '@salesforce/apex/LocationController.getAllAgencies';
+import calculateTripsWithCPQItems from '@salesforce/apex/TripController.calculateTripsWithCPQItems';
 import getTripsByOpportunity from '@salesforce/apex/TripController.getTripsByOpportunity';
-import calculateTrips from '@salesforce/apex/TripController.calculateTrips';
 import LOCATION_NAME from '@salesforce/schema/Location.Name';
 import LOCATION_TYPE from '@salesforce/schema/Location.LocationType';
 import LOCATION_LAT from '@salesforce/schema/Location.Latitude';
 import LOCATION_LNG from '@salesforce/schema/Location.Longitude';
+import OPP_OFFER_TYPE_NAME from '@salesforce/schema/Opportunity.Offer_Type__r.Name';
+import OPP_TRIP_DIRECTION_MODE from '@salesforce/schema/Opportunity.Trip_Direction_Mode__c';
+import RENTAL_CATALOG_NAMES from '@salesforce/label/c.Rental_Catalog_Names';
 
 const LOCATION_FIELDS = [LOCATION_NAME, LOCATION_TYPE, LOCATION_LAT, LOCATION_LNG];
+const OPPORTUNITY_FIELDS = [OPP_OFFER_TYPE_NAME, OPP_TRIP_DIRECTION_MODE];
+const RENTAL_CATALOG_SET = new Set(
+    (RENTAL_CATALOG_NAMES || '').split(',').map(s => s.trim().toLowerCase()).filter(Boolean)
+);
 
 const TRIP_COLUMNS = [
     { label: 'Trip Key', fieldName: 'Trip_Key__c', type: 'text', sortable: true },
@@ -24,6 +31,7 @@ const TRIP_COLUMNS = [
     { label: 'Final Price', fieldName: 'Final_Price__c', type: 'currency', editable: true, typeAttributes: { step: '0.01' } },
     { label: 'Status', fieldName: 'Status__c', type: 'text' },
     { label: 'Override Reason', fieldName: 'Override_Reason__c', type: 'text', editable: true },
+    { label: '3D View', fieldName: 'Bin_Visualization_URL__c', type: 'url', typeAttributes: { label: 'View', target: '_blank' } },
 ];
 
 export default class CpqStepLogistics extends LightningElement {
@@ -45,6 +53,7 @@ export default class CpqStepLogistics extends LightningElement {
     }
 
     @api accountId;
+    @api selectedProducts = [];  
     @api totalWeight = 0;
     @api defaultAgencyId = '';
     @api defaultDeliverySiteId = '';
@@ -129,6 +138,21 @@ export default class CpqStepLogistics extends LightningElement {
         }
     }
     
+    // Load offer type name + persisted direction mode from Opportunity
+    @wire(getRecord, { recordId: '$opportunityId', fields: OPPORTUNITY_FIELDS })
+    wiredOpportunity({ data, error }) {
+        if (data) {
+            this.offerTypeName = getFieldValue(data, OPP_OFFER_TYPE_NAME) || '';
+            const persistedMode = getFieldValue(data, OPP_TRIP_DIRECTION_MODE);
+            if (persistedMode && this.config.directionMode !== persistedMode) {
+                this.config = { ...this.config, directionMode: persistedMode };
+                this.emitState();
+            }
+        } else if (error) {
+            console.warn('Error loading opportunity offer type:', error);
+        }
+    }
+
     // Load default delivery site name by ID using standard LDS
     @wire(getRecord, { recordId: '$defaultDeliverySiteId', fields: LOCATION_FIELDS })
     wiredDefaultDeliveryLocation({ data, error }) {
@@ -159,20 +183,23 @@ export default class CpqStepLogistics extends LightningElement {
     }
     
     // ==================== INTERNAL STATE ====================
-    
+
     urgencyOptions = URGENCY_OPTIONS;
-    
+    directionModeOptions = DIRECTION_MODE_OPTIONS;
+
     @track accountLocations = [];
     @track agencies = [];
-    
+    @track offerTypeName = '';
+
     @track config = {
         agencyId: '',
         deliverySiteId: '',
-        urgency: 'Standard'
+        urgency: 'Standard',
+        directionMode: DIRECTION_MODE.DELIVERY
     };
     
     @track trips = [];
-    @track isCalculating = true; // Commencer à true pour éviter d'afficher le bloc "No Routes" avant le chargement
+    @track isCalculating = true; 
     @track previousConfig = {
         agencyId: '',
         deliverySiteId: ''
@@ -183,13 +210,14 @@ export default class CpqStepLogistics extends LightningElement {
     // ==================== LIFECYCLE ====================
 
     connectedCallback() {
-        // Initialize config with defaults
+        // Initialize config with defaults; preserve directionMode if already hydrated by the Opportunity wire
         this.config = {
             agencyId: this.defaultAgencyId || '',
             deliverySiteId: this.defaultDeliverySiteId || '',
-            urgency: this.defaultUrgency || 'Standard'
+            urgency: this.defaultUrgency || 'Standard',
+            directionMode: this.config.directionMode || DIRECTION_MODE.DELIVERY
         };
-        
+
         this.previousConfig = deepClone(this.config);
     }
 
@@ -240,6 +268,16 @@ export default class CpqStepLogistics extends LightningElement {
     }
 
     /**
+     * Rental offers — match the Offer Type Name against the Rental_Catalog_Names custom label
+     * (canonical source of truth, same convention as Apex Label.Volume_Pricing_Catalog_Names usage).
+     * Sale offers never need a pickup question.
+     */
+    get isRental() {
+        if (!this.offerTypeName) return false;
+        return RENTAL_CATALOG_SET.has(this.offerTypeName.trim().toLowerCase());
+    }
+
+    /**
      * Validate that both agency and delivery site are selected
      */
     @api
@@ -278,6 +316,64 @@ export default class CpqStepLogistics extends LightningElement {
 
     // ==================== EVENT HANDLERS ====================
 
+    @api
+    async handleCalculateTransport() {
+        if (!this.hasValidRoute) return;
+        
+        this.isCalculating = true;
+        try {
+            let result;
+            
+            if (this.selectedProducts && this.selectedProducts.length > 0) {
+                // Build CPQ items structure for API call
+                const cpqItems = this.selectedProducts.map(item => ({
+                    productId: item.productId || item.Id,
+                    productCode: item.productCode,
+                    productName: item.productName,
+                    quantity: item.quantity || 1,
+                    w: item.w,
+                    h: item.h,
+                    d: item.d,
+                    weight: item.weight,
+                    options: (item.options || item.configuredOptions || []).map(opt => ({
+                        isSelected: opt.isSelected,
+                        quantity: opt.quantity || 1,
+                        weight: opt.weight || opt.Unit_Weight_Kg__c,
+                        w: opt.w,
+                        h: opt.h,
+                        d: opt.d
+                    }))
+                }));
+                
+                result = await calculateTripsWithCPQItems({
+                    opportunityId: this.opportunityId,
+                    agencyId: this.config.agencyId,
+                    deliverySiteId: this.config.deliverySiteId,
+                    urgency: this.config.urgency,
+                    cpqItemsJson: JSON.stringify(cpqItems),
+                    directionMode: this.isRental ? this.config.directionMode : DIRECTION_MODE.DELIVERY
+                });
+            }
+            
+            if (result && result.length > 0) {
+                this.trips = result.map((t, index) => ({
+                    ...t,
+                    Id: `temp_${index}`, // mock ID since it's not saved
+                    Final_Price__c: t.Final_Price__c || t.System_Price__c
+                }));
+            } else {
+                this.trips = [];
+                showToast(this, 'Info', 'No optimal packing found', 'info');
+            }
+        } catch (error) {
+            console.error('Error calculating transport:', error);
+            showToast(this, 'Error Calculating Transport', error.body ? error.body.message : error.message, 'error');
+            this.trips = [];
+        } finally {
+            this.isCalculating = false;
+        }
+    }
+
     /**
      * Handle route settings changes (Agency, Delivery Site, Urgency)
      * When departure or delivery location changes:
@@ -289,21 +385,26 @@ export default class CpqStepLogistics extends LightningElement {
         console.log('handleConfigChange triggered!', event.detail);
         const field = event.target.dataset.field;
         const newValue = event.detail.value;
-        
+
         // Update config
         this.config[field] = newValue;
-        
+
         // Check if location-related fields changed
         const isLocationChange = field === 'agencyId' || field === 'deliverySiteId';
-        
+        // Direction mode change invalidates existing trips (each Trip__c is stamped with a direction)
+        const isDirectionChange = field === 'directionMode';
+
         if (isLocationChange && this.didLocationChange()) {
             // Clear trips when location changes
             this.trips = [];
-            
+
             // Update previous config to avoid redundant clears
             this.previousConfig = deepClone(this.config);
-            
+
             // Emit state change to trigger parent auto-recalculation
+            this.emitState();
+        } else if (isDirectionChange) {
+            this.trips = [];
             this.emitState();
         } else {
             // For non-location changes (like urgency), just emit state
@@ -399,38 +500,7 @@ export default class CpqStepLogistics extends LightningElement {
         }
     }
 
-    /**
-     * Public method to calculate trips
-     * Called from parent when auto-calculation is triggered
-     */
-    @api
-    async handleCalculateTrips() {
-        if (!this.hasValidRoute) return;
-        
-        this.isCalculating = true;
 
-        try {
-            const result = await calculateTrips({
-                opportunityId: this.opportunityId,
-                agencyId: this.config.agencyId,
-                deliverySiteId: this.config.deliverySiteId,
-                urgency: this.config.urgency,
-                totalWeight: this.totalWeight
-            });
-            
-            this.trips = result.map(t => ({
-                ...t,
-                Final_Price__c: t.Final_Price__c || t.System_Price__c
-            }));
-            
-            this.emitState();
-        } catch (error) {
-            console.error('Erreur lors du calcul des trips:', error);
-            showToast(this, 'Erreur', 'Impossible de calculer les trajets', 'error');
-        } finally {
-            this.isCalculating = false;
-        }
-    }
 
     // ==================== COMMUNICATION ====================
 
@@ -476,3 +546,4 @@ export default class CpqStepLogistics extends LightningElement {
         }));
     }
 }
+

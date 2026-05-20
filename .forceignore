@@ -11,8 +11,7 @@ package.xml
 # LWC Jest
 **/__tests__/**
 
-# Custom Metadata Type objects (definitions)
-**/objects/*__mdt/
+
 
 # Location fields requiring OrderManagement feature
 force-app/main/default/objects/Location/fields/EarliestPickupTimeOffset.field-meta.xml

@@ -25,6 +25,12 @@
 .product-cell-inner {
     min-height: 2rem;
     height: 100%;
+    min-width: 0;
+    overflow: hidden;
+}
+.product-cell-inner .slds-truncate {
+    min-width: 0;
+    flex: 1 1 auto;
 }
 .slds-table_fixed-layout {
     min-width: 800px;
@@ -36,20 +42,19 @@
     --sds-c-input-text-align: right;
 }
 
+.readonly-cell-value {
+    display: inline-block;
+    width: 100%;
+    text-align: right;
+    padding: 0 0.5rem;
+    color: #181818;
+    background: transparent;
+    cursor: default;
+    font-variant-numeric: tabular-nums;
+}
+
 .error-icon {
     cursor: help;
-}
-
-.slds-row-number::before {
-    content: counter(row-counter);
-}
-
-tbody {
-    counter-reset: row-counter;
-}
-
-tr {
-    counter-increment: row-counter;
 }
 
 .service-header {

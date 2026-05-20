@@ -12,9 +12,10 @@ public inherited sharing class TripDAO {
     public static List<Trip__c> getTripsByOpportunity(Id opportunityId) {
         try {
             return [
-                SELECT Id, Distance_Km__c, System_Price__c, Final_Price__c, 
+                SELECT Id, System_Price__c, Final_Price__c, 
                        Override_Reason__c, Is_Price_Overridden__c, Truck_Type__c, 
-                       Direction__c, Trip_Key__c, Transport_Zone__c, Total_Weight_Kg__c, Status__c
+                       Direction__c, Trip_Key__c, Transport_Zone__c, Total_Weight_Kg__c, 
+                       Status__c, Bin_Visualization_URL__c
                 FROM Trip__c
                 WHERE Opportunity__c = :opportunityId
             ];

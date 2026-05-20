@@ -51,29 +51,36 @@ try {
     for (ProductCategory pc : categories) categoryByCode.put(pc.Name, pc.Id);
 
     // 3. PRODUCTS (LOXAM SKUs)
+    // Family: 'Equipment' for physical items (included in BinSolver packing) / 'Service' for intangibles (excluded).
+    // Picklist constraint: Product2Family standardValueSet allows None / Equipment / Service only.
+    // Sub-categorization (Vehicle / Lifting / Power ...) is encoded via ProductCategoryProduct, not Family.
+    // Dimensions (Width_cm__c / Height_cm__c / Depth_cm__c / Unit_Weight_Kg__c) are REQUIRED by BinSolver:
+    // TripService.buildItemsFromCPQ skips items where w or h is null. Bundles themselves don't need dims (only their leaf options do).
     List<Product2> products = new List<Product2>{
-        new Product2(ProductCode='KIT-TP',     Name='Kit TP & Voirie',           Family='Bundle',    Type='Bundle', IsActive=true),
-        new Product2(ProductCode='KIT-BAT',    Name='Kit Batiment',              Family='Bundle',    Type='Bundle', IsActive=true),
-        new Product2(ProductCode='KIT-LEVAGE', Name='Kit Manutention & Energie', Family='Bundle',    Type='Bundle', IsActive=true),
-        new Product2(ProductCode='079-0025', Name='Fourgon Diesel 3 m3',        Family='Vehicle',    IsActive=true),
-        new Product2(ProductCode='079-0030', Name='Fourgon Diesel 9 m3',        Family='Vehicle',    IsActive=true),
-        new Product2(ProductCode='079-0035', Name='Fourgon 7 places 12 m3',     Family='Vehicle',    IsActive=true),
-        new Product2(ProductCode='079-8041', Name='Camion-Benne Electrique',    Family='Vehicle',    IsActive=true),
-        new Product2(ProductCode='079-0041', Name='Camion-Benne Diesel 3,5 t',  Family='Vehicle',    IsActive=true),
-        new Product2(ProductCode='052-5021', Name='Chariot Telescopique 2t/4m',    Family='Lifting', IsActive=true),
-        new Product2(ProductCode='052-5024', Name='Chariot Telescopique 2,5t/6m',  Family='Lifting', IsActive=true),
-        new Product2(ProductCode='052-5033', Name='Chariot Telescopique 3,5t/12m', Family='Lifting', IsActive=true),
-        new Product2(ProductCode='057-5001', Name='Minipelle 1 t Diesel',     Family='Excavator', IsActive=true),
-        new Product2(ProductCode='057-5004', Name='Minipelle 2,7 t Diesel',   Family='Excavator', IsActive=true),
-        new Product2(ProductCode='057-5008', Name='Minipelle 8,2 t Diesel',   Family='Excavator', IsActive=true),
-        new Product2(ProductCode='024-0030', Name='Rouleau Vibrant VM1',      Family='Compactor', IsActive=true),
-        new Product2(ProductCode='024-0041', Name='Rouleau Vibrant VM3',      Family='Compactor', IsActive=true),
-        new Product2(ProductCode='010-0014', Name='Betonniere Electrique 90 L', Family='Concrete',   IsActive=true),
-        new Product2(ProductCode='010-0031', Name='Betonniere Thermique 280 L', Family='Concrete',   IsActive=true),
-        new Product2(ProductCode='002-0007', Name='Brise-Beton Electrique 13 kg',Family='Demolition', IsActive=true),
-        new Product2(ProductCode='002-0026', Name='Brise-Beton Electrique 30 kg',Family='Demolition', IsActive=true),
-        new Product2(ProductCode='030-0001', Name='Groupe Electrogene 5 kVA Essence',  Family='Power', IsActive=true),
-        new Product2(ProductCode='030-0032', Name='Groupe Electrogene 6,5 kVA Diesel', Family='Power', IsActive=true)
+        new Product2(ProductCode='052-5000',   Name='Chariot Telescopique', Family='Equipment', Type='Bundle', IsActive=true),
+        new Product2(ProductCode='079-8000',    Name='Camion-Benne',         Family='Equipment', Type='Bundle', IsActive=true),
+        new Product2(ProductCode='057-5000', Name='Minipelle',            Family='Equipment', Type='Bundle', IsActive=true),
+        new Product2(ProductCode='079-0025', Name='Fourgon Diesel 3 m3',        Family='Equipment', IsActive=true, Width_cm__c=180, Height_cm__c=200, Depth_cm__c=450, Unit_Weight_Kg__c=1800),
+        new Product2(ProductCode='079-0030', Name='Fourgon Diesel 9 m3',        Family='Equipment', IsActive=true, Width_cm__c=200, Height_cm__c=250, Depth_cm__c=600, Unit_Weight_Kg__c=2500),
+        new Product2(ProductCode='079-0035', Name='Fourgon 7 places 12 m3',     Family='Equipment', IsActive=true, Width_cm__c=210, Height_cm__c=260, Depth_cm__c=650, Unit_Weight_Kg__c=2800),
+        new Product2(ProductCode='079-8041', Name='Camion-Benne Electrique',    Family='Equipment', IsActive=true, Width_cm__c=220, Height_cm__c=280, Depth_cm__c=700, Unit_Weight_Kg__c=3500),
+        new Product2(ProductCode='079-0041', Name='Camion-Benne Diesel 3,5 t',  Family='Equipment', IsActive=true, Width_cm__c=220, Height_cm__c=280, Depth_cm__c=700, Unit_Weight_Kg__c=3500),
+        new Product2(ProductCode='052-5021', Name='Chariot Telescopique 2t/4m',    Family='Equipment', IsActive=true, Width_cm__c=220, Height_cm__c=200, Depth_cm__c=500, Unit_Weight_Kg__c=4500),
+        new Product2(ProductCode='052-5024', Name='Chariot Telescopique 2,5t/6m',  Family='Equipment', IsActive=true, Width_cm__c=230, Height_cm__c=210, Depth_cm__c=550, Unit_Weight_Kg__c=5500),
+        new Product2(ProductCode='052-5033', Name='Chariot Telescopique 3,5t/12m', Family='Equipment', IsActive=true, Width_cm__c=240, Height_cm__c=220, Depth_cm__c=700, Unit_Weight_Kg__c=7500),
+        new Product2(ProductCode='057-5001', Name='Minipelle 1 t Diesel',     Family='Equipment', IsActive=true, Width_cm__c=90,  Height_cm__c=220, Depth_cm__c=250, Unit_Weight_Kg__c=1100),
+        new Product2(ProductCode='057-5004', Name='Minipelle 2,7 t Diesel',   Family='Equipment', IsActive=true, Width_cm__c=140, Height_cm__c=240, Depth_cm__c=320, Unit_Weight_Kg__c=2700),
+        new Product2(ProductCode='057-5008', Name='Minipelle 8,2 t Diesel',   Family='Equipment', IsActive=true, Width_cm__c=220, Height_cm__c=270, Depth_cm__c=500, Unit_Weight_Kg__c=8200),
+        new Product2(ProductCode='024-0030', Name='Rouleau Vibrant VM1',      Family='Equipment', IsActive=true, Width_cm__c=80,  Height_cm__c=90,  Depth_cm__c=130, Unit_Weight_Kg__c=250),
+        new Product2(ProductCode='024-0041', Name='Rouleau Vibrant VM3',      Family='Equipment', IsActive=true, Width_cm__c=130, Height_cm__c=130, Depth_cm__c=240, Unit_Weight_Kg__c=1500),
+        new Product2(ProductCode='010-0014', Name='Betonniere Electrique 90 L', Family='Equipment', IsActive=true, Width_cm__c=60, Height_cm__c=130, Depth_cm__c=120, Unit_Weight_Kg__c=65),
+        new Product2(ProductCode='010-0031', Name='Betonniere Thermique 280 L', Family='Equipment', IsActive=true, Width_cm__c=80, Height_cm__c=150, Depth_cm__c=150, Unit_Weight_Kg__c=180),
+        new Product2(ProductCode='002-0007', Name='Brise-Beton Electrique 13 kg',Family='Equipment', IsActive=true, Width_cm__c=30, Height_cm__c=80, Depth_cm__c=30, Unit_Weight_Kg__c=13),
+        new Product2(ProductCode='002-0026', Name='Brise-Beton Electrique 30 kg',Family='Equipment', IsActive=true, Width_cm__c=35, Height_cm__c=90, Depth_cm__c=35, Unit_Weight_Kg__c=30),
+        new Product2(ProductCode='030-0001', Name='Groupe Electrogene 5 kVA Essence',  Family='Equipment', IsActive=true, Width_cm__c=60, Height_cm__c=70, Depth_cm__c=80,  Unit_Weight_Kg__c=80),
+        new Product2(ProductCode='030-0032', Name='Groupe Electrogene 6,5 kVA Diesel', Family='Equipment', IsActive=true, Width_cm__c=70, Height_cm__c=80, Depth_cm__c=100, Unit_Weight_Kg__c=150),
+        new Product2(ProductCode='080-0010', Name='Tour d\'Eclairage LED 9m',          Family='Equipment', IsActive=true, Width_cm__c=100, Height_cm__c=250, Depth_cm__c=100, Unit_Weight_Kg__c=220),
+        new Product2(ProductCode='060-0011', Name='Sangle de Levage 5t',               Family='Equipment', IsActive=true, Width_cm__c=20,  Height_cm__c=10,  Depth_cm__c=200, Unit_Weight_Kg__c=5)
     };
     Map<String, Id> productByCode = new Map<String, Id>();
     Set<String> productCodes = new Set<String>();
@@ -87,7 +94,7 @@ try {
     // 3b. PRICEBOOK ENTRIES (Standard Pricebook, daily EUR rate)
     Id stdPbId = [SELECT Id FROM Pricebook2 WHERE IsStandard = true LIMIT 1].Id;
     Map<String, Decimal> priceByCode = new Map<String, Decimal>{
-        'KIT-TP'=>600.00, 'KIT-BAT'=>450.00, 'KIT-LEVAGE'=>380.00,
+        '052-5000'=>320.00, '079-8000'=>200.00, '057-5000'=>190.00,
         '079-0025'=>90.00, '079-0030'=>130.00, '079-0035'=>150.00,
         '079-8041'=>220.00, '079-0041'=>160.00,
         '052-5021'=>280.00, '052-5024'=>320.00, '052-5033'=>420.00,
@@ -95,7 +102,8 @@ try {
         '024-0030'=>240.00, '024-0041'=>380.00,
         '010-0014'=>30.00, '010-0031'=>65.00,
         '002-0007'=>45.00, '002-0026'=>65.00,
-        '030-0001'=>50.00, '030-0032'=>85.00
+        '030-0001'=>50.00, '030-0032'=>85.00,
+        '080-0010'=>70.00, '060-0011'=>15.00
     };
     List<PricebookEntry> pbes = new List<PricebookEntry>();
     for (String code : priceByCode.keySet()) {
@@ -133,7 +141,7 @@ try {
     for (PricebookEntry pe : customPbes) { String k=String.valueOf(pe.Pricebook2Id)+'|'+String.valueOf(pe.Product2Id); if (customPbeByKey.containsKey(k)) pe.Id=customPbeByKey.get(k); }
     upsert customPbes;
 
-    // 4. PRODUCT-CATEGORY LINKS (bundles KIT-* not mapped)
+    // 4. PRODUCT-CATEGORY LINKS (each bundle mapped to its host category so it appears in the catalog UI)
     Map<String, String> productToCategoryCode = new Map<String, String>{
         '079-0025'=>'Fourgon et Pick-up', '079-0030'=>'Fourgon et Pick-up', '079-0035'=>'Fourgon et Pick-up',
         '079-8041'=>'Camion-Benne', '079-0041'=>'Camion-Benne',
@@ -141,7 +149,9 @@ try {
         '057-5001'=>'Minipelle', '057-5004'=>'Minipelle', '057-5008'=>'Minipelle',
         '024-0030'=>'Rouleau Vibrant', '024-0041'=>'Rouleau Vibrant',
         '010-0014'=>'Gros Oeuvre et Demolition', '010-0031'=>'Gros Oeuvre et Demolition', '002-0007'=>'Gros Oeuvre et Demolition', '002-0026'=>'Gros Oeuvre et Demolition',
-        '030-0001'=>'Energie Electrique et Fluides', '030-0032'=>'Energie Electrique et Fluides'
+        '030-0001'=>'Energie Electrique et Fluides', '030-0032'=>'Energie Electrique et Fluides',
+        '080-0010'=>'Energie Electrique et Fluides', '060-0011'=>'Transport et Manutention',
+        '052-5000'=>'Chariot Telescopique', '079-8000'=>'Camion-Benne', '057-5000'=>'Minipelle'
     };
     List<ProductCategoryProduct> pcps = new List<ProductCategoryProduct>();
     for (String code : productToCategoryCode.keySet()) pcps.add(new ProductCategoryProduct(ProductCategoryId=categoryByCode.get(productToCategoryCode.get(code)), ProductId=productByCode.get(code)));
@@ -151,17 +161,20 @@ try {
     for (ProductCategoryProduct x : pcps) { String k=String.valueOf(x.ProductCategoryId)+'|'+String.valueOf(x.ProductId); if (pcpByKey.containsKey(k)) x.Id=pcpByKey.get(k); }
     upsert pcps;
 
-    // 5. BUNDLE FEATURES
+    // 5. BUNDLE FEATURES (each bundle = 1 configurable machine: required base model + optional attachments + complementary energy + accessories)
     List<Bundle_Feature__c> features = new List<Bundle_Feature__c>{
-        new Bundle_Feature__c(Product__c=productByCode.get('KIT-TP'),     Name='Transport',  Min_Options__c=1, Max_Options__c=1, Sort_Order__c=1),
-        new Bundle_Feature__c(Product__c=productByCode.get('KIT-TP'),     Name='Excavation', Min_Options__c=0, Max_Options__c=1, Sort_Order__c=2),
-        new Bundle_Feature__c(Product__c=productByCode.get('KIT-TP'),     Name='Compactage', Min_Options__c=0, Max_Options__c=1, Sort_Order__c=3),
-        new Bundle_Feature__c(Product__c=productByCode.get('KIT-BAT'),    Name='Transport',  Min_Options__c=1, Max_Options__c=1, Sort_Order__c=1),
-        new Bundle_Feature__c(Product__c=productByCode.get('KIT-BAT'),    Name='Beton',      Min_Options__c=1, Max_Options__c=1, Sort_Order__c=2),
-        new Bundle_Feature__c(Product__c=productByCode.get('KIT-BAT'),    Name='Demolition', Min_Options__c=0, Max_Options__c=1, Sort_Order__c=3),
-        new Bundle_Feature__c(Product__c=productByCode.get('KIT-BAT'),    Name='Energie',    Min_Options__c=0, Max_Options__c=1, Sort_Order__c=4),
-        new Bundle_Feature__c(Product__c=productByCode.get('KIT-LEVAGE'), Name='Chariot Telescopique', Min_Options__c=1, Max_Options__c=1, Sort_Order__c=1),
-        new Bundle_Feature__c(Product__c=productByCode.get('KIT-LEVAGE'), Name='Energie',              Min_Options__c=0, Max_Options__c=1, Sort_Order__c=2)
+        // 052-5000: telescopic forklift configurable
+        new Bundle_Feature__c(Product__c=productByCode.get('052-5000'),   Name='Modele de Base',         Min_Options__c=1, Max_Options__c=1, Sort_Order__c=1),
+        new Bundle_Feature__c(Product__c=productByCode.get('052-5000'),   Name='Energie d\'Appoint',     Min_Options__c=0, Max_Options__c=1, Sort_Order__c=2),
+        new Bundle_Feature__c(Product__c=productByCode.get('052-5000'),   Name='Accessoires de Levage',  Min_Options__c=0, Max_Options__c=2, Sort_Order__c=3),
+        // 079-8000: dump truck configurable
+        new Bundle_Feature__c(Product__c=productByCode.get('079-8000'),    Name='Modele de Base',         Min_Options__c=1, Max_Options__c=1, Sort_Order__c=1),
+        new Bundle_Feature__c(Product__c=productByCode.get('079-8000'),    Name='Energie d\'Appoint',     Min_Options__c=0, Max_Options__c=1, Sort_Order__c=2),
+        new Bundle_Feature__c(Product__c=productByCode.get('079-8000'),    Name='Eclairage de Chantier',  Min_Options__c=0, Max_Options__c=2, Sort_Order__c=3),
+        // 057-5000: excavator configurable
+        new Bundle_Feature__c(Product__c=productByCode.get('057-5000'), Name='Modele de Base',         Min_Options__c=1, Max_Options__c=1, Sort_Order__c=1),
+        new Bundle_Feature__c(Product__c=productByCode.get('057-5000'), Name='Outils de Demolition',   Min_Options__c=0, Max_Options__c=1, Sort_Order__c=2),
+        new Bundle_Feature__c(Product__c=productByCode.get('057-5000'), Name='Energie d\'Appoint',     Min_Options__c=0, Max_Options__c=1, Sort_Order__c=3)
     };
     Map<String, Id> featureByKey = new Map<String, Id>();
     for (Bundle_Feature__c f : [SELECT Id, Product__c, Name FROM Bundle_Feature__c WHERE Product__c IN :prodIdSet]) featureByKey.put(String.valueOf(f.Product__c)+'|'+f.Name, f.Id);
@@ -169,37 +182,42 @@ try {
     upsert features;
     for (Bundle_Feature__c f : features) featureByKey.put(String.valueOf(f.Product__c)+'|'+f.Name, f.Id);
 
-    Id fTP_T=featureByKey.get(String.valueOf(productByCode.get('KIT-TP'))+'|Transport');
-    Id fTP_E=featureByKey.get(String.valueOf(productByCode.get('KIT-TP'))+'|Excavation');
-    Id fTP_C=featureByKey.get(String.valueOf(productByCode.get('KIT-TP'))+'|Compactage');
-    Id fBAT_T=featureByKey.get(String.valueOf(productByCode.get('KIT-BAT'))+'|Transport');
-    Id fBAT_B=featureByKey.get(String.valueOf(productByCode.get('KIT-BAT'))+'|Beton');
-    Id fBAT_D=featureByKey.get(String.valueOf(productByCode.get('KIT-BAT'))+'|Demolition');
-    Id fBAT_P=featureByKey.get(String.valueOf(productByCode.get('KIT-BAT'))+'|Energie');
-    Id fLV_T=featureByKey.get(String.valueOf(productByCode.get('KIT-LEVAGE'))+'|Chariot Telescopique');
-    Id fLV_P=featureByKey.get(String.valueOf(productByCode.get('KIT-LEVAGE'))+'|Energie');
+    Id fCH_M=featureByKey.get(String.valueOf(productByCode.get('052-5000'))+'|Modele de Base');
+    Id fCH_E=featureByKey.get(String.valueOf(productByCode.get('052-5000'))+'|Energie d\'Appoint');
+    Id fCH_A=featureByKey.get(String.valueOf(productByCode.get('052-5000'))+'|Accessoires de Levage');
+    Id fCA_M=featureByKey.get(String.valueOf(productByCode.get('079-8000'))+'|Modele de Base');
+    Id fCA_E=featureByKey.get(String.valueOf(productByCode.get('079-8000'))+'|Energie d\'Appoint');
+    Id fCA_L=featureByKey.get(String.valueOf(productByCode.get('079-8000'))+'|Eclairage de Chantier');
+    Id fMP_M=featureByKey.get(String.valueOf(productByCode.get('057-5000'))+'|Modele de Base');
+    Id fMP_D=featureByKey.get(String.valueOf(productByCode.get('057-5000'))+'|Outils de Demolition');
+    Id fMP_E=featureByKey.get(String.valueOf(productByCode.get('057-5000'))+'|Energie d\'Appoint');
 
     // 6. BUNDLE OPTIONS
+    //  - Component: base model (qty scales with bundle qty)
+    //  - Related Product: complementary energy (independent qty)
+    //  - Accessory: small add-on (fixed qty)
     List<Bundle_Option__c> options = new List<Bundle_Option__c>{
-        new Bundle_Option__c(Bundle_Product__c=productByCode.get('KIT-TP'),     Feature__c=fTP_T, Option_Product__c=productByCode.get('079-0041'), Option_Type__c='Component', Is_Selected__c=true,  Default_Quantity__c=1, Min_Quantity__c=1, Max_Quantity__c=1, Sort_Order__c=1),
-        new Bundle_Option__c(Bundle_Product__c=productByCode.get('KIT-TP'),     Feature__c=fTP_T, Option_Product__c=productByCode.get('079-0030'), Option_Type__c='Component', Default_Quantity__c=1, Min_Quantity__c=1, Max_Quantity__c=1, Sort_Order__c=2),
-        new Bundle_Option__c(Bundle_Product__c=productByCode.get('KIT-TP'),     Feature__c=fTP_E, Option_Product__c=productByCode.get('057-5004'), Option_Type__c='Component', Is_Selected__c=true, Default_Quantity__c=1, Min_Quantity__c=1, Max_Quantity__c=1, Sort_Order__c=1),
-        new Bundle_Option__c(Bundle_Product__c=productByCode.get('KIT-TP'),     Feature__c=fTP_E, Option_Product__c=productByCode.get('057-5008'), Option_Type__c='Component', Default_Quantity__c=1, Min_Quantity__c=1, Max_Quantity__c=1, Sort_Order__c=2),
-        new Bundle_Option__c(Bundle_Product__c=productByCode.get('KIT-TP'),     Feature__c=fTP_C, Option_Product__c=productByCode.get('024-0030'), Option_Type__c='Component', Default_Quantity__c=1, Min_Quantity__c=1, Max_Quantity__c=1, Sort_Order__c=1),
-        new Bundle_Option__c(Bundle_Product__c=productByCode.get('KIT-TP'),     Feature__c=fTP_C, Option_Product__c=productByCode.get('024-0041'), Option_Type__c='Component', Default_Quantity__c=1, Min_Quantity__c=1, Max_Quantity__c=1, Sort_Order__c=2),
-        new Bundle_Option__c(Bundle_Product__c=productByCode.get('KIT-BAT'),    Feature__c=fBAT_T, Option_Product__c=productByCode.get('079-0025'), Option_Type__c='Component', Is_Selected__c=true,  Default_Quantity__c=1, Min_Quantity__c=1, Max_Quantity__c=1, Sort_Order__c=1),
-        new Bundle_Option__c(Bundle_Product__c=productByCode.get('KIT-BAT'),    Feature__c=fBAT_T, Option_Product__c=productByCode.get('079-0041'), Option_Type__c='Component', Default_Quantity__c=1, Min_Quantity__c=1, Max_Quantity__c=1, Sort_Order__c=2),
-        new Bundle_Option__c(Bundle_Product__c=productByCode.get('KIT-BAT'),    Feature__c=fBAT_B, Option_Product__c=productByCode.get('010-0014'), Option_Type__c='Component', Is_Required__c=true, Is_Selected__c=true, Default_Quantity__c=1, Min_Quantity__c=1, Max_Quantity__c=2, Quantity_Editable__c=true, Sort_Order__c=1),
-        new Bundle_Option__c(Bundle_Product__c=productByCode.get('KIT-BAT'),    Feature__c=fBAT_B, Option_Product__c=productByCode.get('010-0031'), Option_Type__c='Component', Default_Quantity__c=1, Min_Quantity__c=1, Max_Quantity__c=2, Quantity_Editable__c=true, Sort_Order__c=2),
-        new Bundle_Option__c(Bundle_Product__c=productByCode.get('KIT-BAT'),    Feature__c=fBAT_D, Option_Product__c=productByCode.get('002-0007'), Option_Type__c='Component', Default_Quantity__c=1, Min_Quantity__c=1, Max_Quantity__c=3, Quantity_Editable__c=true, Sort_Order__c=1),
-        new Bundle_Option__c(Bundle_Product__c=productByCode.get('KIT-BAT'),    Feature__c=fBAT_D, Option_Product__c=productByCode.get('002-0026'), Option_Type__c='Component', Default_Quantity__c=1, Min_Quantity__c=1, Max_Quantity__c=2, Quantity_Editable__c=true, Sort_Order__c=2),
-        new Bundle_Option__c(Bundle_Product__c=productByCode.get('KIT-BAT'),    Feature__c=fBAT_P, Option_Product__c=productByCode.get('030-0001'), Option_Type__c='Related Product', Default_Quantity__c=1, Min_Quantity__c=1, Max_Quantity__c=2, Quantity_Editable__c=true, Sort_Order__c=1),
-        new Bundle_Option__c(Bundle_Product__c=productByCode.get('KIT-BAT'),    Feature__c=fBAT_P, Option_Product__c=productByCode.get('030-0032'), Option_Type__c='Related Product', Default_Quantity__c=1, Min_Quantity__c=1, Max_Quantity__c=2, Quantity_Editable__c=true, Sort_Order__c=2),
-        new Bundle_Option__c(Bundle_Product__c=productByCode.get('KIT-LEVAGE'), Feature__c=fLV_T, Option_Product__c=productByCode.get('052-5021'), Option_Type__c='Component', Is_Selected__c=true, Default_Quantity__c=1, Min_Quantity__c=1, Max_Quantity__c=1, Sort_Order__c=1),
-        new Bundle_Option__c(Bundle_Product__c=productByCode.get('KIT-LEVAGE'), Feature__c=fLV_T, Option_Product__c=productByCode.get('052-5024'), Option_Type__c='Component', Default_Quantity__c=1, Min_Quantity__c=1, Max_Quantity__c=1, Sort_Order__c=2),
-        new Bundle_Option__c(Bundle_Product__c=productByCode.get('KIT-LEVAGE'), Feature__c=fLV_T, Option_Product__c=productByCode.get('052-5033'), Option_Type__c='Component', Default_Quantity__c=1, Min_Quantity__c=1, Max_Quantity__c=1, Sort_Order__c=3),
-        new Bundle_Option__c(Bundle_Product__c=productByCode.get('KIT-LEVAGE'), Feature__c=fLV_P, Option_Product__c=productByCode.get('030-0001'), Option_Type__c='Related Product', Default_Quantity__c=1, Min_Quantity__c=1, Max_Quantity__c=2, Quantity_Editable__c=true, Sort_Order__c=1),
-        new Bundle_Option__c(Bundle_Product__c=productByCode.get('KIT-LEVAGE'), Feature__c=fLV_P, Option_Product__c=productByCode.get('030-0032'), Option_Type__c='Related Product', Default_Quantity__c=1, Min_Quantity__c=1, Max_Quantity__c=2, Quantity_Editable__c=true, Sort_Order__c=2)
+        // 052-5000 (Chariot Telescopique)
+        new Bundle_Option__c(Bundle_Product__c=productByCode.get('052-5000'),   Feature__c=fCH_M, Option_Product__c=productByCode.get('052-5021'), Option_Type__c='Component',       Is_Selected__c=true, Default_Quantity__c=1, Min_Quantity__c=1, Max_Quantity__c=1, Sort_Order__c=1),
+        new Bundle_Option__c(Bundle_Product__c=productByCode.get('052-5000'),   Feature__c=fCH_M, Option_Product__c=productByCode.get('052-5024'), Option_Type__c='Component',       Default_Quantity__c=1, Min_Quantity__c=1, Max_Quantity__c=1, Sort_Order__c=2),
+        new Bundle_Option__c(Bundle_Product__c=productByCode.get('052-5000'),   Feature__c=fCH_M, Option_Product__c=productByCode.get('052-5033'), Option_Type__c='Component',       Default_Quantity__c=1, Min_Quantity__c=1, Max_Quantity__c=1, Sort_Order__c=3),
+        new Bundle_Option__c(Bundle_Product__c=productByCode.get('052-5000'),   Feature__c=fCH_E, Option_Product__c=productByCode.get('030-0001'), Option_Type__c='Related Product', Default_Quantity__c=1, Min_Quantity__c=1, Max_Quantity__c=2, Sort_Order__c=1),
+        new Bundle_Option__c(Bundle_Product__c=productByCode.get('052-5000'),   Feature__c=fCH_E, Option_Product__c=productByCode.get('030-0032'), Option_Type__c='Related Product', Default_Quantity__c=1, Min_Quantity__c=1, Max_Quantity__c=2, Sort_Order__c=2),
+        new Bundle_Option__c(Bundle_Product__c=productByCode.get('052-5000'),   Feature__c=fCH_A, Option_Product__c=productByCode.get('060-0011'), Option_Type__c='Accessory',       Default_Quantity__c=2, Min_Quantity__c=1, Max_Quantity__c=10, Sort_Order__c=1),
+        // 079-8000 (Camion-Benne)
+        new Bundle_Option__c(Bundle_Product__c=productByCode.get('079-8000'),    Feature__c=fCA_M, Option_Product__c=productByCode.get('079-0041'), Option_Type__c='Component',       Is_Selected__c=true, Default_Quantity__c=1, Min_Quantity__c=1, Max_Quantity__c=1, Sort_Order__c=1),
+        new Bundle_Option__c(Bundle_Product__c=productByCode.get('079-8000'),    Feature__c=fCA_M, Option_Product__c=productByCode.get('079-8041'), Option_Type__c='Component',       Default_Quantity__c=1, Min_Quantity__c=1, Max_Quantity__c=1, Sort_Order__c=2),
+        new Bundle_Option__c(Bundle_Product__c=productByCode.get('079-8000'),    Feature__c=fCA_E, Option_Product__c=productByCode.get('030-0001'), Option_Type__c='Related Product', Default_Quantity__c=1, Min_Quantity__c=1, Max_Quantity__c=2, Sort_Order__c=1),
+        new Bundle_Option__c(Bundle_Product__c=productByCode.get('079-8000'),    Feature__c=fCA_E, Option_Product__c=productByCode.get('030-0032'), Option_Type__c='Related Product', Default_Quantity__c=1, Min_Quantity__c=1, Max_Quantity__c=2, Sort_Order__c=2),
+        new Bundle_Option__c(Bundle_Product__c=productByCode.get('079-8000'),    Feature__c=fCA_L, Option_Product__c=productByCode.get('080-0010'), Option_Type__c='Accessory',       Default_Quantity__c=1, Min_Quantity__c=1, Max_Quantity__c=4, Sort_Order__c=1),
+        // 057-5000 (Minipelle)
+        new Bundle_Option__c(Bundle_Product__c=productByCode.get('057-5000'), Feature__c=fMP_M, Option_Product__c=productByCode.get('057-5004'), Option_Type__c='Component',       Is_Selected__c=true, Default_Quantity__c=1, Min_Quantity__c=1, Max_Quantity__c=1, Sort_Order__c=1),
+        new Bundle_Option__c(Bundle_Product__c=productByCode.get('057-5000'), Feature__c=fMP_M, Option_Product__c=productByCode.get('057-5001'), Option_Type__c='Component',       Default_Quantity__c=1, Min_Quantity__c=1, Max_Quantity__c=1, Sort_Order__c=2),
+        new Bundle_Option__c(Bundle_Product__c=productByCode.get('057-5000'), Feature__c=fMP_M, Option_Product__c=productByCode.get('057-5008'), Option_Type__c='Component',       Default_Quantity__c=1, Min_Quantity__c=1, Max_Quantity__c=1, Sort_Order__c=3),
+        new Bundle_Option__c(Bundle_Product__c=productByCode.get('057-5000'), Feature__c=fMP_D, Option_Product__c=productByCode.get('002-0007'), Option_Type__c='Accessory',       Default_Quantity__c=1, Min_Quantity__c=1, Max_Quantity__c=3, Sort_Order__c=1),
+        new Bundle_Option__c(Bundle_Product__c=productByCode.get('057-5000'), Feature__c=fMP_D, Option_Product__c=productByCode.get('002-0026'), Option_Type__c='Accessory',       Default_Quantity__c=1, Min_Quantity__c=1, Max_Quantity__c=2, Sort_Order__c=2),
+        new Bundle_Option__c(Bundle_Product__c=productByCode.get('057-5000'), Feature__c=fMP_E, Option_Product__c=productByCode.get('030-0001'), Option_Type__c='Related Product', Default_Quantity__c=1, Min_Quantity__c=1, Max_Quantity__c=2, Sort_Order__c=1),
+        new Bundle_Option__c(Bundle_Product__c=productByCode.get('057-5000'), Feature__c=fMP_E, Option_Product__c=productByCode.get('030-0032'), Option_Type__c='Related Product', Default_Quantity__c=1, Min_Quantity__c=1, Max_Quantity__c=2, Sort_Order__c=2)
     };
     Set<Id> featureIdSet = new Set<Id>(featureByKey.values());
     Map<String, Id> optionByKey = new Map<String, Id>();

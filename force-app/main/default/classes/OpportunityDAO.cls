@@ -63,13 +63,41 @@ public inherited sharing class OpportunityDAO {
     }
 
     /**
-     * @description Updates an Opportunity record with the provided fields.
-     * @param opportunity The Opportunity record to update. Must have a valid Id.
+     * @description Retrieves Opportunities by IDs with location fields for distance calculation.
+     * @param opportunityIds Set of Opportunity IDs
+     * @return List of Opportunity records with location fields
      */
-    public static void updateOpportunity(Opportunity opportunity) {
-        if (opportunity == null || opportunity.Id == null) {
+    public static List<Opportunity> getByIds(Set<Id> opportunityIds) {
+        if (opportunityIds == null || opportunityIds.isEmpty()) {
+            return new List<Opportunity>();
+        }
+
+        try {
+            return [
+                SELECT Id, Default_Agency__c, Delivery_Site__c
+                FROM Opportunity
+                WHERE Id IN :opportunityIds
+            ];
+        } catch (QueryException qe) {
+            System.debug(LoggingLevel.ERROR, 'QueryException in getByIdsWithLocations: ' + qe.getMessage());
+            throw qe;
+        }
+    }
+
+
+    /**
+     * @description Updates a single Opportunity record. Performs a partial-update friendly DML.
+     * @param record The Opportunity to update. Must include Id.
+     */
+    public static void updateRecord(Opportunity record) {
+        if (record == null || record.Id == null) {
             return;
         }
-        update as system opportunity;
+        try {
+            update record;
+        } catch (DmlException e) {
+            System.debug(LoggingLevel.ERROR, 'OpportunityDAO.updateRecord failed: ' + e.getMessage() + ' | Id: ' + record.Id);
+            throw e;
+        }
     }
 }

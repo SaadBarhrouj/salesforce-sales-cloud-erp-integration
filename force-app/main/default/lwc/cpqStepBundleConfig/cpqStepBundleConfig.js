@@ -1,7 +1,7 @@
 import { LightningElement, api, track, wire } from 'lwc';
 import { getRecord, getFieldValue } from 'lightning/uiRecordApi';
 import { getIllustration } from 'c/cpqConstants';
-import { showToast, deepClone, formatMessage } from 'c/cpqUtils';
+import { showToast, deepClone, formatMessage, getOptionTypePolicy } from 'c/cpqUtils';
 import getBundleData from '@salesforce/apex/BundleOptionController.getBundleData';
 import PRODUCT_NAME_FIELD from '@salesforce/schema/Product2.Name';
 
@@ -15,8 +15,18 @@ const DATATABLE_COLUMNS = [
         cellAttributes: { alignment: 'left' }
     },
     { label: 'Code', fieldName: 'productCode', type: 'text' },
-    { label: 'Name', fieldName: 'productName', type: 'text' },
+    {
+        label: 'Name',
+        fieldName: 'productUrl',
+        type: 'url',
+        typeAttributes: {
+            label: { fieldName: 'productName' },
+            target: '_blank',
+            tooltip: { fieldName: 'productName' }
+        }
+    },
     { label: 'Description', fieldName: 'description', type: 'text' },
+    { label: 'Type', fieldName: 'optionType', type: 'text' },
 ];
 
 export default class cpqStepBundleConfig extends LightningElement {
@@ -200,20 +210,31 @@ export default class cpqStepBundleConfig extends LightningElement {
     }
 
     processOptions(options) {
-        return (options || []).map((option) => ({
-            Id: option.Id,
-            productId: option.productId,
-            quantity: option.quantity !== undefined ? option.quantity : option.defaultQuantity,
-            minQuantity: option.minQuantity,
-            maxQuantity: option.maxQuantity,
-            productCode: option.productCode,
-            productName: option.productName,
-            description: option.description,
-            unitPrice: option.unitPrice,
-            isQtyEditable: option.quantityEditable,
-            isRequired: option.isRequired,
-            isSelected: option.isSelected
-        }));
+        return (options || []).map((option) => {
+            const policy = getOptionTypePolicy(option.optionType);
+            const initialQty = option.quantity !== undefined ? option.quantity : option.defaultQuantity;
+            return {
+                Id: option.Id,
+                productId: option.productId,
+                quantity: policy.editableInConfigurator ? initialQty : option.defaultQuantity,
+                minQuantity: option.minQuantity,
+                maxQuantity: option.maxQuantity,
+                productCode: option.productCode,
+                productName: option.productName,
+                productUrl: option.productId ? `/${option.productId}` : null,
+                description: option.description,
+                unitPrice: option.unitPrice,
+                optionType: option.optionType,
+                defaultQuantity: option.defaultQuantity,
+                isQtyEditable: policy.editableInConfigurator,
+                isRequired: option.isRequired,
+                isSelected: option.isSelected,
+                w: option.w,
+                h: option.h,
+                d: option.d,
+                weight: option.weight
+            };
+        });
     }
 
     handleFeatureSelection(event) {

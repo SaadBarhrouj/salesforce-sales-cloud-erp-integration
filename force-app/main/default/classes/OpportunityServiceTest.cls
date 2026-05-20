@@ -525,4 +525,117 @@ private class OpportunityServiceTest {
         }
         System.assert(threw, 'Expected exception when a service line is missing dates for a Volume catalog');
     }
+
+    @IsTest
+    static void componentOptionQuantityIsScaledServerSide() {
+        Map<String, Object> seed = TestDataFactory.seedBundleScenario();
+        Id oppId = (Id) seed.get('opportunityId');
+        Id bundleProductId = (Id) seed.get('bundleProductId');
+        Id componentProductId = (Id) seed.get('componentProductId');
+
+        List<Map<String, Object>> payload = new List<Map<String, Object>>{
+            new Map<String, Object>{
+                'product2Id' => bundleProductId,
+                'quantity' => 5,
+                'unitPrice' => 100,
+                'isBundle' => true,
+                'bundleGroup' => 'bg-test-comp',
+                'options' => new List<Object>{
+                    new Map<String, Object>{
+                        'product2Id' => componentProductId,
+                        'quantity' => 1,
+                        'unitPrice' => 25,
+                        'optionType' => 'Component'
+                    }
+                }
+            }
+        };
+
+        Test.startTest();
+        OpportunityService.saveOpportunityWithLines(oppId, payload, null);
+        Test.stopTest();
+
+        OpportunityLineItem componentOli = [
+            SELECT Quantity FROM OpportunityLineItem
+            WHERE OpportunityId = :oppId AND Product2Id = :componentProductId LIMIT 1
+        ];
+        System.assertEquals(20, componentOli.Quantity,
+            'Component option Quantity must equal Default_Quantity__c (4) x parent qty (5)');
+    }
+
+    @IsTest
+    static void accessoryOptionQuantityIsLockedToDefaultServerSide() {
+        Map<String, Object> seed = TestDataFactory.seedBundleScenario();
+        Id oppId = (Id) seed.get('opportunityId');
+        Id bundleProductId = (Id) seed.get('bundleProductId');
+        Id accessoryProductId = (Id) seed.get('accessoryProductId');
+
+        // Tampered payload sending qty=99 for an Accessory whose Default_Quantity__c is 2.
+        // Server must override and persist Default_Quantity__c, ignoring the payload.
+        List<Map<String, Object>> payload = new List<Map<String, Object>>{
+            new Map<String, Object>{
+                'product2Id' => bundleProductId,
+                'quantity' => 5,
+                'unitPrice' => 100,
+                'isBundle' => true,
+                'bundleGroup' => 'bg-test-acc',
+                'options' => new List<Object>{
+                    new Map<String, Object>{
+                        'product2Id' => accessoryProductId,
+                        'quantity' => 99,
+                        'unitPrice' => 30,
+                        'optionType' => 'Accessory'
+                    }
+                }
+            }
+        };
+
+        Test.startTest();
+        OpportunityService.saveOpportunityWithLines(oppId, payload, null);
+        Test.stopTest();
+
+        OpportunityLineItem accessoryOli = [
+            SELECT Quantity FROM OpportunityLineItem
+            WHERE OpportunityId = :oppId AND Product2Id = :accessoryProductId LIMIT 1
+        ];
+        System.assertEquals(2, accessoryOli.Quantity,
+            'Accessory option Quantity must be locked to Default_Quantity__c (2), ignoring the tampered payload value (99)');
+    }
+
+    @IsTest
+    static void relatedProductOptionQuantityIsPersistedAsIs() {
+        Map<String, Object> seed = TestDataFactory.seedBundleScenario();
+        Id oppId = (Id) seed.get('opportunityId');
+        Id bundleProductId = (Id) seed.get('bundleProductId');
+        Id relatedProductId = (Id) seed.get('relatedProductId');
+
+        List<Map<String, Object>> payload = new List<Map<String, Object>>{
+            new Map<String, Object>{
+                'product2Id' => bundleProductId,
+                'quantity' => 5,
+                'unitPrice' => 100,
+                'isBundle' => true,
+                'bundleGroup' => 'bg-test-rel',
+                'options' => new List<Object>{
+                    new Map<String, Object>{
+                        'product2Id' => relatedProductId,
+                        'quantity' => 3,
+                        'unitPrice' => 50,
+                        'optionType' => 'Related Product'
+                    }
+                }
+            }
+        };
+
+        Test.startTest();
+        OpportunityService.saveOpportunityWithLines(oppId, payload, null);
+        Test.stopTest();
+
+        OpportunityLineItem relOli = [
+            SELECT Quantity FROM OpportunityLineItem
+            WHERE OpportunityId = :oppId AND Product2Id = :relatedProductId LIMIT 1
+        ];
+        System.assertEquals(3, relOli.Quantity,
+            'Related Product option Quantity must equal the payload value (no scaling)');
+    }
 }

@@ -31,7 +31,7 @@ private class OpportunityDAOTest {
     @IsTest
     static void updateOpportunityNullDoesNothing() {
         Test.startTest();
-        OpportunityDAO.updateOpportunity(null);
+        OpportunityDAO.updateRecord(null);
         Test.stopTest();
         System.assert(true, 'No exception expected for null input');
     }
@@ -39,7 +39,7 @@ private class OpportunityDAOTest {
     @IsTest
     static void updateOpportunityNullIdDoesNothing() {
         Test.startTest();
-        OpportunityDAO.updateOpportunity(new Opportunity());
+        OpportunityDAO.updateRecord(new Opportunity());
         Test.stopTest();
         System.assert(true, 'No exception expected for null Id');
     }
@@ -57,7 +57,7 @@ private class OpportunityDAOTest {
 
         opp.Description = 'Updated Description';
         Test.startTest();
-        OpportunityDAO.updateOpportunity(opp);
+        OpportunityDAO.updateRecord(opp);
         Test.stopTest();
 
         Opportunity updated = [SELECT Description FROM Opportunity WHERE Id = :opp.Id];

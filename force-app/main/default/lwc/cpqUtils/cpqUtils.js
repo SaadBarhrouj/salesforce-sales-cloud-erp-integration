@@ -224,3 +224,18 @@ export function showToast(component, title, message, variant = 'success') {
     });
     component.dispatchEvent(toastEvent);
 }
+
+/* ─── Option Type Policy ─── */
+export const OPTION_TYPE_COMPONENT = 'Component';
+export const OPTION_TYPE_ACCESSORY = 'Accessory';
+export const OPTION_TYPE_RELATED_PRODUCT = 'Related Product';
+
+const OPTION_TYPE_POLICY = {
+    [OPTION_TYPE_COMPONENT]:       { scalesWithParent: true,  editableInConfigurator: false, editableInLineEditor: false },
+    [OPTION_TYPE_ACCESSORY]:       { scalesWithParent: false, editableInConfigurator: false, editableInLineEditor: false },
+    [OPTION_TYPE_RELATED_PRODUCT]: { scalesWithParent: false, editableInConfigurator: true,  editableInLineEditor: true  }
+};
+
+export function getOptionTypePolicy(optionType) {
+    return OPTION_TYPE_POLICY[optionType] || OPTION_TYPE_POLICY[OPTION_TYPE_RELATED_PRODUCT];
+}
