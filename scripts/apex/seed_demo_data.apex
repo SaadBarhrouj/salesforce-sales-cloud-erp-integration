@@ -286,6 +286,9 @@ try {
     for (Contact c : contacts) if (contactByEmail.containsKey(c.Email)) c.Id = contactByEmail.get(c.Email);
     upsert contacts;
 
+    // 11. PRODUCT RULES are seeded by a separate script (anonymous Apex 32KB limit).
+    //     Run after this one:  sf apex run --file scripts/apex/seed_product_rules.apex
+
     System.debug('SEED OK: catalogs='+catalogs.size()+' categories='+categories.size()+' products='+products.size()+' stdPbe='+pbes.size()+' pricebooks='+pricebooks.size()+' customPbe='+customPbes.size()+' pcps='+pcps.size()+' features='+features.size()+' options='+options.size()+' scheds='+schedules.size()+' tiers='+tiers.size()+' accounts='+accounts.size()+' contacts='+contacts.size());
 
 } catch (Exception e) {

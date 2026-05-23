@@ -89,4 +89,28 @@ private class BundleOptionDAOTest {
         System.assertEquals(null, results[0].Option_Product__c, 'Option product should be null');
         System.assertEquals(null, results[0].Option_Product__r, 'Related product should be null for null option product');
     }
+
+    /**
+     * @description Tests that getByBundleProductId selects the option product Family for rule evaluation.
+     */
+    @IsTest
+    static void testGetByBundleProductIdIncludesProductFamily() {
+        Product2 bundleProduct = TestDataFactory.createProduct2(true);
+        Product2 optionProduct = TestDataFactory.createProduct2(true);
+        optionProduct.Family = 'Equipment';
+        update optionProduct;
+
+        TestDataFactory.createBundleOption(
+            bundleProduct.Id, optionProduct.Id, null, 'Component', 1,
+            1, 0, 10, false, false, false, true
+        );
+
+        Test.startTest();
+        List<Bundle_Option__c> results = BundleOptionDAO.getByBundleProductId(bundleProduct.Id);
+        Test.stopTest();
+
+        System.assertEquals(1, results.size(), 'Should return the option');
+        System.assertEquals('Equipment', results[0].Option_Product__r.Family,
+            'Query should select the option product Family');
+    }
 }

@@ -72,6 +72,8 @@ public inherited sharing class OpportunityService {
 
             List<OpportunityLineItem> lineItems = buildLineItems(opportunityId, lineItemData, entryByProductId, isVolume);
 
+            enforceLineRules(opportunityId, lineItemData);
+
             OpportunityLineItemDAO.deleteByOpportunityId(opportunityId);
             OpportunityLineItemDAO.insertLineItems(lineItems);
 
@@ -135,6 +137,60 @@ public inherited sharing class OpportunityService {
                 throw new OpportunityException('Service End Date must be on or after Start Date on every line.');
             }
         }
+    }
+
+    /**
+     * @description Evaluates the active Validation and Alert Product Rules against the line items
+     * being saved. A fired Validation rule blocks the save; Alert rules are advisory and surfaced
+     * on the Line Editor, so they do not block here.
+     * @param opportunityId The Opportunity being saved.
+     * @param lineItemData  The line item payloads (parents and bundle options).
+     * @throws OpportunityException if any Validation rule fires.
+     */
+    private static void enforceLineRules(Id opportunityId, List<Map<String, Object>> lineItemData) {
+        Map<String, Object> verdict = ProductRuleService.evaluateLineRules(
+            opportunityId, buildRuleLines(lineItemData)
+        );
+        List<String> errors = (List<String>) verdict.get('validationErrors');
+        if (errors != null && !errors.isEmpty()) {
+            throw new OpportunityException(String.join(errors, ' '));
+        }
+    }
+
+    /**
+     * @description Flattens the line item payload into the minimal line maps the rule engine expects.
+     * @param lineItemData Line item payloads from the configurator.
+     * @return One map per parent product and per bundle option.
+     */
+    private static List<Map<String, Object>> buildRuleLines(List<Map<String, Object>> lineItemData) {
+        List<Map<String, Object>> lines = new List<Map<String, Object>>();
+        for (Map<String, Object> item : lineItemData) {
+            lines.add(new Map<String, Object>{
+                'productId' => item.get('product2Id'),
+                'quantity' => item.get('quantity'),
+                'unitPrice' => item.get('unitPrice'),
+                'discountPercent' => item.get('discountPercent'),
+                'isBundle' => item.get('isBundle') == true
+            });
+            List<Object> options = (List<Object>) item.get('options');
+            if (options == null) {
+                continue;
+            }
+            for (Object optObj : options) {
+                Map<String, Object> optData = toStringKeyMap(optObj);
+                if (optData == null) {
+                    continue;
+                }
+                lines.add(new Map<String, Object>{
+                    'productId' => optData.get('product2Id'),
+                    'quantity' => optData.get('quantity'),
+                    'unitPrice' => optData.get('unitPrice'),
+                    'discountPercent' => optData.get('discountPercent'),
+                    'isBundle' => false
+                });
+            }
+        }
+        return lines;
     }
 
     /**

@@ -3,6 +3,7 @@ import { getRecord, getFieldValue } from 'lightning/uiRecordApi';
 import { getIllustration } from 'c/cpqConstants';
 import { showToast, deepClone, formatMessage, getOptionTypePolicy } from 'c/cpqUtils';
 import getBundleData from '@salesforce/apex/BundleOptionController.getBundleData';
+import evaluateBundleRules from '@salesforce/apex/ProductRuleController.evaluateBundleRules';
 import PRODUCT_NAME_FIELD from '@salesforce/schema/Product2.Name';
 
 const DATATABLE_COLUMNS = [
@@ -61,6 +62,12 @@ export default class cpqStepBundleConfig extends LightningElement {
         this._cachedFeatures = value;
         this.scheduleLoad();
     }
+
+    @api opportunityId;
+
+    _ruleHiddenOptionIds = [];
+    _ruleLockedOptionIds = [];
+    _ruleEvalTimer;
 
     _loadTimer;
     scheduleLoad() {
@@ -168,12 +175,18 @@ export default class cpqStepBundleConfig extends LightningElement {
 
     get processedFeatures() {
         return this.localFeatures.map((feature) => {
-            const options = feature.options || [];
+            const allOptions = feature.options || [];
+            const options = allOptions.filter(
+                (opt) => !this._ruleHiddenOptionIds.includes(opt.Id)
+            );
             const min = feature.minOptions;
             const max = feature.maxOptions;
 
             const selectedIds = options.filter((opt) => opt.isSelected).map((opt) => opt.Id);
             const requiredIds = options.filter((opt) => opt.isRequired).map((opt) => opt.Id);
+            const lockedIds = options
+                .filter((opt) => this._ruleLockedOptionIds.includes(opt.Id))
+                .map((opt) => opt.Id);
 
             let disabledIds = [];
             if (max != null && requiredIds.length >= max && max > 0) {
@@ -181,6 +194,7 @@ export default class cpqStepBundleConfig extends LightningElement {
             } else {
                 disabledIds = requiredIds;
             }
+            const mergedDisabled = [...new Set([...disabledIds, ...lockedIds])];
 
             return {
                 Id: feature.Id,
@@ -192,7 +206,7 @@ export default class cpqStepBundleConfig extends LightningElement {
                 badgeClass: 'slds-badge',
                 options: this.processOptions(options),
                 selectedRows: selectedIds,
-                disabledRows: disabledIds,
+                disabledRows: mergedDisabled,
                 draftValues: this.featureDraftValues[feature.Id] || []
             };
         });
@@ -263,6 +277,7 @@ export default class cpqStepBundleConfig extends LightningElement {
         }));
 
         this.localFeatures = [...this.localFeatures];
+        this._scheduleRuleEvaluation();
     }
 
     @api
@@ -439,5 +454,61 @@ export default class cpqStepBundleConfig extends LightningElement {
         }
 
         return true;
+    }
+
+    /**
+     * Evaluates the Selection Product Rules for this bundle and applies the verdict
+     * (auto select / deselect / hide / lock of options). Triggered live as the rep
+     * configures, and by the "Apply Rules" button.
+     */
+    @api
+    async evaluateRules() {
+        if (!this.bundleId) {
+            return;
+        }
+
+        const selectedOptionIds = [];
+        this.localFeatures.forEach((feature) => {
+            (feature.options || []).forEach((opt) => {
+                if (opt.isSelected) {
+                    selectedOptionIds.push(opt.Id);
+                }
+            });
+        });
+
+        try {
+            const verdict = await evaluateBundleRules({
+                bundleProductId: this.bundleId,
+                opportunityId: this.opportunityId || null,
+                selectedOptionIds
+            });
+            this._applyRuleVerdict(verdict);
+        } catch (error) {
+            console.error('[cpqStepBundleConfig.evaluateRules] Selection rule evaluation failed:', error);
+            const detail = error?.body?.message || error?.message || 'Rule evaluation failed.';
+            showToast(this, 'Rules Error', detail, 'error');
+        }
+    }
+
+    _scheduleRuleEvaluation() {
+        clearTimeout(this._ruleEvalTimer);
+        // eslint-disable-next-line @lwc/lwc/no-async-operation
+        this._ruleEvalTimer = setTimeout(() => {
+            this.evaluateRules();
+        }, 300);
+    }
+
+    _applyRuleVerdict(verdict) {
+        const selectedSet = new Set(verdict.selectedOptionIds || []);
+        this._ruleHiddenOptionIds = [...(verdict.hiddenOptionIds || [])];
+        this._ruleLockedOptionIds = [...(verdict.lockedOptionIds || [])];
+
+        this.localFeatures = this.localFeatures.map((feature) => ({
+            ...feature,
+            options: (feature.options || []).map((opt) => ({
+                ...opt,
+                isSelected: selectedSet.has(opt.Id)
+            }))
+        }));
     }
 }

@@ -123,6 +123,8 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
           showToast(this, 'Validation Failed', 'Please fix all line editor errors before proceeding.', 'error');
           return;
         }
+        const ruleResult = await lineEditor.evaluateLineRules();
+        if (ruleResult && ruleResult.blocked) return;
         lineEditor.saveLines();
       }
     }
@@ -603,8 +605,14 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
     this.selectedProducts = productsList;
   }
 
-  _handleApplyRules() {
-    this._showToast("Apply Rules", "Rules applied successfully", "success");
+  async _handleApplyRules() {
+    const bundleConfig = this._getBundleConfigStep();
+    if (!bundleConfig || !this.selectedItemId) {
+      this._showToast("Apply Rules", "Select a bundle to apply rules.", "info");
+      return;
+    }
+    await bundleConfig.evaluateRules();
+    this._showToast("Apply Rules", "Product rules applied.", "success");
   }
 
   handleHeaderSearch(event) {

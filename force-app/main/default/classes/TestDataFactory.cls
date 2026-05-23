@@ -533,4 +533,112 @@ public class TestDataFactory {
         };
     }
 
+    /**
+     * @description Creates a test Product_Rule__c record.
+     * @param name Rule name.
+     * @param ruleType Validation, Alert, or Selection.
+     * @param conditionsMet All, Any, or Custom.
+     * @param message User-facing message for Validation/Alert rules.
+     * @param evaluationOrder Evaluation order (lower runs first).
+     * @param isActive Whether the rule is active.
+     * @param doInsert Whether to insert the record.
+     * @return The created Product_Rule__c record.
+     */
+    public static Product_Rule__c createProductRule(
+        String name, String ruleType, String conditionsMet,
+        String message, Decimal evaluationOrder, Boolean isActive, Boolean doInsert
+    ) {
+        Product_Rule__c rule = new Product_Rule__c(
+            Name = name,
+            Type__c = ruleType,
+            Conditions_Met__c = conditionsMet,
+            Evaluation_Event__c = 'Save',
+            Message__c = message,
+            Evaluation_Order__c = evaluationOrder,
+            Is_Active__c = isActive
+        );
+        if (doInsert) { insert rule; }
+        return rule;
+    }
+
+    /**
+     * @description Creates a test Rule_Condition__c record.
+     * @param productRuleId Parent Product_Rule__c Id.
+     * @param testedObject Opportunity, Opportunity Line, or Bundle Option.
+     * @param testedField API name of the field being tested.
+     * @param operator Comparison operator.
+     * @param filterType Value or Field.
+     * @param filterValue Constant or field API name to compare against.
+     * @param index Condition index.
+     * @param doInsert Whether to insert the record.
+     * @return The created Rule_Condition__c record.
+     */
+    public static Rule_Condition__c createRuleCondition(
+        Id productRuleId, String testedObject, String testedField,
+        String operator, String filterType, String filterValue,
+        Decimal index, Boolean doInsert
+    ) {
+        Rule_Condition__c cond = new Rule_Condition__c(
+            Product_Rule__c = productRuleId,
+            Tested_Object__c = testedObject,
+            Tested_Field__c = testedField,
+            Operator__c = operator,
+            Filter_Type__c = filterType,
+            Filter_Value__c = filterValue,
+            Index__c = index
+        );
+        if (doInsert) { insert cond; }
+        return cond;
+    }
+
+    /**
+     * @description Creates a test Rule_Action__c record.
+     * @param productRuleId Parent Product_Rule__c Id.
+     * @param actionType Add, Remove, Hide, Show, Enable, or Disable.
+     * @param targetProductId Target Product2 Id (null to use filter fields).
+     * @param filterField API name for dynamic targeting (used when targetProductId is null).
+     * @param filterOperator Operator for the filter.
+     * @param filterValue Value for the filter.
+     * @param sortOrder Action execution order.
+     * @param doInsert Whether to insert the record.
+     * @return The created Rule_Action__c record.
+     */
+    public static Rule_Action__c createRuleAction(
+        Id productRuleId, String actionType, Id targetProductId,
+        String filterField, String filterOperator, String filterValue,
+        Decimal sortOrder, Boolean doInsert
+    ) {
+        Rule_Action__c action = new Rule_Action__c(
+            Product_Rule__c = productRuleId,
+            Type__c = actionType,
+            Target_Product__c = targetProductId,
+            Filter_Field__c = filterField,
+            Filter_Operator__c = filterOperator,
+            Filter_Value__c = filterValue,
+            Sort_Order__c = sortOrder
+        );
+        if (doInsert) { insert action; }
+        return action;
+    }
+
+    /**
+     * @description Creates a test Bundle_Rule_Assignment__c record.
+     * @param bundleProductId The bundle Product2 Id.
+     * @param productRuleId The Product_Rule__c Id.
+     * @param isActive Whether the assignment is active.
+     * @param doInsert Whether to insert the record.
+     * @return The created Bundle_Rule_Assignment__c record.
+     */
+    public static Bundle_Rule_Assignment__c createBundleRuleAssignment(
+        Id bundleProductId, Id productRuleId, Boolean isActive, Boolean doInsert
+    ) {
+        Bundle_Rule_Assignment__c assignment = new Bundle_Rule_Assignment__c(
+            Bundle_Product__c = bundleProductId,
+            Product_Rule__c = productRuleId,
+            Is_Active__c = isActive
+        );
+        if (doInsert) { insert assignment; }
+        return assignment;
+    }
+
 }

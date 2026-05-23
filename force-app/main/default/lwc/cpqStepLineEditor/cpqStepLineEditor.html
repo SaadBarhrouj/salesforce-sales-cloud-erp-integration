@@ -47,6 +47,32 @@
                 </div>
             </template>
 
+            <!-- Product Rule Messages -->
+            <template lwc:if={hasRuleMessages}>
+                <div class="slds-m-bottom_small">
+                    <template lwc:if={hasValidationErrors}>
+                        <div class="slds-box slds-theme_error slds-m-bottom_xx-small">
+                            <h3 class="slds-text-title_bold slds-m-bottom_xx-small">Validation</h3>
+                            <ul class="slds-list_dotted">
+                                <template for:each={ruleMessages.errors} for:item="msg">
+                                    <li key={msg.id}>{msg.text}</li>
+                                </template>
+                            </ul>
+                        </div>
+                    </template>
+                    <template lwc:if={hasAlerts}>
+                        <div class="slds-box slds-theme_warning">
+                            <h3 class="slds-text-title_bold slds-m-bottom_xx-small">Alerts</h3>
+                            <ul class="slds-list_dotted">
+                                <template for:each={ruleMessages.alerts} for:item="msg">
+                                    <li key={msg.id}>{msg.text}</li>
+                                </template>
+                            </ul>
+                        </div>
+                    </template>
+                </div>
+            </template>
+
             <!-- Line Items Tree Grid (Custom Blueprint) -->
             <!-- No overflow:auto on the wrapper: the date picker popover from
                  lightning-input type="date" must be free to escape the table

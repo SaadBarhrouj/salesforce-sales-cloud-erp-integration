@@ -638,4 +638,54 @@ private class OpportunityServiceTest {
         System.assertEquals(3, relOli.Quantity,
             'Related Product option Quantity must equal the payload value (no scaling)');
     }
+
+    @IsTest
+    static void saveOpportunityWithLinesValidationRuleBlocksSave() {
+        Pricebook2 pb = TestDataFactory.createPricebook2('Test PB Rule', true, true);
+        Account acc = TestDataFactory.createAccount(true);
+        Opportunity opp = new Opportunity(
+            Name = 'Test Opp',
+            AccountId = acc.Id,
+            StageName = 'Prospecting',
+            CloseDate = Date.today().addDays(30),
+            Pricebook2Id = pb.Id
+        );
+        insert opp;
+
+        Product2 prod = TestDataFactory.createProduct2(true);
+        prod.Family = 'Restricted';
+        update prod;
+        PricebookEntry stdPbe = new PricebookEntry(Pricebook2Id = Test.getStandardPricebookId(), Product2Id = prod.Id, UnitPrice = 100, IsActive = true, UseStandardPrice = false);
+        insert stdPbe;
+        TestDataFactory.createPricebookEntry(pb.Id, prod.Id, 100, true, true);
+
+        Product_Rule__c rule = TestDataFactory.createProductRule(
+            'Block Restricted', 'Validation', 'All', 'Restricted family cannot be quoted.', 1, true, true);
+        TestDataFactory.createRuleCondition(
+            rule.Id, 'Opportunity Line', 'Family', 'equals', 'Value', 'Restricted', 1, true);
+
+        List<Map<String, Object>> lineItems = new List<Map<String, Object>>{
+            new Map<String, Object>{
+                'product2Id' => prod.Id,
+                'quantity' => 1,
+                'unitPrice' => 100,
+                'discountPercent' => 0
+            }
+        };
+
+        Boolean threw = false;
+        Test.startTest();
+        try {
+            OpportunityService.saveOpportunityWithLines(opp.Id, lineItems, null);
+        } catch (OpportunityException e) {
+            threw = true;
+            System.assert(e.getMessage().contains('Restricted family cannot be quoted'),
+                'Error should carry the rule message: ' + e.getMessage());
+        }
+        Test.stopTest();
+
+        System.assert(threw, 'A fired Validation rule must block the save');
+        System.assertEquals(0, [SELECT COUNT() FROM OpportunityLineItem WHERE OpportunityId = :opp.Id],
+            'No line items should be saved when a Validation rule blocks the save');
+    }
 }

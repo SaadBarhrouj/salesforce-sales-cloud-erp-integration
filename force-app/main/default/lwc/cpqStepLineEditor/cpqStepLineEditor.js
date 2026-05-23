@@ -2,6 +2,7 @@ import { LightningElement, api, track } from 'lwc';
 import { formatCurrency, showToast, getOptionTypePolicy, OPTION_TYPE_COMPONENT } from 'c/cpqUtils';
 import calculateLinePrices from '@salesforce/apex/PricebookController.calculateLinePrices';
 import getOptionMetadata from '@salesforce/apex/BundleOptionController.getOptionMetadata';
+import evaluateLineRules from '@salesforce/apex/ProductRuleController.evaluateLineRules';
 
 const DEBOUNCE_DELAY = 500;
 
@@ -29,6 +30,9 @@ export default class CpqStepLineEditor extends LightningElement {
     @track lineItems = []; // FLATTENED state
     @track isLoading = true;
     @track expandedRows = new Set();
+
+    @api opportunityId;
+    @track ruleMessages = { errors: [], alerts: [] };
 
     _debounceTimer = null;
     _calculationSequence = 0;
@@ -139,6 +143,18 @@ export default class CpqStepLineEditor extends LightningElement {
 
     get isNotEmpty() {
         return !this.isEmpty;
+    }
+
+    get hasValidationErrors() {
+        return this.ruleMessages.errors.length > 0;
+    }
+
+    get hasAlerts() {
+        return this.ruleMessages.alerts.length > 0;
+    }
+
+    get hasRuleMessages() {
+        return this.hasValidationErrors || this.hasAlerts;
     }
 
     get subtotal() {
@@ -665,6 +681,47 @@ export default class CpqStepLineEditor extends LightningElement {
 
     _hasPricingErrors() {
         return this.lineItems.some(row => row._hasError);
+    }
+
+    /**
+     * Evaluates the Validation and Alert Product Rules against every line item.
+     * Called when the rep advances from the Line Editor. Validation errors block;
+     * alerts warn but allow continuing.
+     * @returns {Promise<{blocked: boolean}>}
+     */
+    @api
+    async evaluateLineRules() {
+        const lines = this.lineItems.map((row) => ({
+            productId: row.productId,
+            quantity: row.quantity,
+            unitPrice: row.listUnitPrice,
+            discountPercent: row.additionalDiscount,
+            isBundle: !!row.isBundle
+        }));
+
+        try {
+            const verdict = await evaluateLineRules({
+                opportunityId: this.opportunityId || null,
+                lines
+            });
+            const errors = verdict.validationErrors || [];
+            const alerts = verdict.alerts || [];
+            this.ruleMessages = {
+                errors: errors.map((text, i) => ({ id: 'lerr-' + i, text })),
+                alerts: alerts.map((text, i) => ({ id: 'lalert-' + i, text }))
+            };
+            alerts.forEach((msg) => showToast(this, 'Alert', msg, 'warning'));
+            if (errors.length > 0) {
+                errors.forEach((msg) => showToast(this, 'Validation Error', msg, 'error'));
+                return { blocked: true };
+            }
+            return { blocked: false };
+        } catch (error) {
+            console.error('[cpqStepLineEditor.evaluateLineRules] Rule evaluation failed:', error);
+            const detail = error?.body?.message || error?.message || 'Rule evaluation failed.';
+            showToast(this, 'Rules Error', detail, 'error');
+            return { blocked: false };
+        }
     }
 
     @api
