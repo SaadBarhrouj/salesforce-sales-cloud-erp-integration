@@ -882,6 +882,9 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
         // the round-trip and Apex rejects the save with "Each service line must..."
         products[idx].serviceStartDate = lineItem.serviceStartDate || null;
         products[idx].serviceEndDate = lineItem.serviceEndDate || null;
+        // Persist the per-line override flag too — without it, an on-remount
+        // header cascade overwrites individual dates the rep set on a single line.
+        products[idx]._serviceOverridden = !!lineItem._serviceOverridden;
         products[idx].dailyRate = lineItem.dailyRate ?? products[idx].dailyRate;
         if (lineItem.configuredOptions && lineItem.configuredOptions.length > 0) {
           products[idx].configuredOptions = lineItem.configuredOptions;
@@ -1027,7 +1030,10 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
         unitPrice: this.isVolumeOffer
           ? (opt.dailyRate ?? opt.listUnitPrice ?? opt.unitPrice ?? 0)
           : (opt.listUnitPrice || opt.unitPrice || 0),
-        discountPercent: opt.additionalDiscount || opt.discountPercent || 0
+        discountPercent: opt.additionalDiscount || opt.discountPercent || 0,
+        // Forward per-option service dates so server can honor per-line overrides.
+        serviceStartDate: this.isVolumeOffer ? (opt.serviceStartDate || null) : null,
+        serviceEndDate: this.isVolumeOffer ? (opt.serviceEndDate || null) : null
       }))
     }));
   }

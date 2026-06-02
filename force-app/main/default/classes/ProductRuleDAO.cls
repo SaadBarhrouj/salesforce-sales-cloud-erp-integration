@@ -33,7 +33,8 @@ public inherited sharing class ProductRuleDAO {
             return new List<Product_Rule__c>();
         }
         return [
-            SELECT Id, Name, Type__c, Conditions_Met__c, Evaluation_Order__c, Message__c,
+            SELECT Id, Name, Type__c, Conditions_Met__c, Advanced_Condition__c,
+                   Evaluation_Order__c, Message__c,
                    (SELECT Id, Tested_Object__c, Tested_Field__c, Operator__c,
                            Filter_Type__c, Filter_Value__c, Index__c
                     FROM Rule_Conditions__r),
@@ -56,7 +57,8 @@ public inherited sharing class ProductRuleDAO {
      */
     public static List<Product_Rule__c> getActiveLineRules() {
         return [
-            SELECT Id, Name, Type__c, Conditions_Met__c, Evaluation_Order__c, Message__c,
+            SELECT Id, Name, Type__c, Conditions_Met__c, Advanced_Condition__c,
+                   Evaluation_Order__c, Message__c,
                    (SELECT Id, Tested_Object__c, Tested_Field__c, Operator__c,
                            Filter_Type__c, Filter_Value__c, Index__c
                     FROM Rule_Conditions__r)

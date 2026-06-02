@@ -56,13 +56,23 @@ try {
         Name='Block Electric Truck with Diesel Generator',
         Type__c='Validation', Conditions_Met__c='All', Evaluation_Event__c='Save', Is_Active__c=true,
         Message__c='Quote contains both an electric dump truck and a diesel generator. Electric trucks deploy only on zero-emission sites — remove the diesel generator or switch to a diesel truck.');
+    // Custom-conditions example. The formula (1 AND 2 AND 3) OR (1 AND 4) reuses
+    // condition 1 across two OR-arms — not expressible as All (too narrow: requires
+    // all four) or Any (too noisy: fires on any single one). Doesn't shadow the
+    // Selection rules because it tests bundle presence on the quote, not bundle
+    // internals.
+    Product_Rule__c rFlagMultiTrade = new Product_Rule__c(
+        Name='Flag Multi-Trade Job-Site Quote',
+        Type__c='Alert', Conditions_Met__c='Custom', Evaluation_Event__c='Save', Is_Active__c=true,
+        Advanced_Condition__c='(1 AND 2 AND 3) OR (1 AND 4)',
+        Message__c='Multi-trade or large-scale job-site pattern detected. Confirm fleet pricing has been negotiated and that delivery logistics are coordinated with the rental manager.');
     Product_Rule__c rWarnFleetSize = new Product_Rule__c(
         Name='Flag Fleet-Size Bundle Order',
         Type__c='Alert', Conditions_Met__c='All', Evaluation_Event__c='Save', Is_Active__c=true,
         Message__c='A bundle line carries quantity 4 or more. Fleet-size orders should be priced against the fleet rate card — confirm with the rental manager.');
 
     List<Product_Rule__c> rules = new List<Product_Rule__c>{
-        rRequireStrap, rHideDieselBackup, rHideHeavyBreaker, rBlockElectricDieselMix, rWarnFleetSize
+        rRequireStrap, rHideDieselBackup, rHideHeavyBreaker, rBlockElectricDieselMix, rFlagMultiTrade, rWarnFleetSize
     };
     insert rules;
 
@@ -80,13 +90,32 @@ try {
         new Rule_Condition__c(Product_Rule__c=rHideHeavyBreaker.Id,
             Tested_Object__c='Bundle Option', Tested_Field__c='Option_Product__r.ProductCode',
             Operator__c='equals', Filter_Type__c='Value', Filter_Value__c='057-5001', Index__c=1),
-        // Validation: cross-line check — electric truck AND diesel genset both on the quote
+        // Validation (All): cross-line check — electric truck AND diesel genset both on the quote
         new Rule_Condition__c(Product_Rule__c=rBlockElectricDieselMix.Id,
             Tested_Object__c='Opportunity Line', Tested_Field__c='ProductCode',
             Operator__c='equals', Filter_Type__c='Value', Filter_Value__c='079-8041', Index__c=1),
         new Rule_Condition__c(Product_Rule__c=rBlockElectricDieselMix.Id,
             Tested_Object__c='Opportunity Line', Tested_Field__c='ProductCode',
             Operator__c='equals', Filter_Type__c='Value', Filter_Value__c='030-0032', Index__c=2),
+        // Alert (Custom: (1 AND 2 AND 3) OR (1 AND 4))
+        //   1: telehandler bundle on quote (052-5000)
+        //   2: dump-truck bundle on quote (079-8000)
+        //   3: mini-excavator bundle on quote (057-5000)
+        //   4: any line with quantity > 3 (fleet-sized order)
+        // Fires when all three bundle types are on the quote (multi-trade site) OR
+        // when the telehandler is paired with a fleet-sized order.
+        new Rule_Condition__c(Product_Rule__c=rFlagMultiTrade.Id,
+            Tested_Object__c='Opportunity Line', Tested_Field__c='ProductCode',
+            Operator__c='equals', Filter_Type__c='Value', Filter_Value__c='052-5000', Index__c=1),
+        new Rule_Condition__c(Product_Rule__c=rFlagMultiTrade.Id,
+            Tested_Object__c='Opportunity Line', Tested_Field__c='ProductCode',
+            Operator__c='equals', Filter_Type__c='Value', Filter_Value__c='079-8000', Index__c=2),
+        new Rule_Condition__c(Product_Rule__c=rFlagMultiTrade.Id,
+            Tested_Object__c='Opportunity Line', Tested_Field__c='ProductCode',
+            Operator__c='equals', Filter_Type__c='Value', Filter_Value__c='057-5000', Index__c=3),
+        new Rule_Condition__c(Product_Rule__c=rFlagMultiTrade.Id,
+            Tested_Object__c='Opportunity Line', Tested_Field__c='Quantity',
+            Operator__c='greater than', Filter_Type__c='Value', Filter_Value__c='3', Index__c=4),
         // Alert: any bundle line with quantity >= 4 (fleet size)
         new Rule_Condition__c(Product_Rule__c=rWarnFleetSize.Id,
             Tested_Object__c='Opportunity Line', Tested_Field__c='IsBundle',

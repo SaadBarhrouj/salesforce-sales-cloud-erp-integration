@@ -121,6 +121,10 @@ export default class CpqStepLineEditor extends LightningElement {
             }
         }
         this._prepareLineItems();
+        // On remount the header dates reset to null because the component was
+        // unmounted by the parent's lwc:if. Recover them from the persisted
+        // lines so the cascade has a sane source.
+        this._hydrateHeaderFromLines();
         // After rebuilding lines, push header dates onto fresh lines so a rep
         // who set the header before adding products doesn't have to retype.
         this._cascadeHeaderToLines();
@@ -275,7 +279,7 @@ export default class CpqStepLineEditor extends LightningElement {
             _isOption: true,
             _hasError: false,
             _errorMessage: '',
-            _serviceOverridden: false,
+            _serviceOverridden: !!opt._serviceOverridden,
             productId: opt.productId || opt.Id,
             optionId: opt.Id,
             productCode: opt.productCode,
@@ -332,6 +336,9 @@ export default class CpqStepLineEditor extends LightningElement {
     _cascadeHeaderToLines() {
         if (!this._isVolumeOffer) return;
         if (!this.lineItems || !this.lineItems.length) return;
+        // Bug guard: an empty header (component remount before the user has typed
+        // dates again) must NOT nullify the dates the rep already saved on lines.
+        if (!this._headerStart && !this._headerEnd) return;
         const days = this._daysBetween(this._headerStart, this._headerEnd);
         this.lineItems = this.lineItems.map(row => {
             if (row._serviceOverridden) return row;
@@ -343,6 +350,20 @@ export default class CpqStepLineEditor extends LightningElement {
             };
         });
         this._schedulePricingCalculation();
+    }
+
+    _hydrateHeaderFromLines() {
+        if (!this._isVolumeOffer) return;
+        if (this._headerStart || this._headerEnd) return;
+        if (!this.lineItems || !this.lineItems.length) return;
+        for (const row of this.lineItems) {
+            if (row._isOption) continue;
+            if (row.serviceStartDate && row.serviceEndDate) {
+                this._headerStart = row.serviceStartDate;
+                this._headerEnd = row.serviceEndDate;
+                return;
+            }
+        }
     }
 
     _daysBetween(s, e) {
@@ -756,6 +777,7 @@ export default class CpqStepLineEditor extends LightningElement {
                     additionalDiscount: row.additionalDiscount,
                     serviceStartDate: row.serviceStartDate || null,
                     serviceEndDate: row.serviceEndDate || null,
+                    _serviceOverridden: !!row._serviceOverridden,
                     w: row.w,
                     h: row.h,
                     d: row.d,
@@ -780,6 +802,7 @@ export default class CpqStepLineEditor extends LightningElement {
                     isBundle: row.isBundle,
                     serviceStartDate: row.serviceStartDate || null,
                     serviceEndDate: row.serviceEndDate || null,
+                    _serviceOverridden: !!row._serviceOverridden,
                     w: row.w,
                     h: row.h,
                     d: row.d,

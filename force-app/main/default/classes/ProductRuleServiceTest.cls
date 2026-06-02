@@ -163,10 +163,62 @@ private class ProductRuleServiceTest {
     }
 
     @IsTest
-    static void customConditionsMetRuleIsSkipped() {
+    static void customConditionsMetFiresWhenFormulaTrue() {
         Map<String, Id> ids = buildBundle();
         Product_Rule__c rule = TestDataFactory.createProductRule(
             'Custom Rule', 'Selection', 'Custom', null, 1, true, true);
+        rule.Advanced_Condition__c = '1 OR 2';
+        update rule;
+        TestDataFactory.createRuleCondition(
+            rule.Id, 'Bundle Option', 'Option_Type__c', 'equals', 'Value', 'Component', 1, true);
+        TestDataFactory.createRuleCondition(
+            rule.Id, 'Bundle Option', 'Option_Type__c', 'equals', 'Value', 'ImpossibleType', 2, true);
+        TestDataFactory.createRuleAction(
+            rule.Id, 'Add', ids.get('prodRelatedId'), null, null, null, 1, true);
+        TestDataFactory.createBundleRuleAssignment(ids.get('bundleId'), rule.Id, true, true);
+
+        Test.startTest();
+        Map<String, Object> verdict = ProductRuleService.evaluateBundleRules(
+            ids.get('bundleId'), null, new Set<Id>{ ids.get('optComponentId') });
+        Test.stopTest();
+
+        Set<String> selected = new Set<String>((List<String>) verdict.get('selectedOptionIds'));
+        System.assert(selected.contains(String.valueOf(ids.get('optRelatedId'))),
+            'Custom rule with formula "1 OR 2" must fire when condition 1 passes');
+    }
+
+    @IsTest
+    static void customConditionsMetSkipsWhenFormulaFalse() {
+        Map<String, Id> ids = buildBundle();
+        Product_Rule__c rule = TestDataFactory.createProductRule(
+            'Custom AND Rule', 'Selection', 'Custom', null, 1, true, true);
+        rule.Advanced_Condition__c = '1 AND 2';
+        update rule;
+        TestDataFactory.createRuleCondition(
+            rule.Id, 'Bundle Option', 'Option_Type__c', 'equals', 'Value', 'Component', 1, true);
+        TestDataFactory.createRuleCondition(
+            rule.Id, 'Bundle Option', 'Option_Type__c', 'equals', 'Value', 'ImpossibleType', 2, true);
+        TestDataFactory.createRuleAction(
+            rule.Id, 'Add', ids.get('prodRelatedId'), null, null, null, 1, true);
+        TestDataFactory.createBundleRuleAssignment(ids.get('bundleId'), rule.Id, true, true);
+
+        Test.startTest();
+        Map<String, Object> verdict = ProductRuleService.evaluateBundleRules(
+            ids.get('bundleId'), null, new Set<Id>{ ids.get('optComponentId') });
+        Test.stopTest();
+
+        Set<String> selected = new Set<String>((List<String>) verdict.get('selectedOptionIds'));
+        System.assert(!selected.contains(String.valueOf(ids.get('optRelatedId'))),
+            'Custom rule with formula "1 AND 2" must NOT fire when condition 2 fails');
+    }
+
+    @IsTest
+    static void customConditionsMetWithMalformedFormulaDoesNotFireAndDoesNotThrow() {
+        Map<String, Id> ids = buildBundle();
+        Product_Rule__c rule = TestDataFactory.createProductRule(
+            'Malformed Custom Rule', 'Selection', 'Custom', null, 1, true, true);
+        rule.Advanced_Condition__c = '((1 AND 2';
+        update rule;
         TestDataFactory.createRuleCondition(
             rule.Id, 'Bundle Option', 'Option_Type__c', 'equals', 'Value', 'Component', 1, true);
         TestDataFactory.createRuleAction(
@@ -180,7 +232,7 @@ private class ProductRuleServiceTest {
 
         Set<String> selected = new Set<String>((List<String>) verdict.get('selectedOptionIds'));
         System.assert(!selected.contains(String.valueOf(ids.get('optRelatedId'))),
-            'Custom Conditions Met rules are out of scope and must be skipped');
+            'Malformed Advanced_Condition must defensively no-op the rule');
     }
 
     // ===== Line Editor: Validation + Alert rules =====

@@ -14,6 +14,7 @@ public inherited sharing class ProductRuleService {
     private static final String OBJ_OPPORTUNITY_LINE = 'Opportunity Line';
     private static final String COND_ALL = 'All';
     private static final String COND_ANY = 'Any';
+    private static final String COND_CUSTOM = 'Custom';
     private static final String FILTER_TYPE_FIELD = 'Field';
 
     /**
@@ -56,7 +57,7 @@ public inherited sharing class ProductRuleService {
         Opportunity opp = loadOpportunityIfNeeded(rules, opportunityId);
 
         for (Product_Rule__c rule : rules) {
-            if (rule.Conditions_Met__c != COND_ALL && rule.Conditions_Met__c != COND_ANY) {
+            if (!isSupportedMode(rule.Conditions_Met__c)) {
                 continue;
             }
             if (isRuleFired(rule, optionById, opp)) {
@@ -107,7 +108,7 @@ public inherited sharing class ProductRuleService {
         Opportunity opp = loadOpportunityIfNeeded(rules, opportunityId);
 
         for (Product_Rule__c rule : rules) {
-            if (rule.Conditions_Met__c != COND_ALL && rule.Conditions_Met__c != COND_ANY) {
+            if (!isSupportedMode(rule.Conditions_Met__c)) {
                 continue;
             }
             if (!isLineRuleFired(rule, enriched, opp)) {
@@ -181,35 +182,62 @@ public inherited sharing class ProductRuleService {
         Product_Rule__c rule, Map<Id, OptionState> optionById, Opportunity opp
     ) {
         List<Boolean> results = new List<Boolean>();
+        List<Integer> indices = new List<Integer>();
         for (Rule_Condition__c c : rule.Rule_Conditions__r) {
+            Boolean matched = false;
             if (c.Tested_Object__c == OBJ_BUNDLE_OPTION) {
-                results.add(anySelectedOptionMatches(c, optionById));
+                matched = anySelectedOptionMatches(c, optionById);
             } else if (c.Tested_Object__c == OBJ_OPPORTUNITY && opp != null) {
-                results.add(recordMatches(c, opp, opp));
+                matched = recordMatches(c, opp, opp);
             }
+            results.add(matched);
+            indices.add(c.Index__c == null ? results.size() : c.Index__c.intValue());
         }
-        return aggregate(results, rule.Conditions_Met__c);
+        return aggregate(results, indices, rule);
     }
 
     private static Boolean isLineRuleFired(
         Product_Rule__c rule, List<Map<String, Object>> lines, Opportunity opp
     ) {
         List<Boolean> results = new List<Boolean>();
+        List<Integer> indices = new List<Integer>();
         for (Rule_Condition__c c : rule.Rule_Conditions__r) {
+            Boolean matched = false;
             if (c.Tested_Object__c == OBJ_OPPORTUNITY_LINE) {
-                results.add(anyLineMatches(c, lines));
+                matched = anyLineMatches(c, lines);
             } else if (c.Tested_Object__c == OBJ_OPPORTUNITY && opp != null) {
-                results.add(recordMatches(c, opp, opp));
+                matched = recordMatches(c, opp, opp);
             }
+            results.add(matched);
+            indices.add(c.Index__c == null ? results.size() : c.Index__c.intValue());
         }
-        return aggregate(results, rule.Conditions_Met__c);
+        return aggregate(results, indices, rule);
     }
 
-    private static Boolean aggregate(List<Boolean> results, String conditionsMet) {
+    private static Boolean isSupportedMode(String mode) {
+        return mode == COND_ALL || mode == COND_ANY || mode == COND_CUSTOM;
+    }
+
+    private static Boolean aggregate(List<Boolean> results, List<Integer> indices, Product_Rule__c rule) {
         if (results.isEmpty()) {
             return false;
         }
-        if (conditionsMet == COND_ANY) {
+        if (rule.Conditions_Met__c == COND_CUSTOM) {
+            Map<Integer, Boolean> byIndex = new Map<Integer, Boolean>();
+            for (Integer i = 0; i < results.size(); i++) {
+                byIndex.put(indices[i], results[i]);
+            }
+            try {
+                return CustomConditionEvaluator.evaluate(rule.Advanced_Condition__c, byIndex);
+            } catch (CustomConditionEvaluator.FormulaException ex) {
+                // Malformed formula = rule does not fire (defensive). Caller logs nothing
+                // because admin-facing validation belongs on the record page, not the runtime.
+                System.debug(LoggingLevel.WARN,
+                    'ProductRuleService: bad Advanced_Condition on rule "' + rule.Name + '": ' + ex.getMessage());
+                return false;
+            }
+        }
+        if (rule.Conditions_Met__c == COND_ANY) {
             for (Boolean r : results) { if (r) { return true; } }
             return false;
         }

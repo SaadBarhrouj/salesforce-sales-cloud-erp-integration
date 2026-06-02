@@ -348,9 +348,15 @@ public inherited sharing class OpportunityService {
                         continue;
                     }
                     if (isVolume) {
-                        // Bundle options inherit the parent line's service window.
-                        optData.put('serviceStartDate', itemData.get('serviceStartDate'));
-                        optData.put('serviceEndDate', itemData.get('serviceEndDate'));
+                        // Options inherit the parent's service window only when the
+                        // option itself has no override (the line editor lets a rep
+                        // set per-option dates on top of the bundle's defaults).
+                        if (optData.get('serviceStartDate') == null) {
+                            optData.put('serviceStartDate', itemData.get('serviceStartDate'));
+                        }
+                        if (optData.get('serviceEndDate') == null) {
+                            optData.put('serviceEndDate', itemData.get('serviceEndDate'));
+                        }
                     }
                     Id optProduct2Id = toId(optData.get('product2Id'));
 
