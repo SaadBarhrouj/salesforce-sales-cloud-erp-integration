@@ -123,6 +123,8 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
           showToast(this, 'Validation Failed', 'Please fix all line editor errors before proceeding.', 'error');
           return;
         }
+        const ruleResult = await lineEditor.evaluateLineRules();
+        if (ruleResult && ruleResult.blocked) return;
         lineEditor.saveLines();
       }
     }
@@ -413,6 +415,8 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
 
     if (this.isStepSelection) {
       filtersOpen = this._getSelectionStep()?.filterPanelOpen;
+    } else if (this.isStepConfigure) {
+      filtersOpen = this._getBundleConfigStep()?.filterPanelOpen;
     }
 
     return actions.map((action) => {
@@ -461,7 +465,7 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
     else if (action === "refreshPricing") this._getLineEditorStep()?.handleHeaderAction('refreshPricing');
     else if (action === "deleteSelected") this._getLineEditorStep()?.handleHeaderAction('deleteSelected');
     else if (action === "resetEditing") this._handleResetEditing();
-    else if (action === "calculateTransport") this._getLogisticsStep()?.handleCalculateTrips();
+    else if (action === "calculateTransport") this._getLogisticsStep()?.handleCalculateTransport();
     else if (action === "openGoogleMaps") this._getLogisticsStep()?.openRouteInGoogleMaps();
   }
 
@@ -469,7 +473,7 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
     if (this.isStepSelection) {
       this._getSelectionStep()?.toggleFilterPanel();
     } else if (this.isStepConfigure) {
-      this._showToast("Info", "Filters are not currently available for this step.", "info");
+      this._getBundleConfigStep()?.toggleFilterPanel();
     }
   }
 
@@ -494,11 +498,7 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
   }
 
   _handleResetConfig() {
-    const bundleConfig = this._getBundleConfigStep();
-    if (bundleConfig) {
-      bundleConfig.resetCurrentBundle();
-      this._showToast("Configuration Reset", "Bundle configuration has been reset", "info");
-    }
+    this._getBundleConfigStep()?.resetCurrentBundle();
   }
 
   _handleResetEditing() {
@@ -508,6 +508,7 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
   async _ensureAllBundlesConfigured() {
     const bundleConfig = this._getBundleConfigStep();
     if (bundleConfig && this.selectedItemId) {
+      await bundleConfig.evaluateRules('Save');
       const isValid = bundleConfig.saveCurrentConfig();
       if (!isValid) return false;
     }
@@ -575,12 +576,12 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
     return selected;
   }
 
-  _handleSaveConfig() {
+  async _handleSaveConfig() {
     const bundleConfig = this._getBundleConfigStep();
-    if (bundleConfig) {
-      if (bundleConfig.saveCurrentConfig()) {
-        this._goNext();
-      }
+    if (!bundleConfig) return;
+    await bundleConfig.evaluateRules('Save');
+    if (bundleConfig.saveCurrentConfig()) {
+      this._goNext();
     }
   }
 
@@ -603,8 +604,14 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
     this.selectedProducts = productsList;
   }
 
-  _handleApplyRules() {
-    this._showToast("Apply Rules", "Rules applied successfully", "success");
+  async _handleApplyRules() {
+    const bundleConfig = this._getBundleConfigStep();
+    if (!bundleConfig || !this.selectedItemId) {
+      this._showToast("Apply Rules", "Select a bundle to apply rules.", "info");
+      return;
+    }
+    await bundleConfig.evaluateRules();
+    this._showToast("Apply Rules", "Product rules applied.", "success");
   }
 
   handleHeaderSearch(event) {
@@ -874,6 +881,9 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
         // the round-trip and Apex rejects the save with "Each service line must..."
         products[idx].serviceStartDate = lineItem.serviceStartDate || null;
         products[idx].serviceEndDate = lineItem.serviceEndDate || null;
+        // Persist the per-line override flag too — without it, an on-remount
+        // header cascade overwrites individual dates the rep set on a single line.
+        products[idx]._serviceOverridden = !!lineItem._serviceOverridden;
         products[idx].dailyRate = lineItem.dailyRate ?? products[idx].dailyRate;
         if (lineItem.configuredOptions && lineItem.configuredOptions.length > 0) {
           products[idx].configuredOptions = lineItem.configuredOptions;
@@ -1019,7 +1029,10 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
         unitPrice: this.isVolumeOffer
           ? (opt.dailyRate ?? opt.listUnitPrice ?? opt.unitPrice ?? 0)
           : (opt.listUnitPrice || opt.unitPrice || 0),
-        discountPercent: opt.additionalDiscount || opt.discountPercent || 0
+        discountPercent: opt.additionalDiscount || opt.discountPercent || 0,
+        // Forward per-option service dates so server can honor per-line overrides.
+        serviceStartDate: this.isVolumeOffer ? (opt.serviceStartDate || null) : null,
+        serviceEndDate: this.isVolumeOffer ? (opt.serviceEndDate || null) : null
       }))
     }));
   }

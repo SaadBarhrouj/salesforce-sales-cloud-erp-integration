@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(sf org *)",
+      "Bash(unzip -p \"Canevas Rapport PFE 2025-2026-GI \\(1\\).docx\" word/document.xml)",
+      "Read(//tmp/**)",
+      "Bash(py --version)",
+      "Bash(node -e ' *)",
+      "Bash(grep -i \"Test\\\\.cls$\")",
+      "Bash(xargs wc *)",
+      "Bash(pdflatex --version)",
+      "Bash(xargs sed *)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\saadb\\\\OneDrive\\\\Desktop\\\\salesforce-sales-cloud-erp-integration\\\\force-app\\\\main\\\\default\" -Directory)",
+      "Bash(Select-Object Name)",
+      "Bash(grep -i \"test$\")",
+      "Bash(grep -E \"\\(Test|test\\)$\")",
+      "Bash(sed 's/\\\\.[^.]*$//')",
+      "PowerShell(Get-Command *)",
+      "WebSearch"
+    ]
+  }
+}

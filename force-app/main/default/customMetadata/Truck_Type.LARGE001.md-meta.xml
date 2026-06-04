@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomMetadata xmlns="http://soap.sforce.com/2006/04/metadata" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+    <label>LARGE001</label>
+    <protected>false</protected>
+    <values>
+        <field>Country_Code__c</field>
+        <value xsi:type="xsd:string">MA</value>
+    </values>
+    <values>
+        <field>Depth_cm__c</field>
+        <value xsi:type="xsd:double">600.0</value>
+    </values>
+    <values>
+        <field>Height_cm__c</field>
+        <value xsi:type="xsd:double">260.0</value>
+    </values>
+    <values>
+        <field>Max_Weight_Kg__c</field>
+        <value xsi:type="xsd:double">15000.0</value>
+    </values>
+    <values>
+        <field>Quantity__c</field>
+        <value xsi:type="xsd:double">10.0</value>
+    </values>
+    <values>
+        <field>Truck_Code__c</field>
+        <value xsi:type="xsd:string">LARGE001</value>
+    </values>
+    <values>
+        <field>Width_cm__c</field>
+        <value xsi:type="xsd:double">250.0</value>
+    </values>
+</CustomMetadata>

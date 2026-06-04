@@ -525,4 +525,167 @@ private class OpportunityServiceTest {
         }
         System.assert(threw, 'Expected exception when a service line is missing dates for a Volume catalog');
     }
+
+    @IsTest
+    static void componentOptionQuantityIsScaledServerSide() {
+        Map<String, Object> seed = TestDataFactory.seedBundleScenario();
+        Id oppId = (Id) seed.get('opportunityId');
+        Id bundleProductId = (Id) seed.get('bundleProductId');
+        Id componentProductId = (Id) seed.get('componentProductId');
+
+        List<Map<String, Object>> payload = new List<Map<String, Object>>{
+            new Map<String, Object>{
+                'product2Id' => bundleProductId,
+                'quantity' => 5,
+                'unitPrice' => 100,
+                'isBundle' => true,
+                'bundleGroup' => 'bg-test-comp',
+                'options' => new List<Object>{
+                    new Map<String, Object>{
+                        'product2Id' => componentProductId,
+                        'quantity' => 1,
+                        'unitPrice' => 25,
+                        'optionType' => 'Component'
+                    }
+                }
+            }
+        };
+
+        Test.startTest();
+        OpportunityService.saveOpportunityWithLines(oppId, payload, null);
+        Test.stopTest();
+
+        OpportunityLineItem componentOli = [
+            SELECT Quantity FROM OpportunityLineItem
+            WHERE OpportunityId = :oppId AND Product2Id = :componentProductId LIMIT 1
+        ];
+        System.assertEquals(20, componentOli.Quantity,
+            'Component option Quantity must equal Default_Quantity__c (4) x parent qty (5)');
+    }
+
+    @IsTest
+    static void accessoryOptionQuantityIsLockedToDefaultServerSide() {
+        Map<String, Object> seed = TestDataFactory.seedBundleScenario();
+        Id oppId = (Id) seed.get('opportunityId');
+        Id bundleProductId = (Id) seed.get('bundleProductId');
+        Id accessoryProductId = (Id) seed.get('accessoryProductId');
+
+        // Tampered payload sending qty=99 for an Accessory whose Default_Quantity__c is 2.
+        // Server must override and persist Default_Quantity__c, ignoring the payload.
+        List<Map<String, Object>> payload = new List<Map<String, Object>>{
+            new Map<String, Object>{
+                'product2Id' => bundleProductId,
+                'quantity' => 5,
+                'unitPrice' => 100,
+                'isBundle' => true,
+                'bundleGroup' => 'bg-test-acc',
+                'options' => new List<Object>{
+                    new Map<String, Object>{
+                        'product2Id' => accessoryProductId,
+                        'quantity' => 99,
+                        'unitPrice' => 30,
+                        'optionType' => 'Accessory'
+                    }
+                }
+            }
+        };
+
+        Test.startTest();
+        OpportunityService.saveOpportunityWithLines(oppId, payload, null);
+        Test.stopTest();
+
+        OpportunityLineItem accessoryOli = [
+            SELECT Quantity FROM OpportunityLineItem
+            WHERE OpportunityId = :oppId AND Product2Id = :accessoryProductId LIMIT 1
+        ];
+        System.assertEquals(2, accessoryOli.Quantity,
+            'Accessory option Quantity must be locked to Default_Quantity__c (2), ignoring the tampered payload value (99)');
+    }
+
+    @IsTest
+    static void relatedProductOptionQuantityIsPersistedAsIs() {
+        Map<String, Object> seed = TestDataFactory.seedBundleScenario();
+        Id oppId = (Id) seed.get('opportunityId');
+        Id bundleProductId = (Id) seed.get('bundleProductId');
+        Id relatedProductId = (Id) seed.get('relatedProductId');
+
+        List<Map<String, Object>> payload = new List<Map<String, Object>>{
+            new Map<String, Object>{
+                'product2Id' => bundleProductId,
+                'quantity' => 5,
+                'unitPrice' => 100,
+                'isBundle' => true,
+                'bundleGroup' => 'bg-test-rel',
+                'options' => new List<Object>{
+                    new Map<String, Object>{
+                        'product2Id' => relatedProductId,
+                        'quantity' => 3,
+                        'unitPrice' => 50,
+                        'optionType' => 'Related Product'
+                    }
+                }
+            }
+        };
+
+        Test.startTest();
+        OpportunityService.saveOpportunityWithLines(oppId, payload, null);
+        Test.stopTest();
+
+        OpportunityLineItem relOli = [
+            SELECT Quantity FROM OpportunityLineItem
+            WHERE OpportunityId = :oppId AND Product2Id = :relatedProductId LIMIT 1
+        ];
+        System.assertEquals(3, relOli.Quantity,
+            'Related Product option Quantity must equal the payload value (no scaling)');
+    }
+
+    @IsTest
+    static void saveOpportunityWithLinesValidationRuleBlocksSave() {
+        Pricebook2 pb = TestDataFactory.createPricebook2('Test PB Rule', true, true);
+        Account acc = TestDataFactory.createAccount(true);
+        Opportunity opp = new Opportunity(
+            Name = 'Test Opp',
+            AccountId = acc.Id,
+            StageName = 'Prospecting',
+            CloseDate = Date.today().addDays(30),
+            Pricebook2Id = pb.Id
+        );
+        insert opp;
+
+        Product2 prod = TestDataFactory.createProduct2(true);
+        prod.Family = 'Restricted';
+        update prod;
+        PricebookEntry stdPbe = new PricebookEntry(Pricebook2Id = Test.getStandardPricebookId(), Product2Id = prod.Id, UnitPrice = 100, IsActive = true, UseStandardPrice = false);
+        insert stdPbe;
+        TestDataFactory.createPricebookEntry(pb.Id, prod.Id, 100, true, true);
+
+        Product_Rule__c rule = TestDataFactory.createProductRule(
+            'Block Restricted', 'Validation', 'All', 'Restricted family cannot be quoted.', 1, true, true);
+        TestDataFactory.createRuleCondition(
+            rule.Id, 'Opportunity Line', 'Family', 'equals', 'Value', 'Restricted', 1, true);
+
+        List<Map<String, Object>> lineItems = new List<Map<String, Object>>{
+            new Map<String, Object>{
+                'product2Id' => prod.Id,
+                'quantity' => 1,
+                'unitPrice' => 100,
+                'discountPercent' => 0
+            }
+        };
+
+        Boolean threw = false;
+        Test.startTest();
+        try {
+            OpportunityService.saveOpportunityWithLines(opp.Id, lineItems, null);
+        } catch (OpportunityException e) {
+            threw = true;
+            System.assert(e.getMessage().contains('Restricted family cannot be quoted'),
+                'Error should carry the rule message: ' + e.getMessage());
+        }
+        Test.stopTest();
+
+        System.assert(threw, 'A fired Validation rule must block the save');
+        System.assertEquals(0, [SELECT COUNT() FROM OpportunityLineItem WHERE OpportunityId = :opp.Id],
+            'No line items should be saved when a Validation rule blocks the save');
+    }
 }

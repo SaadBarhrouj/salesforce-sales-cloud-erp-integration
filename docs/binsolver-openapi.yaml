@@ -1,0 +1,1834 @@
+openapi: 3.0.3
+info:
+  title: BinSolver API
+  version: 1.0.2
+  description: Developer-first API for 3D bin packing.
+servers:
+  - url: https://api.binsolver.com
+    description: Production
+tags:
+  - name: pack
+    description: 3D bin packing operations
+paths:
+  /:
+    get:
+      summary: Service banner
+      responses:
+        '200':
+          description: Plain text banner.
+          content:
+            text/plain:
+              schema:
+                type: string
+              example: BinSolver API
+  /health:
+    get:
+      summary: Health check
+      responses:
+        '200':
+          description: Service is healthy.
+          content:
+            text/plain:
+              schema:
+                type: string
+              example: ok
+  /pack:
+    post:
+      tags: [pack]
+      summary: Pack items into bins
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - in: header
+          name: x-request-id
+          required: false
+          schema:
+            type: string
+          description: Optional request correlation id.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PackRequest'
+            examples:
+              simple:
+                summary: Basic pack request
+                value:
+                  allowUnplaced: true
+                  objective: minBins
+                  items:
+                    - id: item-1
+                      w: 2
+                      h: 2
+                      d: 1
+                      quantity: 2
+                  bins:
+                    - id: small-box
+                      w: 4
+                      h: 3
+                      d: 3
+                      quantity: 1
+              rotationUpright:
+                summary: Upright and axis-specific rotations
+                value:
+                  allowUnplaced: true
+                  objective: minBins
+                  items:
+                    - id: upright
+                      w: 4
+                      h: 2
+                      d: 3
+                      rotation:
+                        mode: upright
+                    - id: axis-only
+                      w: 2
+                      h: 3
+                      d: 1
+                      rotation:
+                        mode: axis
+                        allowAxes:
+                          xy: true
+                          xz: false
+                          yz: false
+                  bins:
+                    - id: tight
+                      w: 3
+                      h: 2
+                      d: 4
+                      quantity: 1
+                    - id: small
+                      w: 3
+                      h: 3
+                      d: 2
+                      quantity: 1
+              stackingLimits:
+                summary: Support ratio and load limits
+                value:
+                  allowUnplaced: true
+                  objective: minBins
+                  items:
+                    - id: base
+                      w: 2
+                      h: 1
+                      d: 2
+                      weight: 1
+                      stacking:
+                        minSupportRatio: 0.9
+                        maxLoad: 1
+                    - id: top
+                      w: 2
+                      h: 1
+                      d: 2
+                      weight: 2
+                  bins:
+                    - id: bin
+                      w: 2
+                      h: 2
+                      d: 2
+                      quantity: 1
+              packagingRules:
+                summary: Grouping, hazmat, and padding
+                value:
+                  allowUnplaced: true
+                  objective: minBins
+                  items:
+                    - id: kit-a
+                      w: 1
+                      h: 1
+                      d: 1
+                      packaging:
+                        group: kit-1
+                        groupMode: keepTogether
+                        padding:
+                          all: 0.1
+                    - id: kit-b
+                      w: 1
+                      h: 1
+                      d: 1
+                      packaging:
+                        group: kit-1
+                        groupMode: keepTogether
+                    - id: hazmat
+                      w: 1
+                      h: 1
+                      d: 1
+                      packaging:
+                        hazmat: true
+                  bins:
+                    - id: clean-box
+                      w: 2.5
+                      h: 2
+                      d: 2
+                      allowHazmat: false
+                      quantity: 1
+                    - id: hazmat-box
+                      w: 2.5
+                      h: 2
+                      d: 2
+                      allowHazmat: true
+                      quantity: 1
+              nesting:
+                summary: Nesting items inside containers
+                value:
+                  allowUnplaced: true
+                  objective: minBins
+                  nestingStrategy: auto
+                  items:
+                    - id: organizer
+                      w: 4
+                      h: 4
+                      d: 4
+                      weight: 0.8
+                      packaging:
+                        nesting:
+                          innerW: 3
+                          innerH: 3
+                          innerD: 3
+                          padding:
+                            all: 0.1
+                    - id: widget
+                      w: 1
+                      h: 1
+                      d: 1
+                      quantity: 3
+                  bins:
+                    - id: shipping-box
+                      w: 6
+                      h: 6
+                      d: 6
+                      quantity: 1
+              shippingObjective:
+                summary: Shipping-aware optimization
+                value:
+                  allowUnplaced: true
+                  objective: shipping
+                  shippingObjective:
+                    costWeight: 1
+                    carbonWeight: 0.2
+                    slaWeight: 0.1
+                    dimWeightDivisor: 5000
+                  items:
+                    - id: order-1
+                      w: 2
+                      h: 2
+                      d: 2
+                      weight: 1.5
+                  bins:
+                    - id: fast
+                      w: 3
+                      h: 3
+                      d: 3
+                      shipping:
+                        baseCost: 12
+                        ratePerWeight: 0.5
+                        carbonPerWeight: 0.2
+                        slaDays: 1
+                        dimWeightDivisor: 5000
+                      quantity: 1
+                    - id: cheap
+                      w: 3
+                      h: 3
+                      d: 3
+                      shipping:
+                        baseCost: 6
+                        ratePerWeight: 0.2
+                        carbonPerWeight: 0.4
+                        slaDays: 4
+                        dimWeightDivisor: 5000
+                      quantity: 1
+              palletization:
+                summary: Palletization and split audit trails
+                value:
+                  allowUnplaced: true
+                  objective: minBins
+                  items:
+                    - id: item-1
+                      w: 1
+                      h: 1
+                      d: 1
+                      quantity: 4
+                  bins:
+                    - id: container
+                      w: 4
+                      h: 1
+                      d: 1
+                      quantity: 1
+                  palletization:
+                    pallets:
+                      - id: pallet
+                        w: 2
+                        h: 1
+                        d: 1
+                        tareWeight: 1
+                        quantity: 2
+                    allowMixedContainers: false
+              instructions:
+                summary: Request with packing instructions
+                value:
+                  allowUnplaced: true
+                  objective: minBins
+                  includeInstructions: true
+                  items:
+                    - id: monitor
+                      w: 20
+                      h: 15
+                      d: 5
+                  bins:
+                    - id: box
+                      w: 30
+                      h: 20
+                      d: 20
+                      quantity: 1
+              labels:
+                summary: Request with ZPL labels
+                value:
+                  allowUnplaced: true
+                  objective: minBins
+                  labelFormat: zpl
+                  items:
+                    - id: sku-1
+                      w: 10
+                      h: 10
+                      d: 10
+                      weight: 5
+                  bins:
+                    - id: box
+                      w: 20
+                      h: 20
+                      d: 20
+                      maxWeight: 50
+                      quantity: 1
+      responses:
+        '200':
+          description: Packing result.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PackResponse'
+              examples:
+                simple:
+                  summary: Response for basic pack request
+                  value:
+                    bins:
+                      - binId: bin-1
+                        templateId: small-box
+                        w: 4
+                        h: 3
+                        d: 3
+                        vizUrl: https://binsolver.com/viz?l=example
+                        utilization: 0.44
+                        placements:
+                          - itemId: item-1#1
+                            x: 0
+                            y: 0
+                            z: 0
+                            w: 2
+                            h: 2
+                            d: 1
+                            rotation: xyz
+                          - itemId: item-1#2
+                            x: 2
+                            y: 0
+                            z: 0
+                            w: 2
+                            h: 2
+                            d: 1
+                            rotation: xyz
+                    unplaced: []
+                    stats:
+                      items: 2
+                      placed: 2
+                      unplaced: 0
+                      binsUsed: 1
+                      durationMs: 3
+                rotationUpright:
+                  summary: Response showing upright and axis-specific rotations
+                  value:
+                    bins:
+                      - binId: bin-1
+                        templateId: tight
+                        w: 3
+                        h: 2
+                        d: 4
+                        vizUrl: https://binsolver.com/viz?l=example
+                        utilization: 0.5
+                        placements:
+                          - itemId: upright
+                            x: 0
+                            y: 0
+                            z: 0
+                            w: 3
+                            h: 2
+                            d: 4
+                            rotation: zyx
+                      - binId: bin-2
+                        templateId: small
+                        w: 3
+                        h: 3
+                        d: 2
+                        vizUrl: https://binsolver.com/viz?l=example
+                        utilization: 0.33
+                        placements:
+                          - itemId: axis-only
+                            x: 0
+                            y: 0
+                            z: 0
+                            w: 3
+                            h: 2
+                            d: 1
+                            rotation: yxz
+                    unplaced: []
+                    stats:
+                      items: 2
+                      placed: 2
+                      unplaced: 0
+                      binsUsed: 2
+                      durationMs: 5
+                stackingLimits:
+                  summary: Response showing stacking constraints
+                  value:
+                    bins:
+                      - binId: bin-1
+                        templateId: bin
+                        w: 2
+                        h: 2
+                        d: 2
+                        vizUrl: https://binsolver.com/viz?l=example
+                        utilization: 0.5
+                        placements:
+                          - itemId: base
+                            x: 0
+                            y: 0
+                            z: 0
+                            w: 2
+                            h: 1
+                            d: 2
+                            rotation: xyz
+                    unplaced:
+                      - itemId: top
+                        w: 2
+                        h: 1
+                        d: 2
+                        weight: 2
+                        reason: no_fit
+                    stats:
+                      items: 2
+                      placed: 1
+                      unplaced: 1
+                      binsUsed: 1
+                      durationMs: 4
+                packagingRules:
+                  summary: Response showing grouping and hazmat handling
+                  value:
+                    bins:
+                      - binId: bin-1
+                        templateId: clean-box
+                        w: 2.5
+                        h: 2
+                        d: 2
+                        vizUrl: https://binsolver.com/viz?l=example
+                        utilization: 0.46
+                        placements:
+                          - itemId: kit-a
+                            x: 0
+                            y: 0
+                            z: 0
+                            w: 1.2
+                            h: 1.2
+                            d: 1.2
+                            rotation: xyz
+                          - itemId: kit-b
+                            x: 1.2
+                            y: 0
+                            z: 0
+                            w: 1
+                            h: 1
+                            d: 1
+                            rotation: xyz
+                      - binId: bin-2
+                        templateId: hazmat-box
+                        w: 2.5
+                        h: 2
+                        d: 2
+                        vizUrl: https://binsolver.com/viz?l=example
+                        utilization: 0.08
+                        placements:
+                          - itemId: hazmat
+                            x: 0
+                            y: 0
+                            z: 0
+                            w: 1
+                            h: 1
+                            d: 1
+                            rotation: xyz
+                    unplaced: []
+                    stats:
+                      items: 3
+                      placed: 3
+                      unplaced: 0
+                      binsUsed: 2
+                      durationMs: 6
+                nesting:
+                  summary: Response showing nested placements
+                  value:
+                    bins:
+                      - binId: bin-1
+                        templateId: shipping-box
+                        w: 6
+                        h: 6
+                        d: 6
+                        vizUrl: https://binsolver.com/viz?l=example
+                        utilization: 0.3
+                        placements:
+                          - itemId: organizer
+                            x: 0
+                            y: 0
+                            z: 0
+                            w: 4
+                            h: 4
+                            d: 4
+                            rotation: xyz
+                            nested:
+                              - itemId: widget#1
+                                x: 0.1
+                                y: 0.1
+                                z: 0.1
+                                w: 1
+                                h: 1
+                                d: 1
+                                rotation: xyz
+                              - itemId: widget#2
+                                x: 1.1
+                                y: 0.1
+                                z: 0.1
+                                w: 1
+                                h: 1
+                                d: 1
+                                rotation: xyz
+                    unplaced: []
+                    stats:
+                      items: 4
+                      placed: 4
+                      unplaced: 0
+                      binsUsed: 1
+                      durationMs: 4
+                      nested: 2
+                shippingObjective:
+                  summary: Response for shipping-aware optimization
+                  value:
+                    bins:
+                      - binId: bin-1
+                        templateId: cheap
+                        w: 3
+                        h: 3
+                        d: 3
+                        weight: 1.5
+                        shipping:
+                          billableWeight: 1.5
+                          dimensionalWeight: 0.0054
+                          cost: 6.3
+                          carbon: 0.6
+                          slaDays: 4
+                        vizUrl: https://binsolver.com/viz?l=example
+                        utilization: 0.3
+                        placements:
+                          - itemId: order-1
+                            x: 0
+                            y: 0
+                            z: 0
+                            w: 2
+                            h: 2
+                            d: 2
+                            rotation: xyz
+                    unplaced: []
+                    stats:
+                      items: 1
+                      placed: 1
+                      unplaced: 0
+                      binsUsed: 1
+                      durationMs: 3
+                palletization:
+                  summary: Response showing palletization splits
+                  value:
+                    bins:
+                      - binId: bin-1
+                        templateId: container
+                        w: 4
+                        h: 1
+                        d: 1
+                        vizUrl: https://binsolver.com/viz?l=example
+                        utilization: 1
+                        placements:
+                          - itemId: bin-1
+                            x: 0
+                            y: 0
+                            z: 0
+                            w: 2
+                            h: 1
+                            d: 1
+                            rotation: xyz
+                          - itemId: bin-2
+                            x: 2
+                            y: 0
+                            z: 0
+                            w: 2
+                            h: 1
+                            d: 1
+                            rotation: xyz
+                    pallets:
+                      - binId: bin-1
+                        templateId: pallet
+                        w: 2
+                        h: 1
+                        d: 1
+                        vizUrl: https://binsolver.com/viz?l=example
+                        utilization: 0.5
+                        placements:
+                          - itemId: item-1#1
+                            x: 0
+                            y: 0
+                            z: 0
+                            w: 1
+                            h: 1
+                            d: 1
+                            rotation: xyz
+                          - itemId: item-1#2
+                            x: 1
+                            y: 0
+                            z: 0
+                            w: 1
+                            h: 1
+                            d: 1
+                            rotation: xyz
+                      - binId: bin-2
+                        templateId: pallet
+                        w: 2
+                        h: 1
+                        d: 1
+                        vizUrl: https://binsolver.com/viz?l=example
+                        utilization: 0.5
+                        placements:
+                          - itemId: item-1#3
+                            x: 0
+                            y: 0
+                            z: 0
+                            w: 1
+                            h: 1
+                            d: 1
+                            rotation: xyz
+                          - itemId: item-1#4
+                            x: 1
+                            y: 0
+                            z: 0
+                            w: 1
+                            h: 1
+                            d: 1
+                            rotation: xyz
+                    splits:
+                      - itemId: item-1#1
+                        binId: bin-1
+                        palletId: bin-1
+                      - itemId: item-1#2
+                        binId: bin-1
+                        palletId: bin-1
+                      - itemId: item-1#3
+                        binId: bin-1
+                        palletId: bin-2
+                      - itemId: item-1#4
+                        binId: bin-1
+                        palletId: bin-2
+                    unplaced: []
+                    stats:
+                      items: 4
+                      placed: 4
+                      unplaced: 0
+                      binsUsed: 1
+                      palletsUsed: 2
+                      durationMs: 7
+                instructions:
+                  summary: Response with packing instructions
+                  value:
+                    bins:
+                      - binId: bin-1
+                        templateId: box
+                        w: 30
+                        h: 20
+                        d: 20
+                        utilization: 0.125
+                        vizUrl: https://binsolver.com/viz?l=example
+                        placements:
+                          - itemId: monitor
+                            x: 0
+                            y: 0
+                            z: 0
+                            w: 20
+                            h: 15
+                            d: 5
+                            rotation: xyz
+                        instructions:
+                          - "1. Place item 'monitor' upright on the floor, in the back-left corner."
+                    unplaced: []
+                    stats:
+                      items: 1
+                      placed: 1
+                      unplaced: 0
+                      binsUsed: 1
+                      durationMs: 5
+                labels:
+                  summary: Response with ZPL labels
+                  value:
+                    bins:
+                      - binId: bin-1
+                        templateId: box
+                        w: 20
+                        h: 20
+                        d: 20
+                        weight: 5
+                        utilization: 0.125
+                        vizUrl: https://binsolver.com/viz?l=example
+                        placements:
+                          - itemId: sku-1
+                            x: 0
+                            y: 0
+                            z: 0
+                            w: 10
+                            h: 10
+                            d: 10
+                            rotation: xyz
+                        label: '^XA^FO50,50^ADN,36,20^FDbin-1^FS...'
+                    unplaced: []
+                    stats:
+                      items: 1
+                      placed: 1
+                      unplaced: 0
+                      binsUsed: 1
+                      durationMs: 5
+        '400':
+          description: Invalid payload or limits exceeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Missing or invalid API key.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '402':
+          description: Usage exceeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '408':
+          description: Request timeout.
+        '429':
+          description: Rate limited.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '502':
+          description: Upstream auth provider error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/pack:
+    post:
+      tags: [pack]
+      summary: Pack items into bins
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - in: header
+          name: x-request-id
+          required: false
+          schema:
+            type: string
+          description: Optional request correlation id.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PackRequest'
+      responses:
+        '200':
+          description: Packing result.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PackResponse'
+              examples:
+                simple:
+                  summary: Response for basic pack request
+                  value:
+                    bins:
+                      - binId: bin-1
+                        templateId: small-box
+                        w: 4
+                        h: 3
+                        d: 3
+                        vizUrl: https://binsolver.com/viz?l=example
+                        utilization: 0.44
+                        placements:
+                          - itemId: item-1#1
+                            x: 0
+                            y: 0
+                            z: 0
+                            w: 2
+                            h: 2
+                            d: 1
+                            rotation: xyz
+                          - itemId: item-1#2
+                            x: 2
+                            y: 0
+                            z: 0
+                            w: 2
+                            h: 2
+                            d: 1
+                            rotation: xyz
+                    unplaced: []
+                    stats:
+                      items: 2
+                      placed: 2
+                      unplaced: 0
+                      binsUsed: 1
+                      durationMs: 3
+                rotationUpright:
+                  summary: Response showing upright and axis-specific rotations
+                  value:
+                    bins:
+                      - binId: bin-1
+                        templateId: tight
+                        w: 3
+                        h: 2
+                        d: 4
+                        vizUrl: https://binsolver.com/viz?l=example
+                        utilization: 0.5
+                        placements:
+                          - itemId: upright
+                            x: 0
+                            y: 0
+                            z: 0
+                            w: 3
+                            h: 2
+                            d: 4
+                            rotation: zyx
+                      - binId: bin-2
+                        templateId: small
+                        w: 3
+                        h: 3
+                        d: 2
+                        vizUrl: https://binsolver.com/viz?l=example
+                        utilization: 0.33
+                        placements:
+                          - itemId: axis-only
+                            x: 0
+                            y: 0
+                            z: 0
+                            w: 3
+                            h: 2
+                            d: 1
+                            rotation: yxz
+                    unplaced: []
+                    stats:
+                      items: 2
+                      placed: 2
+                      unplaced: 0
+                      binsUsed: 2
+                      durationMs: 5
+                stackingLimits:
+                  summary: Response showing stacking constraints
+                  value:
+                    bins:
+                      - binId: bin-1
+                        templateId: bin
+                        w: 2
+                        h: 2
+                        d: 2
+                        vizUrl: https://binsolver.com/viz?l=example
+                        utilization: 0.5
+                        placements:
+                          - itemId: base
+                            x: 0
+                            y: 0
+                            z: 0
+                            w: 2
+                            h: 1
+                            d: 2
+                            rotation: xyz
+                    unplaced:
+                      - itemId: top
+                        w: 2
+                        h: 1
+                        d: 2
+                        weight: 2
+                        reason: no_fit
+                    stats:
+                      items: 2
+                      placed: 1
+                      unplaced: 1
+                      binsUsed: 1
+                      durationMs: 4
+                packagingRules:
+                  summary: Response showing grouping and hazmat handling
+                  value:
+                    bins:
+                      - binId: bin-1
+                        templateId: clean-box
+                        w: 2.5
+                        h: 2
+                        d: 2
+                        vizUrl: https://binsolver.com/viz?l=example
+                        utilization: 0.46
+                        placements:
+                          - itemId: kit-a
+                            x: 0
+                            y: 0
+                            z: 0
+                            w: 1.2
+                            h: 1.2
+                            d: 1.2
+                            rotation: xyz
+                          - itemId: kit-b
+                            x: 1.2
+                            y: 0
+                            z: 0
+                            w: 1
+                            h: 1
+                            d: 1
+                            rotation: xyz
+                      - binId: bin-2
+                        templateId: hazmat-box
+                        w: 2.5
+                        h: 2
+                        d: 2
+                        vizUrl: https://binsolver.com/viz?l=example
+                        utilization: 0.08
+                        placements:
+                          - itemId: hazmat
+                            x: 0
+                            y: 0
+                            z: 0
+                            w: 1
+                            h: 1
+                            d: 1
+                            rotation: xyz
+                    unplaced: []
+                    stats:
+                      items: 3
+                      placed: 3
+                      unplaced: 0
+                      binsUsed: 2
+                      durationMs: 6
+                nesting:
+                  summary: Response showing nested placements
+                  value:
+                    bins:
+                      - binId: bin-1
+                        templateId: shipping-box
+                        w: 6
+                        h: 6
+                        d: 6
+                        vizUrl: https://binsolver.com/viz?l=example
+                        utilization: 0.3
+                        placements:
+                          - itemId: organizer
+                            x: 0
+                            y: 0
+                            z: 0
+                            w: 4
+                            h: 4
+                            d: 4
+                            rotation: xyz
+                            nested:
+                              - itemId: widget#1
+                                x: 0.1
+                                y: 0.1
+                                z: 0.1
+                                w: 1
+                                h: 1
+                                d: 1
+                                rotation: xyz
+                              - itemId: widget#2
+                                x: 1.1
+                                y: 0.1
+                                z: 0.1
+                                w: 1
+                                h: 1
+                                d: 1
+                                rotation: xyz
+                    unplaced: []
+                    stats:
+                      items: 4
+                      placed: 4
+                      unplaced: 0
+                      binsUsed: 1
+                      durationMs: 4
+                      nested: 2
+                shippingObjective:
+                  summary: Response for shipping-aware optimization
+                  value:
+                    bins:
+                      - binId: bin-1
+                        templateId: cheap
+                        w: 3
+                        h: 3
+                        d: 3
+                        weight: 1.5
+                        shipping:
+                          billableWeight: 1.5
+                          dimensionalWeight: 0.0054
+                          cost: 6.3
+                          carbon: 0.6
+                          slaDays: 4
+                        vizUrl: https://binsolver.com/viz?l=example
+                        utilization: 0.3
+                        placements:
+                          - itemId: order-1
+                            x: 0
+                            y: 0
+                            z: 0
+                            w: 2
+                            h: 2
+                            d: 2
+                            rotation: xyz
+                    unplaced: []
+                    stats:
+                      items: 1
+                      placed: 1
+                      unplaced: 0
+                      binsUsed: 1
+                      durationMs: 3
+                palletization:
+                  summary: Response showing palletization splits
+                  value:
+                    bins:
+                      - binId: bin-1
+                        templateId: container
+                        w: 4
+                        h: 1
+                        d: 1
+                        vizUrl: https://binsolver.com/viz?l=example
+                        utilization: 1
+                        placements:
+                          - itemId: bin-1
+                            x: 0
+                            y: 0
+                            z: 0
+                            w: 2
+                            h: 1
+                            d: 1
+                            rotation: xyz
+                          - itemId: bin-2
+                            x: 2
+                            y: 0
+                            z: 0
+                            w: 2
+                            h: 1
+                            d: 1
+                            rotation: xyz
+                    pallets:
+                      - binId: bin-1
+                        templateId: pallet
+                        w: 2
+                        h: 1
+                        d: 1
+                        vizUrl: https://binsolver.com/viz?l=example
+                        utilization: 0.5
+                        placements:
+                          - itemId: item-1#1
+                            x: 0
+                            y: 0
+                            z: 0
+                            w: 1
+                            h: 1
+                            d: 1
+                            rotation: xyz
+                          - itemId: item-1#2
+                            x: 1
+                            y: 0
+                            z: 0
+                            w: 1
+                            h: 1
+                            d: 1
+                            rotation: xyz
+                      - binId: bin-2
+                        templateId: pallet
+                        w: 2
+                        h: 1
+                        d: 1
+                        vizUrl: https://binsolver.com/viz?l=example
+                        utilization: 0.5
+                        placements:
+                          - itemId: item-1#3
+                            x: 0
+                            y: 0
+                            z: 0
+                            w: 1
+                            h: 1
+                            d: 1
+                            rotation: xyz
+                          - itemId: item-1#4
+                            x: 1
+                            y: 0
+                            z: 0
+                            w: 1
+                            h: 1
+                            d: 1
+                            rotation: xyz
+                    splits:
+                      - itemId: item-1#1
+                        binId: bin-1
+                        palletId: bin-1
+                      - itemId: item-1#2
+                        binId: bin-1
+                        palletId: bin-1
+                      - itemId: item-1#3
+                        binId: bin-1
+                        palletId: bin-2
+                      - itemId: item-1#4
+                        binId: bin-1
+                        palletId: bin-2
+                    unplaced: []
+                    stats:
+                      items: 4
+                      placed: 4
+                      unplaced: 0
+                      binsUsed: 1
+                      palletsUsed: 2
+                      durationMs: 7
+                instructions:
+                  summary: Response with packing instructions
+                  value:
+                    bins:
+                      - binId: bin-1
+                        templateId: box
+                        w: 30
+                        h: 20
+                        d: 20
+                        utilization: 0.125
+                        vizUrl: https://binsolver.com/viz?l=example
+                        placements:
+                          - itemId: monitor
+                            x: 0
+                            y: 0
+                            z: 0
+                            w: 20
+                            h: 15
+                            d: 5
+                            rotation: xyz
+                        instructions:
+                          - "1. Place item 'monitor' upright on the floor, in the back-left corner."
+                    unplaced: []
+                    stats:
+                      items: 1
+                      placed: 1
+                      unplaced: 0
+                      binsUsed: 1
+                      durationMs: 5
+                labels:
+                  summary: Response with ZPL labels
+                  value:
+                    bins:
+                      - binId: bin-1
+                        templateId: box
+                        w: 20
+                        h: 20
+                        d: 20
+                        weight: 5
+                        utilization: 0.125
+                        vizUrl: https://binsolver.com/viz?l=example
+                        placements:
+                          - itemId: sku-1
+                            x: 0
+                            y: 0
+                            z: 0
+                            w: 10
+                            h: 10
+                            d: 10
+                            rotation: xyz
+                        label: '^XA^FO50,50^ADN,36,20^FDbin-1^FS...'
+                    unplaced: []
+                    stats:
+                      items: 1
+                      placed: 1
+                      unplaced: 0
+                      binsUsed: 1
+                      durationMs: 5
+        '400':
+          description: Invalid payload or limits exceeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Missing or invalid API key.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '402':
+          description: Usage exceeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '408':
+          description: Request timeout.
+        '429':
+          description: Rate limited.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '502':
+          description: Upstream auth provider error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: x-api-key
+  schemas:
+    PackRequest:
+      type: object
+      required: [items, bins]
+      properties:
+        items:
+          type: array
+          minItems: 1
+          maxItems: 1000
+          description: Items to pack (expanded by quantity). Maximum items per request is plan-dependent (free 100, paid 1000).
+          items:
+            $ref: '#/components/schemas/ItemInput'
+        bins:
+          type: array
+          minItems: 1
+          maxItems: 200
+          description: Bin templates to pack into. Maximum bin types per request is plan-dependent (free 50, paid 200).
+          items:
+            $ref: '#/components/schemas/BinInput'
+        allowUnplaced:
+          type: boolean
+          description: When false, the request fails if any item cannot be placed. Defaults to true.
+        objective:
+          type: string
+          enum: [fast, minBins, maxPlaced, minWaste, minCost, shipping]
+          description: Packing objective (speed, bins used, placed count, waste minimization, cost, or shipping). minCost requires bin cost values; shipping requires bin shipping profiles. Defaults to 'fast'.
+        shippingObjective:
+          $ref: '#/components/schemas/ShippingObjectiveInput'
+          description: Weights for shipping-aware optimization. Used when objective=shipping; can also tune shipping scoring while using other objectives.
+        palletization:
+          $ref: '#/components/schemas/PalletizationInput'
+          description: Two-stage packing (items->pallets->containers). Returns pallet results and split assignments. (Paid plan only)
+          x-pro-only: true
+        includeInstructions:
+          type: boolean
+          description: If true, returns step-by-step packing instructions for each bin. (Paid plan only) Defaults to false.
+          x-pro-only: true
+        labelFormat:
+          type: string
+          enum: [none, zpl]
+          description: If 'zpl', generates a ZPL label string for each bin. (Paid plan only) Defaults to 'none'.
+          x-pro-only: true
+        nestingStrategy:
+          type: string
+          enum: [auto, maximize, none]
+          description: Controls pre-pack nesting. auto uses the main objective to decide nesting; maximize fills cavities first; none disables nesting. Defaults to 'auto'.
+    ItemInput:
+      type: object
+      required: [w, h, d]
+      properties:
+        id:
+          type: string
+          description: Optional item identifier. If omitted, the API assigns one.
+        w:
+          type: number
+          format: double
+          minimum: 0
+          exclusiveMinimum: true
+          description: Item width (X axis).
+        h:
+          type: number
+          format: double
+          minimum: 0
+          exclusiveMinimum: true
+          description: Item height (Y axis).
+        d:
+          type: number
+          format: double
+          minimum: 0
+          exclusiveMinimum: true
+          description: Item depth (Z axis).
+        weight:
+          type: number
+          format: double
+          minimum: 0
+          description: Weight of a single unit of this item (used for load limits and shipping).
+        allowRotation:
+          type: boolean
+          description: If true, the item can be rotated 90 degrees on any axis. Defaults to true.
+        rotation:
+          $ref: '#/components/schemas/RotationRulesInput'
+          description: Detailed rotation rules (overrides allowRotation when provided).
+        stacking:
+          $ref: '#/components/schemas/StackingRulesInput'
+          description: Stacking constraints for stability and load.
+        packaging:
+          $ref: '#/components/schemas/PackagingRulesInput'
+          description: Grouping, hazmat, fragile, and padding rules.
+        quantity:
+          type: integer
+          minimum: 1
+          maximum: 1000
+          description: When set, total expanded items must remain within plan limits (free 100, paid 1000).
+    BinInput:
+      type: object
+      required: [w, h, d]
+      properties:
+        id:
+          type: string
+          description: Optional bin identifier. If omitted, the API assigns one.
+        w:
+          type: number
+          format: double
+          minimum: 0
+          exclusiveMinimum: true
+          description: Bin width (X axis).
+        h:
+          type: number
+          format: double
+          minimum: 0
+          exclusiveMinimum: true
+          description: Bin height (Y axis).
+        d:
+          type: number
+          format: double
+          minimum: 0
+          exclusiveMinimum: true
+          description: Bin depth (Z axis).
+        maxWeight:
+          type: number
+          format: double
+          description: Maximum weight capacity of this bin (sum of item weights).
+        cost:
+          type: number
+          format: double
+          description: Cost of using this bin (required for minCost objective).
+        tareWeight:
+          type: number
+          format: double
+          description: Empty weight of the bin or pallet (added to shipment weight).
+        allowHazmat:
+          type: boolean
+          description: If false, hazmat items cannot be placed in this bin. Defaults to true.
+        padding:
+          $ref: '#/components/schemas/PaddingInput'
+          description: Clearance between items and bin walls (shrinks usable interior).
+        shipping:
+          $ref: '#/components/schemas/ShippingInput'
+          description: Shipping profile for this bin (required for objective=shipping).
+        quantity:
+          type: integer
+          minimum: 1
+          maximum: 1000
+          description: When set, must not exceed plan limits (free 100, paid 1000).
+    PackResponse:
+      type: object
+      required: [bins, unplaced, stats]
+      properties:
+        bins:
+          type: array
+          description: Packed bins (containers) with placements.
+          items:
+            $ref: '#/components/schemas/BinResult'
+        pallets:
+          type: array
+          description: Packed pallets when palletization is enabled.
+          items:
+            $ref: '#/components/schemas/BinResult'
+        unplaced:
+          type: array
+          description: Items that could not be placed.
+          items:
+            $ref: '#/components/schemas/UnplacedItem'
+        unplacedPallets:
+          type: array
+          description: Pallets that could not be placed into containers.
+          items:
+            $ref: '#/components/schemas/UnplacedPallet'
+        splits:
+          type: array
+          description: Item-to-container assignments with pallet audit trails.
+          items:
+            $ref: '#/components/schemas/SplitAssignment'
+        stats:
+          $ref: '#/components/schemas/PackStats'
+    BinResult:
+      type: object
+      required: [binId, templateId, w, h, d, placements, vizUrl, utilization]
+      properties:
+        binId:
+          type: string
+          description: Instance id for the packed bin.
+        templateId:
+          type: string
+          description: Template id from the request.
+        w:
+          type: number
+          format: double
+          description: Bin width.
+        h:
+          type: number
+          format: double
+          description: Bin height.
+        d:
+          type: number
+          format: double
+          description: Bin depth.
+        weight:
+          type: number
+          format: double
+          description: Total weight of items in this bin.
+        shipping:
+          $ref: '#/components/schemas/ShippingResult'
+          description: Shipping cost/weight metrics for the packed bin (if shipping profile provided).
+        vizUrl:
+          type: string
+          format: uri
+          description: URL to replay this bin packing result in the BinSolver visualizer.
+        utilization:
+          type: number
+          format: double
+          description: Volume utilization of the bin (0.0 to 1.0).
+        placements:
+          type: array
+          description: Item placements in this bin.
+          items:
+            $ref: '#/components/schemas/Placement'
+        instructions:
+          type: array
+          description: Step-by-step packing instructions (if requested).
+          items:
+            type: string
+        label:
+          type: string
+          description: Generated label code (e.g. ZPL) for the bin (if requested).
+    Placement:
+      type: object
+      required: [itemId, x, y, z, w, h, d, rotation]
+      properties:
+        itemId:
+          type: string
+          description: Item identifier for this placement.
+        x:
+          type: number
+          format: double
+          description: X coordinate of the placement origin.
+        y:
+          type: number
+          format: double
+          description: Y coordinate of the placement origin.
+        z:
+          type: number
+          format: double
+          description: Z coordinate of the placement origin.
+        w:
+          type: number
+          format: double
+          description: Packed width (includes item padding if provided).
+        h:
+          type: number
+          format: double
+          description: Packed height (includes item padding if provided).
+        d:
+          type: number
+          format: double
+          description: Packed depth (includes item padding if provided).
+        rotation:
+          type: string
+          enum: [xyz, xzy, yxz, yzx, zxy, zyx]
+          description: Applied rotation permutation.
+        nested:
+          type: array
+          description: Items packed inside this item (if nesting was used). Coordinates are relative to the item's local origin.
+          items:
+            $ref: '#/components/schemas/NestedPlacement'
+    NestedPlacement:
+      type: object
+      required: [itemId, x, y, z, w, h, d, rotation]
+      properties:
+        itemId:
+          type: string
+          description: Item identifier for this placement.
+        x:
+          type: number
+          format: double
+          description: X coordinate of the placement origin (relative to container).
+        y:
+          type: number
+          format: double
+          description: Y coordinate of the placement origin (relative to container).
+        z:
+          type: number
+          format: double
+          description: Z coordinate of the placement origin (relative to container).
+        w:
+          type: number
+          format: double
+          description: Packed width (includes item padding if provided).
+        h:
+          type: number
+          format: double
+          description: Packed height (includes item padding if provided).
+        d:
+          type: number
+          format: double
+          description: Packed depth (includes item padding if provided).
+        rotation:
+          type: string
+          enum: [xyz, xzy, yxz, yzx, zxy, zyx]
+          description: Applied rotation permutation.
+    UnplacedItem:
+      type: object
+      required: [itemId, w, h, d, reason]
+      properties:
+        itemId:
+          type: string
+          description: Item identifier.
+        w:
+          type: number
+          format: double
+          description: Item width.
+        h:
+          type: number
+          format: double
+          description: Item height.
+        d:
+          type: number
+          format: double
+          description: Item depth.
+        weight:
+          type: number
+          format: double
+          description: Item weight.
+        reason:
+          type: string
+          description: Reason code for why the item was not placed (e.g., no_fit, pallet_unplaced).
+    UnplacedPallet:
+      type: object
+      required: [palletId, reason]
+      properties:
+        palletId:
+          type: string
+          description: Pallet instance id.
+        reason:
+          type: string
+          description: Reason code for why the pallet was not placed.
+    SplitAssignment:
+      type: object
+      required: [itemId, binId]
+      properties:
+        itemId:
+          type: string
+          description: Item identifier.
+        binId:
+          type: string
+          description: Container/bin identifier where the item ultimately lands.
+        palletId:
+          type: string
+          description: Pallet identifier if palletization was used.
+    ShippingResult:
+      type: object
+      required: [billableWeight, dimensionalWeight, cost, carbon, slaDays]
+      properties:
+        billableWeight:
+          type: number
+          format: double
+          description: max(actual weight, dimensional weight).
+        dimensionalWeight:
+          type: number
+          format: double
+          description: Dimensional weight computed from bin volume and divisor.
+        cost:
+          type: number
+          format: double
+          description: Estimated shipping cost.
+        carbon:
+          type: number
+          format: double
+          description: Estimated carbon impact.
+        slaDays:
+          type: number
+          format: double
+          description: Estimated delivery time in days.
+    RotationRulesInput:
+      type: object
+      description: Controls which rotations are allowed for this item.
+      properties:
+        mode:
+          $ref: '#/components/schemas/RotationMode'
+          description: Rotation strategy. upright/noFlip keep height on Y axis.
+        allowAxes:
+          $ref: '#/components/schemas/RotationAxes'
+          description: Allowed axis swaps when mode=axis.
+        allowed:
+          type: array
+          description: Allowed explicit rotations when mode=custom.
+          items:
+            type: string
+            enum: [xyz, xzy, yxz, yzx, zxy, zyx]
+    RotationMode:
+      type: string
+      enum: [any, none, upright, noFlip, axis, custom]
+      description: Rotation mode selector.
+    RotationAxes:
+      type: object
+      description: Allowed axis swaps for axis-specific rotation control.
+      properties:
+        xy:
+          type: boolean
+          description: Allow swapping X and Y.
+        xz:
+          type: boolean
+          description: Allow swapping X and Z.
+        yz:
+          type: boolean
+          description: Allow swapping Y and Z.
+    StackingRulesInput:
+      type: object
+      description: Stability and stacking constraints for this item.
+      properties:
+        minSupportRatio:
+          type: number
+          format: double
+          description: Minimum supported base area ratio (0..1).
+        minSupportArea:
+          type: number
+          format: double
+          description: Minimum supported base area (absolute units).
+        maxLoad:
+          type: number
+          format: double
+          description: Maximum load this item can support above it.
+        maxStackHeight:
+          type: number
+          format: double
+          description: Maximum stacked height above this item.
+        requireCogSupport:
+          type: boolean
+          description: Require center-of-gravity to be supported.
+    PackagingRulesInput:
+      type: object
+      description: Packaging and compatibility constraints.
+      properties:
+        group:
+          type: string
+          description: Group identifier. Items sharing the same group id are governed by groupMode.
+        groupMode:
+          $ref: '#/components/schemas/GroupMode'
+          description: keepTogether packs the entire group in the same bin (or leaves all unplaced); separate isolates the group to its own bins. Defaults to keepTogether when group is set.
+        hazmat:
+          type: boolean
+          description: Marks item as hazardous; requires allowHazmat=true on bins.
+        fragile:
+          type: boolean
+          description: Marks item as fragile; prevents stacking weight above.
+        nestable:
+          type: boolean
+          description: When false, this item cannot be nested inside other items. Defaults to true.
+        nesting:
+          $ref: '#/components/schemas/NestingRulesInput'
+          description: Defines an internal cavity so other items may be packed inside this item.
+        padding:
+          $ref: '#/components/schemas/PaddingInput'
+          description: Clearance added around the item dimensions.
+    NestingRulesInput:
+      type: object
+      required: [innerW, innerH, innerD]
+      description: Internal cavity definition for nesting.
+      properties:
+        innerW:
+          type: number
+          format: double
+          minimum: 0
+          exclusiveMinimum: true
+          description: Inner cavity width (X axis).
+        innerH:
+          type: number
+          format: double
+          minimum: 0
+          exclusiveMinimum: true
+          description: Inner cavity height (Y axis).
+        innerD:
+          type: number
+          format: double
+          minimum: 0
+          exclusiveMinimum: true
+          description: Inner cavity depth (Z axis).
+        padding:
+          $ref: '#/components/schemas/PaddingInput'
+          description: Clearance between nested items and cavity walls.
+        maxWeight:
+          type: number
+          format: double
+          minimum: 0
+          description: Maximum total weight allowed inside this cavity.
+        allowHazmat:
+          type: boolean
+          description: If false, hazmat items cannot be nested inside this cavity. Defaults to true.
+        allowedGroups:
+          type: array
+          description: If set, only items whose packaging.group is in this list may be nested.
+          items:
+            type: string
+    GroupMode:
+      type: string
+      enum: [keepTogether, separate]
+      description: Grouping mode for items sharing the same group id. groupMode without group is invalid.
+    PaddingInput:
+      type: object
+      description: Padding/clearance values (all sets defaults for x/y/z).
+      properties:
+        all:
+          type: number
+          format: double
+          description: Uniform padding on all axes.
+        x:
+          type: number
+          format: double
+          description: Padding on the X axis.
+        y:
+          type: number
+          format: double
+          description: Padding on the Y axis.
+        z:
+          type: number
+          format: double
+          description: Padding on the Z axis.
+    ShippingInput:
+      type: object
+      description: Shipping profile for a bin or container.
+      properties:
+        baseCost:
+          type: number
+          format: double
+          description: Fixed cost per shipment for this bin.
+        ratePerWeight:
+          type: number
+          format: double
+          description: Variable cost per unit of billable weight.
+        dimWeightDivisor:
+          type: number
+          format: double
+          description: Divisor for dimensional weight (volume / divisor).
+        carbonPerWeight:
+          type: number
+          format: double
+          description: Carbon cost per unit of billable weight.
+        slaDays:
+          type: number
+          format: double
+          description: Estimated delivery time for this bin.
+    ShippingObjectiveInput:
+      type: object
+      description: Weights used to score shipping tradeoffs during optimization.
+      properties:
+        costWeight:
+          type: number
+          format: double
+          description: Weight applied to cost in the shipping objective.
+        carbonWeight:
+          type: number
+          format: double
+          description: Weight applied to carbon impact in the shipping objective.
+        slaWeight:
+          type: number
+          format: double
+          description: Weight applied to SLA days in the shipping objective (lower is better).
+        dimWeightDivisor:
+          type: number
+          format: double
+          description: Override bin shipping dimWeightDivisor for optimization.
+    PalletizationInput:
+      type: object
+      required: [pallets]
+      description: 'Two-stage packing: items -> pallets -> containers.'
+      properties:
+        pallets:
+          type: array
+          description: Pallet templates used for the first packing stage.
+          items:
+            $ref: '#/components/schemas/BinInput'
+        allowMixedContainers:
+          type: boolean
+          description: When false, all pallets must fit a single container template.
+    PackStats:
+      type: object
+      required: [items, placed, unplaced, binsUsed, durationMs]
+      properties:
+        items:
+          type: integer
+          description: Total items requested (after quantity expansion).
+        placed:
+          type: integer
+          description: Number of items successfully placed.
+        unplaced:
+          type: integer
+          description: Number of items not placed.
+        nested:
+          type: integer
+          description: Number of items nested inside other items.
+        binsUsed:
+          type: integer
+          description: Number of bins used.
+        palletsUsed:
+          type: integer
+          description: Number of pallets used (if palletization enabled).
+        durationMs:
+          type: integer
+          format: int64
+          description: Packing duration in milliseconds.
+        requestId:
+          type: string
+          description: Echoed request id when provided.
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          $ref: '#/components/schemas/ErrorBody'
+    ErrorBody:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+          description: Machine-readable error code.
+        message:
+          type: string
+          description: Human-readable error message.
+        requestId:
+          type: string
+          description: Request identifier when provided.

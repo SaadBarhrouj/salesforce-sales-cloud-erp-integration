@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
-    <fullName>Scope__c</fullName>
-    <inlineHelpText>Bundle: evaluated during configurator. Quote: evaluated at OLI save.</inlineHelpText>
-    <label>Scope</label>
-    <required>true</required>
+    <fullName>Direction__c</fullName>
+    <description>Flow of the call: Outbound (SF to External) or Inbound.</description>
+    <inlineHelpText>Flow of the call: Outbound (SF to External) or Inbound.</inlineHelpText>
+    <label>Direction</label>
+    <required>false</required>
     <trackTrending>false</trackTrending>
     <type>Picklist</type>
     <valueSet>
@@ -11,14 +12,14 @@
         <valueSetDefinition>
             <sorted>false</sorted>
             <value>
-                <fullName>Bundle</fullName>
+                <fullName>Outbound</fullName>
                 <default>false</default>
-                <label>Bundle</label>
+                <label>Outbound</label>
             </value>
             <value>
-                <fullName>Quote</fullName>
+                <fullName>Inbound</fullName>
                 <default>false</default>
-                <label>Quote</label>
+                <label>Inbound</label>
             </value>
         </valueSetDefinition>
     </valueSet>

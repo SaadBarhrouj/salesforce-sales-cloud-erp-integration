@@ -34,7 +34,6 @@
                         {bundleName}
                     </h1>
 
-
                     <!-- ── SECTIONS VIEW ────────────────────────────────── -->
                     <template lwc:if={isSectionsView}>
                         <div class="slds-m-bottom_large">
@@ -110,5 +109,64 @@
             </template>
 
         </div>
+
+        <section class={filterPanelClass} aria-hidden={filterPanelHidden}>
+            <div class="filter-panel__header slds-grid slds-grid_align-spread slds-media_center slds-p-around_medium slds-m-around_none">
+                <div>
+                    <h2 class="slds-text-heading_small slds-truncate slds-m-around_none" title="Filters">Filters</h2>
+                    <p class="slds-m-top_xxx-small slds-text-body_small slds-color__text_gray-9 slds-m-around_none">Code and type</p>
+                </div>
+                <lightning-button-icon
+                    icon-name="utility:close"
+                    variant="border-filled"
+                    alternative-text="Close filters"
+                    title="Close filters"
+                    onclick={handleCloseFilterPanel}>
+                </lightning-button-icon>
+            </div>
+
+            <div class="filter-panel__summary slds-grid slds-wrap" lwc:if={hasActiveFilters}>
+                <template for:each={activeFilters} for:item="filter">
+                    <lightning-pill
+                        key={filter.id}
+                        label={filter.label}
+                        name={filter.field}
+                        onremove={handleRemoveFilter}>
+                    </lightning-pill>
+                </template>
+            </div>
+
+            <div class="filter-panel__body slds-p-around_medium slds-p-top_none">
+                <lightning-input
+                    label="Product Code"
+                    value={pendingFilterProductCode}
+                    onchange={handleFilterProductCodeChange}>
+                </lightning-input>
+
+                <div class="slds-m-top_small">
+                    <lightning-combobox
+                        name="optionTypeFilter"
+                        label="Option Type"
+                        options={optionTypeOptions}
+                        value={pendingFilterOptionType}
+                        onchange={handleFilterOptionTypeChange}>
+                    </lightning-combobox>
+                </div>
+            </div>
+
+            <div class="filter-panel__footer slds-grid slds-grid_align-end slds-gutters_x-small">
+                <lightning-button
+                    label="Reset"
+                    variant="neutral"
+                    onclick={handleResetFilters}>
+                </lightning-button>
+                <lightning-button
+                    class="slds-m-left_small"
+                    label="Apply"
+                    variant="brand"
+                    onclick={handleApplyFilters}>
+                </lightning-button>
+            </div>
+        </section>
     </div>
 </template>

@@ -101,42 +101,8 @@
                     <name>uiBehavior</name>
                     <value>none</value>
                 </fieldInstanceProperties>
-                <fieldItem>Record.Quantity_Editable__c</fieldItem>
-                <identifier>RecordQuantity_Editable_cField</identifier>
-            </fieldInstance>
-        </itemInstances>
-        <itemInstances>
-            <fieldInstance>
-                <fieldInstanceProperties>
-                    <name>uiBehavior</name>
-                    <value>none</value>
-                </fieldInstanceProperties>
-                <fieldItem>Record.Min_Quantity__c</fieldItem>
-                <identifier>RecordMin_Quantity_cField</identifier>
-                <visibilityRule>
-                    <criteria>
-                        <leftValue>{!Record.Quantity_Editable__c}</leftValue>
-                        <operator>EQUAL</operator>
-                        <rightValue>true</rightValue>
-                    </criteria>
-                </visibilityRule>
-            </fieldInstance>
-        </itemInstances>
-        <itemInstances>
-            <fieldInstance>
-                <fieldInstanceProperties>
-                    <name>uiBehavior</name>
-                    <value>none</value>
-                </fieldInstanceProperties>
-                <fieldItem>Record.Max_Quantity__c</fieldItem>
-                <identifier>RecordMax_Quantity_cField</identifier>
-                <visibilityRule>
-                    <criteria>
-                        <leftValue>{!Record.Quantity_Editable__c}</leftValue>
-                        <operator>EQUAL</operator>
-                        <rightValue>true</rightValue>
-                    </criteria>
-                </visibilityRule>
+                <fieldItem>Record.Default_Quantity__c</fieldItem>
+                <identifier>RecordDefault_Quantity_cField</identifier>
             </fieldInstance>
         </itemInstances>
         <name>Facet-17deaf0d-a690-4d73-b280-0ce757686d9f</name>
@@ -189,8 +155,32 @@
                     <name>uiBehavior</name>
                     <value>none</value>
                 </fieldInstanceProperties>
-                <fieldItem>Record.Default_Quantity__c</fieldItem>
-                <identifier>RecordDefault_Quantity_cField</identifier>
+                <fieldItem>Record.Min_Quantity__c</fieldItem>
+                <identifier>RecordMin_Quantity_cField</identifier>
+                <visibilityRule>
+                    <criteria>
+                        <leftValue>{!Record.Option_Type__c}</leftValue>
+                        <operator>EQUAL</operator>
+                        <rightValue>Related Product</rightValue>
+                    </criteria>
+                </visibilityRule>
+            </fieldInstance>
+        </itemInstances>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>none</value>
+                </fieldInstanceProperties>
+                <fieldItem>Record.Max_Quantity__c</fieldItem>
+                <identifier>RecordMax_Quantity_cField</identifier>
+                <visibilityRule>
+                    <criteria>
+                        <leftValue>{!Record.Option_Type__c}</leftValue>
+                        <operator>EQUAL</operator>
+                        <rightValue>Related Product</rightValue>
+                    </criteria>
+                </visibilityRule>
             </fieldInstance>
         </itemInstances>
         <name>Facet-8ba5d4c8-abad-4c69-a29f-3a5fd474e632</name>

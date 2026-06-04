@@ -114,6 +114,13 @@
     white-space: nowrap;
 }
 
+.route-duration {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #706e6b;
+    white-space: nowrap;
+}
+
 .route-direction {
     font-size: 0.6875rem;
     font-weight: 600;

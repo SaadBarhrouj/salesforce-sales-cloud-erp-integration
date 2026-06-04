@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Trigger_Field__c</fullName>
+    <description>Fully qualified API name of the field to evaluate on the Trip or its related objects. The engine reads this field value at runtime. Supported paths: Opportunity.Transport_Urgency__c, Destination_Location__r.Site_Access__c, or direct Trip fields. Ignored when Is_Always_Active__c = true.</description>
+    <externalId>false</externalId>
+    <fieldManageability>DeveloperControlled</fieldManageability>
+    <inlineHelpText>API field path to evaluate (e.g., Opportunity.Transport_Urgency__c or Destination_Location__r.Site_Access__c). Leave blank if Always Active.</inlineHelpText>
+    <label>Trigger Field</label>
+    <length>50</length>
+    <required>false</required>
+    <type>Text</type>
+    <unique>false</unique>
+</CustomField>

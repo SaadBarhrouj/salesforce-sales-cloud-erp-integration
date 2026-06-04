@@ -72,6 +72,8 @@ public inherited sharing class OpportunityService {
 
             List<OpportunityLineItem> lineItems = buildLineItems(opportunityId, lineItemData, entryByProductId, isVolume);
 
+            enforceLineRules(opportunityId, lineItemData);
+
             OpportunityLineItemDAO.deleteByOpportunityId(opportunityId);
             OpportunityLineItemDAO.insertLineItems(lineItems);
 
@@ -135,6 +137,60 @@ public inherited sharing class OpportunityService {
                 throw new OpportunityException('Service End Date must be on or after Start Date on every line.');
             }
         }
+    }
+
+    /**
+     * @description Evaluates the active Validation and Alert Product Rules against the line items
+     * being saved. A fired Validation rule blocks the save; Alert rules are advisory and surfaced
+     * on the Line Editor, so they do not block here.
+     * @param opportunityId The Opportunity being saved.
+     * @param lineItemData  The line item payloads (parents and bundle options).
+     * @throws OpportunityException if any Validation rule fires.
+     */
+    private static void enforceLineRules(Id opportunityId, List<Map<String, Object>> lineItemData) {
+        Map<String, Object> verdict = ProductRuleService.evaluateLineRules(
+            opportunityId, buildRuleLines(lineItemData)
+        );
+        List<String> errors = (List<String>) verdict.get('validationErrors');
+        if (errors != null && !errors.isEmpty()) {
+            throw new OpportunityException(String.join(errors, ' '));
+        }
+    }
+
+    /**
+     * @description Flattens the line item payload into the minimal line maps the rule engine expects.
+     * @param lineItemData Line item payloads from the configurator.
+     * @return One map per parent product and per bundle option.
+     */
+    private static List<Map<String, Object>> buildRuleLines(List<Map<String, Object>> lineItemData) {
+        List<Map<String, Object>> lines = new List<Map<String, Object>>();
+        for (Map<String, Object> item : lineItemData) {
+            lines.add(new Map<String, Object>{
+                'productId' => item.get('product2Id'),
+                'quantity' => item.get('quantity'),
+                'unitPrice' => item.get('unitPrice'),
+                'discountPercent' => item.get('discountPercent'),
+                'isBundle' => item.get('isBundle') == true
+            });
+            List<Object> options = (List<Object>) item.get('options');
+            if (options == null) {
+                continue;
+            }
+            for (Object optObj : options) {
+                Map<String, Object> optData = toStringKeyMap(optObj);
+                if (optData == null) {
+                    continue;
+                }
+                lines.add(new Map<String, Object>{
+                    'productId' => optData.get('product2Id'),
+                    'quantity' => optData.get('quantity'),
+                    'unitPrice' => optData.get('unitPrice'),
+                    'discountPercent' => optData.get('discountPercent'),
+                    'isBundle' => false
+                });
+            }
+        }
+        return lines;
     }
 
     /**
@@ -265,18 +321,60 @@ public inherited sharing class OpportunityService {
             items.add(parentItem);
 
             List<Object> options = (List<Object>) itemData.get('options');
-            if (options != null) {
+            if (options != null && !options.isEmpty()) {
+                // Resolve source Bundle_Option__c records by (parent product, option product) pair.
+                Set<Id> optProductIds = new Set<Id>();
+                for (Object optObj : options) {
+                    Map<String, Object> optDataPreview = toStringKeyMap(optObj);
+                    if (optDataPreview == null) {
+                        continue;
+                    }
+                    Id optProductId = toId(optDataPreview.get('product2Id'));
+                    if (optProductId != null) {
+                        optProductIds.add(optProductId);
+                    }
+                }
+
+                Map<String, Bundle_Option__c> sourceByKey = new Map<String, Bundle_Option__c>();
+                if (product2Id != null && !optProductIds.isEmpty()) {
+                    Map<Id, Set<Id>> pairs = new Map<Id, Set<Id>>{ product2Id => optProductIds };
+                    for (Bundle_Option__c bo : BundleOptionDAO.getByBundleAndOptionPairs(pairs)) {
+                        String k = String.valueOf(bo.Bundle_Product__c) + '|' + String.valueOf(bo.Option_Product__c);
+                        if (!sourceByKey.containsKey(k)) {
+                            sourceByKey.put(k, bo);
+                        }
+                    }
+                }
+
+                Integer parentQty = toInteger(itemData.get('quantity'));
+
                 for (Object optObj : options) {
                     Map<String, Object> optData = toStringKeyMap(optObj);
                     if (optData == null) {
                         continue;
                     }
                     if (isVolume) {
-                        // Bundle options inherit the parent line's service window.
-                        optData.put('serviceStartDate', itemData.get('serviceStartDate'));
-                        optData.put('serviceEndDate', itemData.get('serviceEndDate'));
+                        // Options inherit the parent's service window only when the
+                        // option itself has no override (the line editor lets a rep
+                        // set per-option dates on top of the bundle's defaults).
+                        if (optData.get('serviceStartDate') == null) {
+                            optData.put('serviceStartDate', itemData.get('serviceStartDate'));
+                        }
+                        if (optData.get('serviceEndDate') == null) {
+                            optData.put('serviceEndDate', itemData.get('serviceEndDate'));
+                        }
                     }
                     Id optProduct2Id = toId(optData.get('product2Id'));
+
+                    String key = String.valueOf(product2Id) + '|' + String.valueOf(optProduct2Id);
+                    Bundle_Option__c source = sourceByKey.get(key);
+                    if (source != null && source.Default_Quantity__c != null) {
+                        if (source.Option_Type__c == 'Component') {
+                            optData.put('quantity', Integer.valueOf(source.Default_Quantity__c * parentQty));
+                        } else if (source.Option_Type__c == 'Accessory') {
+                            optData.put('quantity', Integer.valueOf(source.Default_Quantity__c));
+                        }
+                    }
 
                     OpportunityLineItem childItem = buildSingleLineItem(
                         opportunityId, optProduct2Id, optData, entryByProductId, isVolume
@@ -364,7 +462,7 @@ public inherited sharing class OpportunityService {
             opp.Transport_Urgency__c = (String) logistics.get('transportUrgency');
         }
 
-        OpportunityDAO.updateOpportunity(opp);
+        OpportunityDAO.updateRecord(opp);
     }
 
     /**
@@ -435,7 +533,7 @@ public inherited sharing class OpportunityService {
         }
 
         if (!trips.isEmpty()) {
-            TripService.updateTrips(trips);
+            TripDAO.upsertTrips(trips);
         }
     }
 
@@ -529,6 +627,89 @@ public inherited sharing class OpportunityService {
             return Date.valueOf(String.valueOf(value));
         } catch (Exception e) {
             return null;
+        }
+    }
+
+    /**
+     * @description Trigger handler invoked before Opportunity insert.
+     * @param newList The list of Opportunity records being inserted.
+     */
+    public static void beforeInsert(List<Opportunity> newList) {
+        System.debug(LoggingLevel.INFO, '=== [OpportunityService] beforeInsert exécuté ===');
+    }
+
+    /**
+     * @description Trigger handler invoked before Opportunity update.
+     * @param newList The list of Opportunity records being updated.
+     * @param oldMap  Map of Opportunity Id to the previous record state.
+     */
+    public static void beforeUpdate(List<Opportunity> newList, Map<Id, Opportunity> oldMap) {
+        System.debug(LoggingLevel.INFO, '===[OpportunityService] beforeUpdate exécuté ===');
+    }
+
+    /**
+     * @description Trigger handler invoked before Opportunity delete.
+     * @param oldMap Map of Opportunity Id to the record being deleted.
+     */
+    public static void beforeDelete(Map<Id, Opportunity> oldMap) {
+        System.debug(LoggingLevel.INFO, '=== [OpportunityService] beforeDelete exécuté ===');
+    }
+
+    /**
+     * @description Trigger handler invoked after Opportunity insert.
+     * Enqueues distance calculation when agency and delivery site are set.
+     * @param newList The list of Opportunity records just inserted.
+     */
+    public static void afterInsert(List<Opportunity> newList) {
+        System.debug(LoggingLevel.INFO, '=== [OpportunityService] afterInsert exécuté ===');
+
+        checkAndEnqueueDistanceCalculation(newList, null);
+    }
+
+    /**
+     * @description Trigger handler invoked after Opportunity update.
+     * Enqueues distance calculation when agency or delivery site changes.
+     * @param newList The list of Opportunity records just updated.
+     * @param oldMap  Map of Opportunity Id to the previous record state.
+     */
+    public static void afterUpdate(List<Opportunity> newList, Map<Id, Opportunity> oldMap) {
+        System.debug(LoggingLevel.INFO, '=== [OpportunityService] afterUpdate exécuté ===');
+
+        checkAndEnqueueDistanceCalculation(newList, oldMap);
+    }
+
+    /**
+     * @description Trigger handler invoked after Opportunity delete.
+     * @param oldMap Map of Opportunity Id to the deleted record.
+     */
+    public static void afterDelete(Map<Id, Opportunity> oldMap) {
+        System.debug(LoggingLevel.INFO, '=== [OpportunityService] afterDelete exécuté ===');
+    }
+
+
+    /**
+     * @description Checks if an opportunity requires road distance calculation
+     * and enqueues the asynchronous processing (Queueable).
+     * @param newOpps The list of Opportunity records to evaluate.
+     * @param oldMap  Map of Opportunity Id to previous state; null for insert.
+     */
+    private static void checkAndEnqueueDistanceCalculation(List<Opportunity> newOpps, Map<Id, Opportunity> oldMap) {
+        Set<Id> oppIdsToProcess = new Set<Id>();
+        
+        for (Opportunity opp : newOpps) {
+            if (opp.Default_Agency__c != null && opp.Delivery_Site__c != null) {
+                
+                if (oldMap == null || 
+                    opp.Default_Agency__c != oldMap.get(opp.Id).Default_Agency__c || 
+                    opp.Delivery_Site__c != oldMap.get(opp.Id).Delivery_Site__c) {
+                    
+                    oppIdsToProcess.add(opp.Id);
+                }
+            }
+        }
+        
+        if (!oppIdsToProcess.isEmpty()) {
+            System.enqueueJob(new DistanceCalculationQueueable(oppIdsToProcess));
         }
     }
 }

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PermissionSet xmlns="http://soap.sforce.com/2006/04/metadata">
+    <description>Grants access to the Named Credential BinSolver_API and allows users to make BinSolver API calls from the opportunity wizard.
+Required for users who need to calculate trips/loading via BinSolver.</description>
+    <externalCredentialPrincipalAccesses>
+        <enabled>true</enabled>
+        <externalCredentialPrincipal>BinSolver_Auth-BinSolver_API_Key</externalCredentialPrincipal>
+    </externalCredentialPrincipalAccesses>
+    <hasActivationRequired>false</hasActivationRequired>
+    <label>BinSolver Callout</label>
+</PermissionSet>

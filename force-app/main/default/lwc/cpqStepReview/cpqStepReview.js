@@ -124,9 +124,11 @@ export default class CpqStepReview extends NavigationMixin(LightningElement) {
                         buttonVisibility: 'display: none;',
                         paddingStyle: 'padding-left: 2rem;',
                         rowClass: 'slds-hint-parent option-sub-row',
-                        formattedServiceStart: this._formatDate(product.serviceStartDate),
-                        formattedServiceEnd: this._formatDate(product.serviceEndDate),
-                        serviceDays: this._daysBetween(product.serviceStartDate, product.serviceEndDate),
+                        formattedServiceStart: this._formatDate(opt.serviceStartDate || product.serviceStartDate),
+                        formattedServiceEnd: this._formatDate(opt.serviceEndDate || product.serviceEndDate),
+                        serviceDays: this._daysBetween(
+                            opt.serviceStartDate || product.serviceStartDate,
+                            opt.serviceEndDate || product.serviceEndDate),
                         formattedDailyRate: formatCurrency(opt.dailyRate || 0)
                     });
                 });

@@ -47,8 +47,6 @@ $RECYCLE.BIN/
 **/.venv/
 **/venv/
 
-# Custom Metadata Type objects (definitions)
-**/objects/*__mdt/
 
 # GitHub & VSCode configuration files
 .github/skills/
@@ -79,4 +77,4 @@ AGENTS.md
 claude.md
 
 rapportPFE/
-
+docs/

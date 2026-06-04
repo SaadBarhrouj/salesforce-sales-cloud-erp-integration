@@ -1,5 +1,5 @@
 import { LightningElement, api } from 'lwc';
-import { formatCurrency, formatNumber } from 'c/cpqUtils';
+import { formatCurrency, formatNumber, getOptionTypePolicy } from 'c/cpqUtils';
 
 export default class CpqOptionRow extends LightningElement {
     @api option = {};
@@ -29,7 +29,7 @@ export default class CpqOptionRow extends LightningElement {
     }
 
     get isQuantityEditable() {
-        return this.option.Quantity_Editable__c && this.option.isSelected;
+        return getOptionTypePolicy(this.option.optionType).editableInConfigurator && this.option.isSelected;
     }
 
     get formattedPrice() {

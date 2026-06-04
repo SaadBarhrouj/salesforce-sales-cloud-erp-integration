@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Trip_Direction_Mode__c</fullName>
+    <description>For rental opportunities, controls whether trip calculation generates Delivery trips only, Pickup trips only, or Both. Read by TripService.calculateTripsWithCPQItems and persisted from the CPQ Logistics step.</description>
+    <inlineHelpText>For rental offers, choose whether to generate Delivery trips, Pickup (return) trips, or Both. Defaults to Delivery.</inlineHelpText>
+    <label>Trip Direction Mode</label>
+    <required>false</required>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackTrending>false</trackTrending>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Delivery</fullName>
+                <default>true</default>
+                <label>Delivery</label>
+            </value>
+            <value>
+                <fullName>Pickup</fullName>
+                <default>false</default>
+                <label>Pickup</label>
+            </value>
+            <value>
+                <fullName>Delivery_Pickup</fullName>
+                <default>false</default>
+                <label>Delivery &amp; Pickup</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

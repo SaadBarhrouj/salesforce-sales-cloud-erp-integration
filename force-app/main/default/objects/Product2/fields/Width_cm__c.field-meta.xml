@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Width_cm__c</fullName>
+    <description>Physical width of the packaged product measured in centimeters (cm). Must be a whole number for API stability.</description>
+    <externalId>false</externalId>
+    <inlineHelpText>Physical width of the packaged product measured in centimeters (cm). Must be a whole number for API stability.</inlineHelpText>
+    <label>Width (cm)</label>
+    <precision>18</precision>
+    <required>false</required>
+    <scale>0</scale>
+    <trackHistory>false</trackHistory>
+    <type>Number</type>
+    <unique>false</unique>
+</CustomField>

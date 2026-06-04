@@ -1,11 +1,13 @@
 import { LightningElement, api, track } from 'lwc';
-import { formatCurrency, showToast } from 'c/cpqUtils';
+import { formatCurrency, showToast, getOptionTypePolicy, OPTION_TYPE_COMPONENT } from 'c/cpqUtils';
 import calculateLinePrices from '@salesforce/apex/PricebookController.calculateLinePrices';
+import getOptionMetadata from '@salesforce/apex/BundleOptionController.getOptionMetadata';
+import evaluateLineRules from '@salesforce/apex/ProductRuleController.evaluateLineRules';
 
 const DEBOUNCE_DELAY = 500;
 
 const BASE_COLUMNS = [
-    { type: 'text', fieldName: 'productName', label: 'Product', isProduct: true },
+    { type: 'text', fieldName: 'productName', label: 'Product', isProduct: true, style: 'width: 23rem' },
     { type: 'text', fieldName: 'productCode', label: 'Code', isCode: true },
     { type: 'number', fieldName: 'quantity', label: 'Qty', editable: true, isQty: true },
     { type: 'currency', fieldName: 'listUnitPrice', label: 'List Price', isCurrency: true, isListPrice: true },
@@ -28,6 +30,9 @@ export default class CpqStepLineEditor extends LightningElement {
     @track lineItems = []; // FLATTENED state
     @track isLoading = true;
     @track expandedRows = new Set();
+
+    @api opportunityId;
+    @track ruleMessages = { errors: [], alerts: [] };
 
     _debounceTimer = null;
     _calculationSequence = 0;
@@ -77,7 +82,49 @@ export default class CpqStepLineEditor extends LightningElement {
     set selectedProducts(value) {
         this._selectedProducts = value || [];
         this._initialPricingRequested = false;
+        this._enrichOptionMetadataThenPrepare();
+    }
+
+    async _enrichOptionMetadataThenPrepare() {
+        const needsMetadata = [];
+        for (const item of this._selectedProducts) {
+            if (!item.isBundle || !item.configuredOptions) continue;
+            for (const opt of item.configuredOptions) {
+                if (opt.optionType == null || opt.defaultQuantity == null) {
+                    needsMetadata.push({ parentProductId: item.productId, optionProductId: opt.productId });
+                }
+            }
+        }
+        if (needsMetadata.length > 0) {
+            const parentToOptionIds = {};
+            for (const pair of needsMetadata) {
+                if (!parentToOptionIds[pair.parentProductId]) parentToOptionIds[pair.parentProductId] = [];
+                parentToOptionIds[pair.parentProductId].push(pair.optionProductId);
+            }
+            try {
+                const metadata = await getOptionMetadata({ parentToOptionIds });
+                for (const item of this._selectedProducts) {
+                    if (!item.isBundle || !item.configuredOptions) continue;
+                    for (const opt of item.configuredOptions) {
+                        const key = `${item.productId}|${opt.productId}`;
+                        const md = metadata[key];
+                        if (md) {
+                            opt.optionType = opt.optionType ?? md.optionType;
+                            opt.defaultQuantity = opt.defaultQuantity ?? md.defaultQuantity;
+                            opt.minQuantity = opt.minQuantity ?? md.minQuantity;
+                            opt.maxQuantity = opt.maxQuantity ?? md.maxQuantity;
+                        }
+                    }
+                }
+            } catch (err) {
+                console.error('getOptionMetadata failed', err);
+            }
+        }
         this._prepareLineItems();
+        // On remount the header dates reset to null because the component was
+        // unmounted by the parent's lwc:if. Recover them from the persisted
+        // lines so the cascade has a sane source.
+        this._hydrateHeaderFromLines();
         // After rebuilding lines, push header dates onto fresh lines so a rep
         // who set the header before adding products doesn't have to retype.
         this._cascadeHeaderToLines();
@@ -100,6 +147,18 @@ export default class CpqStepLineEditor extends LightningElement {
 
     get isNotEmpty() {
         return !this.isEmpty;
+    }
+
+    get hasValidationErrors() {
+        return this.ruleMessages.errors.length > 0;
+    }
+
+    get hasAlerts() {
+        return this.ruleMessages.alerts.length > 0;
+    }
+
+    get hasRuleMessages() {
+        return this.hasValidationErrors || this.hasAlerts;
     }
 
     get subtotal() {
@@ -141,11 +200,11 @@ export default class CpqStepLineEditor extends LightningElement {
                 isExpanded,
                 chevronClass: (row._hasChildren && !isExpanded) ? 'utility:chevronright' : 'utility:chevrondown',
                 buttonStyle: row._hasChildren ? '' : 'visibility: hidden;',
-                isQtyEditable: !row._isOption,
+                isQtyEditable: !row._isOption || getOptionTypePolicy(row.optionType).editableInLineEditor,
                 isDiscountEditable: true,
                 showCheckbox: !row._isOption,
                 rowClass: `slds-hint-parent ${row._hasError ? 'slds-is-selected row-error' : ''}`,
-                paddingStyle: `padding-left: ${level > 1 ? level * 1.5 : 0}rem;`,
+                paddingStyle: `padding-left: ${row._isOption ? 1 : 0}rem;`,
                 isSelected: !!row.isSelected,
                 formattedListPrice: formatCurrency(Number.isFinite(row.listUnitPrice) ? row.listUnitPrice : 0),
                 formattedNetPrice: formatCurrency(Number.isFinite(row.netUnitPrice) ? row.netUnitPrice : 0),
@@ -162,6 +221,10 @@ export default class CpqStepLineEditor extends LightningElement {
     connectedCallback() {
         this._prepareLineItems();
         this._scheduleInitialPricing();
+    }
+
+    disconnectedCallback() {
+        clearTimeout(this._debounceTimer);
     }
 
     // ─── INITIALIZATION / FLATTENING ──────────────────────────────────────────
@@ -191,29 +254,45 @@ export default class CpqStepLineEditor extends LightningElement {
             isBundle: item.isBundle,
             serviceStartDate: item.serviceStartDate || null,
             serviceEndDate: item.serviceEndDate || null,
-            serviceDays: this._daysBetween(item.serviceStartDate, item.serviceEndDate)
+            serviceDays: this._daysBetween(item.serviceStartDate, item.serviceEndDate),
+            w: item.w,
+            h: item.h,
+            d: item.d,
+            weight: item.weight
         };
     }
 
-    _buildOptionLineItem(parentKey, opt) {
+    _buildOptionLineItem(parentKey, opt, parentItem) {
+        const optionType = opt.optionType || 'Related Product';
+        const policy = getOptionTypePolicy(optionType);
+        const perBundleQty = Number(opt.defaultQuantity ?? opt.quantity) || 0;
+        const parentQty = Number(parentItem && parentItem.quantity) || 1;
+        const effectiveQty = policy.scalesWithParent
+            ? perBundleQty * parentQty
+            : (Number(opt.quantity) || perBundleQty);
+
         const optListPrice = Number(opt.unitPrice) || 0;
-        const optQty = Number(opt.quantity) || 1;
         const optDiscount = Number(opt.additionalDiscount) || 0;
         const optNetPrice = optListPrice * (1 - optDiscount / 100);
-        const optNetTotal = optNetPrice * optQty;
+        const optNetTotal = optNetPrice * effectiveQty;
 
         return {
             _key: opt.Id,
             _parentId: parentKey,
+            _parentProductId: parentItem && parentItem.productId,
             _isOption: true,
             _hasError: false,
             _errorMessage: '',
-            _serviceOverridden: false,
+            _serviceOverridden: !!opt._serviceOverridden,
             productId: opt.productId || opt.Id,
             optionId: opt.Id,
             productCode: opt.productCode,
             productName: opt.productName,
-            quantity: optQty,
+            quantity: effectiveQty,
+            perBundleQty,
+            optionType,
+            minQuantity: opt.minQuantity,
+            maxQuantity: opt.maxQuantity,
             listUnitPrice: optListPrice,
             dailyRate: Number(opt.dailyRate) || optListPrice,
             additionalDiscount: optDiscount,
@@ -221,7 +300,11 @@ export default class CpqStepLineEditor extends LightningElement {
             netTotal: optNetTotal,
             serviceStartDate: opt.serviceStartDate || null,
             serviceEndDate: opt.serviceEndDate || null,
-            serviceDays: this._daysBetween(opt.serviceStartDate, opt.serviceEndDate)
+            serviceDays: this._daysBetween(opt.serviceStartDate, opt.serviceEndDate),
+            w: opt.w,
+            h: opt.h,
+            d: opt.d,
+            weight: opt.weight
         };
     }
 
@@ -236,7 +319,7 @@ export default class CpqStepLineEditor extends LightningElement {
 
             if (hasOptions) {
                 item.configuredOptions.forEach((opt) => {
-                    flatItems.push(this._buildOptionLineItem(item._key, opt));
+                    flatItems.push(this._buildOptionLineItem(item._key, opt, item));
                 });
             }
         });
@@ -257,6 +340,9 @@ export default class CpqStepLineEditor extends LightningElement {
     _cascadeHeaderToLines() {
         if (!this._isVolumeOffer) return;
         if (!this.lineItems || !this.lineItems.length) return;
+        // Bug guard: an empty header (component remount before the user has typed
+        // dates again) must NOT nullify the dates the rep already saved on lines.
+        if (!this._headerStart && !this._headerEnd) return;
         const days = this._daysBetween(this._headerStart, this._headerEnd);
         this.lineItems = this.lineItems.map(row => {
             if (row._serviceOverridden) return row;
@@ -268,6 +354,20 @@ export default class CpqStepLineEditor extends LightningElement {
             };
         });
         this._schedulePricingCalculation();
+    }
+
+    _hydrateHeaderFromLines() {
+        if (!this._isVolumeOffer) return;
+        if (this._headerStart || this._headerEnd) return;
+        if (!this.lineItems || !this.lineItems.length) return;
+        for (const row of this.lineItems) {
+            if (row._isOption) continue;
+            if (row.serviceStartDate && row.serviceEndDate) {
+                this._headerStart = row.serviceStartDate;
+                this._headerEnd = row.serviceEndDate;
+                return;
+            }
+        }
     }
 
     _daysBetween(s, e) {
@@ -369,32 +469,51 @@ export default class CpqStepLineEditor extends LightningElement {
         }
 
         this.lineItems = this.lineItems.map(row => {
-            if (row._key !== itemKey) return row;
-
-            const updatedRow = { ...row, [fieldName]: value };
-            if (fieldName === 'serviceStartDate' || fieldName === 'serviceEndDate') {
-                updatedRow._serviceOverridden = true;
-                updatedRow.serviceDays = this._daysBetween(updatedRow.serviceStartDate, updatedRow.serviceEndDate);
-            }
-            const isPriceImpacting = fieldName === 'quantity'
-                || fieldName === 'additionalDiscount'
-                || fieldName === 'serviceStartDate'
-                || fieldName === 'serviceEndDate';
-            if (isPriceImpacting) {
-                const dailyRate = Number(updatedRow.dailyRate) || Number(updatedRow.listUnitPrice) || 0;
-                const days = this._isVolumeOffer ? Math.max(updatedRow.serviceDays || 0, 0) : 1;
-                const effectiveListPrice = this._isVolumeOffer
-                    ? dailyRate * days
-                    : (Number(updatedRow.listUnitPrice) || 0);
-                const discount = Number(updatedRow.additionalDiscount) || 0;
-                const qty = Number(updatedRow.quantity) || 1;
-                updatedRow.netUnitPrice = effectiveListPrice * (1 - discount / 100);
-                updatedRow.netTotal = updatedRow.netUnitPrice * qty;
-                if (this._isVolumeOffer) {
-                    updatedRow.listUnitPrice = effectiveListPrice;
+            if (row._key === itemKey) {
+                const updatedRow = { ...row, [fieldName]: value };
+                if (fieldName === 'serviceStartDate' || fieldName === 'serviceEndDate') {
+                    updatedRow._serviceOverridden = true;
+                    updatedRow.serviceDays = this._daysBetween(updatedRow.serviceStartDate, updatedRow.serviceEndDate);
                 }
+                const isPriceImpacting = fieldName === 'quantity'
+                    || fieldName === 'additionalDiscount'
+                    || fieldName === 'serviceStartDate'
+                    || fieldName === 'serviceEndDate';
+                if (isPriceImpacting) {
+                    const dailyRate = Number(updatedRow.dailyRate) || Number(updatedRow.listUnitPrice) || 0;
+                    const days = this._isVolumeOffer ? Math.max(updatedRow.serviceDays || 0, 0) : 1;
+                    const effectiveListPrice = this._isVolumeOffer
+                        ? dailyRate * days
+                        : (Number(updatedRow.listUnitPrice) || 0);
+                    const discount = Number(updatedRow.additionalDiscount) || 0;
+                    const qty = Number(updatedRow.quantity) || 1;
+                    updatedRow.netUnitPrice = effectiveListPrice * (1 - discount / 100);
+                    updatedRow.netTotal = updatedRow.netUnitPrice * qty;
+                    if (this._isVolumeOffer) {
+                        updatedRow.listUnitPrice = effectiveListPrice;
+                    }
+                }
+                return updatedRow;
             }
-            return updatedRow;
+
+            // Re-scale Component option children when the parent row's quantity changed.
+            if (fieldName === 'quantity'
+                && row._isOption
+                && row._parentId === itemKey
+                && row.optionType === OPTION_TYPE_COMPONENT) {
+                const newParentQty = Number(value) || 1;
+                const newQty = (Number(row.perBundleQty) || 0) * newParentQty;
+                const listPrice = Number(row.listUnitPrice) || 0;
+                const disc = Number(row.additionalDiscount) || 0;
+                const netPrice = listPrice * (1 - disc / 100);
+                return {
+                    ...row,
+                    quantity: newQty,
+                    netUnitPrice: netPrice,
+                    netTotal: netPrice * newQty
+                };
+            }
+            return row;
         });
 
         this._schedulePricingCalculation();
@@ -406,8 +525,9 @@ export default class CpqStepLineEditor extends LightningElement {
         if (this._debounceTimer) {
             clearTimeout(this._debounceTimer);
         }
-        this._debounceTimer = setTimeout(() => {
-            this._executePricingCalculation();
+        this._debounceTimer = setTimeout(async () => {
+            await this._executePricingCalculation();
+            this._runRuleEvaluation('Edit', false);
         }, DEBOUNCE_DELAY);
     }
 
@@ -553,6 +673,18 @@ export default class CpqStepLineEditor extends LightningElement {
                 updatedRow._hasError = true;
                 updatedRow._errorMessage = 'Quantity must be at least 1';
                 hasValidationErrors = true;
+            } else if (updatedRow._isOption && getOptionTypePolicy(updatedRow.optionType).editableInLineEditor) {
+                const min = Number(updatedRow.minQuantity);
+                const max = Number(updatedRow.maxQuantity);
+                if (Number.isFinite(min) && quantity < min) {
+                    updatedRow._hasError = true;
+                    updatedRow._errorMessage = `Quantity must be at least ${min}`;
+                    hasValidationErrors = true;
+                } else if (Number.isFinite(max) && quantity > max) {
+                    updatedRow._hasError = true;
+                    updatedRow._errorMessage = `Quantity must be at most ${max}`;
+                    hasValidationErrors = true;
+                }
             }
 
             if (this._isVolumeOffer && !updatedRow._hasError) {
@@ -575,6 +707,51 @@ export default class CpqStepLineEditor extends LightningElement {
 
     _hasPricingErrors() {
         return this.lineItems.some(row => row._hasError);
+    }
+
+    /**
+     * Evaluates the Validation and Alert Product Rules against every line item.
+     * Called when the rep advances from the Line Editor. Validation errors block;
+     * alerts warn but allow continuing.
+     * @returns {Promise<{blocked: boolean}>}
+     */
+    @api
+    async evaluateLineRules() {
+        return this._runRuleEvaluation('Save', true);
+    }
+
+    async _runRuleEvaluation(evaluationEvent, blocking) {
+        const lines = this.lineItems.map((row) => ({
+            productId: row.productId,
+            quantity: row.quantity,
+            unitPrice: row.listUnitPrice,
+            discountPercent: row.additionalDiscount,
+            isBundle: !!row.isBundle
+        }));
+
+        try {
+            const verdict = await evaluateLineRules({
+                opportunityId: this.opportunityId || null,
+                lines,
+                evaluationEvent
+            });
+            const errors = verdict.validationErrors || [];
+            const alerts = verdict.alerts || [];
+            this.ruleMessages = {
+                errors: errors.map((text, i) => ({ id: 'lerr-' + i, text })),
+                alerts: alerts.map((text, i) => ({ id: 'lalert-' + i, text }))
+            };
+            const blocked = blocking && errors.length > 0;
+            if (blocked) {
+                showToast(this, 'Validation', 'Please fix the validation errors below before continuing.', 'error');
+            }
+            return { blocked };
+        } catch (error) {
+            console.error('[cpqStepLineEditor._runRuleEvaluation] Rule evaluation failed:', error);
+            const detail = error?.body?.message || error?.message || 'Rule evaluation failed.';
+            showToast(this, 'Rules Error', detail, 'error');
+            return { blocked: false };
+        }
     }
 
     @api
@@ -600,13 +777,20 @@ export default class CpqStepLineEditor extends LightningElement {
                     productCode: row.productCode,
                     productName: row.productName,
                     quantity: row.quantity,
+                    perBundleQty: row.perBundleQty,
+                    optionType: row.optionType,
                     unitPrice: row.listUnitPrice,
                     dailyRate: row.dailyRate,
                     netUnitPrice: row.netUnitPrice,
                     netTotal: row.netTotal,
                     additionalDiscount: row.additionalDiscount,
                     serviceStartDate: row.serviceStartDate || null,
-                    serviceEndDate: row.serviceEndDate || null
+                    serviceEndDate: row.serviceEndDate || null,
+                    _serviceOverridden: !!row._serviceOverridden,
+                    w: row.w,
+                    h: row.h,
+                    d: row.d,
+                    weight: row.weight
                 });
             }
         }
@@ -627,6 +811,11 @@ export default class CpqStepLineEditor extends LightningElement {
                     isBundle: row.isBundle,
                     serviceStartDate: row.serviceStartDate || null,
                     serviceEndDate: row.serviceEndDate || null,
+                    _serviceOverridden: !!row._serviceOverridden,
+                    w: row.w,
+                    h: row.h,
+                    d: row.d,
+                    weight: row.weight,
                     configuredOptions: optionsMap[row._key] || []
                 });
             }

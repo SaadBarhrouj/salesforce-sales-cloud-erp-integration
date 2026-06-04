@@ -65,6 +65,7 @@
                             item-key={selectedItemId}
                             bundle-id={selectedBundleProductId}
                             cached-features={selectedBundleCachedFeatures}
+                            opportunity-id={recordId}
                             onbundlesave={handleBundleConfigSaved}
                         ></c-cpq-step-bundle-config>
                     </template>
@@ -73,6 +74,7 @@
                     <template lwc:if={isStepLineEditor}>
                         <c-cpq-step-line-editor
                             selected-products={selectedProducts}
+                            opportunity-id={recordId}
                             pricebook-id={opportunityPricebookId}
                             offer-type={opportunityOfferType}
                             is-volume-offer={isVolumeOffer}
@@ -92,6 +94,7 @@
                             default-agency-id={logisticsState.agencyId}
                             default-delivery-site-id={logisticsState.deliverySiteId}
                             default-urgency={logisticsState.urgency}
+                            selected-products={selectedProducts}
                             total-weight="250"
                             onlogisticschange={handleLogisticsChange}
                         ></c-cpq-step-logistics>

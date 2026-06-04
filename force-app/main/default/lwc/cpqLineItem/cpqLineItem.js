@@ -1,5 +1,5 @@
 import { LightningElement, api } from 'lwc';
-import { formatCurrency, calculateNetUnitPrice, calculateLineTotal } from 'c/cpqUtils';
+import { formatCurrency, calculateNetUnitPrice, calculateLineTotal, getOptionTypePolicy } from 'c/cpqUtils';
 
 export default class CpqLineItem extends LightningElement {
     @api item = {};
@@ -21,14 +21,18 @@ export default class CpqLineItem extends LightningElement {
         if (!this.item.options) return [];
         return this.item.options
             .filter(o => o.isSelected)
-            .map(o => ({
-                ...o,
-                formattedListPrice: formatCurrency(o.listUnitPrice),
-                formattedNetPrice: formatCurrency(o.listUnitPrice),
-                formattedNetTotal: formatCurrency(
-                    calculateLineTotal(o.quantity * this.item.quantity, o.listUnitPrice, 0)
-                )
-            }));
+            .map(o => {
+                const policy = getOptionTypePolicy(o.optionType);
+                return {
+                    ...o,
+                    isQtyEditable: policy.editableInLineEditor,
+                    formattedListPrice: formatCurrency(o.listUnitPrice),
+                    formattedNetPrice: formatCurrency(o.listUnitPrice),
+                    formattedNetTotal: formatCurrency(
+                        calculateLineTotal(o.quantity, o.listUnitPrice, 0)
+                    )
+                };
+            });
     }
 
     handleQuantityChange(event) {

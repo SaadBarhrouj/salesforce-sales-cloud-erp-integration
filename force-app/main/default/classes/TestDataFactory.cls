@@ -168,7 +168,6 @@ public class TestDataFactory {
             Default_Quantity__c = defaultQuantity,
             Min_Quantity__c = minQuantity,
             Max_Quantity__c = maxQuantity,
-            Quantity_Editable__c = quantityEditable,
             Is_Required__c = isRequired,
             Is_Selected__c = isSelected
         );
@@ -476,6 +475,170 @@ public class TestDataFactory {
             insert recordItem;
         }
         return recordItem;
+    }
+
+    /**
+     * @description Builds a complete bundle scenario for option-type qty tests:
+     * one bundle with three options (Component, Accessory, Related Product),
+     * PricebookEntries on the standard pricebook, and a test Opportunity.
+     * @return Map with keys opportunityId, bundleProductId, componentProductId, accessoryProductId, relatedProductId.
+     */
+    public static Map<String, Object> seedBundleScenario() {
+        Account acc = createAccount(true);
+
+        Product2 bundleProd = new Product2(Name='Test Bundle ' + nextSuffix(), ProductCode='TEST-BUNDLE-' + nextSuffix(), Family='Equipment', Type='Bundle', IsActive=true);
+        Product2 compProd   = new Product2(Name='Test Component ' + nextSuffix(), ProductCode='TEST-COMP-' + nextSuffix(), Family='Equipment', IsActive=true);
+        Product2 accProd    = new Product2(Name='Test Accessory ' + nextSuffix(), ProductCode='TEST-ACC-' + nextSuffix(), Family='Equipment', IsActive=true);
+        Product2 relProd    = new Product2(Name='Test Related ' + nextSuffix(), ProductCode='TEST-REL-' + nextSuffix(), Family='Equipment', IsActive=true);
+        insert new List<Product2>{ bundleProd, compProd, accProd, relProd };
+
+        Id stdPb = Test.getStandardPricebookId();
+        insert new List<PricebookEntry>{
+            new PricebookEntry(Pricebook2Id=stdPb, Product2Id=bundleProd.Id, UnitPrice=100, IsActive=true),
+            new PricebookEntry(Pricebook2Id=stdPb, Product2Id=compProd.Id,   UnitPrice=25,  IsActive=true),
+            new PricebookEntry(Pricebook2Id=stdPb, Product2Id=accProd.Id,    UnitPrice=30,  IsActive=true),
+            new PricebookEntry(Pricebook2Id=stdPb, Product2Id=relProd.Id,    UnitPrice=50,  IsActive=true)
+        };
+
+        Bundle_Feature__c feat = new Bundle_Feature__c(
+            Product__c = bundleProd.Id,
+            Name = 'Feat ' + nextSuffix(),
+            Min_Options__c = 1,
+            Max_Options__c = 3,
+            Sort_Order__c = 1
+        );
+        insert feat;
+
+        insert new List<Bundle_Option__c>{
+            new Bundle_Option__c(Bundle_Product__c=bundleProd.Id, Feature__c=feat.Id, Option_Product__c=compProd.Id, Option_Type__c='Component',       Default_Quantity__c=4, Min_Quantity__c=4, Max_Quantity__c=4, Sort_Order__c=1),
+            new Bundle_Option__c(Bundle_Product__c=bundleProd.Id, Feature__c=feat.Id, Option_Product__c=accProd.Id,  Option_Type__c='Accessory',       Default_Quantity__c=2, Min_Quantity__c=1, Max_Quantity__c=5, Sort_Order__c=2),
+            new Bundle_Option__c(Bundle_Product__c=bundleProd.Id, Feature__c=feat.Id, Option_Product__c=relProd.Id,  Option_Type__c='Related Product', Default_Quantity__c=1, Min_Quantity__c=1, Max_Quantity__c=5, Sort_Order__c=3)
+        };
+
+        Opportunity opp = new Opportunity(
+            Name='Test Opp ' + nextSuffix(),
+            AccountId=acc.Id,
+            StageName='Prospecting',
+            CloseDate=Date.today().addDays(30),
+            Pricebook2Id=stdPb
+        );
+        insert opp;
+
+        return new Map<String, Object>{
+            'opportunityId'      => opp.Id,
+            'bundleProductId'    => bundleProd.Id,
+            'componentProductId' => compProd.Id,
+            'accessoryProductId' => accProd.Id,
+            'relatedProductId'   => relProd.Id
+        };
+    }
+
+    /**
+     * @description Creates a test Product_Rule__c record.
+     * @param name Rule name.
+     * @param ruleType Validation, Alert, or Selection.
+     * @param conditionsMet All, Any, or Custom.
+     * @param message User-facing message for Validation/Alert rules.
+     * @param evaluationOrder Evaluation order (lower runs first).
+     * @param isActive Whether the rule is active.
+     * @param doInsert Whether to insert the record.
+     * @return The created Product_Rule__c record.
+     */
+    public static Product_Rule__c createProductRule(
+        String name, String ruleType, String conditionsMet,
+        String message, Decimal evaluationOrder, Boolean isActive, Boolean doInsert
+    ) {
+        Product_Rule__c rule = new Product_Rule__c(
+            Name = name,
+            Type__c = ruleType,
+            Conditions_Met__c = conditionsMet,
+            Evaluation_Event__c = 'Save',
+            Message__c = message,
+            Evaluation_Order__c = evaluationOrder,
+            Is_Active__c = isActive
+        );
+        if (doInsert) { insert rule; }
+        return rule;
+    }
+
+    /**
+     * @description Creates a test Rule_Condition__c record.
+     * @param productRuleId Parent Product_Rule__c Id.
+     * @param testedObject Opportunity, Opportunity Line, or Bundle Option.
+     * @param testedField API name of the field being tested.
+     * @param operator Comparison operator.
+     * @param filterType Value or Field.
+     * @param filterValue Constant or field API name to compare against.
+     * @param index Condition index.
+     * @param doInsert Whether to insert the record.
+     * @return The created Rule_Condition__c record.
+     */
+    public static Rule_Condition__c createRuleCondition(
+        Id productRuleId, String testedObject, String testedField,
+        String operator, String filterType, String filterValue,
+        Decimal index, Boolean doInsert
+    ) {
+        Rule_Condition__c cond = new Rule_Condition__c(
+            Product_Rule__c = productRuleId,
+            Tested_Object__c = testedObject,
+            Tested_Field__c = testedField,
+            Operator__c = operator,
+            Filter_Type__c = filterType,
+            Filter_Value__c = filterValue,
+            Index__c = index
+        );
+        if (doInsert) { insert cond; }
+        return cond;
+    }
+
+    /**
+     * @description Creates a test Rule_Action__c record.
+     * @param productRuleId Parent Product_Rule__c Id.
+     * @param actionType Add, Remove, Hide, Show, Enable, or Disable.
+     * @param targetProductId Target Product2 Id (null to use filter fields).
+     * @param filterField API name for dynamic targeting (used when targetProductId is null).
+     * @param filterOperator Operator for the filter.
+     * @param filterValue Value for the filter.
+     * @param sortOrder Action execution order.
+     * @param doInsert Whether to insert the record.
+     * @return The created Rule_Action__c record.
+     */
+    public static Rule_Action__c createRuleAction(
+        Id productRuleId, String actionType, Id targetProductId,
+        String filterField, String filterOperator, String filterValue,
+        Decimal sortOrder, Boolean doInsert
+    ) {
+        Rule_Action__c action = new Rule_Action__c(
+            Product_Rule__c = productRuleId,
+            Type__c = actionType,
+            Target_Product__c = targetProductId,
+            Filter_Field__c = filterField,
+            Filter_Operator__c = filterOperator,
+            Filter_Value__c = filterValue,
+            Sort_Order__c = sortOrder
+        );
+        if (doInsert) { insert action; }
+        return action;
+    }
+
+    /**
+     * @description Creates a test Bundle_Rule_Assignment__c record.
+     * @param bundleProductId The bundle Product2 Id.
+     * @param productRuleId The Product_Rule__c Id.
+     * @param isActive Whether the assignment is active.
+     * @param doInsert Whether to insert the record.
+     * @return The created Bundle_Rule_Assignment__c record.
+     */
+    public static Bundle_Rule_Assignment__c createBundleRuleAssignment(
+        Id bundleProductId, Id productRuleId, Boolean isActive, Boolean doInsert
+    ) {
+        Bundle_Rule_Assignment__c assignment = new Bundle_Rule_Assignment__c(
+            Bundle_Product__c = bundleProductId,
+            Product_Rule__c = productRuleId,
+            Is_Active__c = isActive
+        );
+        if (doInsert) { insert assignment; }
+        return assignment;
     }
 
 }

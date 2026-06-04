@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Trigger_Value__c</fullName>
+    <description>Expected value of the trigger field. If the actual runtime value equals this value (case-sensitive string comparison), the supplement is applied. Ignored when Is_Always_Active__c = true.</description>
+    <externalId>false</externalId>
+    <fieldManageability>DeveloperControlled</fieldManageability>
+    <inlineHelpText>Value that triggers this supplement (e.g., Express, Difficult). Must match exactly. Leave blank if Always Active.</inlineHelpText>
+    <label>Trigger Value</label>
+    <length>50</length>
+    <required>false</required>
+    <type>Text</type>
+    <unique>false</unique>
+</CustomField>

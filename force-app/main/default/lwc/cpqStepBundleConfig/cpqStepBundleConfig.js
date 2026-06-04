@@ -1,8 +1,9 @@
 import { LightningElement, api, track, wire } from 'lwc';
 import { getRecord, getFieldValue } from 'lightning/uiRecordApi';
-import { getIllustration } from 'c/cpqConstants';
-import { showToast, deepClone, formatMessage } from 'c/cpqUtils';
+import { getIllustration, OPTION_TYPES } from 'c/cpqConstants';
+import { showToast, deepClone, formatMessage, getOptionTypePolicy } from 'c/cpqUtils';
 import getBundleData from '@salesforce/apex/BundleOptionController.getBundleData';
+import evaluateBundleRules from '@salesforce/apex/ProductRuleController.evaluateBundleRules';
 import PRODUCT_NAME_FIELD from '@salesforce/schema/Product2.Name';
 
 const DATATABLE_COLUMNS = [
@@ -15,8 +16,25 @@ const DATATABLE_COLUMNS = [
         cellAttributes: { alignment: 'left' }
     },
     { label: 'Code', fieldName: 'productCode', type: 'text' },
-    { label: 'Name', fieldName: 'productName', type: 'text' },
+    {
+        label: 'Name',
+        fieldName: 'productUrl',
+        type: 'url',
+        typeAttributes: {
+            label: { fieldName: 'productName' },
+            target: '_blank',
+            tooltip: { fieldName: 'productName' }
+        }
+    },
     { label: 'Description', fieldName: 'description', type: 'text' },
+    { label: 'Type', fieldName: 'optionType', type: 'text' },
+];
+
+const OPTION_TYPE_FILTER_OPTIONS = [
+    { label: 'All', value: 'all' },
+    { label: 'Component', value: OPTION_TYPES.COMPONENT },
+    { label: 'Accessory', value: OPTION_TYPES.ACCESSORY },
+    { label: 'Related Product', value: OPTION_TYPES.RELATED_PRODUCT }
 ];
 
 export default class cpqStepBundleConfig extends LightningElement {
@@ -52,6 +70,10 @@ export default class cpqStepBundleConfig extends LightningElement {
         this.scheduleLoad();
     }
 
+    @api opportunityId;
+
+    _ruleEvalTimer;
+
     _loadTimer;
     scheduleLoad() {
         if (!this._bundleId || !this._itemKey) return;
@@ -61,11 +83,23 @@ export default class cpqStepBundleConfig extends LightningElement {
         }, 0);
     }
 
+    disconnectedCallback() {
+        clearTimeout(this._loadTimer);
+        clearTimeout(this._ruleEvalTimer);
+    }
+
     @track isLoading = false;
     @track featureDraftValues = {};
     @track localFeatures = [];
     @track bundleName = '';
     @track viewMode = 'sections';
+
+    @track isFilterPanelOpen = false;
+    @track pendingFilterProductCode = '';
+    @track pendingFilterOptionType = 'all';
+    @track filterProductCode = '';
+    @track filterOptionType = 'all';
+    optionTypeOptions = OPTION_TYPE_FILTER_OPTIONS;
 
     @api
     get currentFeaturesState() {
@@ -135,9 +169,19 @@ export default class cpqStepBundleConfig extends LightningElement {
         return !this.isLoading && this._bundleId && !this.hasFeatures;
     }
 
+    get isFilteredEmpty() {
+        return !!this._bundleId
+            && this.localFeatures.length > 0
+            && this.hasActiveFilters
+            && this.processedFeatures.length === 0;
+    }
+
     get emptyStateTitle() {
         if (this.noBundleSelected) {
             return 'No Bundle Selected';
+        }
+        if (this.isFilteredEmpty) {
+            return 'No Matching Options';
         }
         return 'No Configuration Options';
     }
@@ -146,6 +190,9 @@ export default class cpqStepBundleConfig extends LightningElement {
         if (this.noBundleSelected) {
             return 'Select a bundle above to configure its features and options.';
         }
+        if (this.isFilteredEmpty) {
+            return 'No options match the current filters. Adjust or reset them.';
+        }
         return 'This bundle has no configurable features.';
     }
 
@@ -153,17 +200,62 @@ export default class cpqStepBundleConfig extends LightningElement {
         if (this.noBundleSelected) {
             return getIllustration('CART_NO_ITEMS').name;
         }
+        if (this.isFilteredEmpty) {
+            return getIllustration('NORESULTS_FILTER').name;
+        }
         return getIllustration('NORESULTS_SEARCH').name;
+    }
+
+    get filterPanelClass() {
+        const base = 'filter-panel';
+        return this.isFilterPanelOpen ? `${base} filter-panel--open` : base;
+    }
+
+    get filterPanelHidden() {
+        return !this.isFilterPanelOpen;
+    }
+
+    @api
+    get filterPanelOpen() {
+        return this.isFilterPanelOpen;
+    }
+
+    get hasActiveFilters() {
+        return !!this.filterProductCode || (this.filterOptionType && this.filterOptionType !== 'all');
+    }
+
+    get activeFilters() {
+        const filters = [];
+        if (this.filterProductCode) {
+            filters.push({ id: 'productCode', label: 'Code: ' + this.filterProductCode, value: this.filterProductCode, field: 'productCode' });
+        }
+        if (this.filterOptionType && this.filterOptionType !== 'all') {
+            filters.push({ id: 'optionType', label: 'Type: ' + this.filterOptionType, value: this.filterOptionType, field: 'optionType' });
+        }
+        return filters;
     }
 
     get processedFeatures() {
         return this.localFeatures.map((feature) => {
-            const options = feature.options || [];
+            const allOptions = feature.options || [];
+            let options = allOptions.filter((opt) => !opt.isRuleHidden);
+            const codeTerm = (this.filterProductCode || '').toLowerCase();
+            if (codeTerm) {
+                options = options.filter(
+                    (opt) => (opt.productCode || '').toLowerCase().includes(codeTerm)
+                );
+            }
+            if (this.filterOptionType && this.filterOptionType !== 'all') {
+                options = options.filter((opt) => opt.optionType === this.filterOptionType);
+            }
             const min = feature.minOptions;
             const max = feature.maxOptions;
 
             const selectedIds = options.filter((opt) => opt.isSelected).map((opt) => opt.Id);
             const requiredIds = options.filter((opt) => opt.isRequired).map((opt) => opt.Id);
+            const lockedIds = options
+                .filter((opt) => opt.isRuleLocked)
+                .map((opt) => opt.Id);
 
             let disabledIds = [];
             if (max != null && requiredIds.length >= max && max > 0) {
@@ -171,6 +263,7 @@ export default class cpqStepBundleConfig extends LightningElement {
             } else {
                 disabledIds = requiredIds;
             }
+            const mergedDisabled = [...new Set([...disabledIds, ...lockedIds])];
 
             return {
                 Id: feature.Id,
@@ -182,10 +275,10 @@ export default class cpqStepBundleConfig extends LightningElement {
                 badgeClass: 'slds-badge',
                 options: this.processOptions(options),
                 selectedRows: selectedIds,
-                disabledRows: disabledIds,
+                disabledRows: mergedDisabled,
                 draftValues: this.featureDraftValues[feature.Id] || []
             };
-        });
+        }).filter((feature) => !this.hasActiveFilters || feature.options.length > 0);
     }
 
     getMinMaxDisplay(min, max) {
@@ -200,20 +293,31 @@ export default class cpqStepBundleConfig extends LightningElement {
     }
 
     processOptions(options) {
-        return (options || []).map((option) => ({
-            Id: option.Id,
-            productId: option.productId,
-            quantity: option.quantity !== undefined ? option.quantity : option.defaultQuantity,
-            minQuantity: option.minQuantity,
-            maxQuantity: option.maxQuantity,
-            productCode: option.productCode,
-            productName: option.productName,
-            description: option.description,
-            unitPrice: option.unitPrice,
-            isQtyEditable: option.quantityEditable,
-            isRequired: option.isRequired,
-            isSelected: option.isSelected
-        }));
+        return (options || []).map((option) => {
+            const policy = getOptionTypePolicy(option.optionType);
+            const initialQty = option.quantity !== undefined ? option.quantity : option.defaultQuantity;
+            return {
+                Id: option.Id,
+                productId: option.productId,
+                quantity: policy.editableInConfigurator ? initialQty : option.defaultQuantity,
+                minQuantity: option.minQuantity,
+                maxQuantity: option.maxQuantity,
+                productCode: option.productCode,
+                productName: option.productName,
+                productUrl: option.productId ? `/${option.productId}` : null,
+                description: option.description,
+                unitPrice: option.unitPrice,
+                optionType: option.optionType,
+                defaultQuantity: option.defaultQuantity,
+                isQtyEditable: policy.editableInConfigurator,
+                isRequired: option.isRequired,
+                isSelected: option.isSelected,
+                w: option.w,
+                h: option.h,
+                d: option.d,
+                weight: option.weight
+            };
+        });
     }
 
     handleFeatureSelection(event) {
@@ -242,6 +346,7 @@ export default class cpqStepBundleConfig extends LightningElement {
         }));
 
         this.localFeatures = [...this.localFeatures];
+        this._scheduleRuleEvaluation();
     }
 
     @api
@@ -252,6 +357,110 @@ export default class cpqStepBundleConfig extends LightningElement {
     @api
     switchToTabs() {
         this.viewMode = 'tabs';
+    }
+
+    async _fetchFeaturesFromServer() {
+        const result = await getBundleData({ bundleId: this._bundleId });
+        return deepClone((result && result.features) || []);
+    }
+
+    @api
+    async refresh() {
+        if (!this._bundleId) {
+            showToast(this, 'No Bundle', 'Select a bundle to refresh.', 'info');
+            return;
+        }
+        const hadUnsavedEdits = Object.keys(this.featureDraftValues || {})
+            .some((key) => (this.featureDraftValues[key] || []).length > 0);
+        this.isLoading = true;
+        try {
+            this.localFeatures = await this._fetchFeaturesFromServer();
+            this.featureDraftValues = {};
+            showToast(
+                this,
+                'Bundle Reloaded',
+                hadUnsavedEdits
+                    ? 'Configuration reloaded. Unsaved edits were discarded.'
+                    : 'Configuration reloaded.',
+                hadUnsavedEdits ? 'warning' : 'success'
+            );
+        } catch (error) {
+            console.error('Error refreshing bundle data:', error);
+            showToast(this, 'Refresh Error', 'Unable to reload bundle configuration.', 'error');
+        } finally {
+            this.isLoading = false;
+        }
+    }
+
+    @api
+    async resetCurrentBundle() {
+        if (!this._bundleId) {
+            showToast(this, 'No Bundle', 'Select a bundle to reset.', 'info');
+            return;
+        }
+        this.isLoading = true;
+        try {
+            const features = await this._fetchFeaturesFromServer();
+            this.localFeatures = features.map((feature) => ({
+                ...feature,
+                options: (feature.options || []).map((opt) => ({
+                    ...opt,
+                    isSelected: opt.isRequired ? true : !!opt.isSelected,
+                    quantity: opt.defaultQuantity != null ? opt.defaultQuantity : opt.quantity
+                }))
+            }));
+            this.featureDraftValues = {};
+            showToast(this, 'Configuration Reset', 'Bundle reset to its default configuration.', 'success');
+        } catch (error) {
+            console.error('Error resetting bundle configuration:', error);
+            showToast(this, 'Reset Error', 'Unable to reset bundle configuration.', 'error');
+        } finally {
+            this.isLoading = false;
+        }
+    }
+
+    @api
+    toggleFilterPanel() {
+        this.isFilterPanelOpen = !this.isFilterPanelOpen;
+        if (this.isFilterPanelOpen) {
+            this.pendingFilterProductCode = this.filterProductCode;
+            this.pendingFilterOptionType = this.filterOptionType;
+        }
+    }
+
+    handleFilterProductCodeChange(event) {
+        this.pendingFilterProductCode = event.detail.value || '';
+    }
+
+    handleFilterOptionTypeChange(event) {
+        this.pendingFilterOptionType = event.detail.value;
+    }
+
+    handleApplyFilters() {
+        this.filterProductCode = this.pendingFilterProductCode;
+        this.filterOptionType = this.pendingFilterOptionType;
+    }
+
+    handleResetFilters() {
+        this.pendingFilterProductCode = '';
+        this.pendingFilterOptionType = 'all';
+        this.filterProductCode = '';
+        this.filterOptionType = 'all';
+    }
+
+    handleRemoveFilter(event) {
+        const field = event.detail?.name || event.target?.name || event.currentTarget?.dataset?.field;
+        if (field === 'productCode') {
+            this.filterProductCode = '';
+            this.pendingFilterProductCode = '';
+        } else if (field === 'optionType') {
+            this.filterOptionType = 'all';
+            this.pendingFilterOptionType = 'all';
+        }
+    }
+
+    handleCloseFilterPanel() {
+        this.isFilterPanelOpen = false;
     }
 
     applyDraftValues(featureId, drafts) {
@@ -418,5 +627,65 @@ export default class cpqStepBundleConfig extends LightningElement {
         }
 
         return true;
+    }
+
+    /**
+     * Evaluates the Selection Product Rules for this bundle and applies the verdict
+     * (auto select / deselect / hide / lock of options). Triggered live as the rep
+     * configures, and by the "Apply Rules" button.
+     */
+    @api
+    async evaluateRules(evaluationEvent) {
+        if (!this.bundleId) {
+            return;
+        }
+        const eventName = evaluationEvent || 'All';
+
+        const selectedOptionIds = [];
+        this.localFeatures.forEach((feature) => {
+            (feature.options || []).forEach((opt) => {
+                if (opt.isSelected) {
+                    selectedOptionIds.push(opt.Id);
+                }
+            });
+        });
+
+        try {
+            const verdict = await evaluateBundleRules({
+                bundleProductId: this.bundleId,
+                opportunityId: this.opportunityId || null,
+                selectedOptionIds,
+                evaluationEvent: eventName
+            });
+            this._applyRuleVerdict(verdict);
+        } catch (error) {
+            console.error('[cpqStepBundleConfig.evaluateRules] Selection rule evaluation failed:', error);
+            const detail = error?.body?.message || error?.message || 'Rule evaluation failed.';
+            showToast(this, 'Rules Error', detail, 'error');
+        }
+    }
+
+    _scheduleRuleEvaluation() {
+        clearTimeout(this._ruleEvalTimer);
+        // eslint-disable-next-line @lwc/lwc/no-async-operation
+        this._ruleEvalTimer = setTimeout(() => {
+            this.evaluateRules('Edit');
+        }, 300);
+    }
+
+    _applyRuleVerdict(verdict) {
+        const selectedSet = new Set(verdict.selectedOptionIds || []);
+        const hiddenSet = new Set(verdict.hiddenOptionIds || []);
+        const lockedSet = new Set(verdict.lockedOptionIds || []);
+
+        this.localFeatures = this.localFeatures.map((feature) => ({
+            ...feature,
+            options: (feature.options || []).map((opt) => ({
+                ...opt,
+                isSelected: selectedSet.has(opt.Id),
+                isRuleHidden: hiddenSet.has(opt.Id),
+                isRuleLocked: lockedSet.has(opt.Id)
+            }))
+        }));
     }
 }

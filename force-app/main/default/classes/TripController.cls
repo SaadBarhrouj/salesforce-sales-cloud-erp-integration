@@ -5,33 +5,42 @@
 public with sharing class TripController {
 
     /**
-     * @description Fetch existing trips for an opportunity
-     * @param opportunityId The Opportunity ID to retrieve trips for.
-     * @return List of Trip__c records associated with the opportunity.
+     * @description Retrieve existing trips for an Opportunity
+     * @param opportunityId The Opportunity ID
+     * @return List of Trip__c records
      */
-    @AuraEnabled
+    @AuraEnabled(cacheable=true)
     public static List<Trip__c> getTripsByOpportunity(Id opportunityId) {
         try {
-            return TripService.getExistingTrips(opportunityId);
-        } catch (TripException e) {
-            throw new AuraHandledException(e.getMessage());
+            return TripDAO.getTripsByOpportunity(opportunityId);
         } catch (Exception e) {
             throw new AuraHandledException(e.getMessage());
         }
     }
 
     /**
-     * @description Recalculate and generate new trips when urgency change
-     * @param opportunityId The Opportunity ID to calculate trips for.
-     * @param urgency The urgency level for trip calculation.
-     * @param totalWeight The total weight for trip calculation.
-     * @return List of newly calculated Trip__c records.
+     * @description Recalculate and generate trips with cost-optimized truck allocation.
+     * @param opportunityId The Opportunity ID
+     * @param agencyId Departure agency Location Id (current LWC selection)
+     * @param deliverySiteId Delivery Location Id (current LWC selection)
+     * @param urgency Transport urgency level
+     * @param cpqItemsJson JSON serialized array of CPQ items with dimensions and weight
+     * @param directionMode Optional 'Delivery' (default), 'Pickup', or 'Both'. Used for rental opportunities
+     *        where the wizard asks whether to generate delivery, pickup, or both sets of trips.
+     * @return List of calculated Trip records
      */
     @AuraEnabled
-    public static List<Trip__c> calculateTrips(Id opportunityId, String urgency, Decimal totalWeight) {
+    public static List<Trip__c> calculateTripsWithCPQItems(
+        Id opportunityId,
+        Id agencyId,
+        Id deliverySiteId,
+        String urgency,
+        String cpqItemsJson,
+        String directionMode
+    ) {
         try {
-            return TripService.calculateAndSaveTrips(opportunityId, urgency, totalWeight);
-        } catch (TripException e) {
+            return TripService.calculateTripsWithCPQItems(opportunityId, agencyId, deliverySiteId, urgency, cpqItemsJson, directionMode);
+        } catch (TripService.TripException e) {
             throw new AuraHandledException(e.getMessage());
         } catch (Exception e) {
             throw new AuraHandledException(e.getMessage());

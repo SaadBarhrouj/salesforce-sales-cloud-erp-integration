@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ReportType xmlns="http://soap.sforce.com/2006/04/metadata">
+    <baseObject>Quote</baseObject>
+    <category>opportunities</category>
+    <deployed>true</deployed>
+    <description>Quotes at quote grain (one row per quote) for accurate quote-level KPIs and reporting.</description>
+    <label>Quotes</label>
+    <sections>
+        <columns>
+            <checkedByDefault>true</checkedByDefault>
+            <field>Name</field>
+            <table>Quote</table>
+        </columns>
+        <columns>
+            <checkedByDefault>true</checkedByDefault>
+            <field>QuoteNumber</field>
+            <table>Quote</table>
+        </columns>
+        <columns>
+            <checkedByDefault>true</checkedByDefault>
+            <field>Status</field>
+            <table>Quote</table>
+        </columns>
+        <columns>
+            <checkedByDefault>true</checkedByDefault>
+            <field>Accepted_Flag__c</field>
+            <table>Quote</table>
+        </columns>
+        <columns>
+            <checkedByDefault>true</checkedByDefault>
+            <field>GrandTotal</field>
+            <table>Quote</table>
+        </columns>
+        <columns>
+            <checkedByDefault>true</checkedByDefault>
+            <field>Subtotal</field>
+            <table>Quote</table>
+        </columns>
+        <columns>
+            <checkedByDefault>true</checkedByDefault>
+            <field>Discount</field>
+            <table>Quote</table>
+        </columns>
+        <columns>
+            <checkedByDefault>true</checkedByDefault>
+            <field>ExpirationDate</field>
+            <table>Quote</table>
+        </columns>
+        <masterLabel>Quote Fields</masterLabel>
+    </sections>
+</ReportType>

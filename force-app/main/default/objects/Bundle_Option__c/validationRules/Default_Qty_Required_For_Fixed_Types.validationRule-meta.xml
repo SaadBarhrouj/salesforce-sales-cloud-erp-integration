@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Default_Qty_Required_For_Fixed_Types</fullName>
+    <active>true</active>
+    <description>Default Quantity must be set for Component and Accessory option types because their qty is locked to Default_Quantity__c at runtime and they are not editable in the Configurator.</description>
+    <errorConditionFormula>ISBLANK(Default_Quantity__c) &amp;&amp; (ISPICKVAL(Option_Type__c, &quot;Component&quot;) || ISPICKVAL(Option_Type__c, &quot;Accessory&quot;))</errorConditionFormula>
+    <errorDisplayField>Default_Quantity__c</errorDisplayField>
+    <errorMessage>Default Quantity is required for Component and Accessory option types.</errorMessage>
+</ValidationRule>

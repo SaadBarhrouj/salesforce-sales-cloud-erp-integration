@@ -25,6 +25,9 @@ function mapProduct2Records(records) {
             Description: product.Description,
             IsActive: product.IsActive,
             Unit_Weight_Kg__c: product.Unit_Weight_Kg__c,
+            Width_cm__c: product.Width_cm__c,
+            Height_cm__c: product.Height_cm__c,
+            Depth_cm__c: product.Depth_cm__c,
             isBundle: !!(product.Options__r && product.Options__r.length > 0)
         }));
 }
@@ -133,7 +136,11 @@ export function getOptionsByFeature(featureId) {
                 productDescription: product.Description || '',
                 listUnitPrice: product.UnitPrice || 0,
                 family: product.Family || '',
+                
                 weight: product.Unit_Weight_Kg__c || 0,
+                Width_cm__c: product.Width_cm__c,
+                Height_cm__c: product.Height_cm__c,
+                Depth_cm__c: product.Depth_cm__c,
                 isSelected: o.Is_Selected__c,
                 quantity: o.Default_Quantity__c || 1
             };
@@ -159,7 +166,11 @@ export function getAllOptionsByProduct(productId) {
                 productDescription: product.Description || '',
                 listUnitPrice: product.UnitPrice || 0,
                 family: product.Family || '',
+                
                 weight: product.Unit_Weight_Kg__c || 0,
+                Width_cm__c: product.Width_cm__c,
+                Height_cm__c: product.Height_cm__c,
+                Depth_cm__c: product.Depth_cm__c,
                 isSelected: o.Is_Selected__c,
                 quantity: o.Default_Quantity__c || 1
             };

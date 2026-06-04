@@ -59,11 +59,11 @@
             <td data-label="Product Name" class="slds-text-color_weak">{opt.productName}</td>
             <td data-label="Quantity">
                 <lightning-input
-                    lwc:if={opt.Quantity_Editable__c}
+                    lwc:if={opt.isQtyEditable}
                     type="number"
                     value={opt.quantity}
-                    min={opt.Min_Quantity__c}
-                    max={opt.Max_Quantity__c}
+                    min={opt.minQuantity}
+                    max={opt.maxQuantity}
                     step="1"
                     label="Qty"
                     variant="label-hidden"

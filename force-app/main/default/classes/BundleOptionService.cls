@@ -21,7 +21,6 @@ public inherited sharing class BundleOptionService {
         'Min_Quantity__c',
         'Option_Product__c',
         'Option_Type__c',
-        'Quantity_Editable__c',
         'Sort_Order__c'
     };
 
@@ -98,7 +97,7 @@ public inherited sharing class BundleOptionService {
      * Handles null values with sensible defaults.
      * @param optionRecord The Bundle_Option__c record to transform
      * @return Map with keys: Id, Name, productCode, productName, description,
-     *         defaultQuantity, minQuantity, maxQuantity, quantityEditable, isRequired, isSelected, optionType
+     *         defaultQuantity, minQuantity, maxQuantity, isRequired, isSelected, optionType
      */
     private static Map<String, Object> buildOptionPayload(Bundle_Option__c optionRecord) {
         Product2 product = optionRecord.Option_Product__r;
@@ -116,10 +115,13 @@ public inherited sharing class BundleOptionService {
             'defaultQuantity' => optionRecord.Default_Quantity__c ?? 0,
             'minQuantity' => optionRecord.Min_Quantity__c,
             'maxQuantity' => optionRecord.Max_Quantity__c,
-            'quantityEditable' => optionRecord.Quantity_Editable__c ?? false,
             'isRequired' => optionRecord.Is_Required__c ?? false,
             'isSelected' => optionRecord.Is_Selected__c ?? false,
-            'optionType' => optionRecord.Option_Type__c
+            'optionType' => optionRecord.Option_Type__c,
+            'w' => product?.Width_cm__c,
+            'h' => product?.Height_cm__c,
+            'd' => product?.Depth_cm__c,
+            'weight' => product?.Unit_Weight_Kg__c
         };
     }
 
@@ -150,5 +152,31 @@ public inherited sharing class BundleOptionService {
     @TestVisible
     private static Boolean valuesDiffer(Object leftValue, Object rightValue) {
         return String.valueOf(leftValue) != String.valueOf(rightValue);
+    }
+
+    /**
+     * @description Resolves Bundle_Option__c metadata for a set of (bundleProductId, optionProductId) pairs.
+     * Used by cpqStepLineEditor on reload to enrich saved option rows with optionType, defaultQuantity, and bounds.
+     * Keys in the returned map are the string concatenation "bundleProductId|optionProductId".
+     * Convention: one option product per bundle. If broken, the first record (lowest Sort_Order__c) wins.
+     * @param parentToOptionIds Map of parent bundle Product2 Id to the set of option Product2 Ids to resolve.
+     * @return Map keyed by "parentId|optionId" pointing to a normalized metadata payload.
+     */
+    public static Map<String, Map<String, Object>> getOptionMetadata(Map<Id, Set<Id>> parentToOptionIds) {
+        Map<String, Map<String, Object>> result = new Map<String, Map<String, Object>>();
+        for (Bundle_Option__c bo : BundleOptionDAO.getByBundleAndOptionPairs(parentToOptionIds)) {
+            String key = String.valueOf(bo.Bundle_Product__c) + '|' + String.valueOf(bo.Option_Product__c);
+            if (result.containsKey(key)) {
+                continue;
+            }
+            result.put(key, new Map<String, Object>{
+                'bundleOptionId'  => String.valueOf(bo.Id),
+                'optionType'      => bo.Option_Type__c,
+                'defaultQuantity' => bo.Default_Quantity__c,
+                'minQuantity'     => bo.Min_Quantity__c,
+                'maxQuantity'     => bo.Max_Quantity__c
+            });
+        }
+        return result;
     }
 }
