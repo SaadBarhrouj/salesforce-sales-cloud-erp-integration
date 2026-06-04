@@ -1,5 +1,13 @@
+/**
+ * Dispatches Opportunity trigger events to the appropriate OpportunityService methods.
+ */
 public inherited sharing class OpportunityTriggerHandler {
-    
+
+    /**
+     * Routes the current trigger context to the matching service handler.
+     * @param newList The list of records in their new state.
+     * @param oldMap The map of records in their old state, keyed by record Id.
+     */
     public static void handle(List<SObject> newList, Map<Id, SObject> oldMap) {
         if (Trigger.isBefore) {
             if (Trigger.isInsert) {
@@ -53,7 +61,9 @@ public inherited sharing class OpportunityTriggerHandler {
 
     private static List<Opportunity> castNewList(List<SObject> rawRecords) {
         List<Opportunity> typedRecords = new List<Opportunity>();
-        if (rawRecords == null) return typedRecords;
+        if (rawRecords == null) {
+            return typedRecords;
+        }
         
         for (SObject rawRecord : rawRecords) {
             typedRecords.add((Opportunity) rawRecord);
@@ -63,7 +73,9 @@ public inherited sharing class OpportunityTriggerHandler {
 
     private static Map<Id, Opportunity> castOldMap(Map<Id, SObject> rawRecordsById) {
         Map<Id, Opportunity> typedRecordsById = new Map<Id, Opportunity>();
-        if (rawRecordsById == null) return typedRecordsById;
+        if (rawRecordsById == null) {
+            return typedRecordsById;
+        }
         
         for (Id recordId : rawRecordsById.keySet()) {
             typedRecordsById.put(recordId, (Opportunity) rawRecordsById.get(recordId));

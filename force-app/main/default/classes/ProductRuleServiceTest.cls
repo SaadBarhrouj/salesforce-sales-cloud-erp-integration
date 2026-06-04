@@ -9,6 +9,7 @@ private class ProductRuleServiceTest {
 
     /**
      * @description Builds a bundle with three options and returns the key Ids.
+     * @return Map of logical names to the created bundle and option Ids.
      */
     private static Map<String, Id> buildBundle() {
         Product2 bundle = TestDataFactory.createProduct2(true);

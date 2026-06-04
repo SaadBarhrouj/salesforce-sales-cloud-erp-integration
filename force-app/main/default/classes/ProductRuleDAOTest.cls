@@ -61,7 +61,7 @@ private class ProductRuleDAOTest {
     static void getActiveLineRulesReturnsValidationAndAlertRules() {
         Product_Rule__c validationRule = TestDataFactory.createProductRule(
             'Validation Rule', 'Validation', 'All', 'msg', 1, true, true);
-        Product_Rule__c alertRule = TestDataFactory.createProductRule(
+        TestDataFactory.createProductRule(
             'Alert Rule', 'Alert', 'Any', 'msg', 2, true, true);
         TestDataFactory.createProductRule(
             'Selection Rule', 'Selection', 'All', 'msg', 3, true, true);

@@ -17,8 +17,17 @@
  */
 public inherited sharing class CustomConditionEvaluator {
 
+    /**
+     * @description Exception thrown when an Advanced Condition formula is empty or malformed.
+     */
     public class FormulaException extends Exception {}
 
+    /**
+     * @description Evaluates the given boolean formula against the supplied condition results.
+     * @param formula The Advanced Condition formula expression to evaluate.
+     * @param resultsByIndex Condition results keyed by Rule_Condition__c.Index__c.
+     * @return The boolean result of evaluating the formula.
+     */
     public static Boolean evaluate(String formula, Map<Integer, Boolean> resultsByIndex) {
         if (String.isBlank(formula)) {
             throw new FormulaException('Advanced Condition formula is empty.');

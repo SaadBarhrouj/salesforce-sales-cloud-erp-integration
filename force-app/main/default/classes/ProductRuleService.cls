@@ -56,7 +56,11 @@ public inherited sharing class ProductRuleService {
     /**
      * @description Event-aware overload. Only rules whose Evaluation_Event__c matches the
      * supplied context (or is Always, or when context is All) are applied.
+     * @param bundleProductId The bundle Product2 Id.
+     * @param opportunityId The Opportunity Id (used only by Opportunity-tested conditions; may be null).
+     * @param selectedOptionIds The Bundle_Option__c Ids the rep currently has selected.
      * @param evaluationEvent Save, Edit, Always, or All (All applies every rule regardless of event).
+     * @return Map with keys selectedOptionIds, hiddenOptionIds, lockedOptionIds.
      */
     public static Map<String, Object> evaluateBundleRules(
         Id bundleProductId,
@@ -121,7 +125,11 @@ public inherited sharing class ProductRuleService {
     /**
      * @description Event-aware overload. Only Validation/Alert rules whose Evaluation_Event__c
      * matches the supplied context (or is Always, or when context is All) are evaluated.
+     * @param opportunityId The Opportunity Id (used only by Opportunity-tested conditions; may be null).
+     * @param lines Line item maps; each carries at least productId, quantity, unitPrice,
+     *              discountPercent, isBundle. Product code / name / family are resolved here.
      * @param evaluationEvent Save, Edit, Always, or All (All evaluates every rule regardless of event).
+     * @return Map with keys validationErrors and alerts (lists of messages).
      */
     public static Map<String, Object> evaluateLineRules(
         Id opportunityId,
@@ -170,6 +178,9 @@ public inherited sharing class ProductRuleService {
      * @description Returns true when a rule's configured Evaluation_Event__c should fire under
      * the given runtime context. Always-rules fire under any context; an All context fires every
      * rule. A blank rule event is treated as Save (the field is required, so this is defensive).
+     * @param ruleEvent The rule's configured Evaluation_Event__c value.
+     * @param contextEvent The runtime evaluation context (Save, Edit, Always, or All).
+     * @return True when the rule should fire under the given context.
      */
     private static Boolean matchesEvent(String ruleEvent, String contextEvent) {
         if (contextEvent == EVENT_ALL) {
@@ -327,6 +338,10 @@ public inherited sharing class ProductRuleService {
 
     /**
      * @description Resolves the tested field and filter value against the given records and compares them.
+     * @param c The Rule_Condition__c describing the field, operator, and filter.
+     * @param testedRecord The record supplying the tested field value.
+     * @param filterRecord The record supplying the filter value when Filter_Type__c is Field.
+     * @return True when the resolved values satisfy the condition's operator.
      */
     private static Boolean recordMatches(
         Rule_Condition__c c, SObject testedRecord, SObject filterRecord
@@ -345,6 +360,9 @@ public inherited sharing class ProductRuleService {
     /**
      * @description Resolves a logical line-item field name against a line map.
      * Returns null when the name is not a recognized line field.
+     * @param line The enriched line item map.
+     * @param fieldName The logical line field name to resolve.
+     * @return The resolved value, or null when the name is not recognized.
      */
     private static Object resolveLineField(Map<String, Object> line, String fieldName) {
         if (line == null || String.isBlank(fieldName)) {
@@ -364,6 +382,9 @@ public inherited sharing class ProductRuleService {
     /**
      * @description Resolves a field path (optionally one relationship hop, e.g. Option_Product__r.Family)
      * against an SObject. Returns null when the path cannot be resolved.
+     * @param record The SObject to resolve the field path against.
+     * @param fieldPath The field path, optionally with one relationship hop.
+     * @return The resolved value, or null when the path cannot be resolved.
      */
     private static Object resolveField(SObject record, String fieldPath) {
         if (record == null || String.isBlank(fieldPath)) {
@@ -385,6 +406,10 @@ public inherited sharing class ProductRuleService {
     /**
      * @description Compares a resolved field value against a filter value using the given operator.
      * Numeric comparison is used when both sides parse as numbers; otherwise case-insensitive string comparison.
+     * @param fieldValue The resolved field value (left operand).
+     * @param operator The comparison operator (e.g. equals, greater than, contains).
+     * @param filterValue The filter value to compare against (right operand).
+     * @return True when the comparison holds for the given operator.
      */
     @TestVisible
     private static Boolean compareValues(Object fieldValue, String operator, String filterValue) {

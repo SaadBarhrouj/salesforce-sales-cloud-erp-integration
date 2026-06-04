@@ -6,10 +6,18 @@ public class DistanceCalculationQueueable implements Queueable, Database.AllowsC
     
     private Set<Id> opportunityIds;
 
+    /**
+     * @description Constructs the queueable with the Opportunity Ids to process.
+     * @param oppIds The set of Opportunity Ids to calculate distances for.
+     */
     public DistanceCalculationQueueable(Set<Id> oppIds) {
         this.opportunityIds = oppIds;
     }
 
+    /**
+     * @description Executes the queueable job, calculating distances for the configured Opportunities.
+     * @param context The Queueable execution context provided by the platform.
+     */
     public void execute(QueueableContext context) {
         System.debug(LoggingLevel.INFO, '=== [DistanceCalculationQueueable] Execution started ===');
 

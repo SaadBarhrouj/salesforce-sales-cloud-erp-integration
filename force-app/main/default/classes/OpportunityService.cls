@@ -326,9 +326,13 @@ public inherited sharing class OpportunityService {
                 Set<Id> optProductIds = new Set<Id>();
                 for (Object optObj : options) {
                     Map<String, Object> optDataPreview = toStringKeyMap(optObj);
-                    if (optDataPreview == null) continue;
+                    if (optDataPreview == null) {
+                        continue;
+                    }
                     Id optProductId = toId(optDataPreview.get('product2Id'));
-                    if (optProductId != null) optProductIds.add(optProductId);
+                    if (optProductId != null) {
+                        optProductIds.add(optProductId);
+                    }
                 }
 
                 Map<String, Bundle_Option__c> sourceByKey = new Map<String, Bundle_Option__c>();
@@ -336,7 +340,9 @@ public inherited sharing class OpportunityService {
                     Map<Id, Set<Id>> pairs = new Map<Id, Set<Id>>{ product2Id => optProductIds };
                     for (Bundle_Option__c bo : BundleOptionDAO.getByBundleAndOptionPairs(pairs)) {
                         String k = String.valueOf(bo.Bundle_Product__c) + '|' + String.valueOf(bo.Option_Product__c);
-                        if (!sourceByKey.containsKey(k)) sourceByKey.put(k, bo);
+                        if (!sourceByKey.containsKey(k)) {
+                            sourceByKey.put(k, bo);
+                        }
                     }
                 }
 

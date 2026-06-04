@@ -89,7 +89,7 @@ public inherited sharing class ProductRuleDAO {
         if (selectFields.size() == 1) {
             return null;
         }
-        String soql = 'SELECT ' + String.join(new List<String>(selectFields), ', ')
+        String soql = 'SELECT ' + String.escapeSingleQuotes(String.join(new List<String>(selectFields), ', '))
                      + ' FROM Opportunity WHERE Id = :opportunityId LIMIT 1';
         List<Opportunity> records = Database.query(soql);
         return records.isEmpty() ? null : records[0];

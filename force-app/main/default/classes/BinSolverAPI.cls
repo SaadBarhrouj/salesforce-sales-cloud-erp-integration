@@ -25,6 +25,9 @@ public inherited sharing class BinSolverAPI {
         public List<BinRequest> bins;
         public List<ItemRequest> items;
 
+        /**
+         * @description Initializes a PackingRequest with default values.
+         */
         public PackingRequest() {
             this.allowUnplaced = true;
             this.bins = new List<BinRequest>();
@@ -62,10 +65,22 @@ public inherited sharing class BinSolverAPI {
      * @description Structured result returned to the business service.
      */
     public class PackingResult {
+        /**
+         * @description Indicates whether the packing API call succeeded.
+         */
         public Boolean isSuccess { get; set; }
+        /**
+         * @description Raw JSON response body returned by the API for parsing.
+         */
         public String responseBody { get; set; } // Raw JSON response for parsing
+        /**
+         * @description Log request capturing the callout details.
+         */
         public IntegrationLoggerService.LogCalloutRequest logRequest { get; set; }
 
+        /**
+         * @description Initializes a PackingResult with default values.
+         */
         public PackingResult() {
             this.isSuccess = false;
         }

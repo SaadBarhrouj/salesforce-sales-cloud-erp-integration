@@ -1,3 +1,6 @@
+/**
+ * Service for logging integration callouts to Integration_Call_Log__c records.
+ */
 public inherited sharing class IntegrationLoggerService {
 
     /**
@@ -14,18 +17,57 @@ public inherited sharing class IntegrationLoggerService {
     /**
      * ==================== INNER CLASS ====================
      */
+    /**
+     * Wrapper holding the data required to log a single integration callout.
+     */
     public class LogCalloutRequest {
+        /**
+         * Name of the external service being called.
+         */
         public String  serviceName        { get; set; }
+        /**
+         * Endpoint URL of the callout.
+         */
         public String  endpoint           { get; set; }
+        /**
+         * HTTP method used for the callout.
+         */
         public String  method             { get; set; }
+        /**
+         * Raw request payload sent to the service.
+         */
         public String  requestPayload     { get; set; }
+        /**
+         * Raw response body returned by the service.
+         */
         public String  responseBody       { get; set; }
+        /**
+         * HTTP status code returned by the service.
+         */
         public Integer statusCode         { get; set; }
+        /**
+         * Timestamp when the request was sent.
+         */
         public Datetime requestTimestamp  { get; set; }
+        /**
+         * Timestamp when the response was received.
+         */
         public Datetime responseTimestamp { get; set; }
+        /**
+         * Id of the Salesforce record related to this callout.
+         */
         public Id      relatedRecordId    { get; set; }
+        /**
+         * Type of action performed by the callout.
+         */
         public String  actionType         { get; set; }
+        /**
+         * Error code returned by the service, if any.
+         */
         public String  errorCode          { get; set; }
+        /**
+         * Number of retry attempts for the callout.
+         */
         public Integer retryCount         { get; set; }
     }
 
@@ -72,6 +114,8 @@ public inherited sharing class IntegrationLoggerService {
 
     /**
      * @description Builds a single Integration_Call_Log__c record from a LogCalloutRequest
+     * @param request The LogCalloutRequest to convert into a log record
+     * @return The populated Integration_Call_Log__c record
      */
     private static Integration_Call_Log__c buildLogRecord(LogCalloutRequest request) {
         Integration_Call_Log__c logRecord = new Integration_Call_Log__c();
@@ -114,29 +158,48 @@ public inherited sharing class IntegrationLoggerService {
 
     /**
      * @description Resolves HTTP status code to Status__c picklist value
+     * @param statusCode The HTTP status code to resolve
+     * @return The corresponding Status__c picklist value
      */
     private static String resolveStatus(Integer statusCode) {
-        if (statusCode == null)                        return 'Timeout';
-        if (statusCode >= 200 && statusCode < 300)     return 'Success';
-        if (statusCode == 408 || statusCode == 504)    return 'Timeout';
+        if (statusCode == null) {
+            return 'Timeout';
+        }
+        if (statusCode >= 200 && statusCode < 300) {
+            return 'Success';
+        }
+        if (statusCode == 408 || statusCode == 504) {
+            return 'Timeout';
+        }
         return 'Failed';
     }
 
     /**
      * @description Validates and normalizes action type against allowed values
+     * @param actionType The raw action type to validate
+     * @return The normalized action type, or 'Fetch' if invalid
      */
     private static String validateActionType(String actionType) {
-        if (String.isBlank(actionType)) return 'Fetch';
+        if (String.isBlank(actionType)) {
+            return 'Fetch';
+        }
         String normalized = actionType.toLowerCase();
         return VALID_ACTION_TYPES.containsKey(normalized) ? VALID_ACTION_TYPES.get(normalized) : 'Fetch';
     }
 
     /**
      * @description Truncates a string to the given max length
+     * @param input The string to truncate
+     * @param maxLength The maximum allowed length
+     * @return The truncated string, or null if input is null
      */
     private static String truncateString(String input, Integer maxLength) {
-        if (input == null)                  return null;
-        if (input.length() <= maxLength)    return input;
+        if (input == null) {
+            return null;
+        }
+        if (input.length() <= maxLength) {
+            return input;
+        }
         System.debug(LoggingLevel.WARN, 'Truncating string from ' + input.length() + ' to ' + maxLength);
         return input.substring(0, maxLength);
     }

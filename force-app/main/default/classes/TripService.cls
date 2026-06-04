@@ -5,20 +5,44 @@
  */
 public inherited sharing class TripService {
 
-    public class TripException extends Exception {}
-
     // ========== CONSTANTS ==========
 
+    /**
+     * Default ISO country code used to resolve transport zones and rates.
+     */
     private static final String DEFAULT_COUNTRY_CODE = 'MA';
+    /**
+     * BinSolver objective that minimizes the number of bins used.
+     */
     private static final String OBJECTIVE_MIN_BINS  = 'minBins';
+    /**
+     * BinSolver objective that minimizes wasted space.
+     */
     private static final String OBJECTIVE_MIN_WASTE = 'minWaste';
 
+    /**
+     * Direction mode for delivery-only trips.
+     */
     private static final String DIRECTION_DELIVERY = 'Delivery';
+    /**
+     * Direction mode for pickup-only trips.
+     */
     private static final String DIRECTION_PICKUP   = 'Pickup';
+    /**
+     * Direction mode for combined delivery and pickup trips.
+     */
     private static final String DIRECTION_BOTH     = 'Delivery_Pickup';
+
+    /**
+     * Exception type raised for trip calculation failures.
+     */
+    public class TripException extends Exception {}
 
     // ========== CPQ DTOs (FOR LWC COMMUNICATION) ==========
 
+    /**
+     * DTO representing a CPQ line item received from the LWC.
+     */
     public class CPQItem {
         public String productId;
         public Integer quantity;
@@ -29,6 +53,9 @@ public inherited sharing class TripService {
         public List<CPQOption> options;
     }
 
+    /**
+     * DTO representing a selectable option attached to a CPQ line item.
+     */
     public class CPQOption {
         public Boolean isSelected;
         public Integer quantity;
@@ -79,9 +106,9 @@ public inherited sharing class TripService {
             Id resolvedDeliveryId = deliverySiteId;
             if (resolvedAgencyId == null || resolvedDeliveryId == null) {
                 Opportunity opp = OpportunityDAO.getById(opportunityId);
-                if (opp == null) throw new TripException('Opportunity not found: ' + opportunityId);
-                if (resolvedAgencyId == null)   resolvedAgencyId   = opp.Default_Agency__c;
-                if (resolvedDeliveryId == null) resolvedDeliveryId = opp.Delivery_Site__c;
+                if (opp == null) { throw new TripException('Opportunity not found: ' + opportunityId); }
+                if (resolvedAgencyId == null)   { resolvedAgencyId   = opp.Default_Agency__c; }
+                if (resolvedDeliveryId == null) { resolvedDeliveryId = opp.Delivery_Site__c; }
             }
             if (resolvedAgencyId == null || resolvedDeliveryId == null) {
                 throw new TripException('Departure agency and delivery site are required.');
@@ -109,7 +136,7 @@ public inherited sharing class TripService {
             List<CPQItem> cpqItems = (List<CPQItem>) JSON.deserialize(cpqItemsJson, List<CPQItem>.class);
             Set<Id> serviceIds = collectServiceIds(cpqItems);
             List<BinSolverAPI.ItemRequest> items = buildItemsFromCPQ(cpqItems, serviceIds);
-            if (items.isEmpty()) throw new TripException('No valid items found for transport calculation.');
+            if (items.isEmpty()) { throw new TripException('No valid items found for transport calculation.'); }
 
             // Restrict the truck fleet to trucks that have a rate in this zone (otherwise we'd be packing trucks we can't price)
             List<BinSolverAPI.BinRequest> bins = fetchTrucksFromMetadata(rateByTruck.keySet());
@@ -131,7 +158,7 @@ public inherited sharing class TripService {
 
             // 6. Single DML batch — log callouts only. The direction-mode choice is persisted
             //    later in the wizard's final-save step, not here.
-            if (!accumulatedLogs.isEmpty()) IntegrationLoggerService.logCallouts(accumulatedLogs);
+            if (!accumulatedLogs.isEmpty()) { IntegrationLoggerService.logCallouts(accumulatedLogs); }
 
             return output;
 
@@ -148,6 +175,15 @@ public inherited sharing class TripService {
      * Log requests are appended to {@code accumulatedLogs} for a single end-of-transaction DML insert
      * — never inserted here, otherwise a subsequent direction's callouts would violate the
      * "no DML between callouts" rule and fail with CalloutException.
+     * @param direction the trip direction to stamp on each generated Trip__c
+     * @param items the items to pack
+     * @param bins the available truck templates
+     * @param rateByTruck map of truck code to its transport rate
+     * @param distanceKm the route distance in kilometers
+     * @param zone the resolved transport zone
+     * @param opportunityId the parent Opportunity Id
+     * @param accumulatedLogs collector for callout log requests to insert later
+     * @return the cheapest priced solution's Trip__c list for this direction
      */
     private static List<Trip__c> calculateForDirection(
         String direction,
@@ -162,8 +198,8 @@ public inherited sharing class TripService {
         BinSolverAPI.PackingResult resMinBins  = BinSolverAPI.callPackingApi(buildRequest(OBJECTIVE_MIN_BINS,  items, bins), opportunityId);
         BinSolverAPI.PackingResult resMinWaste = BinSolverAPI.callPackingApi(buildRequest(OBJECTIVE_MIN_WASTE, items, bins), opportunityId);
 
-        if (resMinBins.logRequest  != null) accumulatedLogs.add(resMinBins.logRequest);
-        if (resMinWaste.logRequest != null) accumulatedLogs.add(resMinWaste.logRequest);
+        if (resMinBins.logRequest  != null) { accumulatedLogs.add(resMinBins.logRequest); }
+        if (resMinWaste.logRequest != null) { accumulatedLogs.add(resMinWaste.logRequest); }
 
         List<PricedSolution> candidates = new List<PricedSolution>();
         if (resMinBins.isSuccess) {
@@ -181,22 +217,37 @@ public inherited sharing class TripService {
 
         PricedSolution winner = candidates[0];
         for (Integer i = 1; i < candidates.size(); i++) {
-            if (candidates[i].totalCost < winner.totalCost) winner = candidates[i];
+            if (candidates[i].totalCost < winner.totalCost) { winner = candidates[i]; }
         }
         return winner.trips;
     }
 
+    /**
+     * Normalizes a raw direction value to a supported direction mode constant.
+     * @param raw the raw direction value from the LWC
+     * @return a supported direction mode, defaulting to delivery
+     */
     private static String normalizeDirectionMode(String raw) {
-        if (String.isBlank(raw)) return DIRECTION_DELIVERY;
-        if (raw == DIRECTION_PICKUP || raw == DIRECTION_BOTH || raw == DIRECTION_DELIVERY) return raw;
+        if (String.isBlank(raw)) { return DIRECTION_DELIVERY; }
+        if (raw == DIRECTION_PICKUP || raw == DIRECTION_BOTH || raw == DIRECTION_DELIVERY) { return raw; }
         return DIRECTION_DELIVERY;
     }
 
+    /**
+     * Collects the Ids of Service-typed products among the given CPQ items.
+     * @param cpqItems the CPQ items to inspect
+     * @return the set of product Ids that are Service-typed
+     */
     private static Set<Id> collectServiceIds(List<CPQItem> cpqItems) {
         Set<Id> productIds = new Set<Id>();
         for (CPQItem c : cpqItems) {
             if (c.productId != null) {
-                try { productIds.add((Id) c.productId); } catch (Exception ignore) {}
+                try {
+                    productIds.add((Id) c.productId);
+                } catch (Exception ignore) {
+                    // Skip values that are not valid Ids.
+                    continue;
+                }
             }
         }
         return Product2DAO.getServiceIdsFromIds(productIds);
@@ -207,6 +258,10 @@ public inherited sharing class TripService {
     /**
      * @description Returns driving distance in km. Uses Distance_Cache__c first; on miss calls
      * OpenRouteService and caches the result. Returns null if no usable distance can be obtained.
+     * @param agencyId the departure agency Location Id
+     * @param deliveryId the delivery site Location Id
+     * @param opportunityId the parent Opportunity Id
+     * @return the driving distance in kilometers, or null if unavailable
      */
     private static Decimal resolveDistance(Id agencyId, Id deliveryId, Id opportunityId) {
         String cacheKey = String.valueOf(agencyId) + '_' + String.valueOf(deliveryId);
@@ -249,14 +304,17 @@ public inherited sharing class TripService {
     /**
      * @description Picks the Transport_Zone__mdt whose distance bracket contains `distanceKm`.
      * Semantics follow the field documentation: Min_Distance_Km__c <= distance < Max_Distance_Km__c.
+     * @param distanceKm the route distance in kilometers
+     * @param countryCode the ISO country code to match
+     * @return the matching transport zone, or null if none matches
      */
     private static Transport_Zone__mdt resolveZone(Decimal distanceKm, String countryCode) {
         for (Transport_Zone__mdt z : Transport_Zone__mdt.getAll().values()) {
-            if (z.Country_Code__c != countryCode) continue;
+            if (z.Country_Code__c != countryCode) { continue; }
             Decimal lo = z.Min_Distance_Km__c;
             Decimal hi = z.Max_Distance_Km__c;
-            if (lo == null || hi == null) continue;
-            if (distanceKm >= lo && distanceKm < hi) return z;
+            if (lo == null || hi == null) { continue; }
+            if (distanceKm >= lo && distanceKm < hi) { return z; }
         }
         return null;
     }
@@ -265,6 +323,8 @@ public inherited sharing class TripService {
 
     /**
      * @description Loads truck templates from CMDT, optionally restricted to a set of truck codes.
+     * @param allowedCodes the truck codes to include, or null/empty to include all
+     * @return the list of truck bin requests
      */
     private static List<BinSolverAPI.BinRequest> fetchTrucksFromMetadata(Set<String> allowedCodes) {
         List<BinSolverAPI.BinRequest> bins = new List<BinSolverAPI.BinRequest>();
@@ -288,12 +348,15 @@ public inherited sharing class TripService {
 
     /**
      * @description Build Truck_Code -> Transport_Rate__mdt map for the active country/zone.
+     * @param countryCode the ISO country code to match
+     * @param zoneCode the transport zone code to match
+     * @return map of truck code to its transport rate for the country/zone
      */
     private static Map<String, Transport_Rate__mdt> buildRateMap(String countryCode, String zoneCode) {
         Map<String, Transport_Rate__mdt> result = new Map<String, Transport_Rate__mdt>();
         for (Transport_Rate__mdt r : Transport_Rate__mdt.getAll().values()) {
-            if (r.Country_Code__c != countryCode) continue;
-            if (r.Zone_Code__c != zoneCode) continue;
+            if (r.Country_Code__c != countryCode) { continue; }
+            if (r.Zone_Code__c != zoneCode) { continue; }
             result.put(r.Truck_Code__c, r);
         }
         return result;
@@ -301,10 +364,13 @@ public inherited sharing class TripService {
 
     /**
      * @description Per-trip price = max(Minimum_Price, Base_Price + max(0, distance - Included_Km) * Price_Per_Extra_Km).
+     * @param rate the transport rate to apply
+     * @param distanceKm the route distance in kilometers
+     * @return the computed per-trip cost, scaled to two decimals
      */
     private static Decimal computeTripCost(Transport_Rate__mdt rate, Decimal distanceKm) {
         Decimal extraKm = distanceKm - (rate.Included_Km__c != null ? rate.Included_Km__c : 0);
-        if (extraKm < 0) extraKm = 0;
+        if (extraKm < 0) { extraKm = 0; }
         Decimal raw = (rate.Base_Price__c != null ? rate.Base_Price__c : 0)
                     + extraKm * (rate.Price_Per_Extra_Km__c != null ? rate.Price_Per_Extra_Km__c : 0);
         Decimal floor = (rate.Minimum_Price__c != null) ? rate.Minimum_Price__c : 0;
@@ -315,6 +381,13 @@ public inherited sharing class TripService {
      * @description Parses a BinSolver response, prices each bin against the rate table, and
      * builds the Trip__c list. Returns null if any bin's truck has no matching rate (the
      * solution is unpriceable so it must not win the cost comparison).
+     * @param jsonResponse the raw BinSolver response body
+     * @param rateByTruck map of truck code to its transport rate
+     * @param distanceKm the route distance in kilometers
+     * @param zone the resolved transport zone
+     * @param opportunityId the parent Opportunity Id
+     * @param direction the trip direction to stamp on each Trip__c
+     * @return the priced solution, or null if it cannot be priced
      */
     private static PricedSolution priceSolution(
         String jsonResponse,
@@ -326,7 +399,7 @@ public inherited sharing class TripService {
     ) {
         Map<String, Object> root = (Map<String, Object>) JSON.deserializeUntyped(jsonResponse);
         List<Object> binsData = (List<Object>) root.get('bins');
-        if (binsData == null || binsData.isEmpty()) return null;
+        if (binsData == null || binsData.isEmpty()) { return null; }
 
         PricedSolution sol = new PricedSolution();
         for (Object obj : binsData) {
@@ -359,12 +432,18 @@ public inherited sharing class TripService {
 
     // ========== HELPERS ==========
 
+    /**
+     * Builds BinSolver item requests from CPQ items, excluding Service-typed products.
+     * @param cpqItems the CPQ items to convert
+     * @param serviceProductIds Ids of Service-typed products to exclude from packing
+     * @return the list of packable item requests
+     */
     private static List<BinSolverAPI.ItemRequest> buildItemsFromCPQ(List<CPQItem> cpqItems, Set<Id> serviceProductIds) {
         List<BinSolverAPI.ItemRequest> items = new List<BinSolverAPI.ItemRequest>();
         for (CPQItem cpq : cpqItems) {
-            if (cpq.w == null || cpq.h == null) continue;
+            if (cpq.w == null || cpq.h == null) { continue; }
             // Service-typed products are intangible (labor, setup, training, etc.) — they don't get packed.
-            if (cpq.productId != null && serviceProductIds != null && serviceProductIds.contains((Id) cpq.productId)) continue;
+            if (cpq.productId != null && serviceProductIds != null && serviceProductIds.contains((Id) cpq.productId)) { continue; }
 
             BinSolverAPI.ItemRequest it = new BinSolverAPI.ItemRequest();
             it.id = cpq.productId;
@@ -389,6 +468,13 @@ public inherited sharing class TripService {
         return items;
     }
 
+    /**
+     * Builds a BinSolver packing request for the given objective.
+     * @param objective the packing objective
+     * @param items the items to pack
+     * @param bins the available truck bins
+     * @return the assembled packing request
+     */
     private static BinSolverAPI.PackingRequest buildRequest(String objective, List<BinSolverAPI.ItemRequest> items, List<BinSolverAPI.BinRequest> bins) {
         BinSolverAPI.PackingRequest req = new BinSolverAPI.PackingRequest();
         req.objective = objective;
@@ -397,17 +483,31 @@ public inherited sharing class TripService {
         return req;
     }
 
+    /**
+     * Validates that the required inputs for trip calculation are present.
+     * @param opportunityId the parent Opportunity Id
+     * @param json the CPQ items JSON string
+     */
     private static void validateInputs(Id opportunityId, String json) {
         if (opportunityId == null || String.isBlank(json)) {
             throw new TripException('Opportunity ID and Items JSON are required.');
         }
     }
 
+    /**
+     * Coerces an untyped JSON value into a Decimal.
+     * @param value the value to convert
+     * @return the value as a Decimal, or null if it cannot be converted
+     */
     private static Decimal toDecimal(Object value) {
-        if (value == null) return null;
-        if (value instanceof Decimal) return (Decimal) value;
-        if (value instanceof Double)  return Decimal.valueOf((Double) value);
-        if (value instanceof Integer) return Decimal.valueOf((Integer) value);
-        try { return Decimal.valueOf(String.valueOf(value)); } catch (Exception e) { return null; }
+        if (value == null) { return null; }
+        if (value instanceof Decimal) { return (Decimal) value; }
+        if (value instanceof Double)  { return Decimal.valueOf((Double) value); }
+        if (value instanceof Integer) { return Decimal.valueOf((Integer) value); }
+        try {
+            return Decimal.valueOf(String.valueOf(value));
+        } catch (Exception e) {
+            return null;
+        }
     }
 }

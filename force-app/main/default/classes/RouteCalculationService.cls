@@ -27,11 +27,26 @@ public inherited sharing class RouteCalculationService {
      * @description Wrapper class to return both data and log request to the Queueable
      */
     public class RouteResult {
+        /**
+         * @description Indicates whether the route calculation succeeded.
+         */
         public Boolean isSuccess { get; set; }
+        /**
+         * @description Driving distance between the two locations, in kilometers.
+         */
         public Decimal distanceKm { get; set; }
+        /**
+         * @description Driving duration between the two locations, in minutes.
+         */
         public Integer durationMinutes { get; set; }
+        /**
+         * @description Log request capturing the callout details.
+         */
         public IntegrationLoggerService.LogCalloutRequest logRequest { get; set; }
-        
+
+        /**
+         * @description Initializes a RouteResult with default values.
+         */
         public RouteResult() {
             this.isSuccess = false;
         }
