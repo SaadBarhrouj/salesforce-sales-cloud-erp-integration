@@ -25,7 +25,7 @@ private class ProductRuleControllerTest {
 
         Test.startTest();
         Map<String, Object> verdict = ProductRuleController.evaluateBundleRules(
-            bundle.Id, null, new List<Id>{ option.Id });
+            bundle.Id, null, new List<Id>{ option.Id }, 'Save');
         Test.stopTest();
 
         Set<String> selected = new Set<String>((List<String>) verdict.get('selectedOptionIds'));
@@ -38,7 +38,7 @@ private class ProductRuleControllerTest {
         Product2 bundle = TestDataFactory.createProduct2(true);
 
         Test.startTest();
-        Map<String, Object> verdict = ProductRuleController.evaluateBundleRules(bundle.Id, null, null);
+        Map<String, Object> verdict = ProductRuleController.evaluateBundleRules(bundle.Id, null, null, 'Save');
         Test.stopTest();
 
         System.assertNotEquals(null, verdict, 'Verdict should not be null for null selection');
@@ -68,7 +68,7 @@ private class ProductRuleControllerTest {
         };
 
         Test.startTest();
-        Map<String, Object> verdict = ProductRuleController.evaluateLineRules(null, lines);
+        Map<String, Object> verdict = ProductRuleController.evaluateLineRules(null, lines, 'Save');
         Test.stopTest();
 
         System.assertEquals(1, ((List<String>) verdict.get('validationErrors')).size(),
@@ -78,7 +78,7 @@ private class ProductRuleControllerTest {
     @IsTest
     static void evaluateLineRulesHandlesNullLines() {
         Test.startTest();
-        Map<String, Object> verdict = ProductRuleController.evaluateLineRules(null, null);
+        Map<String, Object> verdict = ProductRuleController.evaluateLineRules(null, null, 'Save');
         Test.stopTest();
 
         System.assertNotEquals(null, verdict, 'Verdict should not be null for null lines');

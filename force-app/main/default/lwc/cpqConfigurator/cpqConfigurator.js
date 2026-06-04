@@ -415,6 +415,8 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
 
     if (this.isStepSelection) {
       filtersOpen = this._getSelectionStep()?.filterPanelOpen;
+    } else if (this.isStepConfigure) {
+      filtersOpen = this._getBundleConfigStep()?.filterPanelOpen;
     }
 
     return actions.map((action) => {
@@ -471,7 +473,7 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
     if (this.isStepSelection) {
       this._getSelectionStep()?.toggleFilterPanel();
     } else if (this.isStepConfigure) {
-      this._showToast("Info", "Filters are not currently available for this step.", "info");
+      this._getBundleConfigStep()?.toggleFilterPanel();
     }
   }
 
@@ -496,11 +498,7 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
   }
 
   _handleResetConfig() {
-    const bundleConfig = this._getBundleConfigStep();
-    if (bundleConfig) {
-      bundleConfig.resetCurrentBundle();
-      this._showToast("Configuration Reset", "Bundle configuration has been reset", "info");
-    }
+    this._getBundleConfigStep()?.resetCurrentBundle();
   }
 
   _handleResetEditing() {
@@ -510,6 +508,7 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
   async _ensureAllBundlesConfigured() {
     const bundleConfig = this._getBundleConfigStep();
     if (bundleConfig && this.selectedItemId) {
+      await bundleConfig.evaluateRules('Save');
       const isValid = bundleConfig.saveCurrentConfig();
       if (!isValid) return false;
     }
@@ -577,12 +576,12 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
     return selected;
   }
 
-  _handleSaveConfig() {
+  async _handleSaveConfig() {
     const bundleConfig = this._getBundleConfigStep();
-    if (bundleConfig) {
-      if (bundleConfig.saveCurrentConfig()) {
-        this._goNext();
-      }
+    if (!bundleConfig) return;
+    await bundleConfig.evaluateRules('Save');
+    if (bundleConfig.saveCurrentConfig()) {
+      this._goNext();
     }
   }
 

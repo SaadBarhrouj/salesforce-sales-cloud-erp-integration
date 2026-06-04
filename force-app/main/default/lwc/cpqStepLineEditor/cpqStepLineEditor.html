@@ -52,7 +52,7 @@
                 <div class="slds-m-bottom_small">
                     <template lwc:if={hasValidationErrors}>
                         <div class="slds-box slds-theme_error slds-m-bottom_xx-small">
-                            <h3 class="slds-text-title_bold slds-m-bottom_xx-small">Validation</h3>
+                            <h3 class="slds-text-title_bold slds-m-bottom_xx-small">Validation Errors</h3>
                             <ul class="slds-list_dotted">
                                 <template for:each={ruleMessages.errors} for:item="msg">
                                     <li key={msg.id}>{msg.text}</li>

@@ -223,6 +223,10 @@ export default class CpqStepLineEditor extends LightningElement {
         this._scheduleInitialPricing();
     }
 
+    disconnectedCallback() {
+        clearTimeout(this._debounceTimer);
+    }
+
     // ─── INITIALIZATION / FLATTENING ──────────────────────────────────────────
 
     _buildParentLineItem(item, hasOptions) {
@@ -521,8 +525,9 @@ export default class CpqStepLineEditor extends LightningElement {
         if (this._debounceTimer) {
             clearTimeout(this._debounceTimer);
         }
-        this._debounceTimer = setTimeout(() => {
-            this._executePricingCalculation();
+        this._debounceTimer = setTimeout(async () => {
+            await this._executePricingCalculation();
+            this._runRuleEvaluation('Edit', false);
         }, DEBOUNCE_DELAY);
     }
 
@@ -712,6 +717,10 @@ export default class CpqStepLineEditor extends LightningElement {
      */
     @api
     async evaluateLineRules() {
+        return this._runRuleEvaluation('Save', true);
+    }
+
+    async _runRuleEvaluation(evaluationEvent, blocking) {
         const lines = this.lineItems.map((row) => ({
             productId: row.productId,
             quantity: row.quantity,
@@ -723,7 +732,8 @@ export default class CpqStepLineEditor extends LightningElement {
         try {
             const verdict = await evaluateLineRules({
                 opportunityId: this.opportunityId || null,
-                lines
+                lines,
+                evaluationEvent
             });
             const errors = verdict.validationErrors || [];
             const alerts = verdict.alerts || [];
@@ -731,14 +741,13 @@ export default class CpqStepLineEditor extends LightningElement {
                 errors: errors.map((text, i) => ({ id: 'lerr-' + i, text })),
                 alerts: alerts.map((text, i) => ({ id: 'lalert-' + i, text }))
             };
-            alerts.forEach((msg) => showToast(this, 'Alert', msg, 'warning'));
-            if (errors.length > 0) {
-                errors.forEach((msg) => showToast(this, 'Validation Error', msg, 'error'));
-                return { blocked: true };
+            const blocked = blocking && errors.length > 0;
+            if (blocked) {
+                showToast(this, 'Validation', 'Please fix the validation errors below before continuing.', 'error');
             }
-            return { blocked: false };
+            return { blocked };
         } catch (error) {
-            console.error('[cpqStepLineEditor.evaluateLineRules] Rule evaluation failed:', error);
+            console.error('[cpqStepLineEditor._runRuleEvaluation] Rule evaluation failed:', error);
             const detail = error?.body?.message || error?.message || 'Rule evaluation failed.';
             showToast(this, 'Rules Error', detail, 'error');
             return { blocked: false };

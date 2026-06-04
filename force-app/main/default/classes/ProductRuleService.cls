@@ -9,6 +9,10 @@ public inherited sharing class ProductRuleService {
 
     private static final String TYPE_VALIDATION = 'Validation';
     private static final String TYPE_ALERT = 'Alert';
+    private static final String EVENT_SAVE = 'Save';
+    private static final String EVENT_EDIT = 'Edit';
+    private static final String EVENT_ALWAYS = 'Always';
+    private static final String EVENT_ALL = 'All';
     private static final String OBJ_BUNDLE_OPTION = 'Bundle Option';
     private static final String OBJ_OPPORTUNITY = 'Opportunity';
     private static final String OBJ_OPPORTUNITY_LINE = 'Opportunity Line';
@@ -46,6 +50,21 @@ public inherited sharing class ProductRuleService {
         Id opportunityId,
         Set<Id> selectedOptionIds
     ) {
+        return evaluateBundleRules(bundleProductId, opportunityId, selectedOptionIds, EVENT_SAVE);
+    }
+
+    /**
+     * @description Event-aware overload. Only rules whose Evaluation_Event__c matches the
+     * supplied context (or is Always, or when context is All) are applied.
+     * @param evaluationEvent Save, Edit, Always, or All (All applies every rule regardless of event).
+     */
+    public static Map<String, Object> evaluateBundleRules(
+        Id bundleProductId,
+        Id opportunityId,
+        Set<Id> selectedOptionIds,
+        String evaluationEvent
+    ) {
+        String eventName = String.isBlank(evaluationEvent) ? EVENT_SAVE : evaluationEvent;
         Set<Id> selected = selectedOptionIds == null ? new Set<Id>() : selectedOptionIds;
 
         Map<Id, OptionState> optionById = new Map<Id, OptionState>();
@@ -57,6 +76,9 @@ public inherited sharing class ProductRuleService {
         Opportunity opp = loadOpportunityIfNeeded(rules, opportunityId);
 
         for (Product_Rule__c rule : rules) {
+            if (!matchesEvent(rule.Evaluation_Event__c, eventName)) {
+                continue;
+            }
             if (!isSupportedMode(rule.Conditions_Met__c)) {
                 continue;
             }
@@ -93,6 +115,20 @@ public inherited sharing class ProductRuleService {
         Id opportunityId,
         List<Map<String, Object>> lines
     ) {
+        return evaluateLineRules(opportunityId, lines, EVENT_SAVE);
+    }
+
+    /**
+     * @description Event-aware overload. Only Validation/Alert rules whose Evaluation_Event__c
+     * matches the supplied context (or is Always, or when context is All) are evaluated.
+     * @param evaluationEvent Save, Edit, Always, or All (All evaluates every rule regardless of event).
+     */
+    public static Map<String, Object> evaluateLineRules(
+        Id opportunityId,
+        List<Map<String, Object>> lines,
+        String evaluationEvent
+    ) {
+        String eventName = String.isBlank(evaluationEvent) ? EVENT_SAVE : evaluationEvent;
         List<String> validationErrors = new List<String>();
         List<String> alerts = new List<String>();
 
@@ -108,6 +144,9 @@ public inherited sharing class ProductRuleService {
         Opportunity opp = loadOpportunityIfNeeded(rules, opportunityId);
 
         for (Product_Rule__c rule : rules) {
+            if (!matchesEvent(rule.Evaluation_Event__c, eventName)) {
+                continue;
+            }
             if (!isSupportedMode(rule.Conditions_Met__c)) {
                 continue;
             }
@@ -125,6 +164,19 @@ public inherited sharing class ProductRuleService {
             'validationErrors' => validationErrors,
             'alerts' => alerts
         };
+    }
+
+    /**
+     * @description Returns true when a rule's configured Evaluation_Event__c should fire under
+     * the given runtime context. Always-rules fire under any context; an All context fires every
+     * rule. A blank rule event is treated as Save (the field is required, so this is defensive).
+     */
+    private static Boolean matchesEvent(String ruleEvent, String contextEvent) {
+        if (contextEvent == EVENT_ALL) {
+            return true;
+        }
+        String effective = String.isBlank(ruleEvent) ? EVENT_SAVE : ruleEvent;
+        return effective == contextEvent || effective == EVENT_ALWAYS;
     }
 
     private static List<Map<String, Object>> enrichLines(List<Map<String, Object>> lines) {

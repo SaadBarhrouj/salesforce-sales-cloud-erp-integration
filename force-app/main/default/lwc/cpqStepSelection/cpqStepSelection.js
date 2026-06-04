@@ -333,7 +333,6 @@ export default class CpqStepSelection extends LightningElement {
     handleApplyFilters() {
         this.filterProductCode = this.pendingFilterProductCode;
         this.filterBundleType = this.pendingFilterBundleType;
-        this.isFilterPanelOpen = false;
     }
 
     handleResetFilters() {

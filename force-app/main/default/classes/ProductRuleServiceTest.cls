@@ -324,6 +324,107 @@ private class ProductRuleServiceTest {
         System.assertEquals(0, ((List<String>) verdict.get('alerts')).size(), 'No alerts expected');
     }
 
+    // ===== Evaluation Event filtering =====
+
+    @IsTest
+    static void lineRuleEditEventSkippedUnderSaveContext() {
+        Product2 prod = TestDataFactory.createProduct2(true);
+        prod.Family = 'Restricted';
+        update prod;
+
+        Product_Rule__c rule = TestDataFactory.createProductRule(
+            'Block Restricted', 'Validation', 'All', 'Restricted family is not allowed.', 1, true, true);
+        rule.Evaluation_Event__c = 'Edit';
+        update rule;
+        TestDataFactory.createRuleCondition(
+            rule.Id, 'Opportunity Line', 'Family', 'equals', 'Value', 'Restricted', 1, true);
+
+        Test.startTest();
+        Map<String, Object> onSave = ProductRuleService.evaluateLineRules(null, lineFor(prod.Id), 'Save');
+        Map<String, Object> onEdit = ProductRuleService.evaluateLineRules(null, lineFor(prod.Id), 'Edit');
+        Test.stopTest();
+
+        System.assertEquals(0, ((List<String>) onSave.get('validationErrors')).size(),
+            'Edit-event rule must not fire under the Save context');
+        System.assertEquals(1, ((List<String>) onEdit.get('validationErrors')).size(),
+            'Edit-event rule must fire under the Edit context');
+    }
+
+    @IsTest
+    static void lineRuleAlwaysEventFiresUnderEditAndSave() {
+        Product2 prod = TestDataFactory.createProduct2(true);
+        prod.Family = 'Restricted';
+        update prod;
+
+        Product_Rule__c rule = TestDataFactory.createProductRule(
+            'Block Restricted', 'Validation', 'All', 'Restricted family is not allowed.', 1, true, true);
+        rule.Evaluation_Event__c = 'Always';
+        update rule;
+        TestDataFactory.createRuleCondition(
+            rule.Id, 'Opportunity Line', 'Family', 'equals', 'Value', 'Restricted', 1, true);
+
+        Test.startTest();
+        Map<String, Object> onSave = ProductRuleService.evaluateLineRules(null, lineFor(prod.Id), 'Save');
+        Map<String, Object> onEdit = ProductRuleService.evaluateLineRules(null, lineFor(prod.Id), 'Edit');
+        Test.stopTest();
+
+        System.assertEquals(1, ((List<String>) onSave.get('validationErrors')).size(),
+            'Always-event rule fires under the Save context');
+        System.assertEquals(1, ((List<String>) onEdit.get('validationErrors')).size(),
+            'Always-event rule fires under the Edit context');
+    }
+
+    @IsTest
+    static void selectionRuleEditEventSkippedUnderSaveContext() {
+        Map<String, Id> ids = buildBundle();
+        Product_Rule__c rule = TestDataFactory.createProductRule(
+            'Add Battery', 'Selection', 'All', null, 1, true, true);
+        rule.Evaluation_Event__c = 'Edit';
+        update rule;
+        TestDataFactory.createRuleCondition(
+            rule.Id, 'Bundle Option', 'Option_Type__c', 'equals', 'Value', 'Component', 1, true);
+        TestDataFactory.createRuleAction(
+            rule.Id, 'Add', ids.get('prodRelatedId'), null, null, null, 1, true);
+        TestDataFactory.createBundleRuleAssignment(ids.get('bundleId'), rule.Id, true, true);
+
+        Test.startTest();
+        Map<String, Object> onSave = ProductRuleService.evaluateBundleRules(
+            ids.get('bundleId'), null, new Set<Id>{ ids.get('optComponentId') }, 'Save');
+        Map<String, Object> onEdit = ProductRuleService.evaluateBundleRules(
+            ids.get('bundleId'), null, new Set<Id>{ ids.get('optComponentId') }, 'Edit');
+        Test.stopTest();
+
+        Set<String> savedSel = new Set<String>((List<String>) onSave.get('selectedOptionIds'));
+        Set<String> editSel = new Set<String>((List<String>) onEdit.get('selectedOptionIds'));
+        System.assert(!savedSel.contains(String.valueOf(ids.get('optRelatedId'))),
+            'Edit-event selection rule must not auto-add under the Save context');
+        System.assert(editSel.contains(String.valueOf(ids.get('optRelatedId'))),
+            'Edit-event selection rule must auto-add under the Edit context');
+    }
+
+    @IsTest
+    static void allContextAppliesEditEventSelectionRule() {
+        Map<String, Id> ids = buildBundle();
+        Product_Rule__c rule = TestDataFactory.createProductRule(
+            'Add Battery', 'Selection', 'All', null, 1, true, true);
+        rule.Evaluation_Event__c = 'Edit';
+        update rule;
+        TestDataFactory.createRuleCondition(
+            rule.Id, 'Bundle Option', 'Option_Type__c', 'equals', 'Value', 'Component', 1, true);
+        TestDataFactory.createRuleAction(
+            rule.Id, 'Add', ids.get('prodRelatedId'), null, null, null, 1, true);
+        TestDataFactory.createBundleRuleAssignment(ids.get('bundleId'), rule.Id, true, true);
+
+        Test.startTest();
+        Map<String, Object> verdict = ProductRuleService.evaluateBundleRules(
+            ids.get('bundleId'), null, new Set<Id>{ ids.get('optComponentId') }, 'All');
+        Test.stopTest();
+
+        Set<String> selected = new Set<String>((List<String>) verdict.get('selectedOptionIds'));
+        System.assert(selected.contains(String.valueOf(ids.get('optRelatedId'))),
+            'All context must apply an Edit-event rule regardless of event');
+    }
+
     @IsTest
     static void compareValuesCoversOperators() {
         Test.startTest();
