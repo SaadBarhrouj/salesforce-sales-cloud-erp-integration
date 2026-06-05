@@ -20,7 +20,7 @@
         <timesToDisplay>1</timesToDisplay>
         <title>Votre assistant IA est là</title>
         <uiFormulaRule>
-            <booleanFilter>(1 AND 2) AND (3)</booleanFilter>
+            <booleanFilter>1 AND 2</booleanFilter>
             <criteria>
                 <leftValue>{!$Permission.CustomPermission.LOXFORCE_Sales_Manager}</leftValue>
                 <operator>EQUAL</operator>
@@ -31,14 +31,9 @@
                 <operator>EQUAL</operator>
                 <rightValue>TRUE</rightValue>
             </criteria>
-            <criteria>
-                <leftValue>{!$User.Profile.Key}</leftValue>
-                <operator>EQUAL</operator>
-                <rightValue>Admin</rightValue>
-            </criteria>
         </uiFormulaRule>
         <userAccess>SpecificPermissions</userAccess>
-        <userProfileAccess>SpecificProfiles</userProfileAccess>
+        <userProfileAccess>Everyone</userProfileAccess>
         <versionNumber>1</versionNumber>
     </promptVersions>
 </Prompt>

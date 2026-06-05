@@ -10,7 +10,7 @@
         <experience>Lightning</experience>
         <isPublished>true</isPublished>
         <masterLabel>LOXFORCE_Targeted_Send_For_Signature</masterLabel>
-        <publishedDate>2026-06-04</publishedDate>
+        <publishedDate>2026-06-05</publishedDate>
         <referenceElementContext>{&quot;scope&quot;:{&quot;scope&quot;:{&quot;attributes&quot;:{&quot;id&quot;:&quot;sfdc:CustomButton.Quote.Deca0Mg5000000AA4XEAW&quot;}},&quot;attributes&quot;:{&quot;id&quot;:&quot;force_highlightsPanel&quot;}},&quot;version&quot;:2}</referenceElementContext>
         <shouldDisplayActionButton>false</shouldDisplayActionButton>
         <shouldIgnoreGlobalDelay>true</shouldIgnoreGlobalDelay>
@@ -23,7 +23,7 @@
         <timesToDisplay>10</timesToDisplay>
         <title>Envoyez pour signature</title>
         <uiFormulaRule>
-            <booleanFilter>(1 AND 2) AND (3)</booleanFilter>
+            <booleanFilter>1 AND 2</booleanFilter>
             <criteria>
                 <leftValue>{!$Permission.CustomPermission.LOXFORCE_Sales_Manager}</leftValue>
                 <operator>EQUAL</operator>
@@ -34,14 +34,9 @@
                 <operator>EQUAL</operator>
                 <rightValue>TRUE</rightValue>
             </criteria>
-            <criteria>
-                <leftValue>{!$User.Profile.Key}</leftValue>
-                <operator>EQUAL</operator>
-                <rightValue>Admin</rightValue>
-            </criteria>
         </uiFormulaRule>
         <userAccess>SpecificPermissions</userAccess>
-        <userProfileAccess>SpecificProfiles</userProfileAccess>
+        <userProfileAccess>Everyone</userProfileAccess>
         <versionNumber>1</versionNumber>
     </promptVersions>
 </Prompt>

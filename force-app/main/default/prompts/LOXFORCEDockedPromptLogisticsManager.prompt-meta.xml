@@ -15,7 +15,7 @@
         <imageLocation>Top</imageLocation>
         <isPublished>true</isPublished>
         <masterLabel>LOXFORCE Docked Prompt - Logistics Manager</masterLabel>
-        <publishedDate>2026-06-04</publishedDate>
+        <publishedDate>2026-06-05</publishedDate>
         <shouldDisplayActionButton>true</shouldDisplayActionButton>
         <shouldIgnoreGlobalDelay>true</shouldIgnoreGlobalDelay>
         <startDate>2026-06-03</startDate>
@@ -24,20 +24,14 @@
         <timesToDisplay>10</timesToDisplay>
         <title>Votre espace logistique</title>
         <uiFormulaRule>
-            <booleanFilter>(1) AND (2)</booleanFilter>
             <criteria>
                 <leftValue>{!$Permission.CustomPermission.LOXFORCE_Logistics_Manager}</leftValue>
                 <operator>EQUAL</operator>
                 <rightValue>TRUE</rightValue>
             </criteria>
-            <criteria>
-                <leftValue>{!$User.Profile.Key}</leftValue>
-                <operator>EQUAL</operator>
-                <rightValue>Admin</rightValue>
-            </criteria>
         </uiFormulaRule>
         <userAccess>SpecificPermissions</userAccess>
-        <userProfileAccess>SpecificProfiles</userProfileAccess>
+        <userProfileAccess>Everyone</userProfileAccess>
         <versionNumber>1</versionNumber>
     </promptVersions>
 </Prompt>
