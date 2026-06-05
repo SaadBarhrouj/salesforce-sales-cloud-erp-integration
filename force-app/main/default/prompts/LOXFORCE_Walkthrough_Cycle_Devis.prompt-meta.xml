@@ -24,12 +24,6 @@
         <timesToDisplay>10</timesToDisplay>
         <title>Bienvenue dans le parcours de vente</title>
         <uiFormulaRule>
-            <booleanFilter>1 AND 2</booleanFilter>
-            <criteria>
-                <leftValue>{!$Permission.CustomPermission.LOXFORCE_Sales_Manager}</leftValue>
-                <operator>EQUAL</operator>
-                <rightValue>TRUE</rightValue>
-            </criteria>
             <criteria>
                 <leftValue>{!$Permission.CustomPermission.LOXFORCE_Sales_Rep}</leftValue>
                 <operator>EQUAL</operator>
