@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Prompt xmlns="http://soap.sforce.com/2006/04/metadata">
+    <masterLabel>LOXFORCE Docked Prompt - Sales Manager</masterLabel>
+    <promptVersions>
+        <actionButtonLabel>Gérer mon catalogue</actionButtonLabel>
+        <actionButtonLink>/lightning/app/c__LOXFORCE/home</actionButtonLink>
+        <body>&lt;p&gt;Découvrez votre espace de pilotage de l&apos;offre : catalogues, produits et bundles, règles métier, grilles tarifaires et validation des devis. Réduisez ce panneau quand vous voulez.&lt;/p&gt;</body>
+        <delayDays>1</delayDays>
+        <description>Docked prompt welcoming Sales Manager users on the LOXFORCE Home, with an intro video. Targeted to the Sales Manager permission.</description>
+        <displayType>DockedComposer</displayType>
+        <experience>Lightning</experience>
+        <header>Bienvenue dans LOXFORCE</header>
+        <image>loxforce_sales_overview</image>
+        <imageAltText>Écran LOXFORCE de gestion de l’offre avec catalogues, produits et règles de devis.</imageAltText>
+        <imageLocation>Top</imageLocation>
+        <isPublished>true</isPublished>
+        <masterLabel>LOXFORCE Docked Prompt - Sales Manager</masterLabel>
+        <publishedDate>2026-06-05</publishedDate>
+        <shouldDisplayActionButton>true</shouldDisplayActionButton>
+        <shouldIgnoreGlobalDelay>true</shouldIgnoreGlobalDelay>
+        <startDate>2026-06-03</startDate>
+        <timesToDisplay>10</timesToDisplay>
+        <title>Votre pilotage de l&apos;offre</title>
+        <uiFormulaRule>
+            <criteria>
+                <leftValue>{!$Permission.CustomPermission.LOXFORCE_Sales_Manager}</leftValue>
+                <operator>EQUAL</operator>
+                <rightValue>TRUE</rightValue>
+            </criteria>
+        </uiFormulaRule>
+        <userAccess>SpecificPermissions</userAccess>
+        <userProfileAccess>Everyone</userProfileAccess>
+        <versionNumber>1</versionNumber>
+    </promptVersions>
+</Prompt>

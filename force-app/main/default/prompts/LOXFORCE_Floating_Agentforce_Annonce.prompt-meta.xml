@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Prompt xmlns="http://soap.sforce.com/2006/04/metadata">
+    <masterLabel>LOXFORCE_Floating_Agentforce_Annonce</masterLabel>
+    <promptVersions>
+        <body>&lt;p&gt;Dialoguez en langage naturel avec l&apos;assistant LOXFORCE : il résume un compte ou un devis, retrouve l&apos;information dont vous avez besoin et exécute vos actions à votre place.&lt;/p&gt;</body>
+        <customApplication>LOXFORCE</customApplication>
+        <delayDays>1</delayDays>
+        <dismissButtonLabel>Essayer</dismissButtonLabel>
+        <displayPosition>BottomCenter</displayPosition>
+        <displayType>FloatingPanel</displayType>
+        <experience>Lightning</experience>
+        <isPublished>true</isPublished>
+        <masterLabel>LOXFORCE_Floating_Agentforce_Annonce</masterLabel>
+        <publishedDate>2026-06-05</publishedDate>
+        <shouldDisplayActionButton>false</shouldDisplayActionButton>
+        <shouldIgnoreGlobalDelay>true</shouldIgnoreGlobalDelay>
+        <startDate>2026-06-04</startDate>
+        <targetPageKey1>home</targetPageKey1>
+        <targetPageType>standard__namedPage</targetPageType>
+        <themeColor>Theme4</themeColor>
+        <themeSaturation>Light</themeSaturation>
+        <timesToDisplay>10</timesToDisplay>
+        <title>Nouveau : votre assistant IA</title>
+        <uiFormulaRule>
+            <criteria>
+                <leftValue>{!$Permission.CustomPermission.LOXFORCE_Sales_Rep}</leftValue>
+                <operator>EQUAL</operator>
+                <rightValue>TRUE</rightValue>
+            </criteria>
+        </uiFormulaRule>
+        <userAccess>SpecificPermissions</userAccess>
+        <userProfileAccess>Everyone</userProfileAccess>
+        <versionNumber>1</versionNumber>
+    </promptVersions>
+</Prompt>
