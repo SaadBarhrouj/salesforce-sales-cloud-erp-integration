@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Prompt xmlns="http://soap.sforce.com/2006/04/metadata">
+    <masterLabel>LOXFORCE Docked Prompt - Commercial</masterLabel>
+    <promptVersions>
+        <actionButtonLabel>Gérer mes opportunités</actionButtonLabel>
+        <actionButtonLink>/lightning/app/c__LOXFORCE/home</actionButtonLink>
+        <body>&lt;p&gt;Découvrez votre espace de création de devis : sélection des produits, calcul automatique du coût (produits + transport) et génération de vos devis, avec un assistant IA pour vous accompagner au quotidien. Réduisez ce panneau quand vous voulez.&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;</body>
+        <delayDays>1</delayDays>
+        <description>LOXFORCE welcome docked prompt for Commercial users on Home.</description>
+        <displayType>DockedComposer</displayType>
+        <experience>Lightning</experience>
+        <header>Bienvenue dans LOXFORCE</header>
+        <image>VFCommercial</image>
+        <imageAltText>Annonce LOXFORCE — espace de création de devis et de calcul de coût.</imageAltText>
+        <imageLocation>Top</imageLocation>
+        <isPublished>true</isPublished>
+        <masterLabel>LOXFORCE Docked Prompt - Commercial</masterLabel>
+        <publishedDate>2026-06-04</publishedDate>
+        <shouldDisplayActionButton>true</shouldDisplayActionButton>
+        <shouldIgnoreGlobalDelay>true</shouldIgnoreGlobalDelay>
+        <startDate>2026-06-01</startDate>
+        <timesToDisplay>10</timesToDisplay>
+        <title>Votre cockpit commercial</title>
+        <uiFormulaRule>
+            <booleanFilter>(1) AND (2)</booleanFilter>
+            <criteria>
+                <leftValue>{!$Permission.CustomPermission.LOXFORCE_Sales_Rep}</leftValue>
+                <operator>EQUAL</operator>
+                <rightValue>TRUE</rightValue>
+            </criteria>
+            <criteria>
+                <leftValue>{!$User.Profile.Key}</leftValue>
+                <operator>EQUAL</operator>
+                <rightValue>Admin</rightValue>
+            </criteria>
+        </uiFormulaRule>
+        <userAccess>SpecificPermissions</userAccess>
+        <userProfileAccess>SpecificProfiles</userProfileAccess>
+        <versionNumber>1</versionNumber>
+    </promptVersions>
+</Prompt>

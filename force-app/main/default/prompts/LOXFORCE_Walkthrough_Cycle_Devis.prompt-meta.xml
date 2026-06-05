@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Prompt xmlns="http://soap.sforce.com/2006/04/metadata">
+    <masterLabel>LOXFORCE_Walkthrough_Cycle_Devis</masterLabel>
+    <promptVersions>
+        <body>&lt;p&gt;Ce guide vous accompagne de la préparation du dossier client jusqu&apos;à la transmission du devis.&lt;/p&gt;</body>
+        <customApplication>LOXFORCE</customApplication>
+        <delayDays>1</delayDays>
+        <dismissButtonLabel>Dismiss</dismissButtonLabel>
+        <displayPosition>TopCenter</displayPosition>
+        <displayType>FloatingPanel</displayType>
+        <experience>Lightning</experience>
+        <isPublished>true</isPublished>
+        <masterLabel>LOXFORCE_Walkthrough_Cycle_Devis Step 1</masterLabel>
+        <publishedDate>2026-06-04</publishedDate>
+        <shouldDisplayActionButton>false</shouldDisplayActionButton>
+        <shouldIgnoreGlobalDelay>true</shouldIgnoreGlobalDelay>
+        <startDate>2026-06-04</startDate>
+        <stepNumber>1</stepNumber>
+        <targetPageKey1>Account</targetPageKey1>
+        <targetPageKey2>view</targetPageKey2>
+        <targetPageType>standard__recordPage</targetPageType>
+        <themeColor>Theme4</themeColor>
+        <themeSaturation>Light</themeSaturation>
+        <timesToDisplay>10</timesToDisplay>
+        <title>Bienvenue dans le parcours de vente</title>
+        <uiFormulaRule>
+            <booleanFilter>(1 AND 2) AND (3)</booleanFilter>
+            <criteria>
+                <leftValue>{!$Permission.CustomPermission.LOXFORCE_Sales_Manager}</leftValue>
+                <operator>EQUAL</operator>
+                <rightValue>TRUE</rightValue>
+            </criteria>
+            <criteria>
+                <leftValue>{!$Permission.CustomPermission.LOXFORCE_Sales_Rep}</leftValue>
+                <operator>EQUAL</operator>
+                <rightValue>TRUE</rightValue>
+            </criteria>
+            <criteria>
+                <leftValue>{!$User.Profile.Key}</leftValue>
+                <operator>EQUAL</operator>
+                <rightValue>Admin</rightValue>
+            </criteria>
+        </uiFormulaRule>
+        <userAccess>SpecificPermissions</userAccess>
+        <userProfileAccess>SpecificProfiles</userProfileAccess>
+        <versionNumber>1</versionNumber>
+    </promptVersions>
+    <promptVersions>
+        <body>&lt;p&gt;Ajoutez le contact en charge du dossier ; vous le rattacherez ensuite à l&apos;opportunité.&amp;nbsp;&lt;/p&gt;</body>
+        <customApplication>LOXFORCE</customApplication>
+        <dismissButtonLabel>Dismiss</dismissButtonLabel>
+        <displayType>Targeted</displayType>
+        <experience>Lightning</experience>
+        <isPublished>false</isPublished>
+        <masterLabel>LOXFORCE_Walkthrough_Cycle_Devis Step 2</masterLabel>
+        <referenceElementContext>{&quot;scope&quot;:{&quot;scope&quot;:{&quot;attributes&quot;:{&quot;id&quot;:&quot;sfdc:QuickAction.Global.NewContact&quot;}},&quot;attributes&quot;:{&quot;id&quot;:&quot;force_highlightsPanel&quot;}},&quot;version&quot;:2}</referenceElementContext>
+        <shouldDisplayActionButton>false</shouldDisplayActionButton>
+        <shouldIgnoreGlobalDelay>false</shouldIgnoreGlobalDelay>
+        <stepNumber>2</stepNumber>
+        <targetPageKey1>Account</targetPageKey1>
+        <targetPageKey2>view</targetPageKey2>
+        <targetPageType>standard__recordPage</targetPageType>
+        <title>Créez le contact responsable</title>
+        <userAccess>Everyone</userAccess>
+        <userProfileAccess>Everyone</userProfileAccess>
+        <versionNumber>1</versionNumber>
+    </promptVersions>
+    <promptVersions>
+        <body>&lt;p&gt;Créez le site du client : il servira de point de livraison dans le calcul du transport.&lt;/p&gt;</body>
+        <customApplication>LOXFORCE</customApplication>
+        <dismissButtonLabel>Dismiss</dismissButtonLabel>
+        <displayType>Targeted</displayType>
+        <experience>Lightning</experience>
+        <isPublished>false</isPublished>
+        <masterLabel>LOXFORCE_Walkthrough_Cycle_Devis Step 3</masterLabel>
+        <referenceElementContext>{&quot;scope&quot;:{&quot;scope&quot;:{&quot;attributes&quot;:{&quot;id&quot;:&quot;sfdc:QuickAction.Account.Create_Site&quot;}},&quot;attributes&quot;:{&quot;id&quot;:&quot;force_highlightsPanel&quot;}},&quot;version&quot;:2}</referenceElementContext>
+        <shouldDisplayActionButton>false</shouldDisplayActionButton>
+        <shouldIgnoreGlobalDelay>false</shouldIgnoreGlobalDelay>
+        <stepNumber>3</stepNumber>
+        <targetPageKey1>Account</targetPageKey1>
+        <targetPageKey2>view</targetPageKey2>
+        <targetPageType>standard__recordPage</targetPageType>
+        <title>Ajoutez le site de livraison</title>
+        <userAccess>Everyone</userAccess>
+        <userProfileAccess>Everyone</userProfileAccess>
+        <versionNumber>1</versionNumber>
+    </promptVersions>
+    <promptVersions>
+        <body>&lt;p&gt;Lancez une nouvelle affaire : associez-la au client et au contact qui suivra le dossier, puis renseignez ses informations principales.&amp;nbsp;&lt;strong&gt;﻿&lt;/strong&gt;&lt;span class=&quot;ql-cursor&quot;&gt;﻿&lt;/span&gt;&lt;/p&gt;</body>
+        <customApplication>LOXFORCE</customApplication>
+        <dismissButtonLabel>Dismiss</dismissButtonLabel>
+        <displayType>Targeted</displayType>
+        <experience>Lightning</experience>
+        <isPublished>false</isPublished>
+        <masterLabel>LOXFORCE_Walkthrough_Cycle_Devis Step 4</masterLabel>
+        <referenceElementContext>{&quot;scope&quot;:{&quot;attributes&quot;:{&quot;id&quot;:&quot;sfdc:StandardButton.Opportunity.New&quot;}},&quot;version&quot;:2}</referenceElementContext>
+        <shouldDisplayActionButton>false</shouldDisplayActionButton>
+        <shouldIgnoreGlobalDelay>false</shouldIgnoreGlobalDelay>
+        <stepNumber>4</stepNumber>
+        <targetPageKey1>Opportunity</targetPageKey1>
+        <targetPageKey2>list</targetPageKey2>
+        <targetPageType>standard__objectPage</targetPageType>
+        <title>Créez l&apos;opportunité</title>
+        <userAccess>Everyone</userAccess>
+        <userProfileAccess>Everyone</userProfileAccess>
+        <versionNumber>1</versionNumber>
+    </promptVersions>
+    <promptVersions>
+        <body>&lt;p&gt;Ouvrez le configurateu&lt;span class=&quot;ql-cursor&quot;&gt;﻿&lt;/span&gt;r : sélection des produits, paramétrage des bundles et calcul du transport, étape par étape.&lt;/p&gt;</body>
+        <customApplication>LOXFORCE</customApplication>
+        <dismissButtonLabel>Dismiss</dismissButtonLabel>
+        <displayType>Targeted</displayType>
+        <experience>Lightning</experience>
+        <isPublished>false</isPublished>
+        <masterLabel>LOXFORCE_Walkthrough_Cycle_Devis Step 5</masterLabel>
+        <referenceElementContext>{&quot;scope&quot;:{&quot;scope&quot;:{&quot;attributes&quot;:{&quot;id&quot;:&quot;sfdc:CustomButton.Opportunity.Edit_Lines&quot;}},&quot;attributes&quot;:{&quot;id&quot;:&quot;force_highlightsPanel&quot;}},&quot;version&quot;:2}</referenceElementContext>
+        <shouldDisplayActionButton>false</shouldDisplayActionButton>
+        <shouldIgnoreGlobalDelay>false</shouldIgnoreGlobalDelay>
+        <stepNumber>5</stepNumber>
+        <targetPageKey1>Opportunity</targetPageKey1>
+        <targetPageKey2>view</targetPageKey2>
+        <targetPageType>standard__recordPage</targetPageType>
+        <title>Configurez votre offre</title>
+        <userAccess>Everyone</userAccess>
+        <userProfileAccess>Everyone</userProfileAccess>
+        <versionNumber>1</versionNumber>
+    </promptVersions>
+    <promptVersions>
+        <body>&lt;p&gt;Cliquez sur New pour ajouter un devis à l&apos;affaire en cours.&lt;/p&gt;</body>
+        <customApplication>LOXFORCE</customApplication>
+        <dismissButtonLabel>Dismiss</dismissButtonLabel>
+        <displayType>Targeted</displayType>
+        <experience>Lightning</experience>
+        <isPublished>false</isPublished>
+        <masterLabel>LOXFORCE_Walkthrough_Cycle_Devis Step 6</masterLabel>
+        <referenceElementContext>{&quot;scope&quot;:{&quot;scope&quot;:{&quot;scope&quot;:{&quot;attributes&quot;:{&quot;id&quot;:&quot;sfdc:StandardButton.Quote.NewQuote&quot;}},&quot;attributes&quot;:{&quot;id&quot;:&quot;force_relatedListContainer2&quot;}},&quot;attributes&quot;:{&quot;id&quot;:&quot;flexipage_tabset&quot;}},&quot;version&quot;:2,&quot;interactions&quot;:[{&quot;unless&quot;:{&quot;css&quot;:&quot;[aria-selected=true]&quot;},&quot;scope&quot;:{&quot;scope&quot;:{&quot;attributes&quot;:{&quot;id&quot;:&quot;flexipage_tabTab&quot;}},&quot;attributes&quot;:{&quot;id&quot;:&quot;flexipage_tabset&quot;}},&quot;type&quot;:&quot;click&quot;}]}</referenceElementContext>
+        <shouldDisplayActionButton>false</shouldDisplayActionButton>
+        <shouldIgnoreGlobalDelay>false</shouldIgnoreGlobalDelay>
+        <stepNumber>6</stepNumber>
+        <targetPageKey1>Opportunity</targetPageKey1>
+        <targetPageKey2>view</targetPageKey2>
+        <targetPageType>standard__recordPage</targetPageType>
+        <title>Créez le devis</title>
+        <userAccess>Everyone</userAccess>
+        <userProfileAccess>Everyone</userProfileAccess>
+        <versionNumber>1</versionNumber>
+    </promptVersions>
+    <promptVersions>
+        <body>&lt;p&gt;Cliquez sur Generate PDF : le document s&apos;ouvre dans une fenêtre dédiée où vous pouvez le consulter, puis l&apos;enregistrer ou annuler.&lt;/p&gt;</body>
+        <customApplication>LOXFORCE</customApplication>
+        <dismissButtonLabel>Dismiss</dismissButtonLabel>
+        <displayType>Targeted</displayType>
+        <experience>Lightning</experience>
+        <isPublished>false</isPublished>
+        <masterLabel>LOXFORCE_Walkthrough_Cycle_Devis Step 7</masterLabel>
+        <referenceElementContext>{&quot;scope&quot;:{&quot;scope&quot;:{&quot;attributes&quot;:{&quot;id&quot;:&quot;sfdc:QuickAction.Quote.Generate_PDF&quot;}},&quot;attributes&quot;:{&quot;id&quot;:&quot;force_highlightsPanel&quot;}},&quot;version&quot;:2}</referenceElementContext>
+        <shouldDisplayActionButton>false</shouldDisplayActionButton>
+        <shouldIgnoreGlobalDelay>false</shouldIgnoreGlobalDelay>
+        <stepNumber>7</stepNumber>
+        <targetPageKey1>Quote</targetPageKey1>
+        <targetPageKey2>view</targetPageKey2>
+        <targetPageType>standard__recordPage</targetPageType>
+        <title>Générez le document du devis</title>
+        <userAccess>Everyone</userAccess>
+        <userProfileAccess>Everyone</userProfileAccess>
+        <versionNumber>1</versionNumber>
+    </promptVersions>
+    <promptVersions>
+        <body>&lt;p&gt;Passez le statut du devis à Needs Review pour déclencher le processus d&apos;approbation.&lt;/p&gt;</body>
+        <customApplication>LOXFORCE</customApplication>
+        <dismissButtonLabel>Dismiss</dismissButtonLabel>
+        <displayType>Targeted</displayType>
+        <experience>Lightning</experience>
+        <isPublished>false</isPublished>
+        <masterLabel>LOXFORCE_Walkthrough_Cycle_Devis Step 8</masterLabel>
+        <referenceElementContext>{&quot;scope&quot;:{&quot;scope&quot;:{&quot;scope&quot;:{&quot;attributes&quot;:{&quot;id&quot;:&quot;sfdc:RecordField.Quote.Status&quot;}},&quot;attributes&quot;:{&quot;id&quot;:&quot;flexipage_fieldSection&quot;}},&quot;attributes&quot;:{&quot;id&quot;:&quot;flexipage_tabset&quot;}},&quot;version&quot;:2,&quot;interactions&quot;:[{&quot;unless&quot;:{&quot;css&quot;:&quot;[aria-selected=true]&quot;},&quot;scope&quot;:{&quot;scope&quot;:{&quot;attributes&quot;:{&quot;id&quot;:&quot;detailTabTab&quot;}},&quot;attributes&quot;:{&quot;id&quot;:&quot;flexipage_tabset&quot;}},&quot;type&quot;:&quot;click&quot;}]}</referenceElementContext>
+        <shouldDisplayActionButton>false</shouldDisplayActionButton>
+        <shouldIgnoreGlobalDelay>false</shouldIgnoreGlobalDelay>
+        <stepNumber>8</stepNumber>
+        <targetPageKey1>Quote</targetPageKey1>
+        <targetPageKey2>view</targetPageKey2>
+        <targetPageType>standard__recordPage</targetPageType>
+        <title>Lancez la validation du devis</title>
+        <userAccess>Everyone</userAccess>
+        <userProfileAccess>Everyone</userProfileAccess>
+        <versionNumber>1</versionNumber>
+    </promptVersions>
+    <promptVersions>
+        <body>&lt;p&gt;Cliquez sur Email PDF pour transmettre le devis au client.&amp;nbsp;&lt;/p&gt;</body>
+        <customApplication>LOXFORCE</customApplication>
+        <dismissButtonLabel>Dismiss</dismissButtonLabel>
+        <displayType>Targeted</displayType>
+        <experience>Lightning</experience>
+        <isPublished>false</isPublished>
+        <masterLabel>LOXFORCE_Walkthrough_Cycle_Devis Step 9</masterLabel>
+        <referenceElementContext>{&quot;scope&quot;:{&quot;attributes&quot;:{&quot;id&quot;:&quot;sfdc:StandardButton.QuoteDocument.SendEmailRowAction&quot;}},&quot;version&quot;:2,&quot;interactions&quot;:[{&quot;unless&quot;:{&quot;css&quot;:&quot;[aria-expanded=true]&quot;},&quot;scope&quot;:{&quot;attributes&quot;:{&quot;id&quot;:&quot;d3d97191b9714f2388cd2ad681fdc4ed&quot;}},&quot;type&quot;:&quot;click&quot;}]}</referenceElementContext>
+        <shouldDisplayActionButton>false</shouldDisplayActionButton>
+        <shouldIgnoreGlobalDelay>false</shouldIgnoreGlobalDelay>
+        <stepNumber>9</stepNumber>
+        <targetPageKey1>Quote</targetPageKey1>
+        <targetPageKey2>view</targetPageKey2>
+        <targetPageType>standard__recordPage</targetPageType>
+        <title>Envoyez le devis au client</title>
+        <userAccess>Everyone</userAccess>
+        <userProfileAccess>Everyone</userProfileAccess>
+        <versionNumber>1</versionNumber>
+    </promptVersions>
+    <promptVersions>
+        <body>&lt;p&gt;Une fois l&apos;accord du client obtenu, envoyez le devis pour signature électronique via DocuSign.&lt;/p&gt;</body>
+        <customApplication>LOXFORCE</customApplication>
+        <dismissButtonLabel>Dismiss</dismissButtonLabel>
+        <displayType>Targeted</displayType>
+        <experience>Lightning</experience>
+        <isPublished>false</isPublished>
+        <masterLabel>LOXFORCE_Walkthrough_Cycle_Devis Step 10</masterLabel>
+        <referenceElementContext>{&quot;scope&quot;:{&quot;scope&quot;:{&quot;attributes&quot;:{&quot;id&quot;:&quot;sfdc:CustomButton.Quote.Deca0Mg5000000AA4XEAW&quot;}},&quot;attributes&quot;:{&quot;id&quot;:&quot;force_highlightsPanel&quot;}},&quot;version&quot;:2}</referenceElementContext>
+        <shouldDisplayActionButton>false</shouldDisplayActionButton>
+        <shouldIgnoreGlobalDelay>false</shouldIgnoreGlobalDelay>
+        <stepNumber>10</stepNumber>
+        <targetPageKey1>Quote</targetPageKey1>
+        <targetPageKey2>view</targetPageKey2>
+        <targetPageType>standard__recordPage</targetPageType>
+        <title>Envoyez pour signature électronique</title>
+        <userAccess>Everyone</userAccess>
+        <userProfileAccess>Everyone</userProfileAccess>
+        <versionNumber>1</versionNumber>
+    </promptVersions>
+</Prompt>

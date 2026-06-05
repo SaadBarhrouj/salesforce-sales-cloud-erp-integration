@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Prompt xmlns="http://soap.sforce.com/2006/04/metadata">
+    <masterLabel>LOXFORCE_Targeted_Send_For_Signature</masterLabel>
+    <promptVersions>
+        <body>&lt;p&gt;Lorsque le client a donné son accord, envoyez le devis pour signature via DocuSign. Le statut bascule en &lt;em&gt;Presented&lt;/em&gt; et le suivi des relances est automatisé.&lt;/p&gt;</body>
+        <customApplication>LOXFORCE</customApplication>
+        <delayDays>1</delayDays>
+        <dismissButtonLabel>OK</dismissButtonLabel>
+        <displayType>Targeted</displayType>
+        <experience>Lightning</experience>
+        <isPublished>true</isPublished>
+        <masterLabel>LOXFORCE_Targeted_Send_For_Signature</masterLabel>
+        <publishedDate>2026-06-04</publishedDate>
+        <referenceElementContext>{&quot;scope&quot;:{&quot;scope&quot;:{&quot;attributes&quot;:{&quot;id&quot;:&quot;sfdc:CustomButton.Quote.Deca0Mg5000000AA4XEAW&quot;}},&quot;attributes&quot;:{&quot;id&quot;:&quot;force_highlightsPanel&quot;}},&quot;version&quot;:2}</referenceElementContext>
+        <shouldDisplayActionButton>false</shouldDisplayActionButton>
+        <shouldIgnoreGlobalDelay>true</shouldIgnoreGlobalDelay>
+        <startDate>2026-06-04</startDate>
+        <targetPageKey1>Quote</targetPageKey1>
+        <targetPageKey2>view</targetPageKey2>
+        <targetPageType>standard__recordPage</targetPageType>
+        <themeColor>Theme4</themeColor>
+        <themeSaturation>Light</themeSaturation>
+        <timesToDisplay>10</timesToDisplay>
+        <title>Envoyez pour signature</title>
+        <uiFormulaRule>
+            <booleanFilter>(1 AND 2) AND (3)</booleanFilter>
+            <criteria>
+                <leftValue>{!$Permission.CustomPermission.LOXFORCE_Sales_Manager}</leftValue>
+                <operator>EQUAL</operator>
+                <rightValue>TRUE</rightValue>
+            </criteria>
+            <criteria>
+                <leftValue>{!$Permission.CustomPermission.LOXFORCE_Sales_Rep}</leftValue>
+                <operator>EQUAL</operator>
+                <rightValue>TRUE</rightValue>
+            </criteria>
+            <criteria>
+                <leftValue>{!$User.Profile.Key}</leftValue>
+                <operator>EQUAL</operator>
+                <rightValue>Admin</rightValue>
+            </criteria>
+        </uiFormulaRule>
+        <userAccess>SpecificPermissions</userAccess>
+        <userProfileAccess>SpecificProfiles</userProfileAccess>
+        <versionNumber>1</versionNumber>
+    </promptVersions>
+</Prompt>
