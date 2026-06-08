@@ -45,6 +45,7 @@ public inherited sharing class TripService {
      */
     public class CPQItem {
         public String productId;
+        public String productName;
         public Integer quantity;
         public Decimal w;
         public Decimal h;
@@ -143,7 +144,8 @@ public inherited sharing class TripService {
             // 4. Parse CPQ items, exclude Service-typed products from packing
             List<CPQItem> cpqItems = (List<CPQItem>) JSON.deserialize(cpqItemsJson, List<CPQItem>.class);
             Set<Id> serviceIds = collectServiceIds(cpqItems);
-            List<BinPackingAPI.ItemRequest> items = buildItemsFromCPQ(cpqItems, serviceIds);
+            Map<String, String> labelById = resolveProductLabels(cpqItems);
+            List<BinPackingAPI.ItemRequest> items = buildItemsFromCPQ(cpqItems, serviceIds, labelById);
             if (items.isEmpty()) { throw new TripException('No valid items found for transport calculation.'); }
 
             // Restrict the truck fleet to trucks that have a rate in this zone (otherwise we'd be packing trucks we can't price)
@@ -160,10 +162,10 @@ public inherited sharing class TripService {
             //    so the Apex "no DML between callouts" rule is never violated.
             List<Trip__c> output = new List<Trip__c>();
             if (mode == DIRECTION_BOTH) {
-                output.addAll(calculateForDirection(DIRECTION_DELIVERY, items, bins, rateByTruck, binByCode, distanceKm, zone, opportunityId, accumulatedLogs));
-                output.addAll(calculateForDirection(DIRECTION_PICKUP,   items, bins, rateByTruck, binByCode, distanceKm, zone, opportunityId, accumulatedLogs));
+                output.addAll(calculateForDirection(DIRECTION_DELIVERY, items, bins, rateByTruck, binByCode, labelById, distanceKm, zone, opportunityId, accumulatedLogs));
+                output.addAll(calculateForDirection(DIRECTION_PICKUP,   items, bins, rateByTruck, binByCode, labelById, distanceKm, zone, opportunityId, accumulatedLogs));
             } else {
-                output.addAll(calculateForDirection(mode, items, bins, rateByTruck, binByCode, distanceKm, zone, opportunityId, accumulatedLogs));
+                output.addAll(calculateForDirection(mode, items, bins, rateByTruck, binByCode, labelById, distanceKm, zone, opportunityId, accumulatedLogs));
             }
 
             // 6. Single DML batch, AFTER every callout — callout logs first, then the distance
@@ -203,6 +205,7 @@ public inherited sharing class TripService {
         List<BinPackingAPI.BinRequest> bins,
         Map<String, Transport_Rate__mdt> rateByTruck,
         Map<String, BinPackingAPI.BinRequest> binByCode,
+        Map<String, String> labelById,
         Decimal distanceKm,
         Transport_Zone__mdt zone,
         Id opportunityId,
@@ -216,11 +219,11 @@ public inherited sharing class TripService {
 
         List<PricedSolution> candidates = new List<PricedSolution>();
         if (resMinBins.isSuccess) {
-            PricedSolution s = priceSolution(resMinBins.responseBody, rateByTruck, binByCode, distanceKm, zone, opportunityId, direction);
+            PricedSolution s = priceSolution(resMinBins.responseBody, rateByTruck, binByCode, labelById, distanceKm, zone, opportunityId, direction);
             if (s != null) { s.objective = OBJECTIVE_MIN_BINS;  candidates.add(s); }
         }
         if (resMinWaste.isSuccess) {
-            PricedSolution s = priceSolution(resMinWaste.responseBody, rateByTruck, binByCode, distanceKm, zone, opportunityId, direction);
+            PricedSolution s = priceSolution(resMinWaste.responseBody, rateByTruck, binByCode, labelById, distanceKm, zone, opportunityId, direction);
             if (s != null) { s.objective = OBJECTIVE_MIN_WASTE; candidates.add(s); }
         }
 
@@ -264,6 +267,31 @@ public inherited sharing class TripService {
             }
         }
         return Product2DAO.getServiceIdsFromIds(productIds);
+    }
+
+    /**
+     * Builds a Product2 Id -> Name label map so the 3D viewer legend shows product names
+     * rather than raw record Ids. Resolved server-side from Product2, independent of the
+     * LWC payload. Option items are labelled later (in buildItemsFromCPQ) from their parent.
+     * @param cpqItems the CPQ items whose product Ids to resolve
+     * @return map of product Id (string) to product Name
+     */
+    private static Map<String, String> resolveProductLabels(List<CPQItem> cpqItems) {
+        Set<Id> productIds = new Set<Id>();
+        for (CPQItem c : cpqItems) {
+            if (c.productId != null) {
+                try {
+                    productIds.add((Id) c.productId);
+                } catch (Exception ignore) {
+                    continue;
+                }
+            }
+        }
+        Map<String, String> labelById = new Map<String, String>();
+        for (Product2 p : Product2DAO.getByIds(productIds).values()) {
+            labelById.put(p.Id, p.Name);
+        }
+        return labelById;
     }
 
     // ========== STEP 1: DISTANCE ==========
@@ -417,6 +445,7 @@ public inherited sharing class TripService {
         String jsonResponse,
         Map<String, Transport_Rate__mdt> rateByTruck,
         Map<String, BinPackingAPI.BinRequest> binByCode,
+        Map<String, String> labelById,
         Decimal distanceKm,
         Transport_Zone__mdt zone,
         Id opportunityId,
@@ -459,7 +488,7 @@ public inherited sharing class TripService {
             trip.Final_Price__c           = cost;
             trip.Rate_Currency__c         = rate.Currency_Code__c;
             trip.Bin_Visualization_URL__c = (String) binWrapper.get('image_complete');
-            trip.Packing_Geometry__c      = buildPackingGeometry(binData, binWrapper, binByCode.get(truckCode));
+            trip.Packing_Geometry__c      = buildPackingGeometry(binData, binWrapper, binByCode.get(truckCode), labelById);
             sol.trips.add(trip);
         }
         return sol;
@@ -491,7 +520,8 @@ public inherited sharing class TripService {
     private static String buildPackingGeometry(
         Map<String, Object> binData,
         Map<String, Object> binWrapper,
-        BinPackingAPI.BinRequest binReq
+        BinPackingAPI.BinRequest binReq,
+        Map<String, String> labelById
     ) {
         List<Object> rawItems = (List<Object>) binWrapper.get('items');
         if (rawItems == null || rawItems.isEmpty()) { return null; }
@@ -500,8 +530,10 @@ public inherited sharing class TripService {
         for (Object obj : rawItems) {
             Map<String, Object> it = (Map<String, Object>) obj;
             if (it.get('coordinates') == null) { continue; }
+            String rawId = (String) it.get('id');
+            String label = (labelById != null && labelById.containsKey(rawId)) ? labelById.get(rawId) : rawId;
             items.add(new Map<String, Object>{
-                'id'          => it.get('id'),
+                'id'          => label,
                 'coordinates' => it.get('coordinates')
             });
         }
@@ -529,12 +561,16 @@ public inherited sharing class TripService {
      * @param serviceProductIds Ids of Service-typed products to exclude from packing
      * @return the list of packable item requests
      */
-    private static List<BinPackingAPI.ItemRequest> buildItemsFromCPQ(List<CPQItem> cpqItems, Set<Id> serviceProductIds) {
+    private static List<BinPackingAPI.ItemRequest> buildItemsFromCPQ(List<CPQItem> cpqItems, Set<Id> serviceProductIds, Map<String, String> labelById) {
         List<BinPackingAPI.ItemRequest> items = new List<BinPackingAPI.ItemRequest>();
         for (CPQItem cpq : cpqItems) {
             if (cpq.w == null || cpq.h == null) { continue; }
             // Service-typed products are intangible (labor, setup, training, etc.) — they don't get packed.
             if (cpq.productId != null && serviceProductIds != null && serviceProductIds.contains((Id) cpq.productId)) { continue; }
+
+            String productLabel = (labelById != null && labelById.containsKey(cpq.productId))
+                ? labelById.get(cpq.productId)
+                : (String.isNotBlank(cpq.productName) ? cpq.productName : cpq.productId);
 
             BinPackingAPI.ItemRequest it = new BinPackingAPI.ItemRequest();
             it.id = cpq.productId;
@@ -543,6 +579,9 @@ public inherited sharing class TripService {
             it.q = cpq.quantity;
             it.vr = 1;
             items.add(it);
+            if (labelById != null && cpq.productId != null && !labelById.containsKey(cpq.productId)) {
+                labelById.put(cpq.productId, productLabel);
+            }
 
             if (cpq.options != null) {
                 for (CPQOption opt : cpq.options) {
@@ -554,6 +593,7 @@ public inherited sharing class TripService {
                         oit.q = opt.quantity;
                         oit.vr = 1;
                         items.add(oit);
+                        if (labelById != null) { labelById.put(oit.id, String.isNotBlank(productLabel) ? productLabel : 'Option'); }
                     }
                 }
             }

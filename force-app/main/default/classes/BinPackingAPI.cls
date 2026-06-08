@@ -40,10 +40,12 @@ public inherited sharing class BinPackingAPI {
         public String optimization_mode; // 'bins_number' | 'bins_utilization'
         public Integer images_complete;
         public String images_format;
+        public Integer item_coordinates; // 1 = return each packed item's {x1,y1,z1,x2,y2,z2} placement
 
         public Params() {
-            this.images_complete = 1;
-            this.images_format   = 'svg';
+            this.images_complete  = 1;
+            this.images_format    = 'svg';
+            this.item_coordinates = 1;
         }
     }
 

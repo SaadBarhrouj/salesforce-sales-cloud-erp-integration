@@ -2,7 +2,7 @@
 <LightningComponentBundle xmlns="http://soap.sforce.com/2006/04/metadata">
     <apiVersion>62.0</apiVersion>
     <isExposed>true</isExposed>
-    <masterLabel>3D Loading Plan (WebGL)</masterLabel>
+    <masterLabel>3D Load Plan</masterLabel>
     <description>
         Three.js WebGL viewer for the 3DBinPacking result: real lit 3D boxes inside a truck, orbit/zoom, click an item to read its id.
         Requires the threejs static resource.

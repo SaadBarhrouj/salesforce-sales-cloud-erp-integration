@@ -967,6 +967,11 @@
     </fieldPermissions>
     <fieldPermissions>
         <editable>true</editable>
+        <field>Trip__c.Packing_Geometry__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>true</editable>
         <field>Trip__c.Price_Before_Conversion__c</field>
         <readable>true</readable>
     </fieldPermissions>

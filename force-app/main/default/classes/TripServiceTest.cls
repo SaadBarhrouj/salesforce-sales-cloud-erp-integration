@@ -37,7 +37,7 @@ private class TripServiceTest {
 
         Test.startTest();
         TripService.PricedSolution sol = TripService.priceSolution(
-            json, rateMap(), binMap(), 100, zone(), FAKE_OPP_ID, 'Delivery');
+            json, rateMap(), binMap(), new Map<String, String>(), 100, zone(), FAKE_OPP_ID, 'Delivery');
         Test.stopTest();
 
         Assert.isNotNull(sol, 'A packed bin with a known rate should price');
@@ -58,7 +58,7 @@ private class TripServiceTest {
 
         Test.startTest();
         TripService.PricedSolution sol = TripService.priceSolution(
-            json, rateMap(), binMap(), 100, zone(), FAKE_OPP_ID, 'Delivery');
+            json, rateMap(), binMap(), new Map<String, String>(), 100, zone(), FAKE_OPP_ID, 'Delivery');
         Test.stopTest();
 
         Assert.isNotNull(sol, 'Partial packs remain valid (permissive parity)');
@@ -71,7 +71,7 @@ private class TripServiceTest {
 
         Test.startTest();
         TripService.PricedSolution sol = TripService.priceSolution(
-            json, rateMap(), binMap(), 100, zone(), FAKE_OPP_ID, 'Delivery');
+            json, rateMap(), binMap(), new Map<String, String>(), 100, zone(), FAKE_OPP_ID, 'Delivery');
         Test.stopTest();
 
         Assert.isNull(sol, 'No packed bins -> no priceable solution');
@@ -83,7 +83,7 @@ private class TripServiceTest {
 
         Test.startTest();
         TripService.PricedSolution sol = TripService.priceSolution(
-            json, rateMap(), binMap(), 100, zone(), FAKE_OPP_ID, 'Delivery');
+            json, rateMap(), binMap(), new Map<String, String>(), 100, zone(), FAKE_OPP_ID, 'Delivery');
         Test.stopTest();
 
         Assert.isNull(sol, 'A bin whose truck has no rate makes the whole scenario unpriceable');
@@ -98,7 +98,8 @@ private class TripServiceTest {
 
         Test.startTest();
         TripService.PricedSolution sol = TripService.priceSolution(
-            responseJson, rateMap(), binMap(), 100, zone(), FAKE_OPP_ID, 'Delivery');
+            responseJson, rateMap(), binMap(), new Map<String, String>{ 'Palette' => 'Wood Pallet' },
+            100, zone(), FAKE_OPP_ID, 'Delivery');
         Test.stopTest();
 
         Assert.isNotNull(sol, 'A packed bin with items should price');
@@ -111,6 +112,8 @@ private class TripServiceTest {
         Assert.areEqual('240', String.valueOf(bd.get('w')), 'bin width comes from the truck template');
         List<Object> items = (List<Object>) geo.get('items');
         Assert.areEqual(1, items.size(), 'One packed item captured with coordinates');
+        Map<String, Object> item0 = (Map<String, Object>) items[0];
+        Assert.areEqual('Wood Pallet', (String) item0.get('id'), 'item id is replaced with the product label');
     }
 
     @isTest
@@ -119,7 +122,7 @@ private class TripServiceTest {
 
         Test.startTest();
         TripService.PricedSolution sol = TripService.priceSolution(
-            json, rateMap(), binMap(), 100, zone(), FAKE_OPP_ID, 'Delivery');
+            json, rateMap(), binMap(), new Map<String, String>(), 100, zone(), FAKE_OPP_ID, 'Delivery');
         Test.stopTest();
 
         Assert.isNotNull(sol, 'Still priceable without geometry');
