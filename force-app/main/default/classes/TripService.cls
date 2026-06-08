@@ -152,15 +152,18 @@ public inherited sharing class TripService {
                 throw new TripException('No truck templates with pricing available for zone ' + zone.Zone_Code__c);
             }
 
+            Map<String, BinPackingAPI.BinRequest> binByCode = new Map<String, BinPackingAPI.BinRequest>();
+            for (BinPackingAPI.BinRequest b : bins) { binByCode.put(b.id, b); }
+
             // 5. Direction branching — Both runs the packing twice (delivery + pickup) and concatenates.
             //    All callouts happen first; DML (logs + cache) is deferred to the end
             //    so the Apex "no DML between callouts" rule is never violated.
             List<Trip__c> output = new List<Trip__c>();
             if (mode == DIRECTION_BOTH) {
-                output.addAll(calculateForDirection(DIRECTION_DELIVERY, items, bins, rateByTruck, distanceKm, zone, opportunityId, accumulatedLogs));
-                output.addAll(calculateForDirection(DIRECTION_PICKUP,   items, bins, rateByTruck, distanceKm, zone, opportunityId, accumulatedLogs));
+                output.addAll(calculateForDirection(DIRECTION_DELIVERY, items, bins, rateByTruck, binByCode, distanceKm, zone, opportunityId, accumulatedLogs));
+                output.addAll(calculateForDirection(DIRECTION_PICKUP,   items, bins, rateByTruck, binByCode, distanceKm, zone, opportunityId, accumulatedLogs));
             } else {
-                output.addAll(calculateForDirection(mode, items, bins, rateByTruck, distanceKm, zone, opportunityId, accumulatedLogs));
+                output.addAll(calculateForDirection(mode, items, bins, rateByTruck, binByCode, distanceKm, zone, opportunityId, accumulatedLogs));
             }
 
             // 6. Single DML batch, AFTER every callout — callout logs first, then the distance
@@ -199,6 +202,7 @@ public inherited sharing class TripService {
         List<BinPackingAPI.ItemRequest> items,
         List<BinPackingAPI.BinRequest> bins,
         Map<String, Transport_Rate__mdt> rateByTruck,
+        Map<String, BinPackingAPI.BinRequest> binByCode,
         Decimal distanceKm,
         Transport_Zone__mdt zone,
         Id opportunityId,
@@ -212,11 +216,11 @@ public inherited sharing class TripService {
 
         List<PricedSolution> candidates = new List<PricedSolution>();
         if (resMinBins.isSuccess) {
-            PricedSolution s = priceSolution(resMinBins.responseBody, rateByTruck, distanceKm, zone, opportunityId, direction);
+            PricedSolution s = priceSolution(resMinBins.responseBody, rateByTruck, binByCode, distanceKm, zone, opportunityId, direction);
             if (s != null) { s.objective = OBJECTIVE_MIN_BINS;  candidates.add(s); }
         }
         if (resMinWaste.isSuccess) {
-            PricedSolution s = priceSolution(resMinWaste.responseBody, rateByTruck, distanceKm, zone, opportunityId, direction);
+            PricedSolution s = priceSolution(resMinWaste.responseBody, rateByTruck, binByCode, distanceKm, zone, opportunityId, direction);
             if (s != null) { s.objective = OBJECTIVE_MIN_WASTE; candidates.add(s); }
         }
 
@@ -412,6 +416,7 @@ public inherited sharing class TripService {
     private static PricedSolution priceSolution(
         String jsonResponse,
         Map<String, Transport_Rate__mdt> rateByTruck,
+        Map<String, BinPackingAPI.BinRequest> binByCode,
         Decimal distanceKm,
         Transport_Zone__mdt zone,
         Id opportunityId,
@@ -454,6 +459,7 @@ public inherited sharing class TripService {
             trip.Final_Price__c           = cost;
             trip.Rate_Currency__c         = rate.Currency_Code__c;
             trip.Bin_Visualization_URL__c = (String) binWrapper.get('image_complete');
+            trip.Packing_Geometry__c      = buildPackingGeometry(binData, binWrapper, binByCode.get(truckCode));
             sol.trips.add(trip);
         }
         return sol;
@@ -469,6 +475,50 @@ public inherited sharing class TripService {
     private static Object resolveLoadedWeight(Map<String, Object> binData) {
         Object w = binData.get('weight');
         return (w != null) ? w : binData.get('used_weight');
+    }
+
+    /**
+     * @description Builds the 3D loading geometry JSON for one packed bin, consumed by the
+     * binPacking3dViewerGl component. Bin dimensions come from the Truck_Type__mdt request
+     * (guaranteed present) with the provider's bin_data as fallback; items are trimmed to
+     * id + coordinates to keep the stored payload small. Returns null when there is no
+     * placement geometry to render.
+     * @param binData the bin_data map from a bins_packed entry
+     * @param binWrapper the full bins_packed entry (carries the items array)
+     * @param binReq the matching truck template request, or null
+     * @return serialized geometry JSON, or null if no items are present
+     */
+    private static String buildPackingGeometry(
+        Map<String, Object> binData,
+        Map<String, Object> binWrapper,
+        BinPackingAPI.BinRequest binReq
+    ) {
+        List<Object> rawItems = (List<Object>) binWrapper.get('items');
+        if (rawItems == null || rawItems.isEmpty()) { return null; }
+
+        List<Object> items = new List<Object>();
+        for (Object obj : rawItems) {
+            Map<String, Object> it = (Map<String, Object>) obj;
+            if (it.get('coordinates') == null) { continue; }
+            items.add(new Map<String, Object>{
+                'id'          => it.get('id'),
+                'coordinates' => it.get('coordinates')
+            });
+        }
+        if (items.isEmpty()) { return null; }
+
+        Map<String, Object> geometry = new Map<String, Object>{
+            'bin_data' => new Map<String, Object>{
+                'id'          => binData.get('id'),
+                'w'           => (binReq != null) ? binReq.w : binData.get('w'),
+                'h'           => (binReq != null) ? binReq.h : binData.get('h'),
+                'd'           => (binReq != null) ? binReq.d : binData.get('d'),
+                'used_space'  => binData.get('used_space'),
+                'used_weight' => resolveLoadedWeight(binData)
+            },
+            'items' => items
+        };
+        return JSON.serialize(geometry, true);
     }
 
     // ========== HELPERS ==========

@@ -21,6 +21,14 @@ private class TripServiceTest {
         return new Transport_Zone__mdt(Zone_Code__c = 'Z1', Country_Code__c = 'MA');
     }
 
+    private static Map<String, BinPackingAPI.BinRequest> binMap() {
+        BinPackingAPI.BinRequest b = new BinPackingAPI.BinRequest();
+        b.id = 'TRUCK_A';
+        b.w = 240; b.h = 240; b.d = 600;
+        b.max_wg = 10000; b.q = 5;
+        return new Map<String, BinPackingAPI.BinRequest>{ 'TRUCK_A' => b };
+    }
+
     @isTest
     static void priceSolution_mapsBinDataToTrip() {
         String json = '{"response":{"bins_packed":[{'
@@ -29,7 +37,7 @@ private class TripServiceTest {
 
         Test.startTest();
         TripService.PricedSolution sol = TripService.priceSolution(
-            json, rateMap(), 100, zone(), FAKE_OPP_ID, 'Delivery');
+            json, rateMap(), binMap(), 100, zone(), FAKE_OPP_ID, 'Delivery');
         Test.stopTest();
 
         Assert.isNotNull(sol, 'A packed bin with a known rate should price');
@@ -50,7 +58,7 @@ private class TripServiceTest {
 
         Test.startTest();
         TripService.PricedSolution sol = TripService.priceSolution(
-            json, rateMap(), 100, zone(), FAKE_OPP_ID, 'Delivery');
+            json, rateMap(), binMap(), 100, zone(), FAKE_OPP_ID, 'Delivery');
         Test.stopTest();
 
         Assert.isNotNull(sol, 'Partial packs remain valid (permissive parity)');
@@ -63,7 +71,7 @@ private class TripServiceTest {
 
         Test.startTest();
         TripService.PricedSolution sol = TripService.priceSolution(
-            json, rateMap(), 100, zone(), FAKE_OPP_ID, 'Delivery');
+            json, rateMap(), binMap(), 100, zone(), FAKE_OPP_ID, 'Delivery');
         Test.stopTest();
 
         Assert.isNull(sol, 'No packed bins -> no priceable solution');
@@ -75,9 +83,46 @@ private class TripServiceTest {
 
         Test.startTest();
         TripService.PricedSolution sol = TripService.priceSolution(
-            json, rateMap(), 100, zone(), FAKE_OPP_ID, 'Delivery');
+            json, rateMap(), binMap(), 100, zone(), FAKE_OPP_ID, 'Delivery');
         Test.stopTest();
 
         Assert.isNull(sol, 'A bin whose truck has no rate makes the whole scenario unpriceable');
+    }
+
+    @isTest
+    static void priceSolution_capturesPackingGeometry() {
+        String responseJson = '{"response":{"bins_packed":[{'
+            + '"bin_data":{"id":"TRUCK_A","used_weight":500,"used_space":33.3},'
+            + '"items":[{"id":"Palette","coordinates":{"x1":0,"y1":0,"z1":0,"x2":120,"y2":100,"z2":80}}]'
+            + '}]}}';
+
+        Test.startTest();
+        TripService.PricedSolution sol = TripService.priceSolution(
+            responseJson, rateMap(), binMap(), 100, zone(), FAKE_OPP_ID, 'Delivery');
+        Test.stopTest();
+
+        Assert.isNotNull(sol, 'A packed bin with items should price');
+        Trip__c t = sol.trips[0];
+        Assert.isNotNull(t.Packing_Geometry__c, 'Geometry JSON should be captured for the viewer');
+
+        Map<String, Object> geo = (Map<String, Object>) JSON.deserializeUntyped(t.Packing_Geometry__c);
+        Map<String, Object> bd = (Map<String, Object>) geo.get('bin_data');
+        Assert.areEqual('TRUCK_A', (String) bd.get('id'), 'bin id captured');
+        Assert.areEqual('240', String.valueOf(bd.get('w')), 'bin width comes from the truck template');
+        List<Object> items = (List<Object>) geo.get('items');
+        Assert.areEqual(1, items.size(), 'One packed item captured with coordinates');
+    }
+
+    @isTest
+    static void priceSolution_noItems_geometryIsNull() {
+        String json = '{"response":{"bins_packed":[{"bin_data":{"id":"TRUCK_A","used_weight":500}}]}}';
+
+        Test.startTest();
+        TripService.PricedSolution sol = TripService.priceSolution(
+            json, rateMap(), binMap(), 100, zone(), FAKE_OPP_ID, 'Delivery');
+        Test.stopTest();
+
+        Assert.isNotNull(sol, 'Still priceable without geometry');
+        Assert.isNull(sol.trips[0].Packing_Geometry__c, 'No items -> no geometry stored');
     }
 }

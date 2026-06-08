@@ -538,6 +538,9 @@ public inherited sharing class OpportunityService {
             if (tripData.containsKey('binVisualizationUrl')) {
                 trip.Bin_Visualization_URL__c = (String) tripData.get('binVisualizationUrl');
             }
+            if (tripData.containsKey('packingGeometry')) {
+                trip.Packing_Geometry__c = (String) tripData.get('packingGeometry');
+            }
             if (tripData.containsKey('countryCode') && tripData.get('countryCode') != null) {
                 trip.Country_Code__c = (String) tripData.get('countryCode');
             }

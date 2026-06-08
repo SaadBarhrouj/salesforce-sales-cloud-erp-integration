@@ -31,7 +31,16 @@
                     <div class="badge">{selectedLabel}</div>
                 </template>
 
-                <div class="hint">Drag to rotate · scroll to zoom · click a box</div>
+                <template if:false={isEmpty}>
+                    <div class="hint">Drag to rotate · scroll to zoom · click a box</div>
+                </template>
+
+                <template if:true={isEmpty}>
+                    <div class="empty">
+                        <lightning-icon icon-name="utility:package" size="small" alternative-text="No loading plan"></lightning-icon>
+                        <p>No loading plan calculated yet.</p>
+                    </div>
+                </template>
 
                 <template if:true={error}>
                     <div class="err">{error}</div>

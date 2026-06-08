@@ -1055,6 +1055,7 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
       totalWeightKg: Number(trip.Total_Weight_Kg__c) || 0,
       rateCurrency: trip.Rate_Currency__c || null,
       binVisualizationUrl: trip.Bin_Visualization_URL__c || null,
+      packingGeometry: trip.Packing_Geometry__c || null,
       countryCode: trip.Country_Code__c || null
     }));
 

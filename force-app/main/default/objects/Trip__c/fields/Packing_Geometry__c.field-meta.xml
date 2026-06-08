@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Packing_Geometry__c</fullName>
+    <description>System-managed JSON describing the 3D placement of packed items inside this truck (one bin). Captured from the bin-packing service and rendered by the 3D Loading Plan viewer. Shape: {bin_data:{id,w,h,d,used_space,used_weight}, items:[{id,coordinates:{x1,y1,z1,x2,y2,z2}}]}.</description>
+    <inlineHelpText>Auto-generated 3D loading layout for this trip. Used by the 3D Loading Plan component; not meant for manual editing.</inlineHelpText>
+    <label>Packing Geometry</label>
+    <length>131072</length>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>LongTextArea</type>
+    <visibleLines>5</visibleLines>
+</CustomField>

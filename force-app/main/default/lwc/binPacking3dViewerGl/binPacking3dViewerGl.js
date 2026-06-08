@@ -1,5 +1,6 @@
-import { LightningElement, api } from 'lwc';
+import { LightningElement, api, wire } from 'lwc';
 import { loadScript } from 'lightning/platformResourceLoader';
+import getPackingGeometry from '@salesforce/apex/TripController.getPackingGeometry';
 import THREEJS from '@salesforce/resourceUrl/threejs';
 import LOXAM_LOGO from '@salesforce/resourceUrl/LoxamLogoWhite';
 import LOXAM_LOGO_RED from '@salesforce/resourceUrl/LoxamLogoRed';
@@ -50,14 +51,39 @@ function colorForId(id) {
 export default class BinPacking3dViewerGl extends LightningElement {
     @api height = 460;
 
+    // Injected automatically when placed on a Lightning record page. The component
+    // fetches its own geometry from these: an Opportunity yields the full fleet,
+    // a Trip yields that single truck. An explicit binsJson overrides both.
+    @api recordId;
+    @api objectApiName;
+
     selectedBinIndex = 0;
     selectedLabel = '';
     error = '';
     viewMode = 'all'; // 'all' = every truck in one scene, 'single' = one truck via the combobox
 
     _bins = null;
+    _explicitBins = false;
     _loadStarted = false;
     _alive = false;
+
+    @wire(getPackingGeometry, { recordId: '$recordId', objectApiName: '$objectApiName' })
+    wiredGeometry({ data, error }) {
+        if (this._explicitBins) return;
+        if (data) {
+            try {
+                const parsed = JSON.parse(data);
+                this._bins = Array.isArray(parsed) ? parsed : null;
+            } catch (e) {
+                this._bins = null;
+            }
+            this.selectedBinIndex = 0;
+            this.selectedLabel = '';
+            if (this._scene) this._buildScene();
+        } else if (error) {
+            this._bins = null;
+        }
+    }
 
     // Three.js objects
     _THREE;
@@ -78,6 +104,7 @@ export default class BinPacking3dViewerGl extends LightningElement {
 
     @api
     set binsJson(value) {
+        this._explicitBins = value != null;
         try {
             this._bins = value ? JSON.parse(value) : null;
         } catch (e) {
@@ -91,11 +118,19 @@ export default class BinPacking3dViewerGl extends LightningElement {
         return this._bins ? JSON.stringify(this._bins) : null;
     }
 
+    // Real data wins. With no record context and no explicit JSON the component is in
+    // standalone/demo mode and shows SAMPLE; on a record page with no geometry it stays
+    // empty so the empty-state shows instead of fake boxes.
     get bins() {
-        return this._bins && this._bins.length ? this._bins : SAMPLE;
+        if (this._bins && this._bins.length) return this._bins;
+        if (!this.recordId && !this._explicitBins) return SAMPLE;
+        return [];
+    }
+    get isEmpty() {
+        return this.bins.length === 0;
     }
     get currentBin() {
-        return this.bins[this.selectedBinIndex] || this.bins[0];
+        return this.bins[this.selectedBinIndex] || this.bins[0] || null;
     }
     get hasMultipleBins() {
         return this.bins.length > 1;
@@ -139,6 +174,7 @@ export default class BinPacking3dViewerGl extends LightningElement {
         return 'fleet-v3';
     }
     get summary() {
+        if (this.isEmpty) return '';
         if (this.isAll && this.bins.length > 1) {
             const total = this.bins.reduce((s, b) => s + ((b.items || []).length), 0);
             return `${this.bins.length} trucks — ${total} items total`;
@@ -150,6 +186,7 @@ export default class BinPacking3dViewerGl extends LightningElement {
         return `${bd.id || 'Truck'} — ${count} items — ${vol}${wt}`;
     }
     get legend() {
+        if (this.isEmpty) return [];
         const seen = {};
         (this.currentBin.items || []).forEach((it) => {
             if (it.id && !seen[it.id]) seen[it.id] = colorForId(it.id);
@@ -281,6 +318,11 @@ export default class BinPacking3dViewerGl extends LightningElement {
         const THREE = this._THREE;
         if (this._cargo) this._scene.remove(this._cargo);
         this._cargo = new THREE.Group();
+
+        if (this.isEmpty) {
+            this._scene.add(this._cargo);
+            return;
+        }
 
         let span;
         let floorLevel;

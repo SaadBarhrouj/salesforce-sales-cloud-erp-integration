@@ -12,15 +12,34 @@ public inherited sharing class TripDAO {
     public static List<Trip__c> getTripsByOpportunity(Id opportunityId) {
         try {
             return [
-                SELECT Id, System_Price__c, Final_Price__c, 
-                       Override_Reason__c, Is_Price_Overridden__c, Truck_Type__c, 
-                       Direction__c, Trip_Key__c, Transport_Zone__c, Total_Weight_Kg__c, 
-                       Status__c, Bin_Visualization_URL__c
+                SELECT Id, System_Price__c, Final_Price__c,
+                       Override_Reason__c, Is_Price_Overridden__c, Truck_Type__c,
+                       Direction__c, Trip_Key__c, Transport_Zone__c, Total_Weight_Kg__c,
+                       Status__c, Bin_Visualization_URL__c, Packing_Geometry__c
                 FROM Trip__c
                 WHERE Opportunity__c = :opportunityId
             ];
         } catch (QueryException e) {
             System.debug(LoggingLevel.ERROR, 'TripDAO.getTripsByOpportunity failed: ' + e.getMessage() + ' | OpportunityId: ' + opportunityId);
+            throw e;
+        }
+    }
+
+    /**
+     * @description Retrieve a single Trip with its loading geometry.
+     * @param tripId The ID of the Trip
+     * @return List containing the matching Trip__c (empty if not found)
+     */
+    public static List<Trip__c> getTripById(Id tripId) {
+        try {
+            return [
+                SELECT Id, Truck_Type__c, Total_Weight_Kg__c, Bin_Visualization_URL__c, Packing_Geometry__c
+                FROM Trip__c
+                WHERE Id = :tripId
+                LIMIT 1
+            ];
+        } catch (QueryException e) {
+            System.debug(LoggingLevel.ERROR, 'TripDAO.getTripById failed: ' + e.getMessage() + ' | TripId: ' + tripId);
             throw e;
         }
     }

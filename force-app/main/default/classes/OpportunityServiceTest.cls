@@ -313,6 +313,8 @@ private class OpportunityServiceTest {
             }
         };
 
+        String geometryJson = '{"bin_data":{"id":"Van","w":180,"h":180,"d":300},"items":[{"id":"Palette","coordinates":{"x1":0,"y1":0,"z1":0,"x2":120,"y2":100,"z2":80}}]}';
+
         List<Object> trips = new List<Object>{
             new Map<String, Object>{
                 'truckType' => 'Van',
@@ -321,6 +323,7 @@ private class OpportunityServiceTest {
                 'finalPrice' => 2000,
                 'direction' => 'Delivery',
                 'countryCode' => 'US',
+                'packingGeometry' => geometryJson,
                 'tripDate' => Date.today(),
                 'tripKey' => 'PARIS_DEL_' + Date.today().year() + '-' + Date.today().month().format().leftPad(2,'0') + '-' + Date.today().day().format().leftPad(2,'0')
             }
@@ -333,11 +336,12 @@ private class OpportunityServiceTest {
         Id result = OpportunityService.saveOpportunityWithLines(opp.Id, lineItems, logistics);
 
         System.assertEquals(opp.Id, result, 'Should return opportunity Id');
-        List<Trip__c> savedTrips = [SELECT Id, Truck_Type__c, Distance_Km__c, Direction__c FROM Trip__c WHERE Opportunity__c = :opp.Id];
+        List<Trip__c> savedTrips = [SELECT Id, Truck_Type__c, Distance_Km__c, Direction__c, Packing_Geometry__c FROM Trip__c WHERE Opportunity__c = :opp.Id];
         System.assertEquals(1, savedTrips.size(), 'Should create one trip');
         System.assertEquals('Van', savedTrips[0].Truck_Type__c, 'Truck type should match');
         System.assertEquals(150.5, savedTrips[0].Distance_Km__c, 'Distance should match');
         System.assertEquals('Delivery', savedTrips[0].Direction__c, 'Direction should match');
+        System.assertEquals(geometryJson, savedTrips[0].Packing_Geometry__c, '3D packing geometry should persist through save');
     }
 
     @IsTest
