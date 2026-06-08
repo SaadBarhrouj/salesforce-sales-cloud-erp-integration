@@ -4,7 +4,7 @@
 Required for users who need to calculate trips/loading via the bin-packing service.</description>
     <externalCredentialPrincipalAccesses>
         <enabled>true</enabled>
-        <externalCredentialPrincipal>BinPacking3D_Auth-BinPacking_Principal</externalCredentialPrincipal>
+        <externalCredentialPrincipal>BinPacking3D_Auth-BinPacking3D_Principal</externalCredentialPrincipal>
     </externalCredentialPrincipalAccesses>
     <hasActivationRequired>false</hasActivationRequired>
     <label>BinPacking Callout</label>

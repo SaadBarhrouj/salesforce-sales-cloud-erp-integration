@@ -341,6 +341,105 @@ private class OpportunityServiceTest {
     }
 
     @IsTest
+    static void saveOpportunityWithLinesResavingReplacesTripsWithoutDuplicating() {
+        Pricebook2 pb = TestDataFactory.createPricebook2('Test PB', true, true);
+        Account acc = TestDataFactory.createAccount(true);
+        Opportunity opp = new Opportunity(
+            Name = 'Test Opp',
+            AccountId = acc.Id,
+            StageName = 'Prospecting',
+            CloseDate = Date.today().addDays(30),
+            Pricebook2Id = pb.Id
+        );
+        insert opp;
+
+        Product2 prod = TestDataFactory.createProduct2(true);
+        PricebookEntry stdPbe = new PricebookEntry(Pricebook2Id = Test.getStandardPricebookId(), Product2Id = prod.Id, UnitPrice = 100, IsActive = true, UseStandardPrice = false);
+        insert stdPbe;
+        TestDataFactory.createPricebookEntry(pb.Id, prod.Id, 100, true, true);
+
+        List<Map<String, Object>> lineItems = new List<Map<String, Object>>{
+            new Map<String, Object>{
+                'product2Id' => prod.Id,
+                'quantity' => 1,
+                'unitPrice' => 100,
+                'discountPercent' => 0
+            }
+        };
+
+        Map<String, Object> firstLogistics = new Map<String, Object>{
+            'trips' => new List<Object>{
+                new Map<String, Object>{
+                    'truckType' => 'Van', 'distanceKm' => 150.5, 'systemPrice' => 2000,
+                    'finalPrice' => 2000, 'direction' => 'Delivery', 'tripDate' => Date.today()
+                }
+            }
+        };
+        OpportunityService.saveOpportunityWithLines(opp.Id, lineItems, firstLogistics);
+
+        Map<String, Object> secondLogistics = new Map<String, Object>{
+            'trips' => new List<Object>{
+                new Map<String, Object>{
+                    'truckType' => 'Truck', 'distanceKm' => 150.5, 'systemPrice' => 3000,
+                    'finalPrice' => 3000, 'direction' => 'Delivery', 'tripDate' => Date.today()
+                }
+            }
+        };
+
+        Test.startTest();
+        OpportunityService.saveOpportunityWithLines(opp.Id, lineItems, secondLogistics);
+        Test.stopTest();
+
+        List<Trip__c> savedTrips = [SELECT Id, Truck_Type__c FROM Trip__c WHERE Opportunity__c = :opp.Id];
+        System.assertEquals(1, savedTrips.size(), 'Re-saving should replace trips, not duplicate them');
+        System.assertEquals('Truck', savedTrips[0].Truck_Type__c, 'Only the latest trip set should remain');
+    }
+
+    @IsTest
+    static void saveOpportunityWithLinesEmptyTripsClearsExistingTrips() {
+        Pricebook2 pb = TestDataFactory.createPricebook2('Test PB', true, true);
+        Account acc = TestDataFactory.createAccount(true);
+        Opportunity opp = new Opportunity(
+            Name = 'Test Opp',
+            AccountId = acc.Id,
+            StageName = 'Prospecting',
+            CloseDate = Date.today().addDays(30),
+            Pricebook2Id = pb.Id
+        );
+        insert opp;
+
+        Product2 prod = TestDataFactory.createProduct2(true);
+        PricebookEntry stdPbe = new PricebookEntry(Pricebook2Id = Test.getStandardPricebookId(), Product2Id = prod.Id, UnitPrice = 100, IsActive = true, UseStandardPrice = false);
+        insert stdPbe;
+        TestDataFactory.createPricebookEntry(pb.Id, prod.Id, 100, true, true);
+
+        List<Map<String, Object>> lineItems = new List<Map<String, Object>>{
+            new Map<String, Object>{
+                'product2Id' => prod.Id, 'quantity' => 1, 'unitPrice' => 100, 'discountPercent' => 0
+            }
+        };
+
+        OpportunityService.saveOpportunityWithLines(opp.Id, lineItems, new Map<String, Object>{
+            'trips' => new List<Object>{
+                new Map<String, Object>{
+                    'truckType' => 'Van', 'distanceKm' => 150.5, 'systemPrice' => 2000,
+                    'finalPrice' => 2000, 'direction' => 'Delivery', 'tripDate' => Date.today()
+                }
+            }
+        });
+
+        Test.startTest();
+        OpportunityService.saveOpportunityWithLines(opp.Id, lineItems, new Map<String, Object>{
+            'isTransportRequired' => false,
+            'trips' => new List<Object>()
+        });
+        Test.stopTest();
+
+        List<Trip__c> savedTrips = [SELECT Id FROM Trip__c WHERE Opportunity__c = :opp.Id];
+        System.assertEquals(0, savedTrips.size(), 'Turning transport off should clear existing trips');
+    }
+
+    @IsTest
     static void saveOpportunityWithLinesNullLogisticsDoesNotFail() {
         Pricebook2 pb = TestDataFactory.createPricebook2('Test PB', true, true);
         Account acc = TestDataFactory.createAccount(true);

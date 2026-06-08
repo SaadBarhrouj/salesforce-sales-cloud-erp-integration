@@ -157,7 +157,7 @@ export default class CpqStepReview extends NavigationMixin(LightningElement) {
             return 0;
         }
         return this.logisticsState.trips.reduce((total, trip) => {
-            return total + (trip.Final_Price__c || trip.System_Price__c || 0);
+            return total + Number(trip.Final_Price__c || trip.System_Price__c || 0);
         }, 0);
     }
 

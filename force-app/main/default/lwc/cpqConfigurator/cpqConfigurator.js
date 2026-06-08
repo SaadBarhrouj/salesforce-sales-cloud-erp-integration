@@ -1046,11 +1046,16 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
       id: trip.Id || null,
       truckType: trip.Truck_Type__c || null,
       distanceKm: trip.Distance_Km__c || 0,
-      systemPrice: trip.System_Price__c || 0,
-      finalPrice: trip.Final_Price__c || trip.System_Price__c || 0,
+      systemPrice: Number(trip.System_Price__c) || 0,
+      finalPrice: Number(trip.Final_Price__c || trip.System_Price__c) || 0,
       isPriceOverridden: trip.Is_Price_Overridden__c || false,
       overrideReason: trip.Override_Reason__c || null,
-      direction: trip.Direction__c || null
+      direction: trip.Direction__c || null,
+      transportZone: trip.Transport_Zone__c || null,
+      totalWeightKg: Number(trip.Total_Weight_Kg__c) || 0,
+      rateCurrency: trip.Rate_Currency__c || null,
+      binVisualizationUrl: trip.Bin_Visualization_URL__c || null,
+      countryCode: trip.Country_Code__c || null
     }));
 
     return {
@@ -1066,7 +1071,7 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
   _calculateTransportTotal() {
     if (!this.logisticsState.trips || this.logisticsState.trips.length === 0) return 0;
     return this.logisticsState.trips.reduce((total, trip) => {
-      return total + (trip.Final_Price__c || trip.System_Price__c || 0);
+      return total + Number(trip.Final_Price__c || trip.System_Price__c || 0);
     }, 0);
   }
 

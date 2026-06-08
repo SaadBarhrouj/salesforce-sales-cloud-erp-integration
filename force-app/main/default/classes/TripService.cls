@@ -116,8 +116,14 @@ public inherited sharing class TripService {
                 throw new TripException('Departure agency and delivery site are required.');
             }
 
+            // Collectors flushed in a single DML batch at the very end — after every callout.
+            // Apex forbids DML between callouts, so the distance log, the distance cache write,
+            // and all bin-packing logs are deferred here rather than committed inline.
+            List<IntegrationLoggerService.LogCalloutRequest> accumulatedLogs = new List<IntegrationLoggerService.LogCalloutRequest>();
+            List<Distance_Cache__c> pendingCacheWrites = new List<Distance_Cache__c>();
+
             // 1. Distance: cache first, OpenRouteService on miss
-            Decimal distanceKm = resolveDistance(resolvedAgencyId, resolvedDeliveryId, opportunityId);
+            Decimal distanceKm = resolveDistance(resolvedAgencyId, resolvedDeliveryId, opportunityId, accumulatedLogs, pendingCacheWrites);
             if (distanceKm == null) {
                 throw new TripException('Unable to resolve driving distance for the selected route.');
             }
@@ -147,9 +153,8 @@ public inherited sharing class TripService {
             }
 
             // 5. Direction branching — Both runs the packing twice (delivery + pickup) and concatenates.
-            //    All callouts happen first; DML (logs + Opportunity update) is deferred to the end
+            //    All callouts happen first; DML (logs + cache) is deferred to the end
             //    so the Apex "no DML between callouts" rule is never violated.
-            List<IntegrationLoggerService.LogCalloutRequest> accumulatedLogs = new List<IntegrationLoggerService.LogCalloutRequest>();
             List<Trip__c> output = new List<Trip__c>();
             if (mode == DIRECTION_BOTH) {
                 output.addAll(calculateForDirection(DIRECTION_DELIVERY, items, bins, rateByTruck, distanceKm, zone, opportunityId, accumulatedLogs));
@@ -158,9 +163,11 @@ public inherited sharing class TripService {
                 output.addAll(calculateForDirection(mode, items, bins, rateByTruck, distanceKm, zone, opportunityId, accumulatedLogs));
             }
 
-            // 6. Single DML batch — log callouts only. The direction-mode choice is persisted
-            //    later in the wizard's final-save step, not here.
+            // 6. Single DML batch, AFTER every callout — callout logs first, then the distance
+            //    cache write. The direction-mode choice is persisted later in the wizard's
+            //    final-save step, not here.
             if (!accumulatedLogs.isEmpty()) { IntegrationLoggerService.logCallouts(accumulatedLogs); }
+            if (!pendingCacheWrites.isEmpty()) { DistanceCacheDAO.upsertCaches(pendingCacheWrites); }
 
             return output;
 
@@ -259,13 +266,24 @@ public inherited sharing class TripService {
 
     /**
      * @description Returns driving distance in km. Uses Distance_Cache__c first; on miss calls
-     * OpenRouteService and caches the result. Returns null if no usable distance can be obtained.
+     * OpenRouteService. The callout log and the new cache record are appended to the supplied
+     * collectors for a single end-of-transaction DML flush — never committed here, otherwise the
+     * subsequent bin-packing callouts would violate the Apex "no DML between callouts" rule.
+     * Returns null if no usable distance can be obtained.
      * @param agencyId the departure agency Location Id
      * @param deliveryId the delivery site Location Id
      * @param opportunityId the parent Opportunity Id
+     * @param accumulatedLogs collector for the OpenRouteService callout log request
+     * @param pendingCacheWrites collector for the Distance_Cache__c record to upsert later
      * @return the driving distance in kilometers, or null if unavailable
      */
-    private static Decimal resolveDistance(Id agencyId, Id deliveryId, Id opportunityId) {
+    private static Decimal resolveDistance(
+        Id agencyId,
+        Id deliveryId,
+        Id opportunityId,
+        List<IntegrationLoggerService.LogCalloutRequest> accumulatedLogs,
+        List<Distance_Cache__c> pendingCacheWrites
+    ) {
         String cacheKey = String.valueOf(agencyId) + '_' + String.valueOf(deliveryId);
         Map<String, Distance_Cache__c> cached = DistanceCacheDAO.getByCacheKeys(new Set<String>{ cacheKey });
         if (cached.containsKey(cacheKey) && cached.get(cacheKey).Distance_Km__c != null) {
@@ -283,21 +301,19 @@ public inherited sharing class TripService {
 
         RouteCalculationService.RouteResult api = RouteCalculationService.callOpenRouteService(origin, destination, opportunityId);
         if (api.logRequest != null) {
-            IntegrationLoggerService.logCallouts(new List<IntegrationLoggerService.LogCalloutRequest>{ api.logRequest });
+            accumulatedLogs.add(api.logRequest);
         }
         if (!api.isSuccess || api.distanceKm == null) {
             return null;
         }
 
-        DistanceCacheDAO.upsertCaches(new List<Distance_Cache__c>{
-            new Distance_Cache__c(
-                Cache_Key__c = cacheKey,
-                Origin_Location__c = origin.Id,
-                Destination_Location__c = destination.Id,
-                Distance_Km__c = api.distanceKm,
-                Duration_Minutes__c = api.durationMinutes
-            )
-        });
+        pendingCacheWrites.add(new Distance_Cache__c(
+            Cache_Key__c = cacheKey,
+            Origin_Location__c = origin.Id,
+            Destination_Location__c = destination.Id,
+            Distance_Km__c = api.distanceKm,
+            Duration_Minutes__c = api.durationMinutes
+        ));
         return api.distanceKm;
     }
 
@@ -431,6 +447,7 @@ public inherited sharing class TripService {
             trip.Direction__c             = direction;
             trip.Truck_Type__c            = truckCode;
             trip.Transport_Zone__c        = zone.Zone_Code__c;
+            trip.Country_Code__c          = DEFAULT_COUNTRY_CODE;
             trip.Distance_Km__c           = distanceKm;
             trip.Total_Weight_Kg__c       = toDecimal(resolveLoadedWeight(binData));
             trip.System_Price__c          = cost;

@@ -437,7 +437,7 @@ export default class CpqStepLogistics extends LightningElement {
                     
                     // Update Final Price if changed
                     if (draft.Final_Price__c !== undefined) {
-                        const newPrice = draft.Final_Price__c;
+                        const newPrice = Number(draft.Final_Price__c);
                         const isOverridden = newPrice !== trip.System_Price__c;
                         
                         trip.Final_Price__c = newPrice;

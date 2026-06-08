@@ -477,6 +477,8 @@ public inherited sharing class OpportunityService {
             return;
         }
 
+        TripDAO.deleteTripsByOpportunity(opportunityId);
+
         List<Object> tripMaps = (List<Object>) logistics.get('trips');
         if (tripMaps == null || tripMaps.isEmpty()) {
             return;
@@ -506,11 +508,6 @@ public inherited sharing class OpportunityService {
             Trip__c trip = new Trip__c();
             trip.Opportunity__c = opportunityId;
 
-            String tripId = (String) tripData.get('id');
-            if (String.isNotBlank(tripId) && tripId.startsWith('0')) {
-                trip.Id = Id.valueOf(tripId);
-            }
-
             if (tripData.containsKey('truckType')) {
                 trip.Truck_Type__c = (String) tripData.get('truckType');
             }
@@ -528,6 +525,18 @@ public inherited sharing class OpportunityService {
             }
             if (tripData.containsKey('direction')) {
                 trip.Direction__c = (String) tripData.get('direction');
+            }
+            if (tripData.containsKey('transportZone')) {
+                trip.Transport_Zone__c = (String) tripData.get('transportZone');
+            }
+            if (tripData.containsKey('totalWeightKg')) {
+                trip.Total_Weight_Kg__c = toDecimal(tripData.get('totalWeightKg'));
+            }
+            if (tripData.containsKey('rateCurrency')) {
+                trip.Rate_Currency__c = (String) tripData.get('rateCurrency');
+            }
+            if (tripData.containsKey('binVisualizationUrl')) {
+                trip.Bin_Visualization_URL__c = (String) tripData.get('binVisualizationUrl');
             }
             if (tripData.containsKey('countryCode') && tripData.get('countryCode') != null) {
                 trip.Country_Code__c = (String) tripData.get('countryCode');
