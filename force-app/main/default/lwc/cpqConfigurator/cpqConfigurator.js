@@ -568,7 +568,11 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
             quantity: option.defaultQuantity || option.quantity || 1,
             unitPrice: option.unitPrice || 0,
             isRequired: option.isRequired,
-            isSelected: true
+            isSelected: true,
+            w: option.w,
+            h: option.h,
+            d: option.d,
+            weight: option.weight
           });
         }
       }

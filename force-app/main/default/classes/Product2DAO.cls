@@ -180,7 +180,7 @@ public inherited sharing class Product2DAO {
 
     /**
      * @description Returns the subset of the given Product2 IDs whose Family picklist equals 'Service'.
-     * Used to exclude intangible / labor lines from BinSolver packing calculations. Family is the
+     * Used to exclude intangible / labor lines from bin-packing calculations. Family is the
      * standard categorization field in this org (values: Equipment, Service) — Type is system-managed
      * and cannot accept custom values.
      * @param productIds The Product2 IDs to inspect.

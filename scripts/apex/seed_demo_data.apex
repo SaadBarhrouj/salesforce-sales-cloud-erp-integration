@@ -51,10 +51,10 @@ try {
     for (ProductCategory pc : categories) categoryByCode.put(pc.Name, pc.Id);
 
     // 3. PRODUCTS (LOXAM SKUs)
-    // Family: 'Equipment' for physical items (included in BinSolver packing) / 'Service' for intangibles (excluded).
+    // Family: 'Equipment' for physical items (included in bin-packing) / 'Service' for intangibles (excluded).
     // Picklist constraint: Product2Family standardValueSet allows None / Equipment / Service only.
     // Sub-categorization (Vehicle / Lifting / Power ...) is encoded via ProductCategoryProduct, not Family.
-    // Dimensions (Width_cm__c / Height_cm__c / Depth_cm__c / Unit_Weight_Kg__c) are REQUIRED by BinSolver:
+    // Dimensions (Width_cm__c / Height_cm__c / Depth_cm__c / Unit_Weight_Kg__c) are REQUIRED by the bin-packing service:
     // TripService.buildItemsFromCPQ skips items where w or h is null. Bundles themselves don't need dims (only their leaf options do).
     List<Product2> products = new List<Product2>{
         new Product2(ProductCode='052-5000',   Name='Chariot Telescopique', Family='Equipment', Type='Bundle', IsActive=true),

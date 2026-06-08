@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PermissionSet xmlns="http://soap.sforce.com/2006/04/metadata">
+    <description>Grants access to the Named Credential BinPacking3D_API and allows users to make 3D bin-packing API calls from the opportunity wizard.
+Required for users who need to calculate trips/loading via the bin-packing service.</description>
+    <externalCredentialPrincipalAccesses>
+        <enabled>true</enabled>
+        <externalCredentialPrincipal>BinPacking3D_Auth-BinPacking_Principal</externalCredentialPrincipal>
+    </externalCredentialPrincipalAccesses>
+    <hasActivationRequired>false</hasActivationRequired>
+    <label>BinPacking Callout</label>
+</PermissionSet>

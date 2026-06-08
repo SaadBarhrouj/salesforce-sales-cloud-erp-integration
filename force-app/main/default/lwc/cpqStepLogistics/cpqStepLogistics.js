@@ -21,15 +21,12 @@ const RENTAL_CATALOG_SET = new Set(
 );
 
 const TRIP_COLUMNS = [
-    { label: 'Trip Key', fieldName: 'Trip_Key__c', type: 'text', sortable: true },
     { label: 'Direction', fieldName: 'Direction__c', type: 'text', sortable: true },
     { label: 'Truck Type', fieldName: 'Truck_Type__c', type: 'text', sortable: true },
-    { label: 'Transport Zone', fieldName: 'Transport_Zone__c', type: 'text', sortable: true },
     { label: 'Distance (km)', fieldName: 'Distance_Km__c', type: 'number', sortable: true },
     { label: 'Total Weight', fieldName: 'Total_Weight_Kg__c', type: 'number', sortable: true },
     { label: 'System Price', fieldName: 'System_Price__c', type: 'currency', sortable: true },
     { label: 'Final Price', fieldName: 'Final_Price__c', type: 'currency', editable: true, typeAttributes: { step: '0.01' } },
-    { label: 'Status', fieldName: 'Status__c', type: 'text' },
     { label: 'Override Reason', fieldName: 'Override_Reason__c', type: 'text', editable: true },
     { label: '3D View', fieldName: 'Bin_Visualization_URL__c', type: 'url', typeAttributes: { label: 'View', target: '_blank' } },
 ];
@@ -371,6 +368,7 @@ export default class CpqStepLogistics extends LightningElement {
             this.trips = [];
         } finally {
             this.isCalculating = false;
+            this.emitState();
         }
     }
 

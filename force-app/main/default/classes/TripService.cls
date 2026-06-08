@@ -1,6 +1,6 @@
 /**
  * @description Domain Service class to calculate transport trips.
- * Picks the BinSolver scenario with the LOWEST total transport cost
+ * Picks the BinPacking scenario with the LOWEST total transport cost
  * (cost = sum over bins of price(zone, truck, distance)).
  */
 public inherited sharing class TripService {
@@ -12,13 +12,13 @@ public inherited sharing class TripService {
      */
     private static final String DEFAULT_COUNTRY_CODE = 'MA';
     /**
-     * BinSolver objective that minimizes the number of bins used.
+     * Optimization mode that minimizes the number of bins used.
      */
-    private static final String OBJECTIVE_MIN_BINS  = 'minBins';
+    private static final String OBJECTIVE_MIN_BINS  = 'bins_number';
     /**
-     * BinSolver objective that minimizes wasted space.
+     * Optimization mode that minimizes wasted space.
      */
-    private static final String OBJECTIVE_MIN_WASTE = 'minWaste';
+    private static final String OBJECTIVE_MIN_WASTE = 'bins_utilization';
 
     /**
      * Direction mode for delivery-only trips.
@@ -68,9 +68,11 @@ public inherited sharing class TripService {
     /**
      * @description Internal value object — a fully priced candidate solution.
      */
+    @TestVisible
     private class PricedSolution {
         Decimal totalCost = 0;
         String objective;
+        @TestVisible
         List<Trip__c> trips = new List<Trip__c>();
     }
 
@@ -135,11 +137,11 @@ public inherited sharing class TripService {
             // 4. Parse CPQ items, exclude Service-typed products from packing
             List<CPQItem> cpqItems = (List<CPQItem>) JSON.deserialize(cpqItemsJson, List<CPQItem>.class);
             Set<Id> serviceIds = collectServiceIds(cpqItems);
-            List<BinSolverAPI.ItemRequest> items = buildItemsFromCPQ(cpqItems, serviceIds);
+            List<BinPackingAPI.ItemRequest> items = buildItemsFromCPQ(cpqItems, serviceIds);
             if (items.isEmpty()) { throw new TripException('No valid items found for transport calculation.'); }
 
             // Restrict the truck fleet to trucks that have a rate in this zone (otherwise we'd be packing trucks we can't price)
-            List<BinSolverAPI.BinRequest> bins = fetchTrucksFromMetadata(rateByTruck.keySet());
+            List<BinPackingAPI.BinRequest> bins = fetchTrucksFromMetadata(rateByTruck.keySet());
             if (bins.isEmpty()) {
                 throw new TripException('No truck templates with pricing available for zone ' + zone.Zone_Code__c);
             }
@@ -187,16 +189,16 @@ public inherited sharing class TripService {
      */
     private static List<Trip__c> calculateForDirection(
         String direction,
-        List<BinSolverAPI.ItemRequest> items,
-        List<BinSolverAPI.BinRequest> bins,
+        List<BinPackingAPI.ItemRequest> items,
+        List<BinPackingAPI.BinRequest> bins,
         Map<String, Transport_Rate__mdt> rateByTruck,
         Decimal distanceKm,
         Transport_Zone__mdt zone,
         Id opportunityId,
         List<IntegrationLoggerService.LogCalloutRequest> accumulatedLogs
     ) {
-        BinSolverAPI.PackingResult resMinBins  = BinSolverAPI.callPackingApi(buildRequest(OBJECTIVE_MIN_BINS,  items, bins), opportunityId);
-        BinSolverAPI.PackingResult resMinWaste = BinSolverAPI.callPackingApi(buildRequest(OBJECTIVE_MIN_WASTE, items, bins), opportunityId);
+        BinPackingAPI.PackingResult resMinBins  = BinPackingAPI.callPackingApi(buildRequest(OBJECTIVE_MIN_BINS,  items, bins), opportunityId);
+        BinPackingAPI.PackingResult resMinWaste = BinPackingAPI.callPackingApi(buildRequest(OBJECTIVE_MIN_WASTE, items, bins), opportunityId);
 
         if (resMinBins.logRequest  != null) { accumulatedLogs.add(resMinBins.logRequest); }
         if (resMinWaste.logRequest != null) { accumulatedLogs.add(resMinWaste.logRequest); }
@@ -212,7 +214,7 @@ public inherited sharing class TripService {
         }
 
         if (candidates.isEmpty()) {
-            throw new TripException('BinSolver could not generate a valid packing solution for direction ' + direction + '.');
+            throw new TripException('The bin-packing service could not generate a valid packing solution for direction ' + direction + '.');
         }
 
         PricedSolution winner = candidates[0];
@@ -326,19 +328,19 @@ public inherited sharing class TripService {
      * @param allowedCodes the truck codes to include, or null/empty to include all
      * @return the list of truck bin requests
      */
-    private static List<BinSolverAPI.BinRequest> fetchTrucksFromMetadata(Set<String> allowedCodes) {
-        List<BinSolverAPI.BinRequest> bins = new List<BinSolverAPI.BinRequest>();
+    private static List<BinPackingAPI.BinRequest> fetchTrucksFromMetadata(Set<String> allowedCodes) {
+        List<BinPackingAPI.BinRequest> bins = new List<BinPackingAPI.BinRequest>();
         for (Truck_Type__mdt t : Truck_Type__mdt.getAll().values()) {
             if (allowedCodes != null && !allowedCodes.isEmpty() && !allowedCodes.contains(t.Truck_Code__c)) {
                 continue;
             }
-            BinSolverAPI.BinRequest b = new BinSolverAPI.BinRequest();
+            BinPackingAPI.BinRequest b = new BinPackingAPI.BinRequest();
             b.id = t.Truck_Code__c;
             b.w = t.Width_cm__c;
             b.h = t.Height_cm__c;
             b.d = t.Depth_cm__c;
-            b.maxWeight = t.Max_Weight_Kg__c;
-            b.quantity = (t.Quantity__c != null) ? Integer.valueOf(t.Quantity__c) : 5;
+            b.max_wg = t.Max_Weight_Kg__c;
+            b.q = (t.Quantity__c != null) ? Integer.valueOf(t.Quantity__c) : 5;
             bins.add(b);
         }
         return bins;
@@ -368,6 +370,7 @@ public inherited sharing class TripService {
      * @param distanceKm the route distance in kilometers
      * @return the computed per-trip cost, scaled to two decimals
      */
+    @TestVisible
     private static Decimal computeTripCost(Transport_Rate__mdt rate, Decimal distanceKm) {
         Decimal extraKm = distanceKm - (rate.Included_Km__c != null ? rate.Included_Km__c : 0);
         if (extraKm < 0) { extraKm = 0; }
@@ -378,10 +381,10 @@ public inherited sharing class TripService {
     }
 
     /**
-     * @description Parses a BinSolver response, prices each bin against the rate table, and
+     * @description Parses a 3DBinPacking response, prices each bin against the rate table, and
      * builds the Trip__c list. Returns null if any bin's truck has no matching rate (the
      * solution is unpriceable so it must not win the cost comparison).
-     * @param jsonResponse the raw BinSolver response body
+     * @param jsonResponse the raw bin-packing service response body
      * @param rateByTruck map of truck code to its transport rate
      * @param distanceKm the route distance in kilometers
      * @param zone the resolved transport zone
@@ -389,6 +392,7 @@ public inherited sharing class TripService {
      * @param direction the trip direction to stamp on each Trip__c
      * @return the priced solution, or null if it cannot be priced
      */
+    @TestVisible
     private static PricedSolution priceSolution(
         String jsonResponse,
         Map<String, Transport_Rate__mdt> rateByTruck,
@@ -398,13 +402,21 @@ public inherited sharing class TripService {
         String direction
     ) {
         Map<String, Object> root = (Map<String, Object>) JSON.deserializeUntyped(jsonResponse);
-        List<Object> binsData = (List<Object>) root.get('bins');
+        Map<String, Object> response = (Map<String, Object>) root.get('response');
+        if (response == null) { return null; }
+
+        List<Object> binsData = (List<Object>) response.get('bins_packed');
         if (binsData == null || binsData.isEmpty()) { return null; }
 
+        // not_packed_items is intentionally ignored: partial packs remain valid, priceable
+        // scenarios (parity with the previous allowUnplaced = true behavior).
         PricedSolution sol = new PricedSolution();
         for (Object obj : binsData) {
-            Map<String, Object> binMap = (Map<String, Object>) obj;
-            String truckCode = (String) binMap.get('templateId');
+            Map<String, Object> binWrapper = (Map<String, Object>) obj;
+            Map<String, Object> binData = (Map<String, Object>) binWrapper.get('bin_data');
+            if (binData == null) { return null; }
+
+            String truckCode = (String) binData.get('id');
             Transport_Rate__mdt rate = rateByTruck.get(truckCode);
             if (rate == null) {
                 // Truck without a published rate -> can't price this scenario fairly
@@ -420,46 +432,60 @@ public inherited sharing class TripService {
             trip.Truck_Type__c            = truckCode;
             trip.Transport_Zone__c        = zone.Zone_Code__c;
             trip.Distance_Km__c           = distanceKm;
-            trip.Total_Weight_Kg__c       = toDecimal(binMap.get('weight'));
+            trip.Total_Weight_Kg__c       = toDecimal(resolveLoadedWeight(binData));
             trip.System_Price__c          = cost;
             trip.Final_Price__c           = cost;
             trip.Rate_Currency__c         = rate.Currency_Code__c;
-            trip.Bin_Visualization_URL__c = (String) binMap.get('vizUrl');
+            trip.Bin_Visualization_URL__c = (String) binWrapper.get('image_complete');
             sol.trips.add(trip);
         }
         return sol;
     }
 
+    /**
+     * @description Returns the loaded cargo weight from a bin_data map. The provider's `weight`
+     * is the total packed-item weight (confirmed against the live API: 4 items x 10kg -> weight=40,
+     * while used_weight returned a different, mis-scaled value). Used for Total_Weight_Kg__c.
+     * @param binData the bin_data map from a bins_packed entry
+     * @return the cargo weight value, or null if absent
+     */
+    private static Object resolveLoadedWeight(Map<String, Object> binData) {
+        Object w = binData.get('weight');
+        return (w != null) ? w : binData.get('used_weight');
+    }
+
     // ========== HELPERS ==========
 
     /**
-     * Builds BinSolver item requests from CPQ items, excluding Service-typed products.
+     * Builds bin-packing item requests from CPQ items, excluding Service-typed products.
      * @param cpqItems the CPQ items to convert
      * @param serviceProductIds Ids of Service-typed products to exclude from packing
      * @return the list of packable item requests
      */
-    private static List<BinSolverAPI.ItemRequest> buildItemsFromCPQ(List<CPQItem> cpqItems, Set<Id> serviceProductIds) {
-        List<BinSolverAPI.ItemRequest> items = new List<BinSolverAPI.ItemRequest>();
+    private static List<BinPackingAPI.ItemRequest> buildItemsFromCPQ(List<CPQItem> cpqItems, Set<Id> serviceProductIds) {
+        List<BinPackingAPI.ItemRequest> items = new List<BinPackingAPI.ItemRequest>();
         for (CPQItem cpq : cpqItems) {
             if (cpq.w == null || cpq.h == null) { continue; }
             // Service-typed products are intangible (labor, setup, training, etc.) — they don't get packed.
             if (cpq.productId != null && serviceProductIds != null && serviceProductIds.contains((Id) cpq.productId)) { continue; }
 
-            BinSolverAPI.ItemRequest it = new BinSolverAPI.ItemRequest();
+            BinPackingAPI.ItemRequest it = new BinPackingAPI.ItemRequest();
             it.id = cpq.productId;
             it.w = cpq.w; it.h = cpq.h; it.d = cpq.d;
-            it.weight = cpq.weight;
-            it.quantity = cpq.quantity;
+            it.wg = cpq.weight;
+            it.q = cpq.quantity;
+            it.vr = 1;
             items.add(it);
 
             if (cpq.options != null) {
                 for (CPQOption opt : cpq.options) {
                     if (opt.isSelected && opt.w != null) {
-                        BinSolverAPI.ItemRequest oit = new BinSolverAPI.ItemRequest();
+                        BinPackingAPI.ItemRequest oit = new BinPackingAPI.ItemRequest();
                         oit.id = 'OPT-' + Crypto.getRandomInteger();
                         oit.w = opt.w; oit.h = opt.h; oit.d = opt.d;
-                        oit.weight = opt.weight;
-                        oit.quantity = opt.quantity;
+                        oit.wg = opt.weight;
+                        oit.q = opt.quantity;
+                        oit.vr = 1;
                         items.add(oit);
                     }
                 }
@@ -469,15 +495,15 @@ public inherited sharing class TripService {
     }
 
     /**
-     * Builds a BinSolver packing request for the given objective.
+     * Builds a bin-packing request for the given objective.
      * @param objective the packing objective
      * @param items the items to pack
      * @param bins the available truck bins
      * @return the assembled packing request
      */
-    private static BinSolverAPI.PackingRequest buildRequest(String objective, List<BinSolverAPI.ItemRequest> items, List<BinSolverAPI.BinRequest> bins) {
-        BinSolverAPI.PackingRequest req = new BinSolverAPI.PackingRequest();
-        req.objective = objective;
+    private static BinPackingAPI.PackingRequest buildRequest(String objective, List<BinPackingAPI.ItemRequest> items, List<BinPackingAPI.BinRequest> bins) {
+        BinPackingAPI.PackingRequest req = new BinPackingAPI.PackingRequest();
+        req.params.optimization_mode = objective;
         req.items = items;
         req.bins = bins;
         return req;

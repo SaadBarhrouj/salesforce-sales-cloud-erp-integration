@@ -6,7 +6,6 @@
     <inlineHelpText>Country code of the agency handling this trip. Determines which country-specific pricing rules apply. Automatically populated — do not edit manually.</inlineHelpText>
     <label>Country Code</label>
     <length>3</length>
-    <required>true</required>
     <trackHistory>false</trackHistory>
     <trackTrending>false</trackTrending>
     <type>Text</type>

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Service_Name__c</fullName>
-    <description>The name of the integrated system (e.g., BinSolver, ERP).</description>
+    <description>The name of the integrated system (e.g., BinPacking, ERP).</description>
     <inlineHelpText>The name of the integrated system .</inlineHelpText>
     <label>Service Name</label>
     <required>false</required>
@@ -15,6 +15,11 @@
                 <fullName>BinSolver</fullName>
                 <default>false</default>
                 <label>BinSolver</label>
+            </value>
+            <value>
+                <fullName>BinPacking</fullName>
+                <default>false</default>
+                <label>BinPacking</label>
             </value>
             <value>
                 <fullName>ERP</fullName>

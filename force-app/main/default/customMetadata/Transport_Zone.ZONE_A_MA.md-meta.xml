@@ -12,11 +12,11 @@
     </values>
     <values>
         <field>Max_Distance_Km__c</field>
-        <value xsi:type="xsd:double">0.0</value>
+        <value xsi:type="xsd:double">100.0</value>
     </values>
     <values>
         <field>Min_Distance_Km__c</field>
-        <value xsi:type="xsd:double">100.0</value>
+        <value xsi:type="xsd:double">0.0</value>
     </values>
     <values>
         <field>Zone_Code__c</field>

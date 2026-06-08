@@ -484,6 +484,19 @@ public inherited sharing class OpportunityService {
 
         List<Trip__c> trips = new List<Trip__c>();
 
+        // Resolve a real Trip_Date__c from the opportunity's schedule (computed once, outside the loop).
+        // Rental/service line items carry service dates; sales offers don't, so they fall back to today.
+        Date deliveryDate = null; // earliest service start across line items
+        Date pickupDate = null;   // latest service end across line items
+        for (OpportunityLineItem oli : OpportunityLineItemDAO.getByOpportunityId(opportunityId)) {
+            if (oli.Service_Start_Date__c != null && (deliveryDate == null || oli.Service_Start_Date__c < deliveryDate)) {
+                deliveryDate = oli.Service_Start_Date__c;
+            }
+            if (oli.Service_End_Date__c != null && (pickupDate == null || oli.Service_End_Date__c > pickupDate)) {
+                pickupDate = oli.Service_End_Date__c;
+            }
+        }
+
         for (Object tripObj : tripMaps) {
             Map<String, Object> tripData = toStringKeyMap(tripObj);
             if (tripData == null) {
@@ -519,11 +532,18 @@ public inherited sharing class OpportunityService {
             if (tripData.containsKey('countryCode') && tripData.get('countryCode') != null) {
                 trip.Country_Code__c = (String) tripData.get('countryCode');
             }
-            if (tripData.containsKey('tripDate') && tripData.get('tripDate') != null) {
-                Object tripDateVal = tripData.get('tripDate');
-                if (tripDateVal instanceof Date) {
-                    trip.Trip_Date__c = (Date) tripDateVal;
+            Object tripDateVal = tripData.get('tripDate');
+            if (tripDateVal instanceof Date) {
+                trip.Trip_Date__c = (Date) tripDateVal;
+            } else if (tripDateVal instanceof String && String.isNotBlank((String) tripDateVal)) {
+                try {
+                    trip.Trip_Date__c = Date.valueOf((String) tripDateVal);
+                } catch (Exception e) {
+                    trip.Trip_Date__c = null;
                 }
+            }
+            if (trip.Trip_Date__c == null) {
+                trip.Trip_Date__c = resolveTripDate(trip.Direction__c, deliveryDate, pickupDate);
             }
             if (tripData.containsKey('tripKey') && tripData.get('tripKey') != null) {
                 trip.Trip_Key__c = (String) tripData.get('tripKey');
@@ -535,6 +555,29 @@ public inherited sharing class OpportunityService {
         if (!trips.isEmpty()) {
             TripDAO.upsertTrips(trips);
         }
+    }
+
+    /**
+     * @description Resolves the scheduled date for a trip. Delivery trips use the earliest line-item
+     * service start; pickup trips use the latest service end. Sales offers have no service dates, so
+     * they fall back to today. The result is clamped to today when it would otherwise be in the past,
+     * so new Trip__c records satisfy the Trip_Date_Not_Past rule.
+     * @param direction the trip direction ('Delivery' or 'Pickup')
+     * @param deliveryDate earliest line-item service start date, or null
+     * @param pickupDate latest line-item service end date, or null
+     * @return the resolved trip date, never null and never before today
+     */
+    private static Date resolveTripDate(String direction, Date deliveryDate, Date pickupDate) {
+        Date resolved;
+        if (direction == 'Pickup') {
+            resolved = (pickupDate != null) ? pickupDate : deliveryDate;
+        } else {
+            resolved = (deliveryDate != null) ? deliveryDate : pickupDate;
+        }
+        if (resolved == null || resolved < Date.today()) {
+            resolved = Date.today();
+        }
+        return resolved;
     }
 
     /**
