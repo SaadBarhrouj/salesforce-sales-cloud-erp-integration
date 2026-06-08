@@ -1,0 +1,51 @@
+<template>
+    <lightning-card title="3D Loading Plan" icon-name="custom:custom63">
+        <div class="slds-p-horizontal_small slds-p-bottom_x-small">
+
+            <div class="toolbar slds-p-vertical_x-small">
+                <template if:true={showToggle}>
+                    <lightning-button-group>
+                        <lightning-button label="All trucks" variant={allVariant} onclick={showAll}></lightning-button>
+                        <lightning-button label="Single truck" variant={singleVariant} onclick={showSingle}></lightning-button>
+                    </lightning-button-group>
+                </template>
+                <template if:true={showCombobox}>
+                    <div class="slds-m-top_x-small" style="max-width:260px;">
+                        <lightning-combobox
+                            label="Truck"
+                            variant="label-inline"
+                            value={selectedBinValue}
+                            options={binOptions}
+                            onchange={handleBinChange}>
+                        </lightning-combobox>
+                    </div>
+                </template>
+            </div>
+
+            <p class="summary slds-text-body_small slds-text-color_weak slds-m-bottom_xx-small">{summary}</p>
+
+            <div class="stage" style={stageStyle}>
+                <canvas class="viewer"></canvas>
+
+                <template if:true={selectedLabel}>
+                    <div class="badge">{selectedLabel}</div>
+                </template>
+
+                <div class="hint">Drag to rotate · scroll to zoom · click a box</div>
+
+                <template if:true={error}>
+                    <div class="err">{error}</div>
+                </template>
+            </div>
+
+            <div class="legend">
+                <template for:each={legend} for:item="l">
+                    <span key={l.id} class="legend-item">
+                        <span class="swatch" style={l.style}></span>{l.id}
+                    </span>
+                </template>
+            </div>
+
+        </div>
+    </lightning-card>
+</template>

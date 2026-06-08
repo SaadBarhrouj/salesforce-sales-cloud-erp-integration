@@ -1,0 +1,108 @@
+/*
+ * The host MUST be a block. By default an LWC custom element is `display: inline`;
+ * an inline host that wraps a fixed-height block + an absolutely-positioned WebGL
+ * canvas breaks the inline formatting context on a record page, so the toolbar /
+ * summary / legend siblings stay in the DOM but get no layout box (invisible).
+ * App Builder hides this because it wraps each component in its own block chrome.
+ */
+:host {
+    display: block;
+}
+
+/* The toolbar, summary and legend are normal-flow blocks that must always lay out
+   and never be overdrawn by the absolutely-positioned canvas. */
+.summary,
+.legend {
+    position: relative;
+    z-index: 1;
+}
+
+/* The toolbar holds the combobox; its open dropdown must stack ABOVE the summary
+   and legend (which come later in the DOM), otherwise they paint over the menu. */
+.toolbar {
+    position: relative;
+    z-index: 3;
+}
+
+.stage {
+    position: relative;
+    width: 100%;
+    /* Height comes from the `height` property via inline style (stageStyle);
+       min-height guarantees a definite box even before layout settles. */
+    min-height: 240px;
+    background: linear-gradient(#f7f9fb, #e7edf3);
+    border: 1px solid #dfe3e8;
+    border-radius: 0.25rem;
+    overflow: hidden;
+    isolation: isolate;
+}
+
+.viewer {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+    cursor: grab;
+}
+
+.viewer:active {
+    cursor: grabbing;
+}
+
+.badge {
+    position: absolute;
+    bottom: 8px;
+    left: 8px;
+    background: rgba(0, 0, 0, 0.78);
+    color: #fff;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    pointer-events: none;
+    max-width: 70%;
+}
+
+.hint {
+    position: absolute;
+    bottom: 6px;
+    right: 8px;
+    color: #7a869a;
+    font-size: 0.7rem;
+    pointer-events: none;
+}
+
+.err {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 1rem;
+    color: #c23934;
+    font-size: 0.8rem;
+}
+
+.legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    padding: 0.5rem 0 0.25rem;
+}
+
+.legend-item {
+    display: inline-flex;
+    align-items: center;
+    font-size: 0.75rem;
+    color: #3e3e3c;
+}
+
+.swatch {
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+    margin-right: 4px;
+    display: inline-block;
+    border: 1px solid rgba(0, 0, 0, 0.15);
+}
