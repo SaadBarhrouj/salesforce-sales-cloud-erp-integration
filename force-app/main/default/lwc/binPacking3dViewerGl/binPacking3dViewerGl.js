@@ -163,7 +163,8 @@ export default class BinPacking3dViewerGl extends LightningElement {
             : (this.currentBin.items || []);
         const seen = {};
         source.forEach((it) => {
-            if (it.id && !seen[it.id]) seen[it.id] = colorForId(it.id);
+            const name = it.label || it.id;
+            if (name && !seen[name]) seen[name] = colorForId(name);
         });
         return Object.keys(seen).map((id) => ({ id, style: `background-color:${seen[id]}` }));
     }
@@ -359,13 +360,14 @@ export default class BinPacking3dViewerGl extends LightningElement {
         (bin.items || []).forEach((it) => {
             const c = it.coordinates;
             if (!c) return;
+            const name = it.label || it.id;
             const dw = c.x2 - c.x1, dh = c.y2 - c.y1, dd = c.z2 - c.z1;
             const geo = new THREE.BoxGeometry(dw, dh, dd);
-            const mat = new THREE.MeshLambertMaterial({ color: new THREE.Color(colorForId(it.id)) });
+            const mat = new THREE.MeshLambertMaterial({ color: new THREE.Color(colorForId(name)) });
             const mesh = new THREE.Mesh(geo, mat);
             mesh.position.set((c.x1 + c.x2) / 2 - ox, floorY + (c.y1 + c.y2) / 2, (c.z1 + c.z2) / 2 - oz);
             mesh.castShadow = true;
-            mesh.userData.label = `${it.id} — ${Math.round(dw)}×${Math.round(dh)}×${Math.round(dd)} cm`
+            mesh.userData.label = `${name} — ${Math.round(dw)}×${Math.round(dh)}×${Math.round(dd)} cm`
                 + (bd.id ? ` · ${bd.id}` : '');
             g.add(mesh);
 

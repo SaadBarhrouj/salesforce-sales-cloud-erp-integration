@@ -345,6 +345,93 @@ private class OpportunityServiceTest {
     }
 
     @IsTest
+    static void saveOpportunityWithLinesPersistsTransportTotalsKeysAndItemLinks() {
+        Pricebook2 pb = TestDataFactory.createPricebook2('Test PB', true, true);
+        Account acc = TestDataFactory.createAccount(true);
+
+        Schema.Location agencyLoc = new Schema.Location(
+            Name = 'Paris Nord',
+            LocationType = 'Warehouse',
+            Country_Code__c = 'FR'
+        );
+        insert agencyLoc;
+
+        Schema.Location deliveryLoc = new Schema.Location(
+            Name = 'Client Site',
+            LocationType = 'Site',
+            Country_Code__c = 'FR'
+        );
+        insert deliveryLoc;
+
+        Opportunity opp = new Opportunity(
+            Name = 'Test Opp',
+            AccountId = acc.Id,
+            StageName = 'Prospecting',
+            CloseDate = Date.today().addDays(30),
+            Pricebook2Id = pb.Id
+        );
+        insert opp;
+
+        Product2 prod = TestDataFactory.createProduct2(true);
+        PricebookEntry stdPbe = new PricebookEntry(Pricebook2Id = Test.getStandardPricebookId(), Product2Id = prod.Id, UnitPrice = 100, IsActive = true, UseStandardPrice = false);
+        insert stdPbe;
+        TestDataFactory.createPricebookEntry(pb.Id, prod.Id, 100, true, true);
+
+        List<Map<String, Object>> lineItems = new List<Map<String, Object>>{
+            new Map<String, Object>{
+                'product2Id' => prod.Id,
+                'quantity' => 1,
+                'unitPrice' => 100,
+                'discountPercent' => 0
+            }
+        };
+
+        String deliveryGeometry = '{"bin_data":{"id":"Van","w":180,"h":180,"d":300},"items":[{"id":"' + prod.Id + '","label":"Test Product","coordinates":{"x1":0,"y1":0,"z1":0,"x2":120,"y2":100,"z2":80}}]}';
+        String pickupGeometry = deliveryGeometry;
+
+        Map<String, Object> logistics = new Map<String, Object>{
+            'isTransportRequired' => true,
+            'transportUrgency' => 'Standard',
+            'defaultAgencyId' => agencyLoc.Id,
+            'deliverySiteId' => deliveryLoc.Id,
+            'directionMode' => 'Delivery_Pickup',
+            'totalTransportCost' => 4500,
+            'trips' => new List<Object>{
+                new Map<String, Object>{
+                    'truckType' => 'Van', 'distanceKm' => 100, 'systemPrice' => 2000,
+                    'finalPrice' => 2500, 'isPriceOverridden' => true, 'overrideReason' => 'Negotiated',
+                    'direction' => 'Delivery', 'packingGeometry' => deliveryGeometry, 'tripDate' => Date.today()
+                },
+                new Map<String, Object>{
+                    'truckType' => 'Van', 'distanceKm' => 100, 'systemPrice' => 2000,
+                    'finalPrice' => 2000, 'isPriceOverridden' => false,
+                    'direction' => 'Pickup', 'packingGeometry' => pickupGeometry, 'tripDate' => Date.today()
+                }
+            }
+        };
+
+        OpportunityService.saveOpportunityWithLines(opp.Id, lineItems, logistics);
+
+        Opportunity updatedOpp = [SELECT Total_Transport_Cost__c, Trip_Direction_Mode__c FROM Opportunity WHERE Id = :opp.Id];
+        System.assertEquals(4500, updatedOpp.Total_Transport_Cost__c, 'Total transport cost should be persisted on the Opportunity');
+        System.assertEquals('Delivery_Pickup', updatedOpp.Trip_Direction_Mode__c, 'Direction mode should be persisted on the Opportunity');
+
+        Map<String, Trip__c> tripByDirection = new Map<String, Trip__c>();
+        for (Trip__c t : [SELECT Id, Direction__c, Is_Price_Overridden__c, Trip_Key__c FROM Trip__c WHERE Opportunity__c = :opp.Id]) {
+            tripByDirection.put(t.Direction__c, t);
+        }
+        System.assertEquals(2, tripByDirection.size(), 'One delivery and one pickup trip should be saved');
+        System.assertEquals(true, tripByDirection.get('Delivery').Is_Price_Overridden__c, 'Price override flag should be persisted');
+        System.assertEquals(false, tripByDirection.get('Pickup').Is_Price_Overridden__c, 'Non-overridden trip stays unflagged');
+        System.assert(tripByDirection.get('Delivery').Trip_Key__c.startsWith('PARI_DEL_'), 'Trip key should start with the agency code and direction: ' + tripByDirection.get('Delivery').Trip_Key__c);
+        System.assert(tripByDirection.get('Pickup').Trip_Key__c.startsWith('PARI_PCK_'), 'Pickup trip key should use the PCK token: ' + tripByDirection.get('Pickup').Trip_Key__c);
+
+        OpportunityLineItem oli = [SELECT Trip_Delivery__c, Trip_Pickup__c FROM OpportunityLineItem WHERE OpportunityId = :opp.Id LIMIT 1];
+        System.assertEquals(tripByDirection.get('Delivery').Id, oli.Trip_Delivery__c, 'Line item should be linked to its delivery trip');
+        System.assertEquals(tripByDirection.get('Pickup').Id, oli.Trip_Pickup__c, 'Line item should be linked to its pickup trip');
+    }
+
+    @IsTest
     static void saveOpportunityWithLinesResavingReplacesTripsWithoutDuplicating() {
         Pricebook2 pb = TestDataFactory.createPricebook2('Test PB', true, true);
         Account acc = TestDataFactory.createAccount(true);

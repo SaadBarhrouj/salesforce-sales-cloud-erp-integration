@@ -103,27 +103,9 @@
             </layoutItems>
             <layoutItems>
                 <behavior>Edit</behavior>
-                <field>Price_Before_Conversion__c</field>
-            </layoutItems>
-            <layoutItems>
-                <behavior>Edit</behavior>
                 <field>Override_Reason__c</field>
             </layoutItems>
         </layoutColumns>
-        <style>TwoColumnsTopToBottom</style>
-    </layoutSections>
-    <layoutSections>
-        <customLabel>true</customLabel>
-        <detailHeading>true</detailHeading>
-        <editHeading>true</editHeading>
-        <label>Calculation Audit</label>
-        <layoutColumns>
-            <layoutItems>
-                <behavior>Edit</behavior>
-                <field>Calculation_Detail__c</field>
-            </layoutItems>
-        </layoutColumns>
-        <layoutColumns/>
         <style>TwoColumnsTopToBottom</style>
     </layoutSections>
     <layoutSections>
@@ -155,17 +137,17 @@
         <style>CustomLinks</style>
     </layoutSections>
     <relatedLists>
+        <fields>Product2</fields>
         <fields>Quantity</fields>
-        <fields>UnitPrice</fields>
-        <fields>TotalPrice</fields>
         <fields>Delivery_Date__c</fields>
+        <fields>TotalPrice</fields>
         <relatedList>OpportunityLineItem.Trip_Delivery__c</relatedList>
     </relatedLists>
     <relatedLists>
+        <fields>Product2</fields>
         <fields>Quantity</fields>
-        <fields>UnitPrice</fields>
-        <fields>TotalPrice</fields>
         <fields>Pickup_Date__c</fields>
+        <fields>TotalPrice</fields>
         <relatedList>OpportunityLineItem.Trip_Pickup__c</relatedList>
     </relatedLists>
     <relatedLists>
@@ -195,4 +177,10 @@
     <showInteractionLogPanel>false</showInteractionLogPanel>
     <showRunAssignmentRulesCheckbox>false</showRunAssignmentRulesCheckbox>
     <showSubmitAndAttachButton>false</showSubmitAndAttachButton>
+    <summaryLayout>
+        <masterLabel>00hg5000006IzPr</masterLabel>
+        <sizeX>4</sizeX>
+        <sizeY>0</sizeY>
+        <summaryLayoutStyle>Default</summaryLayoutStyle>
+    </summaryLayout>
 </Layout>

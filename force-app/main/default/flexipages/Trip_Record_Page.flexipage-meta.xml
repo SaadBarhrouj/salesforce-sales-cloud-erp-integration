@@ -351,16 +351,6 @@
                     <name>uiBehavior</name>
                     <value>none</value>
                 </fieldInstanceProperties>
-                <fieldItem>Record.Price_Before_Conversion__c</fieldItem>
-                <identifier>RecordPrice_Before_Conversion_cField</identifier>
-            </fieldInstance>
-        </itemInstances>
-        <itemInstances>
-            <fieldInstance>
-                <fieldInstanceProperties>
-                    <name>uiBehavior</name>
-                    <value>none</value>
-                </fieldInstanceProperties>
                 <fieldItem>Record.Override_Reason__c</fieldItem>
                 <identifier>RecordOverride_Reason_cField</identifier>
             </fieldInstance>
@@ -390,48 +380,6 @@
             </componentInstance>
         </itemInstances>
         <name>Facet-e8334031-ad6d-4d7d-8731-159221c59861</name>
-        <type>Facet</type>
-    </flexiPageRegions>
-    <flexiPageRegions>
-        <itemInstances>
-            <fieldInstance>
-                <fieldInstanceProperties>
-                    <name>uiBehavior</name>
-                    <value>none</value>
-                </fieldInstanceProperties>
-                <fieldItem>Record.Calculation_Detail__c</fieldItem>
-                <identifier>RecordCalculation_Detail_cField2</identifier>
-            </fieldInstance>
-        </itemInstances>
-        <name>Facet-ad749b15-4df8-4fb9-ac56-8e8fb1cecdc2</name>
-        <type>Facet</type>
-    </flexiPageRegions>
-    <flexiPageRegions>
-        <name>Facet-c0f9a72b-9047-4136-bced-71f06883c6dc</name>
-        <type>Facet</type>
-    </flexiPageRegions>
-    <flexiPageRegions>
-        <itemInstances>
-            <componentInstance>
-                <componentInstanceProperties>
-                    <name>body</name>
-                    <value>Facet-ad749b15-4df8-4fb9-ac56-8e8fb1cecdc2</value>
-                </componentInstanceProperties>
-                <componentName>flexipage:column</componentName>
-                <identifier>flexipage_column9</identifier>
-            </componentInstance>
-        </itemInstances>
-        <itemInstances>
-            <componentInstance>
-                <componentInstanceProperties>
-                    <name>body</name>
-                    <value>Facet-c0f9a72b-9047-4136-bced-71f06883c6dc</value>
-                </componentInstanceProperties>
-                <componentName>flexipage:column</componentName>
-                <identifier>flexipage_column10</identifier>
-            </componentInstance>
-        </itemInstances>
-        <name>Facet-a7d2be5e-76be-4b00-a39f-7d7f40d90842</name>
         <type>Facet</type>
     </flexiPageRegions>
     <flexiPageRegions>
@@ -557,24 +505,6 @@
                 </componentInstanceProperties>
                 <componentName>flexipage:fieldSection</componentName>
                 <identifier>flexipage_fieldSection4</identifier>
-            </componentInstance>
-        </itemInstances>
-        <itemInstances>
-            <componentInstance>
-                <componentInstanceProperties>
-                    <name>columns</name>
-                    <value>Facet-a7d2be5e-76be-4b00-a39f-7d7f40d90842</value>
-                </componentInstanceProperties>
-                <componentInstanceProperties>
-                    <name>horizontalAlignment</name>
-                    <value>false</value>
-                </componentInstanceProperties>
-                <componentInstanceProperties>
-                    <name>label</name>
-                    <value>Calculation Audit</value>
-                </componentInstanceProperties>
-                <componentName>flexipage:fieldSection</componentName>
-                <identifier>flexipage_fieldSection5</identifier>
             </componentInstance>
         </itemInstances>
         <itemInstances>

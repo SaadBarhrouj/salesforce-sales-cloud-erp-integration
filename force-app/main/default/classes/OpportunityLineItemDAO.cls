@@ -50,4 +50,15 @@ public inherited sharing class OpportunityLineItemDAO {
         insert as system items;
         return items;
     }
+
+    /**
+     * @description Updates a list of OpportunityLineItem records.
+     * @param items The list of OpportunityLineItem records to update.
+     */
+    public static void updateLineItems(List<OpportunityLineItem> items) {
+        if (items == null || items.isEmpty()) {
+            return;
+        }
+        update as system items;
+    }
 }

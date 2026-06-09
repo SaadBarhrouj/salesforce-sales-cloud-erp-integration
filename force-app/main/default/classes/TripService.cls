@@ -58,6 +58,7 @@ public inherited sharing class TripService {
      * DTO representing a selectable option attached to a CPQ line item.
      */
     public class CPQOption {
+        public String productId;
         public Boolean isSelected;
         public Integer quantity;
         public Decimal weight;
@@ -282,6 +283,15 @@ public inherited sharing class TripService {
             if (c.productId != null) {
                 try {
                     productIds.add((Id) c.productId);
+                } catch (Exception ignore) {
+                    continue;
+                }
+            }
+            if (c.options == null) { continue; }
+            for (CPQOption opt : c.options) {
+                if (opt.productId == null) { continue; }
+                try {
+                    productIds.add((Id) opt.productId);
                 } catch (Exception ignore) {
                     continue;
                 }
@@ -549,7 +559,6 @@ public inherited sharing class TripService {
             trip.System_Price__c          = cost;
             trip.Final_Price__c           = cost;
             trip.Rate_Currency__c         = rate.Currency_Code__c;
-            trip.Bin_Visualization_URL__c = (String) binWrapper.get('image_complete');
             trip.Packing_Geometry__c      = buildPackingGeometry(binData, binWrapper, binByCode.get(truckCode), labelById);
             sol.trips.add(trip);
         }
@@ -572,7 +581,7 @@ public inherited sharing class TripService {
      * @description Builds the 3D loading geometry JSON for one packed bin, consumed by the
      * binPacking3dViewerGl component. Bin dimensions come from the Truck_Type__mdt request
      * (guaranteed present) with the provider's bin_data as fallback; items are trimmed to
-     * id + coordinates to keep the stored payload small. Returns null when there is no
+     * id (Product2 Id) + label + coordinates to keep the stored payload small. Returns null when there is no
      * placement geometry to render.
      * @param binData the bin_data map from a bins_packed entry
      * @param binWrapper the full bins_packed entry (carries the items array)
@@ -595,7 +604,8 @@ public inherited sharing class TripService {
             String rawId = (String) it.get('id');
             String label = (labelById != null && labelById.containsKey(rawId)) ? labelById.get(rawId) : rawId;
             items.add(new Map<String, Object>{
-                'id'          => label,
+                'id'          => rawId,
+                'label'       => label,
                 'coordinates' => it.get('coordinates')
             });
         }
@@ -650,13 +660,17 @@ public inherited sharing class TripService {
                 for (CPQOption opt : cpq.options) {
                     if (opt.isSelected && opt.w != null) {
                         BinPackingAPI.ItemRequest oit = new BinPackingAPI.ItemRequest();
-                        oit.id = 'OPT-' + Crypto.getRandomInteger();
+                        oit.id = String.isNotBlank(opt.productId)
+                            ? opt.productId
+                            : 'OPT-' + Crypto.getRandomInteger();
                         oit.w = opt.w; oit.h = opt.h; oit.d = opt.d;
                         oit.wg = opt.weight;
                         oit.q = opt.quantity;
                         oit.vr = 1;
                         items.add(oit);
-                        if (labelById != null) { labelById.put(oit.id, String.isNotBlank(productLabel) ? productLabel : 'Option'); }
+                        if (labelById != null && !labelById.containsKey(oit.id)) {
+                            labelById.put(oit.id, String.isNotBlank(productLabel) ? productLabel : 'Option');
+                        }
                     }
                 }
             }

@@ -28,7 +28,6 @@ const TRIP_COLUMNS = [
     { label: 'System Price', fieldName: 'System_Price__c', type: 'currency', sortable: true },
     { label: 'Final Price', fieldName: 'Final_Price__c', type: 'currency', editable: true, typeAttributes: { step: '0.01' } },
     { label: 'Override Reason', fieldName: 'Override_Reason__c', type: 'text', editable: true },
-    { label: '3D View', fieldName: 'Bin_Visualization_URL__c', type: 'url', typeAttributes: { label: 'View', target: '_blank' } },
 ];
 
 export default class CpqStepLogistics extends LightningElement {
@@ -349,6 +348,7 @@ export default class CpqStepLogistics extends LightningElement {
                     d: item.d,
                     weight: item.weight,
                     options: (item.options || item.configuredOptions || []).map(opt => ({
+                        productId: opt.productId || opt.Id,
                         isSelected: opt.isSelected,
                         quantity: opt.quantity || 1,
                         weight: opt.weight || opt.Unit_Weight_Kg__c,

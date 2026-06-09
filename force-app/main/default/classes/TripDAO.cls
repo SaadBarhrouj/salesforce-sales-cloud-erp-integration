@@ -15,7 +15,8 @@ public inherited sharing class TripDAO {
                 SELECT Id, System_Price__c, Final_Price__c,
                        Override_Reason__c, Is_Price_Overridden__c, Truck_Type__c,
                        Direction__c, Trip_Key__c, Transport_Zone__c, Total_Weight_Kg__c,
-                       Status__c, Bin_Visualization_URL__c, Packing_Geometry__c
+                       Status__c, Packing_Geometry__c,
+                       Distance_Km__c, Country_Code__c, Rate_Currency__c, Trip_Date__c
                 FROM Trip__c
                 WHERE Opportunity__c = :opportunityId
             ];
@@ -33,7 +34,7 @@ public inherited sharing class TripDAO {
     public static List<Trip__c> getTripById(Id tripId) {
         try {
             return [
-                SELECT Id, Truck_Type__c, Total_Weight_Kg__c, Bin_Visualization_URL__c, Packing_Geometry__c
+                SELECT Id, Truck_Type__c, Total_Weight_Kg__c, Packing_Geometry__c
                 FROM Trip__c
                 WHERE Id = :tripId
                 LIMIT 1

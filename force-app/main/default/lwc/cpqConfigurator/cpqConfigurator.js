@@ -906,6 +906,7 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
           agencyId: updatedLogistics.config ? updatedLogistics.config.agencyId : this.logisticsState.agencyId,
           deliverySiteId: updatedLogistics.config ? updatedLogistics.config.deliverySiteId : this.logisticsState.deliverySiteId,
           urgency: updatedLogistics.config ? updatedLogistics.config.urgency : this.logisticsState.urgency,
+          directionMode: updatedLogistics.config ? updatedLogistics.config.directionMode : this.logisticsState.directionMode,
           trips: updatedLogistics.trips,
           isValid: updatedLogistics.isValid,
           agencyName: updatedLogistics.agencyName || this.logisticsState.agencyName,
@@ -1042,29 +1043,36 @@ export default class CpqConfigurator extends NavigationMixin(LightningElement) {
   }
 
   _buildLogisticsPayload() {
-    const trips = (this.logisticsState.trips || []).map((trip) => ({
-      id: trip.Id || null,
-      truckType: trip.Truck_Type__c || null,
-      distanceKm: trip.Distance_Km__c || 0,
-      systemPrice: Number(trip.System_Price__c) || 0,
-      finalPrice: Number(trip.Final_Price__c || trip.System_Price__c) || 0,
-      isPriceOverridden: trip.Is_Price_Overridden__c || false,
-      overrideReason: trip.Override_Reason__c || null,
-      direction: trip.Direction__c || null,
-      transportZone: trip.Transport_Zone__c || null,
-      totalWeightKg: Number(trip.Total_Weight_Kg__c) || 0,
-      rateCurrency: trip.Rate_Currency__c || null,
-      binVisualizationUrl: trip.Bin_Visualization_URL__c || null,
-      packingGeometry: trip.Packing_Geometry__c || null,
-      countryCode: trip.Country_Code__c || null
-    }));
+    // trips === null means the logistics step never hydrated this session: the server
+    // keeps the existing Trip__c records instead of wiping them. An explicit [] clears them.
+    const hasTrips = Array.isArray(this.logisticsState.trips);
+    const trips = hasTrips
+      ? this.logisticsState.trips.map((trip) => ({
+          id: trip.Id || null,
+          truckType: trip.Truck_Type__c || null,
+          distanceKm: trip.Distance_Km__c || 0,
+          systemPrice: Number(trip.System_Price__c) || 0,
+          finalPrice: Number(trip.Final_Price__c || trip.System_Price__c) || 0,
+          isPriceOverridden: trip.Is_Price_Overridden__c || false,
+          overrideReason: trip.Override_Reason__c || null,
+          direction: trip.Direction__c || null,
+          transportZone: trip.Transport_Zone__c || null,
+          totalWeightKg: Number(trip.Total_Weight_Kg__c) || 0,
+          rateCurrency: trip.Rate_Currency__c || null,
+          packingGeometry: trip.Packing_Geometry__c || null,
+          countryCode: trip.Country_Code__c || null,
+          tripDate: trip.Trip_Date__c || null,
+          tripKey: trip.Trip_Key__c || null
+        }))
+      : null;
 
     return {
       isTransportRequired: this.logisticsState.isTransportRequired || false,
       defaultAgencyId: this.logisticsState.agencyId || null,
       deliverySiteId: this.logisticsState.deliverySiteId || null,
       transportUrgency: this.logisticsState.urgency || "Standard",
-      totalTransportCost: this._calculateTransportTotal(),
+      directionMode: this.logisticsState.directionMode || null,
+      totalTransportCost: hasTrips ? this._calculateTransportTotal() : null,
       trips: trips
     };
   }

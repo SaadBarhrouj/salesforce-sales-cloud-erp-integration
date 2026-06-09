@@ -461,6 +461,9 @@ public inherited sharing class OpportunityService {
         if (logistics.containsKey('transportUrgency')) {
             opp.Transport_Urgency__c = (String) logistics.get('transportUrgency');
         }
+        if (logistics.containsKey('directionMode') && logistics.get('directionMode') != null) {
+            opp.Trip_Direction_Mode__c = (String) logistics.get('directionMode');
+        }
 
         OpportunityDAO.updateRecord(opp);
     }
@@ -477,10 +480,20 @@ public inherited sharing class OpportunityService {
             return;
         }
 
+        List<OpportunityLineItem> lineItems = OpportunityLineItemDAO.getByOpportunityId(opportunityId);
+
+        // A null trips payload means the wizard never hydrated the logistics step: existing trips
+        // are preserved and only re-linked to the freshly recreated line items. An explicit empty
+        // list still clears them (transport turned off).
+        List<Object> tripMaps = (List<Object>) logistics.get('trips');
+        if (tripMaps == null) {
+            linkLineItemsToTrips(lineItems, TripDAO.getTripsByOpportunity(opportunityId));
+            return;
+        }
+
         TripDAO.deleteTripsByOpportunity(opportunityId);
 
-        List<Object> tripMaps = (List<Object>) logistics.get('trips');
-        if (tripMaps == null || tripMaps.isEmpty()) {
+        if (tripMaps.isEmpty()) {
             return;
         }
 
@@ -490,7 +503,7 @@ public inherited sharing class OpportunityService {
         // Rental/service line items carry service dates; sales offers don't, so they fall back to today.
         Date deliveryDate = null; // earliest service start across line items
         Date pickupDate = null;   // latest service end across line items
-        for (OpportunityLineItem oli : OpportunityLineItemDAO.getByOpportunityId(opportunityId)) {
+        for (OpportunityLineItem oli : lineItems) {
             if (oli.Service_Start_Date__c != null && (deliveryDate == null || oli.Service_Start_Date__c < deliveryDate)) {
                 deliveryDate = oli.Service_Start_Date__c;
             }
@@ -498,6 +511,10 @@ public inherited sharing class OpportunityService {
                 pickupDate = oli.Service_End_Date__c;
             }
         }
+
+        String agencyCode = resolveAgencyCode(toId(logistics.get('defaultAgencyId')));
+        String oppSuffix = String.valueOf(opportunityId).right(6);
+        Map<String, Integer> seqByDirection = new Map<String, Integer>();
 
         for (Object tripObj : tripMaps) {
             Map<String, Object> tripData = toStringKeyMap(tripObj);
@@ -535,9 +552,6 @@ public inherited sharing class OpportunityService {
             if (tripData.containsKey('rateCurrency')) {
                 trip.Rate_Currency__c = (String) tripData.get('rateCurrency');
             }
-            if (tripData.containsKey('binVisualizationUrl')) {
-                trip.Bin_Visualization_URL__c = (String) tripData.get('binVisualizationUrl');
-            }
             if (tripData.containsKey('packingGeometry')) {
                 trip.Packing_Geometry__c = (String) tripData.get('packingGeometry');
             }
@@ -560,13 +574,128 @@ public inherited sharing class OpportunityService {
             if (tripData.containsKey('tripKey') && tripData.get('tripKey') != null) {
                 trip.Trip_Key__c = (String) tripData.get('tripKey');
             }
+            if (String.isBlank(trip.Trip_Key__c)) {
+                String dirToken = (trip.Direction__c == 'Pickup') ? 'PCK' : 'DEL';
+                Integer seq = seqByDirection.containsKey(dirToken) ? seqByDirection.get(dirToken) + 1 : 1;
+                seqByDirection.put(dirToken, seq);
+                trip.Trip_Key__c = agencyCode + '_' + dirToken + '_' + formatIsoDate(trip.Trip_Date__c)
+                    + '_' + oppSuffix + '-' + seq;
+            }
 
             trips.add(trip);
         }
 
         if (!trips.isEmpty()) {
             TripDAO.upsertTrips(trips);
+            linkLineItemsToTrips(lineItems, trips);
         }
+    }
+
+    /**
+     * @description Resolves the short agency code used as the Trip_Key__c prefix.
+     * Derived from the departure agency Location name (first four alphanumeric
+     * characters, uppercased); falls back to 'TRIP' when no agency is available.
+     * @param agencyId the departure agency Location Id, or null
+     * @return the short agency code
+     */
+    private static String resolveAgencyCode(Id agencyId) {
+        if (agencyId != null) {
+            Schema.Location agency = LocationDAO.getByIds(new Set<Id>{ agencyId }).get(agencyId);
+            if (agency != null && String.isNotBlank(agency.Name)) {
+                String code = agency.Name.replaceAll('[^a-zA-Z0-9]', '').toUpperCase();
+                if (String.isNotBlank(code)) {
+                    return code.left(4);
+                }
+            }
+        }
+        return 'TRIP';
+    }
+
+    /**
+     * @description Formats a Date as ISO yyyy-MM-dd for Trip_Key__c.
+     * @param d the date to format
+     * @return the ISO-formatted date string
+     */
+    private static String formatIsoDate(Date d) {
+        return Datetime.newInstanceGmt(d, Time.newInstance(0, 0, 0, 0)).formatGmt('yyyy-MM-dd');
+    }
+
+    /**
+     * @description Assigns each OpportunityLineItem to the trip carrying its product, per direction.
+     * The product-to-trip mapping comes from each trip's Packing_Geometry__c (item ids are Product2
+     * Ids). When a product's quantity is split across several trips of the same direction, the line
+     * item is assigned to the first trip that carries it.
+     * @param lineItems the opportunity's freshly inserted line items
+     * @param trips the upserted Trip__c records (Ids populated)
+     */
+    private static void linkLineItemsToTrips(List<OpportunityLineItem> lineItems, List<Trip__c> trips) {
+        Map<Id, Id> deliveryTripByProduct = new Map<Id, Id>();
+        Map<Id, Id> pickupTripByProduct = new Map<Id, Id>();
+
+        for (Trip__c trip : trips) {
+            Map<Id, Id> target = (trip.Direction__c == 'Pickup') ? pickupTripByProduct : deliveryTripByProduct;
+            for (Id productId : extractGeometryProductIds(trip.Packing_Geometry__c)) {
+                if (!target.containsKey(productId)) {
+                    target.put(productId, trip.Id);
+                }
+            }
+        }
+
+        if (deliveryTripByProduct.isEmpty() && pickupTripByProduct.isEmpty()) {
+            return;
+        }
+
+        List<OpportunityLineItem> updates = new List<OpportunityLineItem>();
+        for (OpportunityLineItem oli : lineItems) {
+            Id deliveryTripId = deliveryTripByProduct.get(oli.Product2Id);
+            Id pickupTripId = pickupTripByProduct.get(oli.Product2Id);
+            if (deliveryTripId == null && pickupTripId == null) {
+                continue;
+            }
+            updates.add(new OpportunityLineItem(
+                Id = oli.Id,
+                Trip_Delivery__c = deliveryTripId,
+                Trip_Pickup__c = pickupTripId
+            ));
+        }
+
+        if (!updates.isEmpty()) {
+            OpportunityLineItemDAO.updateLineItems(updates);
+        }
+    }
+
+    /**
+     * @description Extracts the Product2 Ids packed into a trip from its Packing_Geometry__c JSON.
+     * Item ids that are not valid record Ids (legacy label-based geometry, synthetic option ids)
+     * are skipped.
+     * @param geometryJson the trip's Packing_Geometry__c payload, or null
+     * @return the set of Product2 Ids found in the geometry
+     */
+    private static Set<Id> extractGeometryProductIds(String geometryJson) {
+        Set<Id> productIds = new Set<Id>();
+        if (String.isBlank(geometryJson)) {
+            return productIds;
+        }
+        try {
+            Map<String, Object> root = (Map<String, Object>) JSON.deserializeUntyped(geometryJson);
+            List<Object> items = (List<Object>) root.get('items');
+            if (items == null) {
+                return productIds;
+            }
+            for (Object obj : items) {
+                Map<String, Object> it = toStringKeyMap(obj);
+                if (it == null) {
+                    continue;
+                }
+                Id productId = toId(it.get('id'));
+                if (productId != null) {
+                    productIds.add(productId);
+                }
+            }
+        } catch (Exception e) {
+            System.debug(LoggingLevel.WARN, 'OpportunityService.extractGeometryProductIds: unparsable geometry skipped: ' + e.getMessage());
+        }
+        return productIds;
     }
 
     /**

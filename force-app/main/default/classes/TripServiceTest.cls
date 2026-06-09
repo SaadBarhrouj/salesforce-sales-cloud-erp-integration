@@ -45,8 +45,6 @@ private class TripServiceTest {
         Trip__c t = sol.trips[0];
         Assert.areEqual('TRUCK_A', t.Truck_Type__c, 'bin_data.id maps to truck code');
         Assert.areEqual(8000, t.Total_Weight_Kg__c, 'weight (total packed-item weight) maps to loaded weight');
-        Assert.areEqual('https://eu.api.3dbinpacking.com/images/abc.svg', t.Bin_Visualization_URL__c,
-            'image_complete maps to the visualization URL');
         Assert.areEqual(200, t.System_Price__c, 'Price uses base + extra-km over the included distance');
         Assert.areEqual('Delivery', t.Direction__c, 'Direction is stamped through');
     }
@@ -113,7 +111,8 @@ private class TripServiceTest {
         List<Object> items = (List<Object>) geo.get('items');
         Assert.areEqual(1, items.size(), 'One packed item captured with coordinates');
         Map<String, Object> item0 = (Map<String, Object>) items[0];
-        Assert.areEqual('Wood Pallet', (String) item0.get('id'), 'item id is replaced with the product label');
+        Assert.areEqual('Palette', (String) item0.get('id'), 'item id keeps the raw product id for trip-item linking');
+        Assert.areEqual('Wood Pallet', (String) item0.get('label'), 'item label carries the product name for the viewer');
     }
 
     @isTest
