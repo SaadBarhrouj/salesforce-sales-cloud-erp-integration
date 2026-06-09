@@ -349,6 +349,68 @@ public inherited sharing class TripService {
         return api.distanceKm;
     }
 
+    /**
+     * @description Lightweight driving distance + duration lookup for a single route pair, for
+     * UI preview (the configurator's logistics map) independent of the full trip calculation.
+     * Cache first; on miss it calls OpenRouteService once and persists the cache row and callout
+     * log. The single callout precedes all DML, so the "no DML between callouts" rule holds.
+     * @param agencyId departure agency Location Id
+     * @param deliverySiteId delivery site Location Id
+     * @param opportunityId parent Opportunity Id, used for callout logging
+     * @return distance (km) + duration (min); both null when unavailable
+     */
+    public static RouteDistanceResult getRouteDistance(Id agencyId, Id deliverySiteId, Id opportunityId) {
+        RouteDistanceResult out = new RouteDistanceResult();
+        if (agencyId == null || deliverySiteId == null) { return out; }
+
+        String cacheKey = String.valueOf(agencyId) + '_' + String.valueOf(deliverySiteId);
+        Map<String, Distance_Cache__c> cached = DistanceCacheDAO.getByCacheKeys(new Set<String>{ cacheKey });
+        if (cached.containsKey(cacheKey) && cached.get(cacheKey).Distance_Km__c != null) {
+            out.distanceKm = cached.get(cacheKey).Distance_Km__c;
+            out.durationMinutes = cached.get(cacheKey).Duration_Minutes__c;
+            return out;
+        }
+
+        Map<Id, Schema.Location> locs = LocationDAO.getByIds(new Set<Id>{ agencyId, deliverySiteId });
+        Schema.Location origin = locs.get(agencyId);
+        Schema.Location destination = locs.get(deliverySiteId);
+        if (origin == null || destination == null
+            || origin.Latitude == null || origin.Longitude == null
+            || destination.Latitude == null || destination.Longitude == null) {
+            return out;
+        }
+
+        RouteCalculationService.RouteResult api = RouteCalculationService.callOpenRouteService(origin, destination, opportunityId);
+        if (api.logRequest != null) {
+            IntegrationLoggerService.logCallouts(new List<IntegrationLoggerService.LogCalloutRequest>{ api.logRequest });
+        }
+        if (!api.isSuccess || api.distanceKm == null) {
+            return out;
+        }
+
+        DistanceCacheDAO.upsertCaches(new List<Distance_Cache__c>{
+            new Distance_Cache__c(
+                Cache_Key__c            = cacheKey,
+                Origin_Location__c      = origin.Id,
+                Destination_Location__c = destination.Id,
+                Distance_Km__c          = api.distanceKm,
+                Duration_Minutes__c     = api.durationMinutes
+            )
+        });
+
+        out.distanceKm = api.distanceKm;
+        out.durationMinutes = api.durationMinutes;
+        return out;
+    }
+
+    /**
+     * @description Driving distance + duration for a single route pair, returned to the UI.
+     */
+    public class RouteDistanceResult {
+        @AuraEnabled public Decimal distanceKm { get; set; }
+        @AuraEnabled public Decimal durationMinutes { get; set; }
+    }
+
     // ========== STEP 2: ZONE ==========
 
     /**
@@ -545,6 +607,7 @@ public inherited sharing class TripService {
                 'w'           => (binReq != null) ? binReq.w : binData.get('w'),
                 'h'           => (binReq != null) ? binReq.h : binData.get('h'),
                 'd'           => (binReq != null) ? binReq.d : binData.get('d'),
+                'max_weight'  => (binReq != null) ? binReq.max_wg : binData.get('max_wg'),
                 'used_space'  => binData.get('used_space'),
                 'used_weight' => resolveLoadedWeight(binData)
             },

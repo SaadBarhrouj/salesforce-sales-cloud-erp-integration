@@ -77,4 +77,22 @@ public with sharing class TripController {
             throw new AuraHandledException(e.getMessage());
         }
     }
+
+    /**
+     * @description Driving distance + duration for a single route pair, for UI preview
+     * (the configurator's logistics map). Cache-first; calls OpenRouteService on a miss.
+     * Not cacheable: it performs a callout and DML.
+     * @param agencyId departure agency Location Id
+     * @param deliverySiteId delivery site Location Id
+     * @param opportunityId parent Opportunity Id, used for callout logging
+     * @return distance (km) + duration (min); both null when unavailable
+     */
+    @AuraEnabled
+    public static TripService.RouteDistanceResult getRouteDistance(Id agencyId, Id deliverySiteId, Id opportunityId) {
+        try {
+            return TripService.getRouteDistance(agencyId, deliverySiteId, opportunityId);
+        } catch (Exception e) {
+            throw new AuraHandledException(e.getMessage());
+        }
+    }
 }

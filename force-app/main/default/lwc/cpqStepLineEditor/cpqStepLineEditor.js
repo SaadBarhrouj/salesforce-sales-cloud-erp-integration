@@ -17,8 +17,8 @@ const BASE_COLUMNS = [
 ];
 
 const SERVICE_COLUMNS_INSERT = [
-    { type: 'date', fieldName: 'serviceStartDate', label: 'Start', editable: true, isStartDate: true },
-    { type: 'date', fieldName: 'serviceEndDate', label: 'End', editable: true, isEndDate: true },
+    { type: 'date', fieldName: 'serviceStartDate', label: 'Start', editable: true, isStartDate: true, style: 'width: 10rem' },
+    { type: 'date', fieldName: 'serviceEndDate', label: 'End', editable: true, isEndDate: true, style: 'width: 10rem' },
     { type: 'currency', fieldName: 'dailyRate', label: 'Daily Rate', isCurrency: true, isDailyRate: true }
 ];
 

@@ -36,9 +36,10 @@ export default class TripRouteMap extends LightningElement {
     @api manualDestinationLng;
     @api manualDestinationName;
     @api manualDistance;
+    @api manualDuration;
 
     get computedIconName() {
-        return this.hideIcon ? undefined : 'action:map';
+        return this.hideIcon ? undefined : 'custom:custom78';
     }
 
     @wire(getRecord, {
@@ -72,8 +73,14 @@ export default class TripRouteMap extends LightningElement {
     }
 
     get durationMinutes() {
-        if (this.isManualMode) return null;
+        if (this.isManualMode) return this.manualDuration;
         return this._val(OPPORTUNITY_DURATION_TRIP);
+    }
+
+    // Show the distance/duration figure on a record page (fields drive it) or in manual
+    // mode once a distance has been supplied (the configurator fetches it server-side).
+    get showRouteMetrics() {
+        return this.isRecordMode || this.distance != null;
     }
 
     get formattedDuration() {

@@ -63,4 +63,4 @@
     border-radius: 0.25rem;
 }
 .service-header lightning-input { max-width: 14rem; }
-table .slds-cell-edit lightning-input[type="date"] { max-width: 11rem; }
+table .slds-cell-edit lightning-input[type="date"] { max-width: 13rem; }

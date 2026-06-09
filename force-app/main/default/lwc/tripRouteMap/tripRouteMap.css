@@ -8,6 +8,19 @@
     display: block;
 }
 
+/* ── Card header ────────────────────────────────── */
+/* Custom header via lightning-card's `title` slot: medium icon + 1rem normal-weight title. */
+.card-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.card-title-text {
+    font-size: 1rem;
+    font-weight: normal;
+}
+
 /* ── Map ────────────────────────────────────────── */
 
 .map-frame {
@@ -20,7 +33,6 @@
 
 .route-panel {
     padding: 1rem 1.25rem;
-    background: #fafafa;
     border-top: 1px solid #e5e5e5;
 }
 
@@ -131,6 +143,14 @@
 
 .estimated {
     color: #e87722;
+    font-weight: 700;
+    text-decoration: none;
+    cursor: help;
+    margin-right: 2px;
+}
+
+.exact {
+    color: #2e844a;
     font-weight: 700;
     text-decoration: none;
     cursor: help;

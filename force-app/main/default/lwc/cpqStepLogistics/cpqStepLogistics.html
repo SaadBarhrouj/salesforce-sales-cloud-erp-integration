@@ -64,7 +64,7 @@
 
                     <!-- SECTION 2: CALCULATED TRIPS WITH CONDITIONAL OVERRIDE REASON -->
                     <template lwc:if={hasTrips}>
-                        <div class="slds-box slds-theme_shade slds-m-bottom_medium">
+                        <div class="slds-box slds-m-bottom_medium">
                             <template lwc:if={isCalculating}>
                                 <lightning-spinner alternative-text="Calculating..." size="medium"></lightning-spinner>
                             </template>
@@ -111,15 +111,24 @@
 
                 <!-- RIGHT COLUMN: MAP -->
                 <lightning-layout-item size="12" large-device-size="5" padding="around-small">
-                    <div class="slds-box slds-theme_default" style="position: relative; min-height: 400px; height: 100%;">
+                    <div class="slds-box slds-theme_default" style="position: relative; min-height: 400px; height: 100%; padding: 0;">
                         
                         <!-- Loading Spinner -->
                         <template lwc:if={isCalculating}>
                             <lightning-spinner alternative-text="Calculating..." size="medium"></lightning-spinner>
                         </template>
 
-                        <!-- Map Display when route is valid -->
-                        <template lwc:if={hasValidRoute}>
+                        <!-- 3D Load Plan once trips are calculated (replaces the map) -->
+                        <template lwc:if={hasTrips}>
+                            <div class="slds-p-around_none overflow-hidden" style="height: 100%;">
+                                <c-bin-packing3d-viewer-gl
+                                    bins-json={loadPlanBinsJson}>
+                                </c-bin-packing3d-viewer-gl>
+                            </div>
+                        </template>
+
+                        <!-- Map Display when route is valid (before calculation) -->
+                        <template lwc:elseif={hasValidRoute}>
                             <div class="slds-p-around_none overflow-hidden" style="height: 100%;">
                                 <c-trip-route-map
                                     manual-departure-lat={selectedAgency.Latitude}
@@ -128,9 +137,10 @@
                                     manual-destination-lat={selectedDelivery.Latitude}
                                     manual-destination-lng={selectedDelivery.Longitude}
                                     manual-destination-name={selectedDelivery.Name}
+                                    manual-distance={routeDistanceKm}
+                                    manual-duration={routeDurationMinutes}
                                     map-title="Route Map"
-                                    hide-icon
-                                    hide-directions-link>
+                                    map-height="380">
                                 </c-trip-route-map>
                             </div>
                         </template>

@@ -1,35 +1,70 @@
 /*
- * The host MUST be a block. By default an LWC custom element is `display: inline`;
- * an inline host that wraps a fixed-height block + an absolutely-positioned WebGL
- * canvas breaks the inline formatting context on a record page, so the toolbar /
- * summary / legend siblings stay in the DOM but get no layout box (invisible).
- * App Builder hides this because it wraps each component in its own block chrome.
+ * IMPORTANT: every class is namespaced `bp3d-`. Generic names like `.stage` collide
+ * with Salesforce's global Aura stylesheet (e.g. `.forceStyle.desktop .viewport
+ * .stage { position:absolute; top:3.125rem; left:0; right:0; ... }`), which has higher
+ * specificity than an LWC scoped class and turns the element into a full-viewport
+ * overlay. Namespacing avoids all such collisions.
+ *
+ * Sizing: a DEFINITE pixel height on .bp3d-stage (no height:100% chain) keeps the box
+ * identical in a bounded tab and a full-height region. The canvas is a normal-flow
+ * block, so it cannot escape the stage. The host MUST be a block.
  */
 :host {
     display: block;
 }
 
-/* The toolbar, summary and legend are normal-flow blocks that must always lay out
-   and never be overdrawn by the absolutely-positioned canvas. */
-.summary,
-.legend {
-    position: relative;
-    z-index: 1;
+/* Custom header rendered via lightning-card's `title` slot so the icon can be
+   medium-sized and the title 1rem with normal weight (the card's defaults are
+   a small icon + bold title and aren't settable via attributes). */
+.bp3d-card-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
-/* The toolbar holds the combobox; its open dropdown must stack ABOVE the summary
-   and legend (which come later in the DOM), otherwise they paint over the menu. */
-.toolbar {
+.bp3d-card-title-text {
+    font-size: 1rem;
+    font-weight: normal;
+}
+
+/* The component now renders inside a standard lightning-card, which supplies the
+   header (title + icon) and the body's horizontal padding (slds-card__body_inner).
+   bp3d-body adds no horizontal padding to avoid doubling it. */
+.bp3d-body {
+    display: flex;
+    flex-direction: column;
+    padding: 0.5rem;
+}
+
+/* The toolbar holds the combobox; its open dropdown must stack ABOVE the summary and
+   legend (later in the DOM) so they don't paint over the menu. */
+.bp3d-toolbar {
     position: relative;
     z-index: 3;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 0.75rem;
+    padding-bottom: 0.5rem;
 }
 
-.stage {
+.bp3d-combo {
+    max-width: 260px;
+}
+
+.bp3d-summary {
+    position: relative;
+    z-index: 1;
+    margin-bottom: 0.25rem;
+}
+
+.bp3d-stage {
     position: relative;
     width: 100%;
-    /* Height comes from the `height` property via inline style (stageStyle);
-       min-height guarantees a definite box even before layout settles. */
-    min-height: 240px;
+    /* Definite height: inline style from the `height` property overrides this; the
+       CSS value is the fallback if the inline binding is ever stripped. */
+    height: 440px;
     background: linear-gradient(#f7f9fb, #e7edf3);
     border: 1px solid #dfe3e8;
     border-radius: 0.25rem;
@@ -37,20 +72,20 @@
     isolation: isolate;
 }
 
-.viewer {
-    position: absolute;
-    inset: 0;
+/* Normal-flow block filling the stage — NOT absolutely positioned, so it cannot
+   escape its container. */
+.bp3d-viewer {
+    display: block;
     width: 100%;
     height: 100%;
-    display: block;
     cursor: grab;
 }
 
-.viewer:active {
+.bp3d-viewer:active {
     cursor: grabbing;
 }
 
-.badge {
+.bp3d-badge {
     position: absolute;
     bottom: 8px;
     left: 8px;
@@ -63,7 +98,7 @@
     max-width: 70%;
 }
 
-.hint {
+.bp3d-hint {
     position: absolute;
     bottom: 6px;
     right: 8px;
@@ -72,7 +107,7 @@
     pointer-events: none;
 }
 
-.err {
+.bp3d-err {
     position: absolute;
     inset: 0;
     display: flex;
@@ -84,7 +119,7 @@
     font-size: 0.8rem;
 }
 
-.empty {
+.bp3d-empty {
     position: absolute;
     inset: 0;
     display: flex;
@@ -98,21 +133,23 @@
     font-size: 0.85rem;
 }
 
-.legend {
+.bp3d-legend {
+    position: relative;
+    z-index: 1;
     display: flex;
     flex-wrap: wrap;
     gap: 0.75rem;
     padding: 0.5rem 0 0.25rem;
 }
 
-.legend-item {
+.bp3d-legend-item {
     display: inline-flex;
     align-items: center;
     font-size: 0.75rem;
     color: #3e3e3c;
 }
 
-.swatch {
+.bp3d-swatch {
     width: 12px;
     height: 12px;
     border-radius: 2px;

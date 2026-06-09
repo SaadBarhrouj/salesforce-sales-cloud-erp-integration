@@ -1,54 +1,33 @@
-import { LightningElement, api } from 'lwc';
+import { LightningElement, api, wire } from 'lwc';
 import { loadScript } from 'lightning/platformResourceLoader';
+import getPackingGeometry from '@salesforce/apex/TripController.getPackingGeometry';
 import THREEJS from '@salesforce/resourceUrl/threejs';
 import LOXAM_LOGO from '@salesforce/resourceUrl/LoxamLogoWhite';
 import LOXAM_LOGO_RED from '@salesforce/resourceUrl/LoxamLogoRed';
 
 
-const TYPE_COLORS = { Palette: '#1f77b4', Caisse: '#ff7f0e', Carton: '#2ca02c' };
 const PALETTE = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#17becf'];
 
 const LOXAM_RED = 0xe2001a;
 const LOXAM_DARK = 0x2b2f36;
 
-const SAMPLE = [{
-    bin_data: { id: 'LRG', w: 240, h: 240, d: 600, used_space: 33.3, used_weight: 45 },
-    items: [
-        { id: 'Palette', coordinates: { x1: 0, y1: 0, z1: 0, x2: 120, y2: 100, z2: 80 } },
-        { id: 'Palette', coordinates: { x1: 120, y1: 0, z1: 0, x2: 240, y2: 100, z2: 80 } },
-        { id: 'Palette', coordinates: { x1: 0, y1: 0, z1: 80, x2: 120, y2: 100, z2: 160 } },
-        { id: 'Caisse', coordinates: { x1: 120, y1: 0, z1: 80, x2: 180, y2: 60, z2: 160 } },
-        { id: 'Caisse', coordinates: { x1: 180, y1: 0, z1: 80, x2: 240, y2: 60, z2: 160 } },
-        { id: 'Carton', coordinates: { x1: 0, y1: 0, z1: 160, x2: 40, y2: 40, z2: 200 } },
-        { id: 'Carton', coordinates: { x1: 40, y1: 0, z1: 160, x2: 80, y2: 40, z2: 200 } },
-        { id: 'Carton', coordinates: { x1: 80, y1: 0, z1: 160, x2: 120, y2: 40, z2: 200 } }
-    ]
-}, {
-    bin_data: { id: 'VAN', w: 180, h: 180, d: 300, used_space: 41.2, used_weight: 88 },
-    items: [
-        { id: 'Palette', coordinates: { x1: 0, y1: 0, z1: 0, x2: 120, y2: 100, z2: 80 } },
-        { id: 'Palette', coordinates: { x1: 0, y1: 0, z1: 80, x2: 120, y2: 100, z2: 160 } },
-        { id: 'Caisse', coordinates: { x1: 120, y1: 0, z1: 0, x2: 180, y2: 60, z2: 80 } },
-        { id: 'Caisse', coordinates: { x1: 120, y1: 0, z1: 80, x2: 180, y2: 60, z2: 160 } },
-        { id: 'Carton', coordinates: { x1: 0, y1: 100, z1: 0, x2: 40, y2: 140, z2: 40 } },
-        { id: 'Carton', coordinates: { x1: 40, y1: 100, z1: 0, x2: 80, y2: 140, z2: 40 } }
-    ]
-}];
-
 function colorForId(id) {
     if (!id) return '#888888';
-    for (const key in TYPE_COLORS) {
-        if (Object.prototype.hasOwnProperty.call(TYPE_COLORS, key) && id.indexOf(key) === 0) {
-            return TYPE_COLORS[key];
-        }
-    }
     let hash = 0;
     for (let i = 0; i < id.length; i++) hash = (hash * 31 + id.charCodeAt(i)) >>> 0;
     return PALETTE[hash % PALETTE.length];
 }
 
 export default class BinPacking3dViewerGl extends LightningElement {
-    @api height = 460;
+    // Viewer height in px. A definite height (no 100%-height chain) keeps the box the
+    // same in a bounded tab and a full-height region, so it can't balloon or overlap.
+    @api height = 440;
+
+    // Injected automatically when placed on a Lightning record page. The component
+    // fetches its own geometry from these: an Opportunity yields the full fleet,
+    // a Trip yields that single truck. An explicit binsJson overrides both.
+    @api recordId;
+    @api objectApiName;
 
     selectedBinIndex = 0;
     selectedLabel = '';
@@ -56,8 +35,27 @@ export default class BinPacking3dViewerGl extends LightningElement {
     viewMode = 'all'; // 'all' = every truck in one scene, 'single' = one truck via the combobox
 
     _bins = null;
+    _explicitBins = false;
     _loadStarted = false;
     _alive = false;
+
+    @wire(getPackingGeometry, { recordId: '$recordId', objectApiName: '$objectApiName' })
+    wiredGeometry({ data, error }) {
+        if (this._explicitBins) return;
+        if (data) {
+            try {
+                const parsed = JSON.parse(data);
+                this._bins = Array.isArray(parsed) ? parsed : null;
+            } catch (e) {
+                this._bins = null;
+            }
+            this.selectedBinIndex = 0;
+            this.selectedLabel = '';
+            if (this._scene) this._buildScene();
+        } else if (error) {
+            this._bins = null;
+        }
+    }
 
     // Three.js objects
     _THREE;
@@ -78,6 +76,7 @@ export default class BinPacking3dViewerGl extends LightningElement {
 
     @api
     set binsJson(value) {
+        this._explicitBins = value != null;
         try {
             this._bins = value ? JSON.parse(value) : null;
         } catch (e) {
@@ -92,10 +91,13 @@ export default class BinPacking3dViewerGl extends LightningElement {
     }
 
     get bins() {
-        return this._bins && this._bins.length ? this._bins : SAMPLE;
+        return (this._bins && this._bins.length) ? this._bins : [];
+    }
+    get isEmpty() {
+        return this.bins.length === 0;
     }
     get currentBin() {
-        return this.bins[this.selectedBinIndex] || this.bins[0];
+        return this.bins[this.selectedBinIndex] || this.bins[0] || null;
     }
     get hasMultipleBins() {
         return this.bins.length > 1;
@@ -127,31 +129,40 @@ export default class BinPacking3dViewerGl extends LightningElement {
     get singleVariant() {
         return this.isSingle ? 'brand' : 'neutral';
     }
-    get containerStyle() {
-        return `height:${this.height}px`;
-    }
     get stageStyle() {
-        // Definite height for the stage, driven by the App Builder "Viewer height" property.
-        // A definite box is required so the absolutely-positioned canvas resizes predictably.
-        return `height:${this.height || 460}px`;
-    }
-    get buildTag() {
-        return 'fleet-v3';
+        return `height:${this.height || 440}px`;
     }
     get summary() {
+        if (this.isEmpty) return '';
         if (this.isAll && this.bins.length > 1) {
             const total = this.bins.reduce((s, b) => s + ((b.items || []).length), 0);
-            return `${this.bins.length} trucks — ${total} items total`;
+            let usedWeight = 0;
+            let maxWeight = 0;
+            this.bins.forEach((b) => {
+                const d = b.bin_data || {};
+                if (d.used_weight != null) usedWeight += Number(d.used_weight);
+                if (d.max_weight != null) maxWeight += Number(d.max_weight);
+            });
+            const wt = maxWeight > 0
+                ? ` — ${((usedWeight / maxWeight) * 100).toFixed(0)}% weight`
+                : '';
+            return `${this.bins.length} trucks — ${total} items total${wt}`;
         }
         const bd = this.currentBin.bin_data || {};
         const count = (this.currentBin.items || []).length;
         const vol = bd.used_space != null ? `${Number(bd.used_space).toFixed(1)}% vol` : '';
-        const wt = bd.used_weight != null ? ` · ${Number(bd.used_weight).toFixed(0)}% weight` : '';
+        const wt = (bd.used_weight != null && bd.max_weight)
+            ? ` · ${((Number(bd.used_weight) / Number(bd.max_weight)) * 100).toFixed(0)}% weight`
+            : '';
         return `${bd.id || 'Truck'} — ${count} items — ${vol}${wt}`;
     }
     get legend() {
+        if (this.isEmpty) return [];
+        const source = (this.isAll && this.bins.length > 1)
+            ? this.bins.reduce((acc, b) => acc.concat(b.items || []), [])
+            : (this.currentBin.items || []);
         const seen = {};
-        (this.currentBin.items || []).forEach((it) => {
+        source.forEach((it) => {
             if (it.id && !seen[it.id]) seen[it.id] = colorForId(it.id);
         });
         return Object.keys(seen).map((id) => ({ id, style: `background-color:${seen[id]}` }));
@@ -209,12 +220,12 @@ export default class BinPacking3dViewerGl extends LightningElement {
 
     _initThree() {
         const THREE = this._THREE;
-        const stage = this.template.querySelector('.stage');
-        const canvas = this.template.querySelector('canvas.viewer');
+        const stage = this.template.querySelector('.bp3d-stage');
+        const canvas = this.template.querySelector('canvas.bp3d-viewer');
         // The stage box may not be laid out yet (record-page columns size late);
         // fall back to sane defaults — the ResizeObserver re-fits once it settles.
         const w = (stage && stage.clientWidth) || 600;
-        const h = (stage && stage.clientHeight) || this.height || 460;
+        const h = (stage && stage.clientHeight) || 460;
 
         this._renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
         this._renderer.setPixelRatio(window.devicePixelRatio || 1);
@@ -266,7 +277,7 @@ export default class BinPacking3dViewerGl extends LightningElement {
      * re-fit if ResizeObserver is unavailable.
      */
     _observeStage() {
-        const stage = this.template.querySelector('.stage');
+        const stage = this.template.querySelector('.bp3d-stage');
         if (!stage) return;
         if (typeof ResizeObserver === 'undefined') {
             requestAnimationFrame(() => this._onResize());
@@ -281,6 +292,11 @@ export default class BinPacking3dViewerGl extends LightningElement {
         const THREE = this._THREE;
         if (this._cargo) this._scene.remove(this._cargo);
         this._cargo = new THREE.Group();
+
+        if (this.isEmpty) {
+            this._scene.add(this._cargo);
+            return;
+        }
 
         let span;
         let floorLevel;
@@ -372,14 +388,22 @@ export default class BinPacking3dViewerGl extends LightningElement {
         const cabLen = BD * 0.24;
 
         // Translucent Loxam-yellow cargo walls + edges (so the load stays visible).
-        truck.add(new THREE.Mesh(
+        // Sit the box on floorY so its bottom rests on the truck floor — keeps the walls
+        // aligned with the load, plate and wheels when the fleet view shares one common
+        // floor across trucks of differing heights.
+        const cargoY = floorY + BH / 2;
+        const walls = new THREE.Mesh(
             new THREE.BoxGeometry(BW, BH, BD),
             new THREE.MeshLambertMaterial({ color: LOXAM_RED, transparent: true, opacity: 0.16, side: THREE.DoubleSide })
-        ));
-        truck.add(new THREE.LineSegments(
+        );
+        walls.position.y = cargoY;
+        truck.add(walls);
+        const wallEdges = new THREE.LineSegments(
             new THREE.EdgesGeometry(new THREE.BoxGeometry(BW, BH, BD)),
             new THREE.LineBasicMaterial({ color: LOXAM_DARK })
-        ));
+        );
+        wallEdges.position.y = cargoY;
+        truck.add(wallEdges);
 
         // Floor plate the load rests on.
         const plate = new THREE.Mesh(
@@ -506,7 +530,7 @@ export default class BinPacking3dViewerGl extends LightningElement {
     };
     _onResize = () => {
         if (!this._renderer) return;
-        const stage = this.template.querySelector('.stage');
+        const stage = this.template.querySelector('.bp3d-stage');
         if (!stage) return;
         const w = stage.clientWidth, h = stage.clientHeight;
         if (!w || !h) return;

@@ -6,6 +6,7 @@ import getLocationsByAccount from '@salesforce/apex/LocationController.getLocati
 import getAllAgencies from '@salesforce/apex/LocationController.getAllAgencies';
 import calculateTripsWithCPQItems from '@salesforce/apex/TripController.calculateTripsWithCPQItems';
 import getTripsByOpportunity from '@salesforce/apex/TripController.getTripsByOpportunity';
+import getRouteDistance from '@salesforce/apex/TripController.getRouteDistance';
 import LOCATION_NAME from '@salesforce/schema/Location.Name';
 import LOCATION_TYPE from '@salesforce/schema/Location.LocationType';
 import LOCATION_LAT from '@salesforce/schema/Location.Latitude';
@@ -23,7 +24,6 @@ const RENTAL_CATALOG_SET = new Set(
 const TRIP_COLUMNS = [
     { label: 'Direction', fieldName: 'Direction__c', type: 'text', sortable: true },
     { label: 'Truck Type', fieldName: 'Truck_Type__c', type: 'text', sortable: true },
-    { label: 'Distance (km)', fieldName: 'Distance_Km__c', type: 'number', sortable: true },
     { label: 'Total Weight', fieldName: 'Total_Weight_Kg__c', type: 'number', sortable: true },
     { label: 'System Price', fieldName: 'System_Price__c', type: 'currency', sortable: true },
     { label: 'Final Price', fieldName: 'Final_Price__c', type: 'currency', editable: true, typeAttributes: { step: '0.01' } },
@@ -196,7 +196,10 @@ export default class CpqStepLogistics extends LightningElement {
     };
     
     @track trips = [];
-    @track isCalculating = true; 
+    @track isCalculating = true;
+    routeDistanceKm;
+    routeDurationMinutes;
+    _lastFetchedPair = null;
     @track previousConfig = {
         agencyId: '',
         deliverySiteId: ''
@@ -302,6 +305,19 @@ export default class CpqStepLogistics extends LightningElement {
      */
     get showEmptyState() {
         return !this.hasTrips && !this.isCalculating;
+    }
+
+    /**
+     * Aggregate every trip's packing geometry into the bins-json array the 3D viewer
+     * expects ("[{...},{...}]"). Calculated trips carry Packing_Geometry__c in-memory
+     * (unsaved) and loaded trips carry it from the query, so the viewer works without
+     * persisting. Null when no trip has geometry, which leaves the viewer empty.
+     */
+    get loadPlanBinsJson() {
+        const geometries = this.trips
+            .map(t => t.Packing_Geometry__c)
+            .filter(g => g);
+        return geometries.length ? `[${geometries.join(',')}]` : null;
     }
 
     /**
@@ -523,9 +539,47 @@ export default class CpqStepLogistics extends LightningElement {
     }
 
     /**
+     * Fetch the server-side driving distance + duration for the current route pair so the
+     * map can show the same figure as the record page. Guarded by the agency/delivery pair
+     * (server-cached too), so it fires at most once per distinct route. Stale responses are
+     * dropped if the selection changes mid-flight.
+     */
+    maybeFetchRouteDistance() {
+        if (!this.hasValidRoute) {
+            this.routeDistanceKm = undefined;
+            this.routeDurationMinutes = undefined;
+            this._lastFetchedPair = null;
+            return;
+        }
+
+        const pair = `${this.config.agencyId}_${this.config.deliverySiteId}`;
+        if (pair === this._lastFetchedPair) return;
+        this._lastFetchedPair = pair;
+
+        getRouteDistance({
+            agencyId: this.config.agencyId,
+            deliverySiteId: this.config.deliverySiteId,
+            opportunityId: this.opportunityId
+        })
+            .then(result => {
+                if (`${this.config.agencyId}_${this.config.deliverySiteId}` !== pair) return;
+                this.routeDistanceKm = result?.distanceKm ?? undefined;
+                this.routeDurationMinutes = result?.durationMinutes ?? undefined;
+            })
+            .catch(error => {
+                console.error('Error fetching route distance:', error);
+                if (`${this.config.agencyId}_${this.config.deliverySiteId}` !== pair) return;
+                this.routeDistanceKm = undefined;
+                this.routeDurationMinutes = undefined;
+            });
+    }
+
+    /**
      * Emit current state to parent component
      */
     emitState() {
+        this.maybeFetchRouteDistance();
+
         const selectedAgency = this.selectedAgency;
         const selectedDelivery = this.selectedDelivery;
 

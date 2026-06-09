@@ -1,8 +1,11 @@
 <template>
-    <lightning-card title="3D Load Plan" icon-name="custom:custom63">
-        <div class="slds-p-horizontal_small slds-p-bottom_x-small">
-
-            <div class="toolbar slds-p-vertical_x-small">
+    <lightning-card>
+        <h2 slot="title" class="bp3d-card-title">
+            <lightning-icon icon-name="custom:custom57" size="medium"></lightning-icon>
+            <span class="bp3d-card-title-text">3D Load Plan</span>
+        </h2>
+        <div class="bp3d-body">
+            <div class="bp3d-toolbar">
                 <template if:true={showToggle}>
                     <lightning-button-group>
                         <lightning-button label="All trucks" variant={allVariant} onclick={showAll}></lightning-button>
@@ -10,10 +13,10 @@
                     </lightning-button-group>
                 </template>
                 <template if:true={showCombobox}>
-                    <div class="slds-m-top_x-small" style="max-width:260px;">
+                    <div class="bp3d-combo">
                         <lightning-combobox
                             label="Truck"
-                            variant="label-inline"
+                            variant="label-hidden"
                             value={selectedBinValue}
                             options={binOptions}
                             onchange={handleBinChange}>
@@ -22,39 +25,38 @@
                 </template>
             </div>
 
-            <p class="summary slds-text-body_small slds-text-color_weak slds-m-bottom_xx-small">{summary}</p>
+            <p class="bp3d-summary slds-text-body_small slds-text-color_weak">{summary}</p>
 
-            <div class="stage" style={stageStyle}>
-                <canvas class="viewer"></canvas>
+            <div class="bp3d-stage" style={stageStyle}>
+                <canvas class="bp3d-viewer"></canvas>
 
                 <template if:true={selectedLabel}>
-                    <div class="badge">{selectedLabel}</div>
+                    <div class="bp3d-badge">{selectedLabel}</div>
                 </template>
 
                 <template if:false={isEmpty}>
-                    <div class="hint">Drag to rotate · scroll to zoom · click a box</div>
+                    <div class="bp3d-hint">Drag to rotate · scroll to zoom · click a box</div>
                 </template>
 
                 <template if:true={isEmpty}>
-                    <div class="empty">
+                    <div class="bp3d-empty">
                         <lightning-icon icon-name="utility:package" size="small" alternative-text="No loading plan"></lightning-icon>
                         <p>No loading plan calculated yet.</p>
                     </div>
                 </template>
 
                 <template if:true={error}>
-                    <div class="err">{error}</div>
+                    <div class="bp3d-err">{error}</div>
                 </template>
             </div>
 
-            <div class="legend">
+            <div class="bp3d-legend">
                 <template for:each={legend} for:item="l">
-                    <span key={l.id} class="legend-item">
-                        <span class="swatch" style={l.style}></span>{l.id}
+                    <span key={l.id} class="bp3d-legend-item">
+                        <span class="bp3d-swatch" style={l.style}></span>{l.id}
                     </span>
                 </template>
             </div>
-
         </div>
     </lightning-card>
 </template>

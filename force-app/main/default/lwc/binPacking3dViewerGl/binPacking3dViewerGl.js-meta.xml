@@ -18,10 +18,10 @@
         <targetConfig targets="lightning__RecordPage,lightning__AppPage,lightning__HomePage">
             <property name="height"
                       type="Integer"
-                      default="460"
+                      default="440"
                       label="Viewer height (px)"
-                      description="Viewer height in pixels"
-                      min="240" max="900" />
+                      description="Height of the 3D viewer in pixels."
+                      min="200" max="900" />
         </targetConfig>
     </targetConfigs>
 </LightningComponentBundle>
